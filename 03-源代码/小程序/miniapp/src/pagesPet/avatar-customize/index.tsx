@@ -20,7 +20,7 @@ import PhotoUploader from '../../components/PetAvatar/PhotoUploader'
 import ImageGallery from '../../components/PetAvatar/ImageGallery'
 import Model3DViewer from '../../components/PetAvatar/Model3DViewer'
 import { getPresetsBySpecies, type AvatarPreset } from './data/avatarPresets'
-import { getHomeStyleAvatarUrl } from '../../data/homeStyleAvatars'
+import { getHomeStyleAvatarUrl, getHomeStyleAvatarUrlByKey } from '../../data/homeStyleAvatars'
 import PresetAvatar from './PresetAvatar'
 import {
   generateAvatarOptions,
@@ -622,13 +622,21 @@ export default function AvatarCustomizePage() {
     }
     trackEvent('save_preset_avatar', { presetId: selectedPreset.id })
     try {
+      // 坑点（关键）：selectedPreset.image 是 Taro 打包后的分包内本地路径
+      // （如 /pagesPet/avatar-customize/assets/preset-home/cat/cat-04-calico.png），
+      // 只能在当前页作为 <Image src> 即时展示。若把它写进 avatar_cartoon_url 落库，
+      // 档案页/首页/家庭页等其他页面拿到的是一段「分包资源路径」，<Image> 无法加载，
+      // 头像显示为空白/兜底占位——即「预设头像保存后其他页看不到」的根因。
+      // 正确做法：按 preset id（与品牌头像文件名 key 一致）+ 物种，
+      // 用 getHomeStyleAvatarUrlByKey 生成服务器 /uploads 托管的远程 URL 落库，
+      // 与家庭页头像同源同图，任意页面都能稳定加载。
       const custom: AvatarCustomization = {
         species,
         style: 'cartoon',
         styleVariant: selectedPreset.id,
         baseColor: '#FFD93D',
         generatedAt: new Date().toISOString(),
-        cartoonUrl: selectedPreset.image,
+        cartoonUrl: getHomeStyleAvatarUrlByKey(selectedPreset.id, selectedPreset.species),
       }
       const updated = await saveAvatarCustomization(custom, petId)
       const patch = updated
