@@ -8,6 +8,7 @@ import Taro from '@tarojs/taro'
 import { usePetStore } from '../../stores/petStore'
 import { useMembership } from '../../hooks/useMembership'
 import { api } from '../../services/api'
+import { generateYearlyReview } from '../../services/yearlyReviewService'
 import type { PetProfile } from '../../services/petService'
 import './index.scss'
 import { Icon } from '../../components'
@@ -30,7 +31,8 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 export default function YearlyReviewPage() {
-  const { pets, fetchPets, currentPet } = usePetStore()
+  // userId 从 petStore 取（与其它页一致）；本页要它才能本地计算年度数据
+  const { pets, fetchPets, currentPet, userId } = usePetStore()
   const { isMember } = useMembership()
   const [selectedPetId, setSelectedPetId] = useState('')
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR)
@@ -50,21 +52,75 @@ export default function YearlyReviewPage() {
     }
   }, [pets, currentPet, selectedPetId])
 
+  /**
+   * 加载某年度的年度回顾
+   *
+   * 2026-09-11 修复「点进去什么都看不到」（用户拍板方案 A）：
+   * 原实现直接读后端 `/api/pets/{id}/yearly-review/{year}`，但后端 `toDetailResponse`
+   * 只返回 `{id, pet_id, year, status, review_data, cover_url, video_url, paid, ...}` ——
+   * 本页要的 `total_checkins / total_days / max_streak / weight_change / top_moods /
+   * highlights / summary` **连 review_data 里都没有**（后端 stats 是另一套字段，
+   * 且创建时全部初始化为 0，项目里没有任何地方会把真实数字写进去）。
+   * 也就是说：这一页此前必然渲染 undefined / 0，而且没有任何入口。
+   *
+   * 现在改为**本地计算**：数据源是打卡记录 + 宠物档案（与「回忆录中心」的年度回顾同源，
+   * 复用 `generateYearlyReview`），算完再映射成本页既有的 snake_case 形状 ——
+   * 渲染层一行都不用改。后端记录仍会尝试读取，但只用于「生成年度视频」（需要后端 id）；
+   * 没有记录时视频按钮保持禁用并给出说明。
+   */
   const fetchReview = useCallback(async () => {
     if (!selectedPetId) return
     setLoading(true); setError('')
     try {
-      const data = await api.get<YearlyReview>(`/api/pets/${selectedPetId}/yearly-review/${selectedYear}`)
-      setReview(data)
+      const pet: PetProfile | null = pets.find((p) => p.id === selectedPetId) || currentPet
+      if (!pet || !userId) {
+        setReview(null); setError('暂无该年度回忆数据'); return
+      }
+
+      const local = await generateYearlyReview(pet, userId, selectedYear)
+
+      // 后端记录（可选）：只有它存在时才能提交视频生成任务
+      let remoteId = ''
+      let remoteVideoUrl = ''
+      try {
+        const remote = await api.get<{ id?: string; video_url?: string }>(
+          `/api/pets/${selectedPetId}/yearly-review/${selectedYear}`,
+        )
+        remoteId = remote?.id || ''
+        remoteVideoUrl = remote?.video_url || ''
+      } catch {
+        // 后端还没有这一年的记录：属正常情况（本地数据不依赖它），不弹错误
+      }
+
+      setReview({
+        id: remoteId,
+        pet_id: selectedPetId,
+        year: local.year,
+        total_checkins: local.totalCheckins,
+        total_days: local.totalDays,
+        max_streak: local.maxStreak,
+        weight_change: local.weightChange,
+        top_moods: local.topMoods,
+        highlights: local.highlights,
+        summary: local.summary,
+        video_url: remoteVideoUrl,
+        video_status: remoteVideoUrl ? 'completed' : 'pending',
+        created_at: '',
+      })
     } catch {
       setReview(null); setError('暂无该年度回忆数据')
     } finally { setLoading(false) }
-  }, [selectedPetId, selectedYear])
+  }, [selectedPetId, selectedYear, pets, currentPet, userId])
 
   useEffect(() => { fetchReview() }, [fetchReview])
 
   const handleGenerateVideo = async () => {
     if (!review || generating) return
+    // 本地统计不依赖后端，但视频生成需要后端那条年度记录（它的 id 才算得出任务归属）
+    if (!review.id) {
+      Taro.showToast({ title: '该年度还没有云端记录，暂不能生成视频', icon: 'none' })
+      return
+    }
     if (!isMember) { Taro.showToast({ title: '该功能需要会员权限', icon: 'none' }); return }
     setGenerating(true)
     try {

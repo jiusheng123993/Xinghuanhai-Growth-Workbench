@@ -1,12 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Taro, { useRouter } from '@tarojs/taro'
-import { View, Text } from '@tarojs/components'
+import { View, Text, Canvas } from '@tarojs/components'
 import { usePetStore } from '../../stores/petStore'
 import { getMaterialCheck, getMemoirPricing } from '../../services/memoirService'
 import type { MaterialCheck } from '../../services/memoirService'
+import {
+  generateYearlyReview,
+  renderYearlyReview,
+  saveYearlyReview,
+} from '../../services/yearlyReviewService'
+import type { YearlyReviewData } from '../../services/yearlyReviewService'
 import { pickTierPrice, formatYuan, isTierAvailable } from '../../utils/memoirTier'
 
 import './index.scss'
+import PageBackground from '../../components/PageBackground'
+import { Icon } from '../../components'
 
 /**
  * 回忆录馆（2026-09-09 对齐高保真原型 creative-hub-prototype.html 屏3）：
@@ -15,6 +23,10 @@ import './index.scss'
  *       → 三档定价卡同屏（轻纪念/标准/完整，点击直达对应流程）→ 更多（年度回顾/我的回忆录）
  * 档位卡路由规则：轻纪念 → memoir-daily（light 单段流水线）；
  *                标准/完整 → memoir-vlog?tier=standard|full（多段纪念管线，确认页可改档）
+ *
+ * 2026-09-10 调整：回忆录类入口统一收口到本页。原「时光」页顶部的「回忆精选」
+ * 三张卡（年度回忆/日常回忆录/纪念Vlog）与这里重复，已整体移除；
+ * 其中只有「年度回忆」不重复，故把它的生成逻辑一并搬到这里（原「年度回顾」还是假占位）。
  */
 const SUGGESTION_LABEL: Record<string, string> = {
   light: '轻纪念',
@@ -30,6 +42,15 @@ const MemoirCenter = () => {
 
   const [material, setMaterial] = useState<MaterialCheck | null>(null)
   const [pricing, setPricing] = useState<Awaited<ReturnType<typeof getMemoirPricing>> | null>(null)
+
+  // ===== 年度回顾（原「时光」页的年度回忆，2026-09-10 迁入本页）=====
+  const userId = usePetStore((s) => s.userId)
+  const [yearlyReview, setYearlyReview] = useState<YearlyReviewData | null>(null)
+  const [reviewLoading, setReviewLoading] = useState(false)
+  const [reviewImageUrl, setReviewImageUrl] = useState('')
+  const [showReviewModal, setShowReviewModal] = useState(false)
+  // Canvas 必须先挂载再绘制，这里标记本次是否已把 canvas 显示出来
+  const reviewCanvasRef = useRef(false)
 
   // 挂载拉素材盘点（banner 前置：能做什么档/缺什么素材）与三档价格；失败静默降级静态文案
   useEffect(() => {
@@ -83,12 +104,66 @@ const MemoirCenter = () => {
     return !isTierAvailable(tier, photoCount)
   }
 
+  /**
+   * 生成年度回顾图集
+   *
+   * 顺序很关键：先让 Canvas 真正挂载（reviewCanvasRef 置 true 触发一次渲染），
+   * 再等 300ms 等节点就绪，最后才让 service 拿 canvas 上下文去画 ——
+   * 反过来会拿到 null 上下文，表现为「点了没反应」。
+   */
+  const handleYearlyReview = useCallback(async () => {
+    if (reviewLoading) return
+    const pet = currentPet
+    if (!pet || !userId) {
+      Taro.showToast({ title: '请先添加宠物', icon: 'none' })
+      return
+    }
+    setReviewLoading(true)
+    try {
+      const currentYear = new Date().getFullYear()
+      const reviewData = await generateYearlyReview(pet, userId, currentYear)
+      setYearlyReview(reviewData)
+
+      reviewCanvasRef.current = true
+      await new Promise((resolve) => setTimeout(resolve, 300))
+
+      const result = await renderYearlyReview(reviewData, {
+        canvasId: 'yearly-review-canvas',
+        pixelRatio: 2,
+      })
+      setReviewImageUrl(result.tempFilePath)
+      setShowReviewModal(true)
+    } catch (err: unknown) {
+      const error = err as { message?: string }
+      Taro.showToast({ title: error.message || '生成失败，请重试', icon: 'none' })
+    } finally {
+      setReviewLoading(false)
+    }
+  }, [reviewLoading, currentPet, userId])
+
+  const handleSaveReview = useCallback(async () => {
+    if (!reviewImageUrl) return
+    try {
+      await saveYearlyReview(reviewImageUrl)
+    } catch (err: unknown) {
+      const error = err as { message?: string }
+      Taro.showToast({ title: error.message || '保存失败', icon: 'none' })
+    }
+  }, [reviewImageUrl])
+
+  const handleCloseReview = useCallback(() => {
+    setShowReviewModal(false)
+    setReviewImageUrl('')
+    reviewCanvasRef.current = false
+  }, [])
+
   const lightP = priceOf('light')
   const standardP = priceOf('standard')
   const fullP = priceOf('full')
 
   return (
     <View className='mhall'>
+      <PageBackground />
       {/* ===== 紫渐变 hero（原型屏3） ===== */}
       <View className='mhall-hero'>
         <Text className='mhall-hero-face'>🎞️</Text>
@@ -132,7 +207,7 @@ const MemoirCenter = () => {
         className={`mhall-card${tierDisabled('standard') ? ' mhall-card--dim' : ''}`}
         onClick={() => goTier('standard')}
       >
-        <Text className='mhall-card-em'>📖</Text>
+        <Icon name='book-open' size={30} tone='primary' className='mhall-card-em' />
         <View className='mhall-card-txt'>
           <View className='mhall-card-titlerow'>
             <Text className='mhall-card-title'>标准回忆录</Text>
@@ -150,7 +225,7 @@ const MemoirCenter = () => {
         className={`mhall-card${tierDisabled('full') ? ' mhall-card--dim' : ''}`}
         onClick={() => goTier('full')}
       >
-        <Text className='mhall-card-em'>🎬</Text>
+        <Icon name='film-strip' size={30} tone='primary' className='mhall-card-em' />
         <View className='mhall-card-txt'>
           <View className='mhall-card-titlerow'>
             <Text className='mhall-card-title'>完整回忆录</Text>
@@ -168,22 +243,87 @@ const MemoirCenter = () => {
       <View className='mhall-sectitle'>更多</View>
       <View className='mhall-grid2'>
         <View
-          className='mhall-mini'
-          onClick={() => Taro.showToast({ title: '年度回顾即将上线', icon: 'none' })}
+          className={`mhall-mini${reviewLoading ? ' mhall-mini--loading' : ''}`}
+          onClick={reviewLoading ? undefined : handleYearlyReview}
         >
           <Text className='mhall-mini-em'>🎊</Text>
-          <Text className='mhall-mini-title'>年度回顾</Text>
+          <Text className='mhall-mini-title'>{reviewLoading ? '生成中...' : '年度回顾'}</Text>
           <Text className='mhall-mini-desc'>这一年 TA 的档案大片</Text>
         </View>
         <View
           className='mhall-mini'
           onClick={() => Taro.showToast({ title: '生成记录即将上线', icon: 'none' })}
         >
-          <Text className='mhall-mini-em'>🎬</Text>
+          <Icon name='film-strip' size={24} tone='primary' className='mhall-mini-em' />
           <Text className='mhall-mini-title'>我的回忆录</Text>
           <Text className='mhall-mini-desc'>生成记录 · 再次观看</Text>
         </View>
+        {/* 年度数据详情（2026-09-11 新增入口）：pagesPet/yearly-review 这个页面此前
+            全站没有任何 navigateTo，用户根本点不进去（等于没上线）。这里给它接上入口——
+            与上面的「年度回顾」（本地出图集）分工：那个是"生成一张大片"，这个是"看数据细节"。 */}
+        <View
+          className='mhall-mini'
+          onClick={() => Taro.navigateTo({ url: '/pagesPet/yearly-review/index' })}
+        >
+          <Icon name='chart-line' size={24} tone='primary' className='mhall-mini-em' />
+          <Text className='mhall-mini-title'>年度数据</Text>
+          <Text className='mhall-mini-desc'>打卡 · 体重 · 情绪全景</Text>
+        </View>
       </View>
+
+      {/* ===== 年度回顾图集弹窗（原「时光」页年度回忆弹窗迁入） ===== */}
+      {showReviewModal && reviewImageUrl && yearlyReview && (
+        <View className='mhall-review-overlay' onClick={handleCloseReview}>
+          <View
+            className='mhall-review-modal'
+            onClick={(e: { stopPropagation: () => void }) => e.stopPropagation()}
+          >
+            <View className='mhall-review-header'>
+              <Text className='mhall-review-header-title'>
+                {yearlyReview.year}年度回顾 · {yearlyReview.petEmoji} {yearlyReview.petName}
+              </Text>
+              <View className='mhall-review-header-close' onClick={handleCloseReview}>
+                <Text>✕</Text>
+              </View>
+            </View>
+            <View className='mhall-review-image-wrap'>
+              <View
+                className='mhall-review-image'
+                style={{ backgroundImage: `url(${reviewImageUrl})` }}
+                onClick={() =>
+                  Taro.previewImage({ urls: [reviewImageUrl], current: reviewImageUrl })
+                }
+              />
+            </View>
+            <View className='mhall-review-actions'>
+              <View
+                className='mhall-review-btn mhall-review-btn--primary'
+                onClick={handleSaveReview}
+              >
+                <Text className='mhall-review-btn-text'>💾 保存到相册</Text>
+              </View>
+              <View className='mhall-review-btn mhall-review-btn--outline' onClick={handleCloseReview}>
+                <Text className='mhall-review-btn-text'>关闭</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+      {/* 离屏画布：生成年度图集用，必须真实挂载（display 控制显隐，不能用条件渲染） */}
+      <Canvas
+        className='mhall-review-canvas'
+        canvasId='yearly-review-canvas'
+        id='yearly-review-canvas'
+        style={{
+          display: reviewCanvasRef.current ? 'block' : 'none',
+          position: 'fixed',
+          left: '-9999px',
+          top: '-9999px',
+          width: '750px',
+          height: '1334px',
+        }}
+        type='2d'
+      />
     </View>
   )
 }
