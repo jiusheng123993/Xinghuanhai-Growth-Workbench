@@ -2,6 +2,9 @@
 @import '../../styles/_animations';
 @import '../../styles/_journal';
 
+// 【2026-09-11 修】下面各处原写作 rgba(var(--primary-rgb, 255, 107, 61), α)，而 $lb-primary 的值本身是 var(...),
+// 于是编译成 rgba(var(--primary-dark,...), α) —— 这在部分端上属非法 CSS，**整条声明会被静默丢弃**。
+// 改用主题的通道变量 --primary-rgb（主题里已定义），淡色底才能真的生效。
 $lb-primary: var(--primary-dark, #F04E1D);
 $lb-bg: transparent;
 
@@ -81,7 +84,7 @@ $lb-bg: transparent;
   width: 64rpx;
   height: 64rpx;
   border-radius: $radius-full;
-  background: rgba($lb-primary, 0.12);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
   @include press-feedback;
 
   &--loading {
@@ -104,7 +107,7 @@ $lb-bg: transparent;
 .period-tab {
   padding: 12rpx 32rpx;
   border-radius: $radius-round;
-  background: rgba($lb-primary, 0.08);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
   @include press-feedback;
 
   &--active {
@@ -146,7 +149,7 @@ $lb-bg: transparent;
     order: 2;
     width: 220rpx;
     padding: 32rpx 24rpx;
-    box-shadow: 0 8rpx 32rpx rgba($lb-primary, 0.25);
+    box-shadow: 0 8rpx 32rpx rgba(var(--primary-rgb, 255, 107, 61), 0.25);
     animation-delay: 0s;
   }
 
@@ -178,7 +181,7 @@ $lb-bg: transparent;
   width: 96rpx;
   height: 96rpx;
   border-radius: $radius-full;
-  background: rgba($lb-primary, 0.08);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
   font-size: 48rpx;
   margin-bottom: 10rpx;
 
@@ -186,8 +189,8 @@ $lb-bg: transparent;
     width: 112rpx;
     height: 112rpx;
     font-size: 56rpx;
-    background: linear-gradient(135deg, rgba($lb-primary, 0.15), rgba($lb-primary, 0.05));
-    border: 3rpx solid rgba($lb-primary, 0.3);
+    background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.15), rgba(var(--primary-rgb, 255, 107, 61), 0.05));
+    border: 3rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.3);
   }
 }
 
@@ -241,7 +244,7 @@ $lb-bg: transparent;
   width: 64rpx;
   height: 64rpx;
   border-radius: $radius-full;
-  background: rgba($lb-primary, 0.08);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
   font-size: 32rpx;
   margin: 0 16rpx;
   flex-shrink: 0;
@@ -280,7 +283,7 @@ $lb-bg: transparent;
   padding: 20rpx 24rpx;
   margin: -4rpx 0 12rpx;
   border-radius: 0 0 $radius-md $radius-md;
-  background: rgba($lb-primary, 0.04);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.04);
   animation: metricsSlideDown 0.25s ease-out;
 }
 
