@@ -11,16 +11,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
 
 /**
- * 火山方舟 DeepSeek-V4-Flash（GA 版）默认入口
- * 与 DeepSeek 官方同款模型，换入口是为了微信「深度合成-AI问答」类目能签第三方合作协议。
- * 抽成常量供 config 与各 service 复用，避免默认字符串在多处重复维护导致不一致。
- */
-const ARK_BASE_URL_DEFAULT = 'https://ark.cn-beijing.volces.com/api/v3';
-const ARK_MODEL_DEFAULT = 'deepseek-v4-flash-ga-260731';
-
-/**
- * DeepSeek 官方默认入口（旧 AI_* 变量语义）。
- * 仅当完全没有 ARK_* 时才用到，保证 legacy 分支整组走 DeepSeek 官方，避免与 Ark 混配。
+ * DeepSeek 官方入口（运行时唯一 AI 通道）
+ *
+ * 2026-09-10 用户决策：不再自动切换火山方舟入口，运行时一律走 DeepSeek 官方 API（AI_* 变量）。
+ * 微信「深度合成-AI问答」类目的第三方合作协议按火山方舟签署存档，仅作为类目报备材料
+ * （届时按平台要求提交），与实际调用入口解耦——即"报备材料走火山、运行时调用走官方"。
+ * 如未来确需切回火山方舟，从 git 历史恢复 buildAiConfig 的 ARK 分支即可（本注释留档）。
  */
 const DEEPSEEK_BASE_URL_DEFAULT = 'https://api.deepseek.com/v1';
 const DEEPSEEK_MODEL_DEFAULT = 'deepseek-chat';
@@ -35,37 +31,21 @@ function env(key: string): string {
 }
 
 /**
- * 构建 AI 连接配置（成组选择，避免跨厂商混配）
- * 坑点：baseUrl/model/apiKey 必须来自同一套变量，否则会拼出「火山 key + DeepSeek 官方 URL +
- * 火山模型名」的非法组合，导致认证失败且不易排查。因此这里按整组解析：
- * - 检测到任一 ARK_* 存在 → 整组用 Ark 语义（缺项用火山默认兜底，绝不回落 AI_*）
- * - 完全没有任何 ARK_* → 整组用旧 AI_* 语义（缺项用 DeepSeek 官方默认兜底）
+ * 构建 AI 连接配置（DeepSeek 官方整组语义）
+ * 成组原则：baseUrl/model/apiKey 必须同源（AI_* 整组），缺项回落官方默认，
+ * 绝不跨厂商混配；纯空格 key trim 后视为未配置，避免发出带空 key 的真实请求。
+ * 注意：ARK_* 变量已不再参与运行时选择（即使误配也会被忽略，见顶部说明）。
  * @returns { apiKey, baseUrl, model } 三者语义一致
  */
 function buildAiConfig(): { apiKey: string; baseUrl: string; model: string } {
-  const arkApiKey = env('ARK_API_KEY');
-  const arkBaseUrl = env('ARK_BASE_URL');
-  const arkModel = env('ARK_MODEL');
-  const legacyApiKey = env('AI_API_KEY');
-  const legacyBaseUrl = env('AI_BASE_URL');
-  const legacyModel = env('AI_MODEL');
-
-  // 只要配置了任一非空 ARK_* 就按“整组 Ark”解析
-  const usingArk = Boolean(arkApiKey || arkBaseUrl || arkModel);
-  return usingArk
-    ? {
-        apiKey: arkApiKey,
-        baseUrl: arkBaseUrl || ARK_BASE_URL_DEFAULT,
-        model: arkModel || ARK_MODEL_DEFAULT,
-      }
-    : {
-        apiKey: legacyApiKey,
-        baseUrl: legacyBaseUrl || DEEPSEEK_BASE_URL_DEFAULT,
-        model: legacyModel || DEEPSEEK_MODEL_DEFAULT,
-      };
+  return {
+    apiKey: env('AI_API_KEY'),
+    baseUrl: env('AI_BASE_URL') || DEEPSEEK_BASE_URL_DEFAULT,
+    model: env('AI_MODEL') || DEEPSEEK_MODEL_DEFAULT,
+  };
 }
 
-/** 导出纯函数供单测覆盖 ARK/legacy/全空/空格 组合（不影响 config 构建行为） */
+/** 导出纯函数供单测覆盖 官方/全空/空格/误配 ARK 组合（不影响 config 构建行为） */
 export { buildAiConfig };
 
 /** 应用全局配置对象 */
@@ -185,22 +165,17 @@ if (process.env.NODE_ENV === 'production' && !(config.moderate?.accessKeyId && c
 }
 
 // ===== AI 连接配置启动校验 =====
-// 检测到 ARK_* 被部分配置（最常见的部署遗漏：只配了 key 忘了配另外两项）时，
-// 尽早打警告日志提醒，避免线上 AI 请求静默失败。密钥本身不打印，仅打印缺失的变量名。
+// 2026-09-10 起运行时一律走 DeepSeek 官方（AI_*）；ARK_* 已不参与选择。
+// 这里只做两件校验：①误配 ARK_* 时提醒（防止有人按旧文档继续配火山）；
+// ②AI_API_KEY 缺失时提醒（AI 对话/记忆/Agent 将无法调用）。密钥本身不打印。
 {
   const arkKeys = ['ARK_API_KEY', 'ARK_BASE_URL', 'ARK_MODEL'] as const;
   const anyArkSet = arkKeys.some((k) => (process.env[k] || '').trim() !== '');
   if (anyArkSet) {
-    const missing = arkKeys.filter((k) => (process.env[k] || '').trim() === '');
-    if (missing.length > 0) {
-      console.warn(`[config] 已检测到 ARK_* 配置但以下项缺失，将使用火山方舟默认值兜底：${missing.join(', ')}`);
-    }
-    if (!config.ai.apiKey) {
-      console.warn('[config] ARK_API_KEY 未配置，AI 对话/记忆/Agent 将无法调用（各 service 会返回占位或空）。');
-    }
-  } else if (config.ai.apiKey) {
-    // 完全没配 ARK_* 但配了旧 AI_*：兼容旧部署，仅提示建议迁移到 ARK_*
-    console.warn('[config] 当前使用旧 AI_API_KEY 语义，建议迁移到 ARK_API_KEY/ARK_BASE_URL/ARK_MODEL。');
+    console.warn('[config] 检测到 ARK_* 配置，但运行时已切换为 DeepSeek 官方（AI_*），ARK_* 将被忽略（火山合作协议仅作微信类目报备材料，不参与实际调用）。');
+  }
+  if (!config.ai.apiKey) {
+    console.warn('[config] AI_API_KEY 未配置，AI 对话/记忆/Agent 将无法调用（各 service 会返回占位或空）。');
   }
 }
 
