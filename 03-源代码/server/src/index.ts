@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 应用入口 - Express 服务器主文件
  * 配置中间件、路由注册、服务器启动和后台任务调度
  * v2: 增加 helmet 安全头、请求日志、限流、WebSocket、功能开关
@@ -10,7 +10,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { config } from './config.js';
 import { errorHandler } from './middleware/error.js';
-import { requestLogger } from './middleware/requestLogger.js';
+import { requestLogger } from './middleware/requestLogger.js'
+import { allowCrossOriginUploads } from './middleware/uploadsResourcePolicy.js';
 import { globalLimiter } from './middleware/rateLimit.js';
 import { authMiddleware, resolveUserId } from './middleware/auth.js';
 import authRoutes from './routes/auth.js';
@@ -93,8 +94,24 @@ app.use('/api/', resolveUserId);
 // 全局限流（60次/分钟兜底，按 IP+用户 维度）
 app.use('/api/', globalLimiter);
 
-// 静态文件
-app.use('/uploads', express.static(path.resolve(__dirname, '..', config.uploadDir)));
+// 静态文件（用户上传物：头像/宠物形象/全家福/分享卡/回忆录音视频）
+//
+// ⚠️ 必须显式放开跨域资源策略（CORP）——2026-09-10 修复「头像保存成功但不显示」的根因：
+// helmet() 默认给所有响应打 `Cross-Origin-Resource-Policy: same-origin`，该头会阻止
+// 【跨域文档】以 <img>/<video>/<audio> 方式加载本站资源。而本站图片的真实消费方几乎都是跨域来源：
+//   ① 微信小程序开发者工具/真机 webview（Chromium 内核，来源非 api.xinghuanhai.com）
+//   ② App（Capacitor webview）与官网/H5 页面
+// 结果就是：wx.request 走原生请求不受 CORP 约束（接口全正常），但所有 /uploads 图片一律加载失败。
+// 实测证据（同一 Chromium、同一测试页）：
+//   https://api.xinghuanhai.com/uploads/.../cat-03-cow.png（经 Express，带 CORP）→ ERROR
+//   https://api.xinghuanhai.com/assets/hero-pet-grass.jpg（同域 nginx 直出，无 CORP）→ LOADED 2560px
+// 上传物本就是面向用户公开的资源（URL 含随机 uuid、非鉴权凭据），放开 CORP 不泄露额外信息；
+// 仅放宽本挂载点，其余接口仍保留 helmet 的 same-origin 默认策略。
+app.use(
+  '/uploads',
+  allowCrossOriginUploads,
+  express.static(path.resolve(__dirname, '..', config.uploadDir)),
+);
 
 // 知识图谱审核后台（Phase 3 轻量管理页，Token 登录见 routes/knowledge.ts）
 app.use('/admin', express.static(path.resolve(__dirname, '..', 'public')));
