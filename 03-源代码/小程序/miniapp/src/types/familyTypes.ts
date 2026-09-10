@@ -205,6 +205,15 @@ export interface MemoryMomentContent {
   petName: string
   petEmoji: string
   description: string
+  /**
+   * 这条回忆关联的**全部宠物**（多宠共同回忆，2026-09-11 新增）
+   *
+   * 【存哪】写在 content（JSONB）里 —— pet_moments 表结构零变更；
+   *   pet_id 仍是"主宠物"（= pets[0]），所有旧读取路径（家庭动态、按宠物查询）不受影响。
+   * 【谁写】服务端用库里的权威名字/物种生成（不信任客户端），见 routes/timeline.ts。
+   * 【谁读】时光页卡片用它渲染多枚宠物标签；缺失时回退到 petName/petEmoji（老数据）。
+   */
+  pets?: { id: string; name: string; emoji: string }[]
 }
 
 export interface AiSummaryMomentContent {

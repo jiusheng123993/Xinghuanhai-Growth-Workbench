@@ -19,7 +19,18 @@ export const timelineService = {
     return data || []
   },
 
-  async addMoment(moment: Omit<PetMoment, 'id' | 'createdAt'>): Promise<PetMoment> {
+  /**
+   * 新增回忆
+   *
+   * @param moment - 回忆内容；除 PetMoment 字段外可带 `petIds`：
+   *   **这条回忆关联的全部宠物**（多宠共同回忆，2026-09-11 新增）。
+   *   服务端会逐个校验归属，并用库里的权威名字/物种写入 content.pets；
+   *   `petId` 仍是主宠物（= petIds[0]），老读取路径不受影响。
+   * @returns 落库后的回忆（含服务端补齐的 content.pets）
+   */
+  async addMoment(
+    moment: Omit<PetMoment, 'id' | 'createdAt'> & { petIds?: string[] },
+  ): Promise<PetMoment> {
     const data = await api.post<PetMoment>('/api/timeline/moments', moment)
     return data
   },

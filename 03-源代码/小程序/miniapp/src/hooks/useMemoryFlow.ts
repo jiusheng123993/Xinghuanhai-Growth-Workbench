@@ -6,11 +6,14 @@ import { useCallback, useState } from 'react'
 import Taro from '@tarojs/taro'
 import { timelineService } from '../services/timelineService'
 import { useAuthStore } from '../stores/authStore'
+import { usePetStore } from '../stores/petStore'
 import { CONFIG } from '../config'
 import { storage } from '../utils/storage'
 import { chooseImageWithPrivacy } from '../utils/privacy'
+import { detectPetsInText } from '../utils/petMatching'
 import { logger } from '../logger'
 import type { PetInfo } from '../types/chatTypes'
+import type { PetProfile } from '../services/petService'
 
 export interface UseMemoryFlowParams {
   addAiMsg: (content: string, options?: string[]) => void
@@ -113,32 +116,67 @@ export function useMemoryFlow(params: UseMemoryFlowParams) {
         }
 
         const userId = useAuthStore.getState().user?.id || ''
+        /**
+         * 归属宠物：**从正文里认**（2026-09-11 新增）
+         *
+         * 用户说"记一下烧鸭今天拆家"，过去一律记到 AI 页当前选中的那只名下 —— 说烧鸭记烧鸡，
+         * 界面上还看不出来。现在统一走 utils/petMatching：正文提到谁就记给谁（提到多只就都关联），
+         * 一只都没提到才回退到当前选中。服务端仍会逐个校验归属，前端只负责猜默认值。
+         */
+        const allPets = usePetStore.getState().pets
+        const candidatePets = allPets.length ? allPets : []
+        const detectedIds = detectPetsInText(text, candidatePets, petInfo.activePet.id)
+        const targetPets = detectedIds
+          .map((id) => candidatePets.find((p) => p.id === id))
+          .filter((p): p is PetProfile => !!p)
+        // 极端情况（宠物列表为空/被删）：回退到"当前活跃宠物"，行为与改动前一致
+        const primaryPetId = targetPets.length ? targetPets[0].id : petInfo.activePet.id
+        const primaryPetName = targetPets.length ? targetPets[0].name : petInfo.name
+        const primaryPetEmoji = targetPets.length
+          ? (targetPets[0].species === 'cat' ? '🐱' : targetPets[0].species === 'dog' ? '🐕' : '🐾')
+          : petInfo.emoji
+
         await timelineService.addMoment({
           userId,
-          petId: petInfo.activePet.id,
+          petId: primaryPetId,
+          // 多宠共同回忆：服务端校验归属后用库里的权威名字写入 content.pets
+          petIds: targetPets.length ? targetPets.map((p) => p.id) : undefined,
           type: 'memory',
           content: {
-            petName: petInfo.name,
-            petEmoji: petInfo.emoji,
+            petName: primaryPetName,
+            petEmoji: primaryPetEmoji,
             description: text,
           },
           photos: photoUrl ? [photoUrl] : [],
         })
         setMemoryPhoto(null)
         setIsTyping(false)
+        // 三种结果分开说，不合并成一句"已记录"（见下方 catch 注释的同类问题）：
+        // uploadMemoryPhoto 上传失败时返回 null 而不是抛错，若不加区分，用户会以为照片也存上了
         if (photoUrl) {
           addAiMsg('回忆已记录 ✦\n\n照片和文字都已保存，你可以在「时光」页面查看所有回忆哦～')
+        } else if (memoryPhoto) {
+          addAiMsg('回忆已记录（仅文字）✦\n\n照片这次没能上传成功，这条回忆先按纯文字存下了，你可以在「时光」页面查看。')
         } else {
           addAiMsg('回忆已记录 ✦\n\n你可以在「时光」页面查看所有回忆哦～')
         }
       } catch (err) {
-        setMemoryPhoto(null)
         setIsTyping(false)
         logger.error('index', 'memory record failed', err)
-        addAiMsg('回忆已保存到本地 ✦\n\n你可以在「时光」页面查看所有回忆～')
+        // 失败后**保留照片、重新武装录制流程**（2026-09-11 审查 P3）：
+        // 原先这里把 memoryPhoto 清空且 memoryActive 已是 false，而文案却让用户"再发一次"——
+        // 此时重发会走 Agent（不是回忆录制流程），内容根本不会重新落库，等于给了个走不通的指引。
+        // ⚠️ 说清楚保留的是什么（2026-09-11 二轮审查 P2-4）：这里只保留了**照片**；
+        //   文字在上游 useChatCore 发消息时就被清空了（setInputValue('')），所以文案不能承诺"原样再发一次"，
+        //   必须明确告诉用户"照片还在，文字要再写一遍"。
+        setMemoryActive(true)
+        // 保存失败必须如实告知（2026-09-11 复盘）：
+        // 原实现在任何失败（网络异常 / 401 / 500）下都回"回忆已保存到本地 ✦ 你可以在「时光」页面查看"，
+        // 用户以为记下了、去「时光」却找不到——与"AI 说记了其实没记"是同一类信任事故。
+        addAiMsg('抱歉，这段回忆没能保存上 ✦\n\n可能是网络不稳或登录已过期。你刚选的照片还留着，请再写一遍这段文字（也可以到「时光」页点「记录」手动补上）。')
       }
     },
-    [addAiMsg, memoryPhoto, petInfo.activePet, petInfo.emoji, petInfo.name, setIsTyping, uploadMemoryPhoto]
+    [addAiMsg, memoryPhoto, petInfo.activePet, petInfo.emoji, petInfo.name, setMemoryActive, setIsTyping, uploadMemoryPhoto]
   )
 
   return {
