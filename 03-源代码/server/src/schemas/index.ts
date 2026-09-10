@@ -211,6 +211,8 @@ export const chatMessageSchema = z.object({
   // 页面也能召回视觉观察文本。仅作存储用途、不进当轮 prompt；长度上限与
   // saveConversation 内部 2000 截断口径一致
   persistUserContent: z.string().max(2000).optional(),
+  // 会话 id（多会话改造 2026-09-10）：旧版 /api/ai/chat 降级链路也按会话落库，避免降级轮消息游离在会话外
+  sessionId: z.string().min(1).optional(),
 });
 
 // ===== 取名模块 =====
@@ -751,6 +753,7 @@ export const timelineMomentsQuerySchema = z.object({
 /** Agent 对话历史查询参数 */
 export const agentHistoryQuerySchema = z.object({
   petId: z.string().min(1, 'petId 不能为空').optional(),
+  sessionId: z.string().min(1, 'sessionId 不能为空').optional(),
   limit: z.coerce.number().int('limit 必须为整数').min(1, 'limit 最小为 1').max(100, 'limit 最大为 100').default(20),
 });
 
@@ -767,6 +770,17 @@ export const agentChatSchema = z.object({
     .max(10, 'history 最多 10 条')
     .optional(),
   petId: z.string().min(1, 'petId 不能为空').optional(),
+  sessionId: z.string().min(1, 'sessionId 不能为空').optional(),
+});
+
+/** 新建聊天会话请求（多会话改造 2026-09-10） */
+export const createChatSessionSchema = z.object({
+  petId: z.string().min(1, 'petId 不能为空').optional(),
+});
+
+/** 会话 id 路径参数 */
+export const sessionIdParamsSchema = z.object({
+  id: z.string().min(1, 'id 不能为空'),
 });
 
 // ===== 健康趋势模块 - Query 参数 =====

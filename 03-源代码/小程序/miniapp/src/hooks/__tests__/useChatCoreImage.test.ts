@@ -18,6 +18,7 @@ const {
   mockSendChatMessage,
   mockAgentChat,
   mockLoadAgentHistory,
+  mockListChatSessions,
 } = vi.hoisted(() => {
   return {
     mockChooseImage: vi.fn(),
@@ -25,6 +26,7 @@ const {
     mockSendChatMessage: vi.fn(),
     mockAgentChat: vi.fn(),
     mockLoadAgentHistory: vi.fn(),
+    mockListChatSessions: vi.fn(),
   }
 })
 
@@ -37,6 +39,9 @@ vi.mock('../../services/agentService', () => ({
   agentChat: (...args: any[]) => mockAgentChat(...args),
   getToolLabel: (name: string) => name,
   loadAgentHistory: (...args: any[]) => mockLoadAgentHistory(...args),
+  listChatSessions: (...args: any[]) => mockListChatSessions(...args),
+  createChatSession: vi.fn(),
+  deleteChatSession: vi.fn(),
 }))
 
 vi.mock('../../utils/privacy', () => ({
@@ -79,6 +84,8 @@ describe('useChatCore 发图带文字（pendingImage 附件流）', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockLoadAgentHistory.mockResolvedValue([])
+    // 多会话改造后 useChatCore 挂载即拉会话列表；默认无会话（列表空），不触发历史加载
+    mockListChatSessions.mockResolvedValue([])
     mockAgentChat.mockImplementation(async function* () {
       // 空生成器：不应被调用（有附件时走图片链路）；若被误调用则产出零事件
     } as any)

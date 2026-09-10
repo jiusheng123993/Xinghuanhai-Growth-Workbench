@@ -9,16 +9,19 @@ import { validate } from '../middleware/validate.js';
 import { uploadLimiter, aiRecognizeLimiter, chatLimiter, namingLimiter } from '../middleware/rateLimit.js';
 import { chatMessageSchema } from '../schemas/index.js';
 import { chat, guardCheck, guardCheckOutput, bailianChat, bailianASR } from '../services/aiService.js';
+import { detectOffTopic, OFFTOPIC_REPLY } from '../services/agentRuleIntent.js';
 import { saveConversation } from '../services/memoryService.js';
 import { recognizeHealthReport } from '../services/healthReportService.js';
 import { analyzeImage } from '../services/visionService.js';
 import { PetFactRepository } from '../repositories/petFactRepository.js';
 import { PetRepository } from '../repositories/petRepository.js';
+import { ChatSessionRepository } from '../repositories/chatSessionRepository.js';
 
 const router = Router();
 
 const petFactRepository = new PetFactRepository();
 const petRepository = new PetRepository();
+const chatSessionRepository = new ChatSessionRepository();
 
 // 共享上传配置：multipart 表单（photo / audio 等）
 // 需对 MIME 做白名单——本路由的 /photo-analyze、/breed-recognize、/health-report-recognize、
@@ -40,7 +43,18 @@ const upload = multer({
 // 限流：chatLimiter 30次/分钟（2026-09 审查修复：此前未挂载，付费 LLM 入口仅剩全局兜底）
 router.post('/chat', authMiddleware, chatLimiter, validate({ body: chatMessageSchema }), async (req: Request, res: Response) => {
   try {
-    const { messages, temperature, max_tokens, petId, persistUserContent } = req.body;
+    const { messages, temperature, max_tokens, petId, persistUserContent, sessionId } = req.body;
+
+    // 边界守卫（2026-09 越界收敛）：与 /api/agent/chat 同口径。旧版链路前端 chatService
+    // 已有同款确定性拦截，此处补服务端纵深兜底——直连本接口时对与宠物无关的越界话题
+    // （人类恋爱/婚恋等）也硬拦截，不调 LLM；软约束 prompt 仍在，此处保证边界确定性。
+    const lastUserMessage = (messages as Array<{ role: string; content: unknown }> | undefined)
+      ?.filter((m) => m.role === 'user')
+      .pop();
+    if (lastUserMessage && typeof lastUserMessage.content === 'string' && detectOffTopic(lastUserMessage.content)) {
+      res.json({ success: true, data: { content: OFFTOPIC_REPLY } });
+      return;
+    }
 
     const result = await chat(messages, { temperature, max_tokens });
     res.json({ success: true, data: { content: result } });
@@ -53,6 +67,16 @@ router.post('/chat', authMiddleware, chatLimiter, validate({ body: chatMessageSc
       try {
         const canAccess = await petRepository.canAccess(petId, req.userId as string);
         if (canAccess) {
+          // 会话归属校验（多会话 P1 修复）：sessionId 必须属于当前用户，否则落 NULL（宁漏记不越权写元数据）
+          let validSessionId: string | null = null;
+          if (typeof sessionId === 'string' && sessionId) {
+            try {
+              const owned = await chatSessionRepository.findByIdAndUser(sessionId, req.userId as string);
+              if (owned) validSessionId = sessionId;
+            } catch {
+              // 校验异常：fail-safe，落 NULL
+            }
+          }
           const userMessagesToSave = messages.filter((m: { role: string }) => m.role === 'user');
           const lastUser = userMessagesToSave[userMessagesToSave.length - 1];
           // 发图轮前端会传 persistUserContent（"[图片] 文字｜视觉观察：…"合并文本），
@@ -63,11 +87,11 @@ router.post('/chat', authMiddleware, chatLimiter, validate({ body: chatMessageSc
               ? persistUserContent
               : lastUser?.content;
           if (userContentToSave) {
-            void saveConversation(req.userId as string, petId, 'user', userContentToSave);
+            void saveConversation(req.userId as string, petId, 'user', userContentToSave, undefined, validSessionId);
           }
           // 空串回复不落库（审查 P3：避免孤儿空条目）
           if (result) {
-            void saveConversation(req.userId as string, petId, 'assistant', result);
+            void saveConversation(req.userId as string, petId, 'assistant', result, undefined, validSessionId);
           }
         }
       } catch (err) {

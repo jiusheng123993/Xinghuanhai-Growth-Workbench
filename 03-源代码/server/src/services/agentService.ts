@@ -9,7 +9,7 @@ import {
   type ToolCall,
 } from './toolRegistry.js';
 import { pool } from '../db.js';
-import { detectBreedQuestion } from './agentRuleIntent.js';
+import { detectBreedQuestion, OFFTOPIC_REPLY } from './agentRuleIntent.js';
 import {
   buildMemoryContext,
   ingestMemories,
@@ -111,6 +111,8 @@ export interface AgentContext {
   petName?: string;
   petBreed?: string;
   petAge?: string;
+  /** 会话 id（多会话改造 2026-09-10）：消息持久化时归入该会话 */
+  sessionId?: string;
 }
 
 export interface AgentEvent {
@@ -229,21 +231,31 @@ export async function buildSystemPrompt(context: AgentContext, userMessage: stri
 - "适合新手养的狗" → search_breed_info
 
 ### 💬 普通聊天 / 分享日常 → 直接回复
-用户只是在聊天、问候、表达情感、分享宠物日常时，直接文字回复，不调用任何工具。
-**关键判断：如果用户不是在提问、不是在寻求建议、不是在要求记录，就属于聊天/分享，直接回复即可。**
+用户问候、感谢、分享**宠物**日常时，直接文字回复，不调用任何工具。
+**关键判断：聊天必须与宠物/养宠相关。** 与宠物无关的个人话题按下方「回答边界」拒绝并拉回宠物。
 示例：
-- "你好" → 直接回复
-- "今天天气真好" → 直接回复
+- "你好" → 直接回复（问候后自然带一句"今天想为毛孩子做点什么？"）
 - "豆豆真可爱" → 直接回复
 - "谢谢你" → 直接回复
 - "烧鸡今天吃了超多" → 直接回复（分享日常，关心一下即可）
 - "它今天吃了很多猫粮" → 直接回复（分享日常）
 - "它把罐头全吃完了" → 直接回复（分享日常）
 - "今天给它喂了鸡胸肉，它很喜欢" → 直接回复（分享日常）
-- "我只是和你分享" → 直接回复（聊天）
 - "它今天一直在睡觉" → 直接回复（分享日常）
 - "它刚才追逗猫棒玩疯了" → 直接回复（分享日常）
 - "它今天对我发脾气了" → 直接回复（分享日常）
+
+## 🚧 回答边界（只聊养宠相关，最重要）
+你是宠物健康记录工具，**只处理与宠物/养宠相关的话题**。遇到以下与宠物无关的内容，必须礼貌拒绝并把话题拉回宠物，**绝不展开回答**：
+1. 用户的个人感情/恋爱/婚恋（如"我想谈恋爱了""我失恋了""帮我追她""婚姻问题"）
+2. 与宠物无关的生活/工作/学习/时事/娱乐求助（如"帮我写作业""写代码""翻译""股票""八卦"）
+3. 通用知识问答与无宠物关联的闲聊（如"今天天气怎么样""讲个笑话"）
+
+拒绝并拉回的示例（语气友好、简短，1-2 句）：
+- 用户："我想谈恋爱了" → 你："我是宠物管家，主要帮你照顾毛孩子的健康和回忆哦～感情话题我不太擅长。你家宝贝最近怎么样？"
+- 用户："帮我写个作业" → 你："这个我帮不上忙，我只懂养宠。要不要聊聊你家毛孩子的健康，或记录点它的小事？"
+
+重要例外（仍要温暖回应）：宠物生病、走失、离世带来的难过属于养宠情绪陪伴，要安慰并围绕宠物展开，这是你的本分。
 
 ## 你的能力
 你可以通过调用工具来帮助用户管理宠物健康：
@@ -281,6 +293,7 @@ export async function buildSystemPrompt(context: AgentContext, userMessage: stri
 6. 涉及医疗建议时必须附带免责声明
 7. 检测到用户情绪危机时触发安全干预
 8. 定位红线（最重要）：你是工具助手，不是情感陪伴角色——禁止恋人化/家人化语气与承诺（如"我永远陪着你""我会一直爱你""想我了就跟我说""我是你的家人"），禁止诱导用户与你建立情感依赖；表达关心时始终围绕宠物健康与记录本身
+9. 边界红线（最重要）：只回答宠物/养宠相关；用户提到与宠物无关的个人话题（恋爱、情感、婚恋、生活、工作、学习、时事、通用问答）时，礼貌拒绝并引导回宠物话题，绝不展开回答
 
 ## 当前宠物信息
 `;
@@ -454,7 +467,8 @@ interface IntentResult {
 
 /** 意图 → 工具名映射（高置信度时强制调用） */
 const INTENT_TOOL_MAP: Record<string, string | null> = {
-  chat: null,           // 聊天/分享 → 不调用任何工具
+  chat: null,           // 宠物相关聊天/分享 → 不调用任何工具
+  offtopic: null,       // 与宠物无关的越界话题 → 确定性拒绝，不进入 LLM 主循环
   naming: 'start_naming',
   memory: 'record_memory',
   symptom: 'check_symptom',
@@ -490,7 +504,8 @@ async function classifyIntent(
   const classifyPrompt = `你是意图分类器。根据用户消息判断意图，只输出JSON，不要输出其他内容。
 
 ## 意图类别
-- chat: 聊天、问候、分享日常、表达情感、感谢（不调用任何工具）
+- chat: 与宠物相关的聊天、问候、分享宠物日常、表达对宠物的情感、感谢（不调用任何工具）
+- offtopic: 与宠物/养宠完全无关的内容（人的恋爱/情感/婚恋、生活/工作/学习求助、写作业/翻译/写代码、时事/政治/新闻、娱乐/明星/游戏、财经/股票、天气、星座算命、人类疾病等）
 - naming: 为宠物取名、换名字、求推荐名字
 - checkin: 健康打卡、记录今天状态
 - memory: 记录回忆、写日记、保存美好时刻（包括用户已提供具体回忆内容的情况，如"记录回忆：豆豆今天玩疯了"）
@@ -522,6 +537,14 @@ async function classifyIntent(
    - "它刚才追逗猫棒玩疯了" → chat（分享日常）
    - "记个日记" / "记录回忆" → memory（明确要求记录）
    - 判断标准：用户在分享但没要求记录 → chat；用户明确要求记录 → memory
+
+4. **越界判定（offtopic，专门服务宠物行业的边界）**：
+   - "我想谈恋爱了""我失恋了" → offtopic（人的恋爱/情感）
+   - "帮我写作业""帮我写代码""帮我翻译" → offtopic（学业/编程/翻译代办）
+   - "今天股票怎么样""推荐一部电影""今天天气怎么样""我感冒了怎么办" → offtopic（财经/娱乐/天气/人类疾病）
+   - "我家猫感冒了怎么办""豆豆今天没精神" → 不是 offtopic（宠物症状，归 symptom）
+   - "我家猫去世了我好难过" → 不是 offtopic（宠物离世的情绪陪伴，归 chat 并温暖安慰）
+   - 判断标准：内容与宠物/养宠完全无关 → offtopic；只要围绕宠物（含宠物生病/走失/离世的难过）→ 对应宠物意图，绝不误判为 offtopic
 
 ## 最近对话上下文
 ${recentHistory || '（无）'}
@@ -755,6 +778,15 @@ export async function* agentLoop(
   let intentHint = '';
   const CONFIDENCE_THRESHOLD = 0.7;
 
+  // 越界意图（LLM 分类器判定为与宠物无关）→ 确定性拒绝，不进入 LLM 主循环（省成本 + 硬保证边界）
+  // 与 agentRouter 的规则预筛（detectOffTopic）分工：规则预筛拦截高精度常见类别，此处兜底长尾越界
+  // （如"推荐一部电影""人类为什么会做梦"等无法用正则穷举的）。
+  if (intentResult.intent === 'offtopic' && intentResult.confidence >= CONFIDENCE_THRESHOLD) {
+    console.log('[Agent] 路由决策: offtopic → 确定性拒绝（不进入主循环）');
+    yield { type: 'done', data: { content: OFFTOPIC_REPLY, iterations } };
+    return;
+  }
+
   if (intentResult.confidence >= CONFIDENCE_THRESHOLD) {
     const mappedTool = INTENT_TOOL_MAP[intentResult.intent];
     if (mappedTool === null) {
@@ -885,8 +917,8 @@ export async function* agentLoop(
         yield { type: 'done', data: { content: finalContent, iterations } };
         // 异步保存对话记录 & 触发记忆摄入（不阻塞响应）
         const petIdForSave = context.petId || null;
-        saveConversation(context.userId, petIdForSave, 'user', userMessage).catch(() => {});
-        saveConversation(context.userId, petIdForSave, 'assistant', finalContent).catch(() => {});
+        saveConversation(context.userId, petIdForSave, 'user', userMessage, undefined, context.sessionId).catch(() => {});
+        saveConversation(context.userId, petIdForSave, 'assistant', finalContent, undefined, context.sessionId).catch(() => {});
         // 异步记忆摄入（传入已有记忆避免重复）+ 矛盾检测
         (async () => {
           const existing = await getActiveMemories(context.userId, context.petId || '', 20);
@@ -899,7 +931,7 @@ export async function* agentLoop(
       // 没有内容也没有工具调用，结束
       yield { type: 'done', data: { content: '收到，让我想想...', iterations } };
       // 保存用户消息（无有效助手回复，跳过记忆摄入）
-      saveConversation(context.userId, context.petId || null, 'user', userMessage).catch(() => {});
+      saveConversation(context.userId, context.petId || null, 'user', userMessage, undefined, context.sessionId).catch(() => {});
       return;
 
     } catch (error) {
@@ -930,9 +962,9 @@ export async function* agentLoop(
     },
   };
   // 异步保存对话记录 & 触发记忆摄入（不阻塞响应）
-  saveConversation(context.userId, context.petId || null, 'user', userMessage).catch(() => {});
+  saveConversation(context.userId, context.petId || null, 'user', userMessage, undefined, context.sessionId).catch(() => {});
   if (finalContent) {
-    saveConversation(context.userId, context.petId || null, 'assistant', finalContent).catch(() => {});
+    saveConversation(context.userId, context.petId || null, 'assistant', finalContent, undefined, context.sessionId).catch(() => {});
     // 异步记忆摄入 + 矛盾检测
     (async () => {
       const existing = await getActiveMemories(context.userId, context.petId || '', 20);

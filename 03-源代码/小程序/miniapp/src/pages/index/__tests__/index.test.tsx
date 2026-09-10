@@ -34,6 +34,7 @@ const {
   mockSetFlowHandlers,
   mockPet,
   mockMessages,
+  mockSessionId,
   petStoreState,
 } = vi.hoisted(() => {
   const mockPetData = {
@@ -54,6 +55,7 @@ const {
     mockSetFlowHandlers: vi.fn(),
     mockPet: mockPetData,
     mockMessages: [{ id: 'msg_1', type: 'ai' as const, content: '你好' }],
+    mockSessionId: { value: null as string | null },
     petStoreState: {
       currentPet: mockPetData as any,
       pets: [mockPetData] as any[],
@@ -116,11 +118,24 @@ vi.mock('../../../hooks/useChatCore', () => ({
     addMessage: vi.fn(),
     addAiMsg: vi.fn(),
     addUserMsg: vi.fn(),
+    addImageMsg: vi.fn(),
     streamAiReply: vi.fn(),
     skipStream: vi.fn(),
     scrollToBottom: vi.fn(),
     handleSend: vi.fn(),
+    handleChooseImage: vi.fn(),
+    pendingImage: null,
+    clearPendingImage: vi.fn(),
+    sendPendingImage: vi.fn(),
     setFlowHandlers: mockSetFlowHandlers,
+    updateMessageCard: vi.fn(),
+    agentToolStatus: null,
+    // 多会话（豆包式「新建对话」）
+    sessionId: mockSessionId.value,
+    sessions: [],
+    handleNewSession: vi.fn(),
+    handleSwitchSession: vi.fn(),
+    handleDeleteSession: vi.fn(),
   }),
 }))
 
@@ -492,5 +507,38 @@ describe('Index page — 症状初筛弹窗卡片交互', () => {
 
     fireEvent.click(shortcut!)
     expect(container.querySelector('[data-testid="symptom-popup"]')).toBeTruthy()
+  })
+})
+
+describe('Index page — 长对话软提示（多会话）', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    petStoreState.currentPet = mockPet
+    petStoreState.pets = [mockPet]
+    petStoreState.isLoading = false
+    // 重置：默认短会话、无会话 id
+    mockMessages.length = 0
+    mockMessages.push({ id: 'msg_1', type: 'ai' as const, content: '你好' })
+    mockSessionId.value = null
+  })
+
+  it('消息不足 60 条时不显示软提示', () => {
+    const { container } = render(createElement(Index))
+
+    expect(container.querySelector('.chat-long-tip')).toBeFalsy()
+  })
+
+  it('当前会话消息满 60 条时显示软提示（建议新建对话）', () => {
+    mockSessionId.value = 'session-1'
+    mockMessages.length = 0
+    for (let i = 0; i < 60; i++) {
+      mockMessages.push({ id: `msg_${i}`, type: i % 2 === 0 ? 'user' as const : 'ai' as const, content: `消息${i}` })
+    }
+
+    const { container } = render(createElement(Index))
+
+    const tip = container.querySelector('.chat-long-tip')
+    expect(tip).toBeTruthy()
+    expect(tip!.textContent).toContain('新建对话')
   })
 })

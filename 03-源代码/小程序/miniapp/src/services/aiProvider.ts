@@ -18,6 +18,8 @@ interface ChatRequest {
    *  合并文本传给服务端落库，保证与前端 chatHistory 逐字一致——Agent 链路按精确匹配去重，
    *  双侧一致才能命中去重；跨会话重进页面后也能召回视觉观察文本 */
   persistUserContent?: string
+  /** 会话 id（多会话改造 2026-09-10）：旧版降级链路也按会话落库 */
+  sessionId?: string
 }
 
 /**

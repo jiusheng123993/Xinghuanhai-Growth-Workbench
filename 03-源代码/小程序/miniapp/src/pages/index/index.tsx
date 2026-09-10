@@ -91,6 +91,8 @@ export default function Index() {
   const [inputMode, setInputMode] = useState<'text' | 'voice'>('text')
   const [plusPanelOpen, setPlusPanelOpen] = useState(false)
   const [showGreetingQuickActions, setShowGreetingQuickActions] = useState(true)
+  // 会话列表抽屉开关（多会话「历史对话」入口）
+  const [sessionDrawerOpen, setSessionDrawerOpen] = useState(false)
   // 慢性病风险角标：进入首页读取缓存的风险扫描结果，有风险信号时在快捷入口显示角标
   const [chronicRiskCount, setChronicRiskCount] = useState(0)
   const [currentQuickActions, setCurrentQuickActions] = useState<QuickAction[]>([
@@ -117,7 +119,13 @@ export default function Index() {
     setShowGreetingQuickActions,
   })
 
-  const { agentToolStatus } = chat
+  const { agentToolStatus, sessionId, sessions, messages, handleNewSession, handleSwitchSession, handleDeleteSession } = chat
+
+  // 长对话软提示：当前会话页面消息满 60 条时提示「建议新建对话」（不强制、可继续聊）。
+  // 用 messages.length 而非 sessions[].messageCount——后者是进入页面时的快照，发送后不刷新，
+  // 会导致新建会话计数冻结为 0、软提示实时永不触发（审查 P1）；messages 随发送实时递增。
+  const LONG_CHAT_THRESHOLD = 60
+  const showLongChatTip = sessionId !== null && messages.length >= LONG_CHAT_THRESHOLD
 
   // 加载今日健康打卡数据（用于健康摘要卡）
   // 抽成 refreshTodayHealth：打卡弹窗完成后也需要手动刷新一次
@@ -672,6 +680,10 @@ export default function Index() {
           </View>
         </View>
         <View className='chat-top-right'>
+          <View className='chat-top-memory-btn' onClick={() => setSessionDrawerOpen(true)}>
+            <Text className='chat-top-memory-icon'>📋</Text>
+            <Text className='chat-top-memory-text'>历史</Text>
+          </View>
           <View className='chat-top-memory-btn' onClick={() => Taro.navigateTo({ url: '/pagesUser/memory/index' })}>
             <Text className='chat-top-memory-icon'>🧠</Text>
             <Text className='chat-top-memory-text'>记忆</Text>
@@ -697,6 +709,15 @@ export default function Index() {
 
         {/* 内层容器：scroll-view 上不支持 padding（webview 渲染模式），由内部元素承载间距 */}
         <View className='chat-msg-list__inner'>
+
+        {/* ===== 长对话软提示（多会话：满 30 轮建议新建，不强制） ===== */}
+        {showLongChatTip && (
+          <View className='chat-long-tip' onClick={handleNewSession}>
+            <Text className='chat-long-tip-icon'>💡</Text>
+            <Text className='chat-long-tip-text'>当前对话已较长，新建对话 AI 会更记得住</Text>
+            <Text className='chat-long-tip-action'>＋ 新建对话</Text>
+          </View>
+        )}
 
         {/* ===== 今日健康摘要卡（设计稿对齐） ===== */}
         <View className='home-summary-card' onClick={openCheckin}>
@@ -1259,6 +1280,56 @@ export default function Index() {
                 <Text className='msg-naming-detail-text msg-naming-detail-text--summary'>{naming.namingDetailPopup.summary}</Text>
               </View>
                 </>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      )}
+
+      {/* ===== 会话列表抽屉（多会话「历史对话」，豆包式新建/切换/删除） ===== */}
+      {sessionDrawerOpen && (
+        <View className='session-drawer-overlay' onClick={() => setSessionDrawerOpen(false)}>
+          <View className='session-drawer' onClick={(e: any) => e.stopPropagation()}>
+            <View className='session-drawer-head'>
+              <Text className='session-drawer-title'>历史对话</Text>
+              <View
+                className='session-drawer-new'
+                onClick={() => { handleNewSession(); setSessionDrawerOpen(false) }}
+              >
+                <Text className='session-drawer-new-icon'>＋</Text>
+                <Text className='session-drawer-new-text'>新建对话</Text>
+              </View>
+            </View>
+            <ScrollView className='session-drawer-list' scrollY>
+              {sessions.length === 0 ? (
+                <View className='session-drawer-empty'>
+                  <Text className='session-drawer-empty-icon'>💬</Text>
+                  <Text className='session-drawer-empty-text'>还没有对话，点上方「新建对话」开始吧</Text>
+                </View>
+              ) : (
+                sessions.map((s) => (
+                  <View
+                    key={s.id}
+                    className={`session-item ${s.id === sessionId ? 'session-item--active' : ''}`}
+                    onClick={() => { handleSwitchSession(s.id); setSessionDrawerOpen(false) }}
+                    onLongPress={() => {
+                      // 长按删除：confirmText「删除」2 字（微信 showModal 上限 4 字，超长弹不出）
+                      Taro.showModal({
+                        title: '删除对话',
+                        content: `确定删除「${s.title}」吗？删除后无法恢复。`,
+                        confirmText: '删除',
+                        confirmColor: '#E5484D',
+                        success: (res) => { if (res.confirm) handleDeleteSession(s.id) },
+                      })
+                    }}
+                  >
+                    <View className='session-item-main'>
+                      <Text className='session-item-title'>{s.title}</Text>
+                      <Text className='session-item-meta'>{s.messageCount} 条消息</Text>
+                    </View>
+                    {s.id === sessionId && <Text className='session-item-current'>当前</Text>}
+                  </View>
+                ))
               )}
             </ScrollView>
           </View>

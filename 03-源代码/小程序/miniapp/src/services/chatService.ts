@@ -6,7 +6,7 @@
 import Taro from '@tarojs/taro'
 import type { ChatMessage } from '../types/chatTypes'
 import { chat, guardCheck, guardCheckOutput } from './aiProvider'
-import { checkInput as ruleCheck } from '../utils/ruleGuard'
+import { checkInput as ruleCheck, detectOffTopic, OFFTOPIC_REPLY } from '../utils/ruleGuard'
 import { SYSTEM_PROMPT_BASE } from '../types/chatTypes'
 import { requireAuth } from '../utils/authGuard'
 import { logger } from '../logger'
@@ -114,7 +114,7 @@ export async function sendChatMessage(
   userMessage: string,
   context: ChatContext,
   history: ChatMessage[] = [],
-  options?: { persistUserContent?: string }
+  options?: { persistUserContent?: string; sessionId?: string }
 ): Promise<ChatResult> {
   const { userId } = requireAuth()
 
@@ -130,6 +130,11 @@ export async function sendChatMessage(
       reply: '抱歉，我无法处理这条消息。请尝试其他与宠物相关的问题。',
       blocked: true
     }
+  }
+
+  // 边界守卫：与宠物无关的越界话题（恋爱/婚恋、学业、编程、财经、天气、时事等）确定性拦截，礼貌拒绝并拉回宠物，不调 LLM
+  if (detectOffTopic(userMessage)) {
+    return { reply: OFFTOPIC_REPLY, blocked: true }
   }
 
   try {
@@ -190,6 +195,7 @@ export async function sendChatMessage(
       temperature: 0.7,
       petId: context.petId,
       persistUserContent: options?.persistUserContent,
+      sessionId: options?.sessionId,
     })
 
     const outputCheck = await guardCheckOutput(reply)

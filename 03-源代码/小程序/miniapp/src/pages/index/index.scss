@@ -2046,3 +2046,132 @@
   color: #b08968;
   flex-shrink: 0;
 }
+
+/* ===== 长对话软提示（多会话：满 30 轮建议新建，不强制） ===== */
+.chat-long-tip {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin: 12rpx 0 20rpx;
+  padding: 20rpx 24rpx;
+  background: linear-gradient(135deg, #fff7ed, #ffedd5);
+  border: 1rpx solid #ffd9b0;
+  border-radius: 20rpx;
+}
+
+.chat-long-tip-icon { font-size: 30rpx; }
+
+.chat-long-tip-text {
+  flex: 1;
+  font-size: 24rpx;
+  color: #a06a3f;
+}
+
+.chat-long-tip-action {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #ff6b3d;
+  padding: 8rpx 16rpx;
+  background: #fff;
+  border-radius: 999rpx;
+}
+
+/* ===== 会话列表抽屉（多会话「历史对话」，豆包式新建/切换/删除） ===== */
+.session-drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+}
+
+.session-drawer {
+  width: 100%;
+  max-height: 70vh;
+  background: #fff;
+  border-radius: 32rpx 32rpx 0 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.session-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 32rpx 20rpx;
+  border-bottom: 1rpx solid #f3ece4;
+}
+
+.session-drawer-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #4a3728;
+}
+
+.session-drawer-new {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 10rpx 20rpx;
+  background: linear-gradient(135deg, #ff8a5c, #ff6b3d);
+  border-radius: 999rpx;
+}
+
+.session-drawer-new-icon { font-size: 26rpx; color: #fff; font-weight: 700; }
+.session-drawer-new-text { font-size: 24rpx; color: #fff; }
+
+.session-drawer-list { max-height: 56vh; }
+
+.session-drawer-empty {
+  padding: 80rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.session-drawer-empty-icon { font-size: 64rpx; }
+.session-drawer-empty-text { font-size: 24rpx; color: #b6a594; }
+
+.session-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid #f7f1ea;
+}
+
+.session-item--active { background: #fff7ed; }
+
+.session-item-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.session-item-title {
+  font-size: 28rpx;
+  color: #4a3728;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-item-meta { font-size: 22rpx; color: #b6a594; }
+
+.session-item-current {
+  flex-shrink: 0;
+  font-size: 20rpx;
+  color: #ff6b3d;
+  padding: 4rpx 14rpx;
+  background: #ffedd5;
+  border-radius: 999rpx;
+}

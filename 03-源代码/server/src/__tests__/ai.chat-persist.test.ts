@@ -133,11 +133,12 @@ describe('POST /api/ai/chat 持久化历史（发图带文字配套）', () => {
     // 第 1 次调用 = 主对话；后续可能还有异步特征提取的 chat() 调用，故按参数断言首次
     expect(mockChat.mock.calls[0][0]).toEqual(multiUserMessages);
     expect(mockSaveConversation).toHaveBeenCalledTimes(2);
+    // 多会话改造后 saveConversation 新增 metadata / sessionId 两参（未传会话时均为空）
     expect(mockSaveConversation).toHaveBeenNthCalledWith(
-      1, 'test-user-id', 'pet-1', 'user', '我上传了一张宠物照片，请帮我看看这是什么猫',
+      1, 'test-user-id', 'pet-1', 'user', '我上传了一张宠物照片，请帮我看看这是什么猫', undefined, null,
     );
     expect(mockSaveConversation).toHaveBeenNthCalledWith(
-      2, 'test-user-id', 'pet-1', 'assistant', '这是一只橘猫',
+      2, 'test-user-id', 'pet-1', 'assistant', '这是一只橘猫', undefined, null,
     );
   });
 
@@ -154,11 +155,11 @@ describe('POST /api/ai/chat 持久化历史（发图带文字配套）', () => {
     expect(res.status).toBe(200);
     // user 条目 = persistUserContent（与前端 chatHistory 逐字一致，精确去重可命中）
     expect(mockSaveConversation).toHaveBeenNthCalledWith(
-      1, 'test-user-id', 'pet-1', 'user', merged,
+      1, 'test-user-id', 'pet-1', 'user', merged, undefined, null,
     );
     // assistant 条目仍写回复原文
     expect(mockSaveConversation).toHaveBeenNthCalledWith(
-      2, 'test-user-id', 'pet-1', 'assistant', '这是一只橘猫',
+      2, 'test-user-id', 'pet-1', 'assistant', '这是一只橘猫', undefined, null,
     );
   });
 

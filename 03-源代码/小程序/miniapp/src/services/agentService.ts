@@ -89,13 +89,14 @@ export interface HistoryEntry {
   content: string
 }
 
-export async function loadAgentHistory(petId?: string, limit = 20): Promise<HistoryEntry[]> {
+export async function loadAgentHistory(petId?: string, limit = 20, sessionId?: string): Promise<HistoryEntry[]> {
   const token = storage.getToken()
   if (!token) return []
 
   try {
     const params: string[] = [`limit=${limit}`]
     if (petId) params.push(`petId=${encodeURIComponent(petId)}`)
+    if (sessionId) params.push(`sessionId=${encodeURIComponent(sessionId)}`)
 
     const res = await Taro.request({
       url: `${CONFIG.API_BASE_URL}/api/agent/history?${params.join('&')}`,
@@ -115,12 +116,93 @@ export async function loadAgentHistory(petId?: string, limit = 20): Promise<Hist
   }
 }
 
+// ========== 聊天会话（多会话改造 2026-09-10） ==========
+
+/** 会话摘要（后端 /api/agent/sessions 返回） */
+export interface ChatSession {
+  id: string
+  petId: string | null
+  title: string
+  messageCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+/** 列出当前用户的聊天会话（可按 petId 过滤），按最近活跃倒序 */
+export async function listChatSessions(petId?: string): Promise<ChatSession[]> {
+  const token = storage.getToken()
+  if (!token) return []
+
+  try {
+    const qs = petId ? `?petId=${encodeURIComponent(petId)}` : ''
+    const res = await Taro.request({
+      url: `${CONFIG.API_BASE_URL}/api/agent/sessions${qs}`,
+      method: 'GET',
+      header: { Authorization: `Bearer ${token}` },
+    })
+
+    if (res.statusCode === 200) {
+      const body = res.data as { success: boolean; data: { sessions: ChatSession[] } }
+      if (body.success && body.data?.sessions) {
+        return body.data.sessions
+      }
+    }
+    return []
+  } catch {
+    return []
+  }
+}
+
+/** 新建会话（后端会把该宠物下无会话归属的存量消息归并进新会话） */
+export async function createChatSession(petId?: string): Promise<ChatSession | null> {
+  const token = storage.getToken()
+  if (!token) return null
+
+  try {
+    const res = await Taro.request({
+      url: `${CONFIG.API_BASE_URL}/api/agent/sessions`,
+      method: 'POST',
+      header: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      data: { petId: petId || undefined },
+    })
+
+    if (res.statusCode === 200) {
+      const body = res.data as { success: boolean; data: { session: ChatSession } }
+      if (body.success && body.data?.session) {
+        return body.data.session
+      }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+/** 删除会话（级联删除其消息） */
+export async function deleteChatSession(sessionId: string): Promise<boolean> {
+  const token = storage.getToken()
+  if (!token) return false
+
+  try {
+    const res = await Taro.request({
+      url: `${CONFIG.API_BASE_URL}/api/agent/sessions/${encodeURIComponent(sessionId)}`,
+      method: 'DELETE',
+      header: { Authorization: `Bearer ${token}` },
+    })
+    return res.statusCode === 200
+  } catch {
+    return false
+  }
+}
+
 // ========== Agent 对话请求 ==========
 
 export interface AgentChatParams {
   message: string
   history?: ChatMessage[]
   petId?: string
+  /** 会话 id（多会话改造）：消息持久化归入该会话 */
+  sessionId?: string
 }
 
 /**
@@ -162,6 +244,7 @@ export async function* agentChat(params: AgentChatParams): AsyncGenerator<AgentE
         message: params.message,
         history: sanitizeHistory(params.history),
         petId: params.petId,
+        sessionId: params.sessionId,
       },
       enableChunked: true,
       responseType: 'text',
@@ -293,6 +376,7 @@ export async function agentChatFallback(params: AgentChatParams): Promise<{
         message: params.message,
         history: sanitizeHistory(params.history),
         petId: params.petId,
+        sessionId: params.sessionId,
       },
     })
 

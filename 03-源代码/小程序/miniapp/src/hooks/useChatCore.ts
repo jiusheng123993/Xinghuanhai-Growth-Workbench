@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Taro from '@tarojs/taro'
 import { sendChatMessage, analyzeChatPhoto, type ChatContext } from '../services/chatService'
-import { agentChat, getToolLabel, loadAgentHistory } from '../services/agentService'
+import { agentChat, getToolLabel, loadAgentHistory, listChatSessions, createChatSession, deleteChatSession, type ChatSession } from '../services/agentService'
 import type { CardData, ChatMessage, Message, PetInfo } from '../types/chatTypes'
 import { logger } from '../logger'
 import { chooseImageWithPrivacy } from '../utils/privacy'
@@ -170,6 +170,12 @@ export function useChatCore(params: UseChatCoreParams) {
   // 补充文字，点发送后图文合并为一条消息发出（对齐微信 IM 习惯）
   const [pendingImage, setPendingImage] = useState<string | null>(null)
 
+  // ===== 多会话状态（豆包式「新建对话」2026-09-10） =====
+  /** 当前会话 id（null=尚未创建会话，首条消息时惰性创建） */
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  /** 当前宠物的会话列表（按最近活跃倒序） */
+  const [sessions, setSessions] = useState<ChatSession[]>([])
+
   const streamRef = useRef<{
     timer: ReturnType<typeof setInterval> | null
     fullContent: string
@@ -178,6 +184,9 @@ export function useChatCore(params: UseChatCoreParams) {
 
   // Agent 流式跳过标记
   const agentSkipRef = useRef(false)
+
+  // 会话 id 引用：ensureSession 在异步回调里读取最新会话，避免闭包读到旧值
+  const sessionIdRef = useRef<string | null>(null)
 
   const scrollRef = useRef<any>(null)
 
@@ -208,23 +217,124 @@ export function useChatCore(params: UseChatCoreParams) {
     scrollToBottom()
   }, [messages, isTyping, scrollToBottom])
 
-  // 加载服务端持久化对话历史
+  // 加载会话列表 + 最近会话的历史（多会话改造：进入页面/切换宠物时打开最近活跃会话）
   useEffect(() => {
+    // 切换宠物 / 重新进入页面：清空当前会话消息、历史与会话状态，避免上一只宠物的残留
+    setMessages([])
+    setChatHistory([])
+    setSessionId(null)
+    sessionIdRef.current = null
+    setSessions([])
     if (!petInfo.hasPet) return
-    loadAgentHistory(petInfo.activePet?.id, 20)
+
+    // 1. 拉会话列表，默认打开最近活跃会话（后端按 updated_at 倒序，sessions[0] 即最近）
+    listChatSessions(petInfo.activePet?.id)
+      .then((list) => {
+        setSessions(list)
+        if (list.length === 0) return
+        const current = list[0]
+        setSessionId(current.id)
+        sessionIdRef.current = current.id
+        // 2. 按会话 id 加载历史
+        return loadAgentHistory(petInfo.activePet?.id, 20, current.id)
+      })
       .then((history) => {
-        if (history.length > 0) {
-          setChatHistory(
-            history.map((h) => ({
-              role: h.role,
-              content: h.content,
-            }))
-          )
-          logger.info('useChatCore', `Loaded ${history.length} history entries from server`)
-        }
+        if (!history || history.length === 0) return
+        setChatHistory(
+          history.map((h) => ({ role: h.role, content: h.content }))
+        )
+        // 修复「聊天记录每次进入都消失」：历史此前只写进 chatHistory 作 AI 上下文，
+        // 从未渲染到页面 messages。这里按会话把历史渲染到页面消息流（role→type 映射）。
+        setMessages(
+          history.map((h) => ({
+            id: genId(),
+            type: h.role === 'user' ? 'user' : 'ai',
+            content: h.content,
+          }))
+        )
+        logger.info('useChatCore', `Loaded ${history.length} history entries from server`)
       })
       .catch(() => {})
   }, [petInfo.activePet?.id, petInfo.hasPet])
+
+  /** 确保存在当前会话：无会话时惰性创建（首条消息/发送时用）；返回会话 id 或 null */
+  const ensureSession = useCallback(async (): Promise<string | null> => {
+    if (sessionIdRef.current) return sessionIdRef.current
+    const created = await createChatSession(petInfo.activePet?.id)
+    if (!created) return null
+    setSessionId(created.id)
+    sessionIdRef.current = created.id
+    // 刷新会话列表（新会话进列表）
+    listChatSessions(petInfo.activePet?.id).then(setSessions).catch(() => {})
+    return created.id
+  }, [petInfo.activePet?.id])
+
+  /** 新建会话：创建并设为当前，清空页面消息流，刷新列表（顶部「新建对话」按钮） */
+  const handleNewSession = useCallback(async () => {
+    const created = await createChatSession(petInfo.activePet?.id)
+    if (!created) {
+      Taro.showToast({ title: '新建对话失败，请重试', icon: 'none' })
+      return
+    }
+    setSessionId(created.id)
+    sessionIdRef.current = created.id
+    setMessages([])
+    setChatHistory([])
+    listChatSessions(petInfo.activePet?.id).then(setSessions).catch(() => {})
+  }, [petInfo.activePet?.id])
+
+  /** 切换会话：加载该会话历史并设为当前（会话列表点击） */
+  const handleSwitchSession = useCallback(async (id: string) => {
+    if (id === sessionIdRef.current) return
+    setSessionId(id)
+    sessionIdRef.current = id
+    setMessages([])
+    setChatHistory([])
+    const history = await loadAgentHistory(petInfo.activePet?.id, 20, id)
+    if (history.length > 0) {
+      setChatHistory(history.map((h) => ({ role: h.role, content: h.content })))
+      setMessages(history.map((h) => ({
+        id: genId(),
+        type: h.role === 'user' ? 'user' : 'ai',
+        content: h.content,
+      })))
+    }
+  }, [petInfo.activePet?.id])
+
+  /** 删除会话：成功后从列表移除；若删的是当前会话则切到最近会话或置空（长按删除） */
+  const handleDeleteSession = useCallback(async (id: string) => {
+    const ok = await deleteChatSession(id)
+    if (!ok) {
+      Taro.showToast({ title: '删除失败，请重试', icon: 'none' })
+      return
+    }
+    const list = await listChatSessions(petInfo.activePet?.id)
+    setSessions(list)
+    // 删的是当前会话：切到新列表第一条（最近活跃），无则置空回到问候语态
+    if (id === sessionIdRef.current) {
+      if (list.length > 0) {
+        const next = list[0]
+        setSessionId(next.id)
+        sessionIdRef.current = next.id
+        setMessages([])
+        setChatHistory([])
+        const history = await loadAgentHistory(petInfo.activePet?.id, 20, next.id)
+        if (history.length > 0) {
+          setChatHistory(history.map((h) => ({ role: h.role, content: h.content })))
+          setMessages(history.map((h) => ({
+            id: genId(),
+            type: h.role === 'user' ? 'user' : 'ai',
+            content: h.content,
+          })))
+        }
+      } else {
+        setSessionId(null)
+        sessionIdRef.current = null
+        setMessages([])
+        setChatHistory([])
+      }
+    }
+  }, [petInfo.activePet?.id])
 
   const addMessage = useCallback((msg: Omit<Message, 'id'>): string => {
     const id = genId()
@@ -392,6 +502,9 @@ export function useChatCore(params: UseChatCoreParams) {
       ? `[图片] ${caption}｜${observationPart}`
       : `[图片] ${observationPart}`
 
+    // 确保有会话（首条消息惰性创建），图片轮也归入当前会话
+    const sid = await ensureSession()
+
     try {
       const result = await sendChatMessage(
         caption || (description
@@ -401,7 +514,7 @@ export function useChatCore(params: UseChatCoreParams) {
         chatHistory,
         // 服务端持久化用合并文本：与下方 chatHistory 存储逐字一致，Agent 链路精确
         // 去重才能命中；跨会话重进页面后 Agent 也能从持久化历史召回视觉观察
-        { persistUserContent: userHistoryContent }
+        { persistUserContent: userHistoryContent, sessionId: sid ?? undefined }
       )
       setIsTyping(false)
 
@@ -427,7 +540,7 @@ export function useChatCore(params: UseChatCoreParams) {
       // 分析成功但回复生成失败：如实说明是"回复"失败，而不是误导为"照片分析失败"
       addAiMsg(description ? '回复生成失败，请稍后再试。' : '图片已收到！虽然我现在无法分析图片内容，但你可以描述一下想了解什么～')
     }
-  }, [pendingImage, petInfo, chatHistory, addImageMsg, addAiMsg, streamAiReply])
+  }, [pendingImage, petInfo, chatHistory, addImageMsg, addAiMsg, streamAiReply, ensureSession])
 
   /** Agent 模式的发送逻辑（textOverride：外部注入的发送文本，如语音识别结果，优先于 inputValue） */
   const handleSend = async (textOverride?: string) => {
@@ -497,6 +610,9 @@ export function useChatCore(params: UseChatCoreParams) {
       petAge: petInfo.age,
     }
 
+    // 确保有会话（首条消息惰性创建）：Agent 对话与降级链路都按会话持久化
+    const sid = await ensureSession()
+
     setIsTyping(true)
     setAgentToolStatus(null)
     agentSkipRef.current = false
@@ -519,7 +635,7 @@ export function useChatCore(params: UseChatCoreParams) {
       let content = fullContent
       if (!content) {
         try {
-          const result = await sendChatMessage(text, context, chatHistory)
+          const result = await sendChatMessage(text, context, chatHistory, { sessionId: sid ?? undefined })
           content = result.reply
         } catch {
           content = '抱歉，我刚走神了，请再问一次。'
@@ -543,6 +659,7 @@ export function useChatCore(params: UseChatCoreParams) {
         message: text,
         history: chatHistory,
         petId: context.petId,
+        sessionId: sid ?? undefined,
       })) {
         // 如果用户点击了跳过，直接显示完整内容
         if (agentSkipRef.current) continue
@@ -608,7 +725,7 @@ export function useChatCore(params: UseChatCoreParams) {
             // Agent 失败时降级到旧版 chatService
             logger.warn('index', 'Agent failed, falling back to legacy chat', event.data)
             try {
-              const result = await sendChatMessage(text, context, chatHistory)
+              const result = await sendChatMessage(text, context, chatHistory, { sessionId: sid ?? undefined })
               setMessages(prev =>
                 prev.map(m => m.id === aiMsgId
                   ? { ...m, content: result.reply }
@@ -684,6 +801,12 @@ export function useChatCore(params: UseChatCoreParams) {
     setFlowHandlers,
     updateMessageCard,
     agentToolStatus,
+    // 多会话（豆包式「新建对话」）
+    sessionId,
+    sessions,
+    handleNewSession,
+    handleSwitchSession,
+    handleDeleteSession,
   }
 }
 

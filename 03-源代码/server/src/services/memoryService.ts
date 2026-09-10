@@ -10,6 +10,10 @@
  */
 import { pool } from '../db.js';
 import { config } from '../config.js';
+import { ChatSessionRepository } from '../repositories/chatSessionRepository.js';
+
+/** 聊天会话仓库单例（saveConversation 内部维护会话计数/标题用） */
+const chatSessionRepo = new ChatSessionRepository();
 
 // ========== 类型定义 ==========
 
@@ -667,38 +671,62 @@ export async function runMemoryDecay(): Promise<{ dormanted: number; expired: nu
 // 6. 对话持久化
 // ============================================================================
 
-/** 保存一条对话消息 */
+/**
+ * 保存一条对话消息
+ * @param sessionId - 会话 id（多会话改造后新增）：非空时消息归入该会话，并维护会话计数/触达/标题
+ */
 export async function saveConversation(
   userId: string,
   petId: string | null,
   role: 'user' | 'assistant',
   content: string,
   metadata?: Record<string, unknown>,
+  sessionId?: string | null,
 ): Promise<void> {
   try {
     await pool.query(
-      `INSERT INTO agent_conversations (user_id, pet_id, role, content, metadata)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [userId, petId, role, content.substring(0, 2000), JSON.stringify(metadata || {})],
+      `INSERT INTO agent_conversations (user_id, pet_id, role, content, metadata, session_id)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [userId, petId, role, content.substring(0, 2000), JSON.stringify(metadata || {}), sessionId ?? null],
     );
+    // 会话维护：有 sessionId 时消息计数 +1 并触达（列表排序 + 软提示阈值依据）
+    if (sessionId) {
+      await chatSessionRepo.touchSession(sessionId, 1);
+      // 首条用户消息：把默认标题「新的对话」更新为消息截断（清洗空白，20 字封顶）
+      if (role === 'user') {
+        const cleanTitle = content.replace(/\s+/g, ' ').trim().substring(0, 20);
+        await chatSessionRepo.updateTitleIfDefault(sessionId, cleanTitle || '新的对话');
+      }
+    }
   } catch {
     // 静默
   }
 }
 
-/** 加载最近的对话历史 */
+/**
+ * 加载最近的对话历史
+ * @param sessionId - 会话 id：非空时按会话隔离查询（附 user_id 校验防横向越权）；空时回退旧行为（按 user+pet 查）
+ */
 export async function loadConversationHistory(
   userId: string,
   petId: string | null,
   limit = 20,
+  sessionId?: string | null,
 ): Promise<Array<{ role: 'user' | 'assistant'; content: string }>> {
   try {
-    const { rows } = await pool.query(
-      `SELECT role, content FROM agent_conversations
-       WHERE user_id = $1 AND pet_id = $2
-       ORDER BY created_at DESC LIMIT $3`,
-      [userId, petId, limit],
-    );
+    const { rows } = sessionId
+      ? await pool.query(
+          `SELECT role, content FROM agent_conversations
+           WHERE session_id = $1 AND user_id = $2
+           ORDER BY created_at DESC LIMIT $3`,
+          [sessionId, userId, limit],
+        )
+      : await pool.query(
+          `SELECT role, content FROM agent_conversations
+           WHERE user_id = $1 AND pet_id = $2
+           ORDER BY created_at DESC LIMIT $3`,
+          [userId, petId, limit],
+        );
 
     return rows
       .reverse()

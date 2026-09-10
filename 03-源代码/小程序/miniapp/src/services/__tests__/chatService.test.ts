@@ -21,6 +21,8 @@ vi.mock('../aiProvider', () => ({
 vi.mock('../../utils/ruleGuard', () => ({
   checkInput: vi.fn().mockReturnValue({ blocked: false, action: 'pass' }),
   sanitizeOutput: vi.fn((t: string) => t),
+  detectOffTopic: vi.fn(() => false),
+  OFFTOPIC_REPLY: '抱歉，我主要专注宠物相关话题',
 }))
 
 vi.mock('../../utils/authGuard', () => ({
