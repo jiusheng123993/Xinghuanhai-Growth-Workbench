@@ -267,18 +267,32 @@
 // 按事件类型上色（疫苗金/驱虫绿/打卡青，见 EVENT_TYPE_CONFIG），内联样式优先级高于本文件，
 // 因此这里**只做加法**（宽度/形状/填充感），不去改它的颜色，避免写了却看不见效果的白费声明。
 // ============================================
+// 【P0 修复（审-1 打回，2026-09-11）】原实现在**页面根**同时做了两件互相打架的事：
+//   ① @include journal-paper-tokens → 把 --text-primary 钉成深棕 #40281c；
+//   ② background: var(--bg-page) → 星空主题下 --bg-page 是深蓝紫 #1B2450。
+// 于是"深棕字压深蓝底"，无头实测对比度 1.09:1，月份大标题几乎不可见（改前是 #FFFFFF，能读）。
+// 正确做法（与家族其它 14 页一致）：**只在浅色纸面上钉 token，页面底跟随主题** ——
+// 手账的语义是"深色桌面上摊开的浅色纸卡"，不是把整页刷成纸。所以这里什么都不写，
+// 由下面各个纸面（日历卡 / 日程卡 / 空态 / 错误态 / 按钮）各自钉回。
 .calendar-page {
-  // 纸面 token 钉在页面根：日历格、日程卡、按钮都坐在这一层纸上，
-  // 深色主题（.theme-starry）会把 --text-* / --glass-bg 转成浅色，不钉回就是白字压白纸。
-  // 放在根上（而不是逐个容器）还有一个好处：只写一处，后续新增子块自动继承。
-  @include journal-paper-tokens;
-
-  // 背景换成手账纸面：原来的 $gradient-page 在深色主题下是深蓝紫渐变，
-  // 纸卡浮在深色渐变上会像"贴纸掉进夜里"，与「温暖手账」方向不符。
-  // 用纯变量而非覆盖整个 $gradient-page，是为了深色主题下同样落到浅纸底。
-  background: var(--bg-page, #fff6ee);
+  // 有意留空：不要在这里钉 token，也不要覆盖背景
 }
 
+// 浅色纸面统一钉"卡内 token"（P0 修复的配套动作）：
+// 页面底跟随主题（星空主题下是深蓝紫），下面这些面恒为浅纸，所以各自把文字/描边/玻璃色钉回浅色取值。
+// 这样"深色桌面上摊开浅色纸卡"的层次才成立，且不会出现深字压深底。
+.calendar-grid,
+.calendar-header__nav,
+.calendar-events__item,
+.calendar-events__loading,
+.calendar-events__empty,
+.calendar-events__placeholder,
+.calendar-error__text,
+.calendar-error__btn,
+.calendar-loading__text,
+.calendar-footer__btn {
+  @include journal-paper-tokens;
+}
 // —— 模块 ① 月份切换头：衬线大标题 + 两侧虚线翻页方块 ——
 .calendar-header {
   margin-bottom: 14rpx;

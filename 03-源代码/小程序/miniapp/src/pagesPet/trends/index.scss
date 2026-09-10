@@ -1058,10 +1058,10 @@
 .pet-trends-page {
 
   // —— 顶部时间范围切换：三枚贴纸胶囊（未选虚线纸面 / 选中实线暖底 / 会员锁定降透明） ——
-  &__time-range,
-  &__time-btn,
-  &__time-btn--active,
-  &__time-btn--locked,
+  .pet-trends__time-range,
+  .pet-trends__time-btn,
+  .pet-trends__time-btn--active,
+  .pet-trends__time-btn--locked,
   &__tabs,
   &__tab,
   &__tab--active,
@@ -1089,7 +1089,7 @@
   }
 
   // 顶部三枚切换胶囊：底改纸面（原 card-base 的 -bg-card 在深色主题下会变浅），描边改 3rpx 虚线
-  &__time-btn {
+  .pet-trends__time-btn {
     background: #fffdf8;
     border: 3rpx dashed $color-border;
     box-shadow: $shadow-xs;
@@ -1111,13 +1111,13 @@
     }
   }
 
-  &__time-btn-text {
+  .pet-trends__time-btn-text {
     font-size: 26rpx;
     font-weight: $font-weight-semibold;
     color: $color-text-secondary;
   }
 
-  &__time-btn--active &__time-btn-text {
+  .pet-trends__time-btn--active .pet-trends__time-btn-text {
     color: $color-primary-dark;
   }
 
@@ -1430,14 +1430,14 @@
   }
 
   // —— 免责声明：金色虚线便签（原来只是淡色底 + 实线边） ——
-  &__disclaimer {
+  .pet-trends__disclaimer {
     padding: 20rpx 22rpx;
     border-radius: 26rpx;
     background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
     border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
   }
 
-  &__disclaimer-text {
+  .pet-trends__disclaimer-text {
     font-size: 22rpx;
     line-height: 1.7;
     color: $color-text-secondary;
