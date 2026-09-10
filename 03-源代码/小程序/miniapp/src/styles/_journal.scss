@@ -1,0 +1,225 @@
+// ============================================
+// 手账皮肤（视觉方向 C · 温暖手账）公共 mixin
+// ============================================
+// 宠物板块（宠物档案 / 健康打卡 / 疫苗日历 / 健康趋势 …）统一用这套语言，
+// 目的：① 各页观感一致；② 一处改、全板块跟随；③ 新页面少写重复样式。
+//
+// 用法：
+//   @import '../../styles/journal';
+//   .my-page__card { @include journal-paper-tokens; @include journal-note; }
+//   .my-page__title { @include journal-serif; }
+//
+// 【主题安全】纸面恒为浅底，而深色主题（.theme-starry）会把 --text-* / --glass-bg 转成浅色，
+// 因此任何"纸面容器"都要同时 include journal-paper-tokens（把卡内 token 钉回浅色取值），
+// 否则深色主题下就是白字压白纸。
+//
+// 【通道写法】淡色底一律 rgba(var(--x-rgb, 回退), α)。**不能**写 rgba(var(--x), α)：
+// 那种写法在部分端上属非法 CSS，整条声明会被丢弃（见项目 skill「小程序样式陷阱」）。
+// ============================================
+
+@import './_theme';
+
+/// 纸面 token 兜底：给"恒为浅底"的容器钉回浅色主题的文字/描边/玻璃色
+@mixin journal-paper-tokens {
+  --text-primary: #40281c;
+  --text-secondary: #8b6e58;
+  --text-tertiary: #a98d74;
+  --text-placeholder: #cbb49e;
+  --bg-secondary: #fffdf9;
+  --border: #f3e2d2;
+  --border-light: rgba(243, 226, 210, 0.5);
+  --glass-bg: rgba(255, 255, 255, 0.72);
+}
+
+/// 纸面底色与纸纹感（不带边框，供自定义边框的卡片复用）
+@mixin journal-paper {
+  background: #fffdf8;
+  box-shadow: $shadow-xs;
+}
+
+/// 虚线便签：本板块最常用的容器（标题 + 内容 + 可选右上副题）
+/// @param $tint 边框色通道名（默认主色；可传 gold / teal / sage / danger）
+/// @param $alpha 边框透明度
+@mixin journal-note($tint: primary, $alpha: 0.42) {
+  position: relative;
+  border-radius: 36rpx;
+  background: #fffdf8;
+  border: 3rpx dashed rgba(var(--#{$tint}-rgb, 255, 107, 61), $alpha);
+  box-shadow: $shadow-xs;
+}
+
+/// 双层描边"卡纸"：证件/接种本一类需要"压印感"的容器
+@mixin journal-idcard($tint: gold, $alpha: 0.55) {
+  position: relative;
+  border-radius: 44rpx;
+  background: #fffdf8;
+  border: 2rpx solid rgba(var(--#{$tint}-rgb, 255, 176, 32), $alpha);
+  box-shadow:
+    inset 0 0 0 8rpx #fffdf8,
+    inset 0 0 0 10rpx rgba(var(--#{$tint}-rgb, 255, 176, 32), 0.26),
+    0 10rpx 30rpx -18rpx rgba(61, 33, 18, 0.35);
+}
+
+/// 衬线标题（宋体族）：安卓无宋体时回退黑体，观感仍成立
+@mixin journal-serif($size: 30rpx) {
+  font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
+  font-size: $size;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+  color: $color-text-primary;
+}
+
+/// 便签内的行：图标 + 文案 + 右侧值，行间虚线分隔
+@mixin journal-row {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  padding: 16rpx 0;
+  border-bottom: 2rpx dashed rgba(243, 226, 210, 0.95);
+
+  &:last-child {
+    border-bottom: 0;
+    padding-bottom: 2rpx;
+  }
+}
+
+/// 行首图标方块（底色与图标 tone 同源）
+/// @param $tint 底色通道名
+@mixin journal-row-icon($tint: primary) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 16rpx;
+  background: rgba(var(--#{$tint}-rgb, 255, 107, 61), 0.08);
+  flex-shrink: 0;
+}
+
+/// 状态贴纸：未选中＝虚线灰；用 --active 变体表达"已选中/已到期"等状态
+/// 用法：.x { @include journal-status; } .x--done { @include journal-status($tint: sage, $filled: true); }
+@mixin journal-status($tint: primary, $filled: false) {
+  display: flex;
+  align-items: center;
+  height: 44rpx;
+  padding: 0 16rpx;
+  border-radius: $radius-round;
+  font-size: 20rpx;
+  font-weight: 700;
+
+  @if $filled {
+    border: 2rpx solid rgba(var(--#{$tint}-rgb, 255, 107, 61), 0.6);
+    background: rgba(var(--#{$tint}-rgb, 255, 107, 61), 0.14);
+    color: var(--#{$tint}, #{$color-primary});
+  } @else {
+    border: 2rpx dashed $color-border;
+    background: #fffaf3;
+    color: $color-text-secondary;
+  }
+}
+
+/// 手账按钮（主按钮）：渐变 + 投影 + 圆角胶囊 + 按压反馈 + 图标位
+@mixin journal-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  height: 96rpx;
+  border-radius: $radius-round;
+  background: linear-gradient(135deg, #ff8a4d 0%, $color-primary 55%, $color-primary-dark 100%);
+  box-shadow: 0 14rpx 30rpx -12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.8);
+  @include press-feedback;
+}
+
+/// 次级按钮/入口：玻璃底 + 虚线边（坐在页面背景上时用，不要在纸面上用）
+@mixin journal-ghost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  min-height: 80rpx;
+  border-radius: 24rpx;
+  background: $glass-bg;
+  border: 2rpx dashed $color-border;
+  @include press-feedback;
+}
+
+/// 贴纸数据格（三格统计一类）：微旋转 + 顶部胶带
+/// @param $rotate 旋转角度（各格取不同值，制造"手贴"的感觉）
+@mixin journal-sticker($rotate: 0deg) {
+  position: relative;
+  flex: 1;
+  padding: 26rpx 12rpx 18rpx;
+  border-radius: 24rpx;
+  background: $color-bg-card;
+  border: 2rpx solid $color-border;
+  box-shadow: 0 10rpx 22rpx -16rpx rgba(61, 33, 18, 0.55);
+  text-align: center;
+  transform: rotate($rotate);
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -12rpx;
+    width: 88rpx;
+    height: 26rpx;
+    transform: translateX(-50%) rotate(-3deg);
+    background: rgba(255, 214, 150, 0.8);
+    border-left: 2rpx dashed rgba(255, 255, 255, 0.9);
+    border-right: 2rpx dashed rgba(255, 255, 255, 0.9);
+  }
+}
+
+/// 胶带（单独贴在照片/卡片顶边）
+@mixin journal-tape($width: 96rpx) {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -12rpx;
+  width: $width;
+  height: 26rpx;
+  transform: translateX(-50%) rotate(-3deg);
+  background: rgba(255, 214, 150, 0.8);
+  border-left: 2rpx dashed rgba(255, 255, 255, 0.9);
+  border-right: 2rpx dashed rgba(255, 255, 255, 0.9);
+}
+
+/// 旋转图章（已绝育 / 已完成 / 已逾期…）：外实线内虚线 + 微旋转
+@mixin journal-stamp($tint: primary-dark) {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 116rpx;
+  height: 116rpx;
+  border-radius: 50%;
+  border: 3rpx solid rgba(var(--#{$tint}-rgb, 240, 78, 29), 0.62);
+  transform: rotate(-11deg);
+  opacity: 0.92;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 6rpx;
+    left: 6rpx;
+    right: 6rpx;
+    bottom: 6rpx;
+    border: 2rpx dashed rgba(var(--#{$tint}-rgb, 240, 78, 29), 0.45);
+    border-radius: 50%;
+  }
+}
+
+/// 虚线槽进度条（手账里没画满的刻度是虚的）
+@mixin journal-track($height: 10rpx) {
+  height: $height;
+  border-radius: $radius-round;
+  border-bottom: 4rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.3);
+}
+
+/// 进度条填充
+@mixin journal-fill {
+  height: 10rpx;
+  border-radius: $radius-round;
+  background: $gradient-gold;
+}
