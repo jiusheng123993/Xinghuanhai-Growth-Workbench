@@ -401,7 +401,11 @@
     padding: 16rpx 32rpx;
     font-size: 24rpx;
     color: $color-text-secondary;
-    background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+    // 【审-2 复核修正 2026-09-11】原来只有 10% 金色淡底：在星空主题下它与深色页面底
+    // 合成后仍是深色，纸上钉的深色文字就"深字压深底"，实测对比度只有 2.06~2.37:1。
+    // 便签要真的是一张纸 —— 先给不透明纸底，再叠金色淡晕。
+    background: #fffdf8;
+    background-image: linear-gradient(rgba(var(--gold-rgb, 255, 176, 32), 0.1), rgba(var(--gold-rgb, 255, 176, 32), 0.1));
     border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
     border-radius: 24rpx;
   }
@@ -451,6 +455,8 @@
   }
 
   // 三个"没有内容可看"的文案统一成虚线便签：观感一致，也避免 26rpx 灰字看起来像页脚注释
+  // 【审-2 复核修正】纸底必须**不透明**：原来只有 10% 金色淡底，星空主题下与深色页面底合成仍是深色，
+  // 便签里钉的深色文字就成了"深字压深底"（实测 2.2:1 左右，几乎看不清）。纸 + 淡金晕分两层写。
   &__loading,
   &__empty,
   &__placeholder {
@@ -458,7 +464,8 @@
     margin-top: 8rpx;
     padding: 36rpx 32rpx;
     border-radius: 28rpx;
-    background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+    background: #fffdf8;
+    background-image: linear-gradient(rgba(var(--gold-rgb, 255, 176, 32), 0.1), rgba(var(--gold-rgb, 255, 176, 32), 0.1));
     border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
     font-size: 24rpx;
     line-height: 1.7;

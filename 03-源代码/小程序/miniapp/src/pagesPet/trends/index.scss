@@ -1058,13 +1058,12 @@
 .pet-trends-page {
 
   // —— 顶部时间范围切换：三枚贴纸胶囊（未选虚线纸面 / 选中实线暖底 / 会员锁定降透明） ——
+  // 注：原先这里还列了 `&__tabs/&__tab/&__tab--active`，它们会编译成 .pet-trends-page__tabs 等
+  // **tsx 不产出的死类名**（审-2 复核要求清零），故已移除。
   .pet-trends__time-range,
   .pet-trends__time-btn,
   .pet-trends__time-btn--active,
   .pet-trends__time-btn--locked,
-  &__tabs,
-  &__tab,
-  &__tab--active,
   .trends-ai-card,
   .trends-ai-card__badge,
   .trends-ai-card__badge--warn,
@@ -1118,26 +1117,15 @@
   }
 
   .pet-trends__time-btn--active .pet-trends__time-btn-text {
-    color: $color-primary-dark;
+    // 【审-2 复核修正】原来用 $color-primary-dark 当字色：星空主题下该变量是深主色，
+    // 压在"主色 12% 淡底"上实测只有 2.93:1（改前 4.68）→ 改用文字色（深色主题下自动取浅色）。
+    color: $color-text-primary;
   }
 
-  // 头像切换条/tab 条：加一层虚线，与板块内其它便签呼应
-  &__tabs {
-    background: #fffdf8;
-    border: 3rpx dashed $color-border;
-  }
-
-  &__tab {
-    border-radius: 28rpx;
-
-    &--active {
-      border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.5);
-    }
-  }
-
-  &__tab-text {
-    font-size: 26rpx;
-  }
+  // 【审-2 复核修正 2026-09-11】原来这里写了 &__tabs / &__tab / &__tab--active / &__tab-text，
+  // 编译成 .pet-trends-page__tabs 等 4 个类 —— 但**本页 tsx 根本不产出这些类名**
+  // （已 grep 全仓确认：`pet-trends-page__` 零命中，头像切换条用的是别的类）。
+  // 写了不会报错、也不会生效，属"死选择器"，审-2 复核要求清零，故删除。
 
   // —— AI 月度小结卡：整卡便签化 + 顶部一条胶带 ——
   .trends-ai-card {
@@ -1430,10 +1418,13 @@
   }
 
   // —— 免责声明：金色虚线便签（原来只是淡色底 + 实线边） ——
+  // 【审-2 复核修正】纸底必须不透明：只有 10% 金色淡底时，星空主题下与深色页面底合成仍是深色，
+  // 里面的深色小字就成了"深字压深底"（实测 2.54:1，改前 6.73）。纸 + 淡金晕分两层写。
   .pet-trends__disclaimer {
     padding: 20rpx 22rpx;
     border-radius: 26rpx;
-    background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+    background: #fffdf8;
+    background-image: linear-gradient(rgba(var(--gold-rgb, 255, 176, 32), 0.1), rgba(var(--gold-rgb, 255, 176, 32), 0.1));
     border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
   }
 
