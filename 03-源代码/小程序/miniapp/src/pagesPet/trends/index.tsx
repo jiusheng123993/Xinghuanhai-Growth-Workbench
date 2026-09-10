@@ -34,6 +34,7 @@ import { AnalyticsEventName } from '../../types/analyticsTypes'
 import './index.scss'
 import { Icon } from '../../components'
 import PageBackground from '../../components/PageBackground'
+import { localDateString } from '../../utils/date'
 
 type TimeRange = 'week' | 'month' | 'quarter'
 type TrendTab = 'weight' | 'appetite' | 'stool' | 'summary'
@@ -442,11 +443,46 @@ export default function PetTrendsPage() {
     return null
   }, [weightChartData])
 
-  /** 食欲卡右侧指标：末尾连续正常天数 */
+  /**
+   * 食欲卡右侧指标：末尾连续正常天数（按自然日去重）
+   *
+   * 2026-09-11 修复「按条数冒充天数」（审查 P3-7）：appetitePoints 里**每条打卡一行**
+   * （由 trendService.checkinToTrendDataPoint 逐条映射而来），同一天补记两次就是两行；
+   * 原来的实现直接在数组末尾累加条数，于是「连续正常 3 天」会被算成 4、5 天。
+   * 现在先把同一自然日归并成一天，再数末尾连续正常的天数。
+   *
+   * 归并规则：
+   * - 日期统一走 utils/date 的 localDateString（本地日历日 YYYY-MM-DD）；
+   *   不能自己写 toISOString().slice(0, 10) —— 那是 UTC，东八区 20:00 之后会差一天；
+   * - 同一天多条时保留「当天最晚的一条」：当天最后的状态比早上那条更贴近用户直觉；
+   * - 归并结果再按日期字符串从新到旧排序（YYYY-MM-DD 可直接字典序比较），
+   *   这样末尾不依赖数组本身是升序还是降序（与 reportService.calculateStreak 同一思路）。
+   */
   const appetiteStreak = useMemo(() => {
+    // 1) 先取每条记录的本地日历日：解析不出日期（date 为空串/脏数据）的直接跳过，
+    //    宁可少算一天，也不凭空多算一天
+    const dated = appetitePoints
+      .map((point) => ({ day: localDateString(point.date), point }))
+      .filter((item): item is { day: string; point: TrendDataPoint } => item.day !== null)
+
+    // 2) 判断数组是「新→旧」还是「旧→新」
+    // TrendDataPoint 只有日期、没有时刻字段，同一自然日内的先后只能靠数组顺序推断：
+    // 后端 /checkins 按 created_at DESC 返回（新→旧），本地缓存兜底则是插入顺序（旧→新），
+    // 两个来源方向相反，所以这里用首尾日期比一次大小，而不是写死升序
+    const newestFirst = dated.length > 1 && dated[0].day > dated[dated.length - 1].day
+
+    // 3) 同一自然日只留一条「当天最晚的」：
+    // 新→旧时当天最晚的那条先出现（保留首次），旧→新时最后出现的那条最晚（覆盖）
+    const latestOfDay = new Map<string, TrendDataPoint>()
+    for (const { day, point } of dated) {
+      if (newestFirst && latestOfDay.has(day)) continue
+      latestOfDay.set(day, point)
+    }
+
+    // 4) 从最新的一天往回数连续正常，遇到第一个非 normal 就停
     let streak = 0
-    for (let i = appetitePoints.length - 1; i >= 0; i--) {
-      if (appetitePoints[i].appetite === 'normal') streak++
+    for (const day of Array.from(latestOfDay.keys()).sort().reverse()) {
+      if (latestOfDay.get(day)!.appetite === 'normal') streak++
       else break
     }
     return streak

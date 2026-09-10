@@ -4,6 +4,25 @@ import React from 'react'
 import { render, fireEvent } from '@testing-library/react'
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Import the mocked modules and the component
+// ═══════════════════════════════════════════════════════════════════════════
+
+import { useTrend } from '../../../hooks/useTrend'
+import { useMembership } from '../../../hooks/useMembership'
+import PetTrendsPage, {
+  APPETITE_LABELS,
+  STOOL_LABELS,
+  APPETITE_COLORS,
+  STOOL_COLORS,
+  RISK_COLORS,
+  TIME_RANGE_OPTIONS,
+  TREND_TABS,
+} from '../index'
+
+
+import type { TrendDataPoint } from '../../../services/trendService'
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Hoisted variables used in vi.mock factories
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -54,7 +73,11 @@ const { mockUseMembershipFn } = vi.hoisted(() => ({
 // Mock all dependencies before importing the component
 // ═══════════════════════════════════════════════════════════════════════════
 
-vi.mock('../../../hooks/useThemeClass', () => ({ useThemeClass: vi.fn(() => '') }))
+vi.mock('../../../hooks/useThemeClass', () => ({
+  useThemeClass: vi.fn(() => ''),
+  useThemeKey: vi.fn(() => 'autumn'),
+  usePetWallpaper: vi.fn(() => null),
+}))
 
 vi.mock('../../../stores/petStore', () => ({
   usePetStore: vi.fn((selector?: (s: any) => any) => {
@@ -102,6 +125,7 @@ vi.mock('../../../components/HealthReportPreview', () => ({ default: () => null 
 vi.mock('../../../components/HealthTrendShareCard', () => ({ default: () => null }))
 vi.mock('../../../components/NpsSurvey', () => ({ default: () => null }))
 vi.mock('../../../components', () => ({
+  Icon: ({ name, className }: any) => <span className={className} data-icon={name} />,
   PetAvatar: () => null,
 }))
 
@@ -142,25 +166,6 @@ vi.mock('../../../hooks/useAnalytics', () => ({
 vi.mock('../../../types/analyticsTypes', () => ({ AnalyticsEventName: { ShareAction: 'share_action' } }))
 
 vi.mock('../../index.scss', () => ({}))
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Import the mocked modules and the component
-// ═══════════════════════════════════════════════════════════════════════════
-
-import { useTrend } from '../../../hooks/useTrend'
-import { useMembership } from '../../../hooks/useMembership'
-import PetTrendsPage from '../index'
-import {
-  APPETITE_LABELS,
-  STOOL_LABELS,
-  APPETITE_COLORS,
-  STOOL_COLORS,
-  RISK_COLORS,
-  TIME_RANGE_OPTIONS,
-  TREND_TABS,
-} from '../index'
-
-import type { TrendDataPoint } from '../../../services/trendService'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Helper: build a TrendDataPoint with defaults
@@ -591,6 +596,93 @@ describe('健康趋势页 - 食欲趋势展示', () => {
     const appetiteCard = chartCards[1]
     const legendItems = appetiteCard?.querySelectorAll('.trend-chart__legend-item') || []
     expect(legendItems.length).toBe(4)
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 4b. 食欲卡「连续N天正常」的天数口径（2026-09-11 修复 P3-7：按自然日去重）
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('健康趋势页 - 食欲连续正常天数按自然日去重', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockUseMembershipFn.mockReturnValue({
+      isMember: true,
+      checkAccess: mockCheckAccess,
+      shouldShowPaywall: false,
+      markPaywallShown: vi.fn(),
+    })
+  })
+
+  /**
+   * 渲染趋势页并取出食欲卡右侧那句指标文案
+   * （页面首屏用 useTrend 的 trendData 初始化三张图的 points，store 为空时不会覆盖）
+   * @param trendData - 要灌给 useTrend 的趋势数据点
+   * @returns 指标文案，例如「连续3天正常」或「近期有波动」
+   */
+  function renderAppetiteStreakText(trendData: TrendDataPoint[]): string {
+    mockUseTrendFn.mockReturnValue({
+      trendData,
+      summary: null,
+      monthlyReport: null,
+      isLoading: false,
+      error: null,
+      fetchWeightTrend: mockFetchWeightTrend,
+      fetchAppetiteTrend: mockFetchAppetiteTrend,
+      fetchStoolTrend: mockFetchStoolTrend,
+      fetchSummary: mockFetchSummary,
+      fetchMonthlyReport: mockFetchMonthlyReport,
+      clearError: mockClearError,
+    })
+
+    const { container } = render(React.createElement(PetTrendsPage))
+    const chartCards = container.querySelectorAll('.trends-chart-card')
+    // 卡片顺序固定为 体重 / 食欲 / 便便，所以第 2 张就是食欲卡
+    return chartCards[1]?.querySelector('.trends-chart-card__metric-text')?.textContent || ''
+  }
+
+  it('同一天补记多条只算一天（旧实现按条数会算成 4 天）', () => {
+    const text = renderAppetiteStreakText([
+      makeTrendPoint({ date: '2024-01-01', appetite: 'normal', weight: undefined }),
+      makeTrendPoint({ date: '2024-01-02', appetite: 'normal', weight: undefined }),
+      makeTrendPoint({ date: '2024-01-03', appetite: 'normal', weight: undefined }),
+      // 同一天补记的第二条：归并后依然是「3 天」
+      makeTrendPoint({ date: '2024-01-03', appetite: 'normal', weight: undefined }),
+    ])
+
+    expect(text).toContain('连续3天正常')
+  })
+
+  it('同一天多条时取该日最晚的一条（数组旧→新）', () => {
+    // 1-02 早上正常、晚上食欲变差 → 按「当天最晚的一条」算，连续天数归零
+    const text = renderAppetiteStreakText([
+      makeTrendPoint({ date: '2024-01-01', appetite: 'normal', weight: undefined }),
+      makeTrendPoint({ date: '2024-01-02', appetite: 'normal', weight: undefined }),
+      makeTrendPoint({ date: '2024-01-02', appetite: 'decreased', weight: undefined }),
+    ])
+
+    expect(text).toContain('近期有波动')
+  })
+
+  it('后端 /checkins 的新→旧顺序同样取该日最晚的一条', () => {
+    // 后端 checkinRepository 按 created_at DESC 返回，同一天里先出现的那条才是「当天最晚」，
+    // 旧实现从数组末尾往前数，会把这两条 normal 算成「连续2天正常」（因此本用例能锁住方向判断）
+    const text = renderAppetiteStreakText([
+      makeTrendPoint({ date: '2024-01-02', appetite: 'decreased', weight: undefined }),
+      makeTrendPoint({ date: '2024-01-02', appetite: 'normal', weight: undefined }),
+      makeTrendPoint({ date: '2024-01-01', appetite: 'normal', weight: undefined }),
+    ])
+
+    expect(text).toContain('近期有波动')
+  })
+
+  it('日期解析不出来的脏数据不参与计数（不凭空多算一天）', () => {
+    const text = renderAppetiteStreakText([
+      makeTrendPoint({ date: '2024-01-01', appetite: 'normal', weight: undefined }),
+      makeTrendPoint({ date: '', appetite: 'normal', weight: undefined }),
+    ])
+
+    expect(text).toContain('连续1天正常')
   })
 })
 
