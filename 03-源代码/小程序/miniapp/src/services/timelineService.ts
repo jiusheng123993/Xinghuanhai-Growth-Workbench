@@ -11,8 +11,21 @@ import { storage } from '../utils/storage'
 import type { PetMoment, PetMilestone } from '../types/familyTypes'
 
 export const timelineService = {
+  /**
+   * 拉取回忆列表
+   *
+   * 【limit 为什么是 100】2026-09-11 时光页改成"所有宠物共用一条时间线"后，这 50 条
+   *   不再是一只宠物的量，而是**全部宠物**的总量 —— 多宠家庭很容易攒够 50 条，
+   *   于是更早的回忆（往往是某只宠物唯一的早期记录）会被静默截断、在页面上彻底消失。
+   *   服务端该接口的上限就是 100（`timelineMomentsQuerySchema`），故这里直接取满。
+   * ⚠️ 已知边界：超过 100 条仍会被截断。彻底解决要给后端加分页/游标（`findByUser` 目前
+   *   不支持分页），属独立改造，不在本次范围；在此之前 100 是能拿到的最大值。
+   *
+   * @param petId - 可选：只取某只宠物的回忆（不传＝全部宠物共用一本）
+   * @param familyId - 可选：家庭维度的回忆
+   */
   async getMoments(petId?: string, familyId?: string): Promise<PetMoment[]> {
-    const params: Record<string, string> = { limit: '50' }
+    const params: Record<string, string> = { limit: '100' }
     if (petId) params.pet_id = petId
     if (familyId) params.family_id = familyId
     const data = await api.get<PetMoment[]>('/api/timeline/moments', params)
