@@ -1,7 +1,9 @@
 @import '../../styles/_theme';
+@import '../../styles/_animations';
+@import '../../styles/_journal';
 
-$lb-primary: #D08AA8;
-$lb-bg: #FFF0F5;
+$lb-primary: var(--primary-dark, #F04E1D);
+$lb-bg: transparent;
 
 // ===== 容器 =====
 .leaderboard-container {
@@ -116,7 +118,7 @@ $lb-bg: #FFF0F5;
   font-weight: $font-weight-medium;
 
   .period-tab--active & {
-    color: #fff;
+    color: #FFFDF8;
   }
 }
 
@@ -135,7 +137,7 @@ $lb-bg: #FFF0F5;
   flex-direction: column;
   padding: 24rpx 20rpx;
   border-radius: $radius-lg;
-  background: #fff;
+  background: #FFFDF8;
   box-shadow: $shadow-sm;
   width: 200rpx;
   animation: podiumAppear 0.5s ease-out both;
@@ -221,7 +223,7 @@ $lb-bg: #FFF0F5;
   padding: 20rpx 24rpx;
   margin-bottom: 12rpx;
   border-radius: $radius-md;
-  background: #fff;
+  background: #FFFDF8;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   @include press-feedback;
 }
@@ -335,7 +337,7 @@ $lb-bg: #FFF0F5;
   width: 160rpx;
   padding: 20rpx 16rpx;
   border-radius: $radius-lg;
-  background: #fff;
+  background: #FFFDF8;
   border: 2rpx solid $lb-primary;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
   animation: roleCardEnter 0.5s ease-out both;
@@ -368,4 +370,216 @@ $lb-bg: #FFF0F5;
   color: $color-text-tertiary;
   @include text-ellipsis;
   max-width: 100%;
+}
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖 + 配色纠偏）
+// ============================================
+// 【配色纠偏】这页和 share-card 一样是**写死的粉紫配色**（底 #FFF0F5、主粉 #D08AA8），
+// 与宠物板块其它页脱节：先把它们映射成主题 token（底→transparent 交给 PageBackground、
+// 主粉→var(--primary-dark)），再追加下面的布局皮肤。
+//
+// 【布局】排行页的"领奖台 + 榜单"很适合手账：前三名做成贴纸台卡，榜单行做成带虚线分隔的纸行，
+// 名词用衬线数字，职位/角色卡做成小贴纸。
+.leaderboard-container {
+  min-height: 100vh;
+  /* 背景交给 <PageBackground />（原来是写死粉底） */
+  background: transparent;
+
+  // 浅色面统一钉"卡内 token"（深色主题下 --text-* / --glass-bg 会被转浅）
+  .lb-header,
+  .lb-empty,
+  .lb-empty-list,
+  .rank-item,
+  .podium-item,
+  .role-card,
+  .period-tab,
+  .refresh-btn {
+    @include journal-paper-tokens;
+  }
+
+  // —— 页头：衬线标题 + 虚线短横 ——
+  .lb-header-title {
+    @include journal-serif(42rpx);
+    letter-spacing: 3rpx;
+  }
+
+  .refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 64rpx;
+    padding: 0 24rpx;
+    border-radius: $radius-round;
+    background: #FFFDF8;
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.4);
+    @include press-feedback;
+  }
+
+  .refresh-btn-text {
+    font-size: 22rpx;
+    font-weight: 700;
+    color: var(--primary-dark, #F04E1D);
+  }
+
+  // —— 周期切换：贴纸胶囊 ——
+  .period-tabs {
+    white-space: nowrap;
+  }
+
+  .period-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 64rpx;
+    padding: 0 26rpx;
+    margin-right: 14rpx;
+    border-radius: $radius-round;
+    background: #FFFDF8;
+    border: 3rpx dashed var(--border, #F3E2D2);
+    @include press-feedback;
+  }
+
+  .period-tab--active {
+    border-style: solid;
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+  }
+
+  .period-tab-text {
+    font-size: 24rpx;
+    font-weight: 700;
+    color: var(--text-secondary, #8B6E58);
+  }
+
+  .period-tab--active .period-tab-text {
+    color: var(--primary-dark, #F04E1D);
+  }
+
+  // —— 领奖台：前三名做成贴纸台卡（微旋转 + 胶带 + 衬线名字） ——
+  .podium-item {
+    position: relative;
+    border-radius: 28rpx;
+    background: #FFFDF8;
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.45);
+    box-shadow: $shadow-xs;
+
+    &:nth-child(1) { transform: rotate(-1.2deg); }
+    &:nth-child(2) { transform: rotate(0.8deg); }
+    &:nth-child(3) { transform: rotate(-0.6deg); }
+  }
+
+  .podium-rank {
+    @include journal-serif(34rpx);
+    color: var(--gold-deep, #E8920A);
+  }
+
+  .podium-avatar {
+    border-radius: 50%;
+    background: #FFFDF8;
+    box-shadow: 0 0 0 6rpx rgba(var(--gold-rgb, 255, 176, 32), 0.3);
+  }
+
+  .podium-name {
+    @include journal-serif(28rpx);
+  }
+
+  .podium-score {
+    font-size: 24rpx;
+    font-weight: 800;
+    color: var(--primary-dark, #F04E1D);
+    font-variant-numeric: tabular-nums;
+  }
+
+  // —— 榜单行：纸行 + 虚线分隔 ——
+  .rank-item {
+    border-radius: 26rpx;
+    background: #FFFDF8;
+    border: 3rpx dashed var(--border, #F3E2D2);
+    box-shadow: $shadow-xs;
+  }
+
+  .rank-number {
+    @include journal-serif(30rpx);
+    color: var(--text-tertiary, #B69B83);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rank-avatar {
+    border-radius: 50%;
+    background: #FFFDF8;
+    box-shadow: 0 0 0 5rpx rgba(var(--gold-rgb, 255, 176, 32), 0.24);
+  }
+
+  .rank-name {
+    font-size: 27rpx;
+    font-weight: 800;
+    color: var(--text-primary, #40281C);
+  }
+
+  // 徽章/指标做成小贴纸
+  .rank-badges .rank-badge,
+  .metric-item {
+    border-radius: 18rpx;
+    background: #FFF6EA;
+    border: 2rpx solid rgba(var(--gold-rgb, 255, 176, 32), 0.35);
+  }
+
+  .metric-item-label {
+    font-size: 19rpx;
+    color: var(--text-secondary, #8B6E58);
+  }
+
+  .metric-item-value {
+    font-size: 24rpx;
+    font-weight: 800;
+    color: var(--text-primary, #40281C);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rank-score {
+    font-size: 28rpx;
+    font-weight: 800;
+    color: var(--primary-dark, #F04E1D);
+    font-variant-numeric: tabular-nums;
+  }
+
+  // —— 角色区：贴纸卡 ——
+  .role-title {
+    @include journal-serif(30rpx);
+  }
+
+  .role-card {
+    border-radius: 26rpx;
+    background: #FFFDF8;
+    border: 3rpx dashed rgba(var(--teal-rgb, 79, 163, 227), 0.4);
+    box-shadow: $shadow-xs;
+    @include press-feedback;
+  }
+
+  .role-label,
+  .role-pet-name {
+    font-size: 22rpx;
+    color: var(--text-secondary, #8B6E58);
+  }
+
+  // —— 空态 / 加载：虚线便签 ——
+  .lb-empty,
+  .lb-empty-list {
+    padding: 60rpx 30rpx;
+    border-radius: 36rpx;
+    background: #FFFDF8;
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.4);
+  }
+
+  .lb-empty-text,
+  .lb-empty-list-text {
+    font-size: 24rpx;
+    font-weight: 700;
+    color: var(--text-primary, #40281C);
+  }
+
+  .lb-loading-text {
+    font-size: 23rpx;
+    color: var(--text-secondary, #8B6E58);
+  }
 }
