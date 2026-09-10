@@ -400,7 +400,9 @@
     display: block;
     padding: 16rpx 32rpx;
     font-size: 24rpx;
-    color: $color-text-secondary;
+    // 【审-4 终审修正】原用 text-secondary：淡金层把纸底压暗后实测 4.34~4.47:1，低于正文 4.5 线。
+    // 改用文字主色（纸面上约 12:1），淡金晕观感不变。
+    color: $color-text-primary;
     // 【审-2 复核修正 2026-09-11】原来只有 10% 金色淡底：在星空主题下它与深色页面底
     // 合成后仍是深色，纸上钉的深色文字就"深字压深底"，实测对比度只有 2.06~2.37:1。
     // 便签要真的是一张纸 —— 先给不透明纸底，再叠金色淡晕。
@@ -470,7 +472,8 @@
     font-size: 24rpx;
     line-height: 1.7;
     text-align: center;
-    color: $color-text-secondary;
+    // 【审-4 终审修正】同 calendar-loading__text：淡金层压暗纸底后 4.34~4.47:1 不达标，改主色（约 12:1）
+    color: $color-text-primary;
   }
 
   // 日程卡＝贴在日历下面的小纸片：虚线便签 + 左侧色条（颜色由 tsx 内联 style 决定，这里只改形状）

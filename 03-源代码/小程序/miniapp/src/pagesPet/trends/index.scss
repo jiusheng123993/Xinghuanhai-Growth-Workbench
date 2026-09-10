@@ -1100,7 +1100,12 @@
     &--active {
       border-style: solid;
       border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.6);
-      background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+      // 【审-4 终审修正 2026-09-11，P0】这里原来是**半透明**主色底 rgba(primary,.12)：
+      // 该元素在 token 钉块里被当"纸面"钉成了浅色主题的深棕文字，而半透明底会和页面根
+      // （星空主题下是深蓝紫）合成 → 实测 1.07:1，比改前(2.89:1)更差，用户看不出选中了哪个。
+      // 修法：纸底必须**不透明**，主色淡晕用 background-image 叠上去（两层写法，与便签同款）。
+      background-color: #fffaf3;
+      background-image: linear-gradient(rgba(var(--primary-rgb, 255, 107, 61), 0.12), rgba(var(--primary-rgb, 255, 107, 61), 0.12));
     }
 
     &--locked {
@@ -1431,7 +1436,11 @@
   .pet-trends__disclaimer-text {
     font-size: 22rpx;
     line-height: 1.7;
-    color: $color-text-secondary;
+    // 【审-4 终审修正 2026-09-11】原用 $color-text-secondary：10% 淡金层把纸底压暗后，
+    // 实测对比度只有 4.343(浅色)~4.473(星空)，都低于正文 4.5 的线
+    // （浅色更差是因为 .theme-autumn 未定义 --gold-rgb、回落的金色更饱和）。
+    // 改用文字主色（纸面上约 12:1），淡金晕的观感保持不变。
+    color: $color-text-primary;
   }
 
   // —— 报告弹窗：纸卡 + 虚线分隔（弹窗要真点"预览报告"才出现，预览里看不到） ——
