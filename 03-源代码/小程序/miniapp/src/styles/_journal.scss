@@ -27,14 +27,29 @@
 // ============================================
 
 /// 纸面 token 兜底：给"恒为浅底"的容器钉回浅色主题的文字/描边/玻璃色
+///
+/// 【为什么这里必须"钉全"（2026-09-11 由 10 号 / 11 号船员各自独立发现）】
+/// 这个 mixin 的语义是"把卡片内部的 token 全部钉回浅色取值"。只要漏掉一个通道，
+/// 用了该通道的容器在深色主题（.theme-starry）下就会变回主题的浅色值 → 出现
+/// "白字压白纸 / 深字压深底"。两次实测漏项：
+///   · `--bg-card`：`journal-sticker` 用它当贴纸底色 → 深色主题下贴纸变深底 + 墨字
+///   · `--text-hint`：`lineage` 页的小字用它 → 白字压白卡片
+/// 所以这里补齐"纸面上会用到的全部通道"，新增 mixin 若引入新通道，也要一起加进来。
 @mixin journal-paper-tokens {
+  // 文字层（含 hint：小字/脚注）
   --text-primary: #40281c;
   --text-secondary: #8b6e58;
   --text-tertiary: #a98d74;
   --text-placeholder: #cbb49e;
+  --text-hint: #967a62;
+  // 面层：卡片底（journal-sticker / 纸卡）、次级底
+  --bg-card: #fffdf8;
+  --bg-card-rgb: 255, 253, 248;
   --bg-secondary: #fffdf9;
+  // 描边层
   --border: #f3e2d2;
   --border-light: rgba(243, 226, 210, 0.5);
+  // 玻璃底（按钮/次级入口）
   --glass-bg: rgba(255, 255, 255, 0.72);
 }
 

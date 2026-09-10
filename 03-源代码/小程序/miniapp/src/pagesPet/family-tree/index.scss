@@ -1,5 +1,6 @@
 @import '../../styles/_theme';
 @import '../../styles/_animations';
+@import '../../styles/_journal';
 
 // ============================================
 // 家族图谱页 — 原型 1:1：头部卡 + 三代树形图 + 成员列表
@@ -7,7 +8,8 @@
 
 .family-tree {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
   position: relative;
   z-index: 1;
   animation: pageEnter 0.4s ease-out;
@@ -79,7 +81,10 @@
 }
 
 .ft-card__section-title {
-  display: block;
+  /* 图标 + 文字水平排列（原来 emoji 内联在标题文字里） */
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
   font-size: $font-size-md;
   font-weight: $font-weight-semibold;
   color: $color-text-secondary;
@@ -204,7 +209,7 @@
   // 铲屎官根节点头像（2026-08-24）：金色渐变，与宠物节点区分
   &--owner {
     border-color: $color-gold;
-    background: linear-gradient(135deg, rgba($color-gold, 0.35), rgba($color-primary, 0.2));
+    background: linear-gradient(135deg, rgba(var(--gold-rgb, 255, 176, 32), 0.35), rgba(var(--primary-rgb, 255, 107, 61), 0.2));
   }
 }
 
@@ -318,7 +323,7 @@
   transition: background $transition-fast;
 
   &--active {
-    background: rgba($color-primary, 0.04);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.04);
     border-radius: 16rpx;
     padding-left: 12rpx;
     padding-right: 12rpx;
@@ -330,7 +335,7 @@
 }
 
 .ft-member-row:active {
-  background: rgba($color-primary, 0.06);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
 }
 
 .ft-member-avatar {
@@ -416,7 +421,7 @@
   border-radius: 50%;
   overflow: hidden;
   @include flex-center;
-  background: linear-gradient(135deg, rgba($color-gold, 0.28), rgba($color-primary, 0.18));
+  background: linear-gradient(135deg, rgba(var(--gold-rgb, 255, 176, 32), 0.28), rgba(var(--primary-rgb, 255, 107, 61), 0.18));
   flex-shrink: 0;
 }
 
@@ -447,7 +452,7 @@
   background: $color-bg-secondary;
 
   &--owner {
-    background: rgba($color-gold, 0.22);
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.22);
   }
 }
 
@@ -500,7 +505,7 @@
   width: 44rpx;
   height: 44rpx;
   border-radius: 50%;
-  background: rgba($color-danger, 0.1);
+  background: rgba(var(--danger-rgb, 255, 90, 95), 0.1);
   font-size: 24rpx;
   color: $color-danger;
   flex-shrink: 0;
@@ -567,7 +572,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 32rpx 16rpx;
-  border-bottom: 1rpx solid rgba($color-text-primary, 0.06);
+  border-bottom: 1rpx solid rgba(var(--text-primary-rgb, 64, 40, 28), 0.06);
 }
 
 .relation-panel__title {
@@ -602,7 +607,7 @@
 .relation-form__picker {
   padding: 20rpx 24rpx;
   border-radius: $radius-md;
-  background: rgba($color-text-primary, 0.04);
+  background: rgba(var(--text-primary-rgb, 64, 40, 28), 0.04);
   font-size: 28rpx;
   color: $color-text-primary;
   display: flex;
@@ -625,7 +630,7 @@
   border-radius: $radius-round;
   font-size: 24rpx;
   color: $color-text-secondary;
-  background: rgba($color-text-primary, 0.04);
+  background: rgba(var(--text-primary-rgb, 64, 40, 28), 0.04);
   transition: $transition-fast;
 
   &--active {
@@ -654,4 +659,323 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.4);
   z-index: 99;
+}
+
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖）
+// ============================================
+// 【为什么追加而不是重写】本页（改前 661 行 / 60+ 个选择器）里有大量"预览里复现不了"的状态：
+//   ① `!currentFamily` 的整页空态（family-tree__empty + 空态按钮）—— 只有没家庭时才渲染；
+//   ② 加载态 family-tree__loading（要等 familyTreeService 返回，一闪而过）；
+//   ③ 图谱树里 `row.ownerRoot` 分支（无父母的宠物才有"铲屎官"根节点）；三代行里
+//      "第一代 · 父母 / 第三代 · 子女"两行要真实血缘数据才出现；
+//   ④ 两个关系弹窗（relation-panel，宠物关系 + 成员关系）—— 要点击"添加关系"才出现；
+//   ⑤ 成员列表的 `ft-member-row--active` 选中态、owner 才有的"添加成员关系"按钮、
+//      ft-rel-list 里 owner 才有的删除按钮；三处"暂无…"文案分支。
+// 直接重写会把上面这些看不见的状态样式一并丢掉，所以本轮只做**同特异性 + 顺序在后**的覆盖，
+// 一条原有规则都没删、没改。等哪天真机把状态跑全了，再把这段并回上面的模块段落。
+//
+// 【本页特意没碰的东西】
+//   ① **图谱几何**：.ft-node / .ft-tree-row / .ft-tree-parents / .ft-connector /
+//      .ft-connector-v / .ft-legend__line 的尺寸、间距、连接线粗细与虚实一律不动 ——
+//      它们是"树形图"的结构本身，动了就不是换皮肤而是改版式了；
+//   ② **emoji**：🧑 / › / ✕ / 💾 与 USER_REL_META 的表情（👫👨‍👧…）都是页面内容（人像与关系符号），
+//      不是装饰图标，按 emojiIconMap 的取舍原则保留，只统一尺寸与行高；
+//   ③ .overlay 遮罩：纯功能层，没有可"手账化"的视觉。
+//
+// 【本页有 4 个前缀，别写错】family-tree__*（页面骨架/空态）、ft-card*（通用卡片与图谱头部）、
+//   ft-tree-* / ft-node* / ft-avatar*（图谱几何，只允许改观感）、ft-member-* / ft-user-* /
+//   ft-rel-* / ft-actions*（列表与按钮）、relation-panel* / relation-form__*（弹窗）。
+// ============================================
+// 浅色纸面统一钉"卡内 token"：页面底跟随主题（星空主题下是深蓝紫），
+// 而下面这些面恒为浅纸（#fffdf8 / --bg-card 的浅色取值），必须把卡内文字/描边/玻璃色钉回浅色，
+// 否则深色主题下就是"白字压白纸"。**页面根 .family-tree 故意不钉**（它没有纸底，钉了就是深字压深底）。
+.family-tree__empty,
+.family-tree__empty-btn,
+.ft-card,
+.ft-user-row,
+.ft-member-row,
+.ft-action,
+.relation-panel,
+.relation-form__picker,
+.relation-form__type-item,
+.relation-form__submit {
+  @include journal-paper-tokens;
+}
+
+// —— 模块 ① 空态（无家庭时整页只有它）/ 加载态：给"无纸可依"的两处文案铺一张虚线便签 ——
+// 只在 !currentFamily 时，.family-tree__empty 直接坐在页面底上；空态文案是 24rpx 灰字浮在背景上，
+// 深色主题下几乎看不见。铺纸后这段文字才"有地方待"。
+.family-tree__empty {
+  border-radius: 36rpx;
+  background: #fffdf8;
+  border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.45);
+  box-shadow: $shadow-xs;
+
+  // 文案用主色而非灰：淡金细线压住的浅纸上，灰字对比度不够（同 calendar 页的裁决）
+  &-text {
+    color: $color-text-primary;
+  }
+
+  // 空态按钮＝手账主按钮（渐变 + 投影 + 按压缩放）
+  &-btn {
+    @include journal-button;
+    // 原规则靠 padding 撑高，这里由按钮 mixin 的 height 定高，宽度按内容撑开
+    width: auto;
+    padding: 0 56rpx;
+    // 原圆角 999rpx 与 mixin 一致，保留显式声明便于日后单改
+    border-radius: $radius-round;
+
+    // tsx 里按钮文字是裸 <Text>（无类名），只能靠后代选择器命中
+    Text {
+      color: #ffffff;
+      font-size: 28rpx;
+      font-weight: 700;
+      letter-spacing: 2rpx;
+    }
+  }
+}
+
+// 加载态在卡内（已被 .ft-card 钉过 token），这里显式再钉一次：
+// 万一将来把它挪出卡片，也不会变成深色主题下的隐形字；顺便把灰字提到次级色。
+.family-tree__loading {
+  @include journal-paper-tokens;
+
+  &-text {
+    color: $color-text-secondary;
+    letter-spacing: 1rpx;
+  }
+}
+
+// —— 模块 ② 通用卡（图谱头部卡 / 图谱树卡 / 成员卡 / 成员（人）卡 四张同用 .ft-card）——
+// 统一成"摊在桌面上的虚线便签"，避免四张卡各写一份。
+.ft-card {
+  @include journal-note(primary, 0.42);
+  padding: 30rpx 26rpx 24rpx;
+
+  &__section-title {
+    @include journal-serif(30rpx);
+    // 原规则的字号/字重/颜色被 mixin 覆盖（它是本文件最后出现，同特异性顺序在后即生效）；
+    // 只把字距收一点：衬线 + 2rpx 字距在"🌿 家族图谱"这类 5 字标题上会松得散架
+    letter-spacing: 1rpx;
+    padding-bottom: 16rpx;
+    border-bottom: 2rpx dashed rgba(243, 226, 210, 0.95);
+  }
+}
+
+// —— 模块 ③ 图谱头部卡：圆头像贴一张"胶带照片"、编辑入口做虚线贴纸胶囊 ——
+.ft-card__avatar {
+  // 圆形头像 + 纸白描边＝贴在纸上的一张小照片
+  border: 4rpx solid #fffdf8;
+  box-shadow: 0 8rpx 20rpx -14rpx rgba(61, 33, 18, 0.5);
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+.ft-card__edit {
+  border: 3rpx dashed $color-border;
+  background: #fffaf3;
+  @include press-feedback;
+
+  &:active {
+    border-style: solid;
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+  }
+}
+
+// —— 模块 ④ 图谱树：**只改文字与"照片"观感，几何与连接线一律不动** ——
+// 行标题（第一代 · 父母 / 🏠 铲屎官 …）＝手写小标题，下面带一条虚线
+.ft-tree-row-title {
+  @include journal-serif(24rpx);
+  letter-spacing: 1rpx;
+  padding-bottom: 10rpx;
+  border-bottom: 2rpx dashed rgba(243, 226, 210, 0.95);
+}
+
+// 节点头像：与原规则同为 4rpx 描边（只是换成纸白 + 投影），
+// **不写 width/height** —— 节点尺寸属于树形几何，本轮不碰
+.ft-avatar {
+  border-color: #fffdf8;
+  background: #fffaf3;
+  box-shadow: 0 8rpx 20rpx -14rpx rgba(61, 33, 18, 0.5);
+}
+
+.ft-node-name {
+  color: $color-text-primary;
+}
+
+.ft-node-role {
+  @include journal-status(primary, true);
+  max-width: 160rpx;
+}
+
+// —— 模块 ⑤ 家庭成员（宠物）列表：行＝便签里的虚线行，头像＝小照片，角色＝状态贴纸 ——
+.ft-member-row {
+  @include journal-row;
+
+  // 选中＝主色淡底 + 左侧主色细条（"这一行被铅笔圈过"）
+  &--active {
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
+    border-radius: 20rpx;
+    box-shadow: inset 6rpx 0 0 rgba(var(--primary-rgb, 255, 107, 61), 0.55);
+  }
+}
+
+.ft-member-avatar {
+  // 圆 → 圆角方片：与"贴纸照片"的语言一致
+  border-radius: 24rpx;
+  background: #fffaf3;
+  border: 4rpx solid #fffdf8;
+  box-shadow: 0 8rpx 20rpx -14rpx rgba(61, 33, 18, 0.5);
+}
+
+.ft-member-rel {
+  color: $color-text-tertiary;
+}
+
+.ft-member-role {
+  @include journal-status(primary, false);
+
+  &-text {
+    color: $color-text-secondary;
+  }
+}
+
+// 右侧箭头 › 是导航符号不是装饰，只统一尺寸/颜色
+.ft-member-arrow {
+  font-size: 30rpx;
+  color: $color-text-tertiary;
+}
+
+// 成员行里的文字色（原规则用 --text-*，卡面已钉回浅色取值，这里只是显式对齐）
+.ft-member-name {
+  color: $color-text-primary;
+}
+
+// —— 模块 ⑥ 家庭成员（人）卡：人节点行 + 人关系行 + 删除按钮 ——
+.ft-user-row {
+  @include journal-row;
+}
+
+// 人节点头像用金色淡底（与宠物节点区分），这里补纸白描边与投影保持同一套"贴纸照片"
+.ft-user-avatar {
+  border: 4rpx solid #fffdf8;
+  box-shadow: 0 8rpx 20rpx -14rpx rgba(61, 33, 18, 0.5);
+}
+
+.ft-user-name {
+  color: $color-text-primary;
+}
+
+// 创建者/成员胶囊＝贴纸；owner 态用金色填充（金色 = 铲屎官/家长，与 ft-avatar--owner 同源）
+.ft-user-role {
+  @include journal-status(gold, false);
+
+  &--owner {
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.14);
+    border-style: solid;
+    border-color: rgba(var(--gold-rgb, 255, 176, 32), 0.6);
+  }
+}
+
+// 人关系区块：与上方人节点列表之间用虚线撕口分开（原为 2rpx 实线）
+.ft-rel-list {
+  border-top: 2rpx dashed rgba(243, 226, 210, 0.95);
+}
+
+.ft-rel-row {
+  @include journal-row;
+}
+
+.ft-rel-text {
+  color: $color-text-primary;
+}
+
+// 删除关系：危险色虚线小圆钮（圆形保留，它是"打叉"的印章位）
+.ft-rel-remove {
+  border: 3rpx dashed rgba(var(--danger-rgb, 255, 90, 95), 0.5);
+  @include press-feedback;
+}
+
+// —— 模块 ⑦ 关系管理入口（卡底两个按钮）：与其它宠物页统一为手账按钮语言 ——
+.ft-actions {
+  // 卡内的分隔用虚线（实线在这个语言里更像表格）
+  border-top: 2rpx dashed rgba(243, 226, 210, 0.95);
+}
+
+.ft-action--primary {
+  @include journal-button;
+  height: 88rpx;
+}
+
+// 次级按钮＝纸面上的虚线胶囊（不能用 journal-ghost：那是给"坐在页面背景上"的入口用的玻璃底）
+.ft-action--outline {
+  border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.55);
+  background: #fffaf3;
+  @include press-feedback;
+}
+
+// 文字色：主按钮纸白（压渐变底），次级按钮主色（压纸底）
+.ft-action__text {
+  color: #ffffff;
+
+  .ft-action--outline & {
+    color: $color-primary;
+  }
+}
+
+// —— 模块 ⑧ 关系弹窗（添加宠物关系 / 添加成员关系，预览看不到）——
+// 弹窗是"从桌面下抽出来的另一张纸"：纸底 + 顶部虚线撕口 + 衬线标题
+.relation-panel {
+  background: #fffdf8;
+
+  &__header {
+    border-bottom: 2rpx dashed rgba(243, 226, 210, 0.95);
+  }
+
+  &__title {
+    @include journal-serif(32rpx);
+  }
+
+  &__close {
+    color: $color-text-tertiary;
+    @include press-feedback;
+  }
+}
+
+// 选择器（请选择宠物 A / 成员 A）＝虚线槽：手账里"待填的栏位"就是虚线框
+.relation-form__picker {
+  border: 3rpx dashed $color-border;
+  background: #fffaf3;
+  @include press-feedback;
+
+  &-placeholder {
+    color: $color-text-placeholder;
+  }
+}
+
+.relation-form__label {
+  color: $color-text-secondary;
+}
+
+// 关系类型＝一排贴纸胶囊；选中＝主色实线 + 主色淡底（用 token 而不是写死 #fff，
+// 这样深色主题切换主色时文字仍可读）
+.relation-form__type-item {
+  border: 3rpx dashed $color-border;
+  background: #fffaf3;
+  @include press-feedback;
+
+  &--active {
+    border-style: solid;
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.14);
+  }
+}
+
+// 确认添加＝手账主按钮（原本是渐变块 + 文字，这里补上定高/居中/投影/按压反馈）
+.relation-form__submit {
+  @include journal-button;
+  height: 96rpx;
 }
