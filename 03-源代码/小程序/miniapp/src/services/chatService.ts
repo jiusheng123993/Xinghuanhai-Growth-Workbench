@@ -6,7 +6,7 @@
 import Taro from '@tarojs/taro'
 import type { ChatMessage } from '../types/chatTypes'
 import { chat, guardCheck, guardCheckOutput } from './aiProvider'
-import { checkInput as ruleCheck, sanitizeOutput } from '../utils/ruleGuard'
+import { checkInput as ruleCheck } from '../utils/ruleGuard'
 import { SYSTEM_PROMPT_BASE } from '../types/chatTypes'
 import { requireAuth } from '../utils/authGuard'
 import { logger } from '../logger'
@@ -200,8 +200,13 @@ export async function sendChatMessage(
       }
     }
 
+    // 聊天为纯文本渲染（React {text} 自动转义 XSS，无需手动 HTML 转义），只做长度截断。
+    // 此前用 sanitizeOutput 做 HTML 转义，会把 AI 回复里的双引号转成 &quot; 等实体乱码
+    // （2026-09-10 用户反馈"聊天出现不相干符号 &quot"）。截断 2000 与服务端持久化口径一致。
+    const safeReply = reply.length > 2000 ? reply.slice(0, 2000) : reply
+
     return {
-      reply: sanitizeOutput(reply, 2000),
+      reply: safeReply,
       blocked: false
     }
   } catch (err) {
