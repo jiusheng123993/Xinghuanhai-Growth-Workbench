@@ -1,9 +1,11 @@
 @import '../../styles/_theme';
+@import '../../styles/_journal';
 @import '../../styles/_animations';
 
 .add-pet {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
   padding: $spacing-xl $spacing-lg;
   padding-bottom: 200rpx;
   animation: pageEnter 0.4s ease-out;
@@ -134,7 +136,7 @@
   background: $color-primary-bg;
   border-color: $color-primary;
   color: $color-primary;
-  box-shadow: 0 0 16rpx rgba($color-primary, 0.15);
+  box-shadow: 0 0 16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.15);
 }
 
 .add-pet__species-icon {
@@ -164,7 +166,7 @@
   background: $color-primary-bg;
   border-color: $color-primary;
   color: $color-primary;
-  box-shadow: 0 0 16rpx rgba($color-primary, 0.15);
+  box-shadow: 0 0 16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.15);
 }
 
 .add-pet__switch-row {
@@ -233,7 +235,7 @@
   font-weight: $font-weight-bold;
   border-radius: $radius-round;
   @include flex-center;
-  box-shadow: 0 8rpx 32rpx rgba($color-primary, 0.3);
+  box-shadow: 0 8rpx 32rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
   transition: all $transition-fast;
   @include press-feedback;
 }
@@ -245,19 +247,19 @@
 
 .add-pet__breed-info {
   @include card-base;
-  border-color: rgba($color-primary, 0.25);
+  border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.25);
   border-radius: $radius-lg;
   padding: 28rpx $spacing-lg;
   display: flex;
   flex-direction: column;
   gap: 20rpx;
-  box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.08);
+  box-shadow: 0 4rpx 16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.08);
   animation: fadeInUp 0.35s ease-out;
 }
 
 .add-pet__breed-info-header {
   padding-bottom: $spacing-md;
-  border-bottom: 2rpx solid rgba($color-primary, 0.15);
+  border-bottom: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.15);
 }
 
 .add-pet__breed-info-title {
@@ -274,6 +276,10 @@
 }
 
 .add-pet__breed-info-label {
+  /* 图标 + 文字水平排列（原来 emoji 内联在标签文字里） */
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
   font-size: 26rpx;
   color: $color-text-secondary;
   font-weight: $font-weight-medium;
@@ -293,7 +299,7 @@
 }
 
 .add-pet__breed-info-tag--warn {
-  background: rgba($color-primary, 0.12);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
   color: $color-primary-light;
 }
 
@@ -405,8 +411,8 @@
   gap: $spacing-md;
   margin: $spacing-md $spacing-lg;
   padding: $spacing-md $spacing-lg;
-  background: linear-gradient(135deg, rgba($color-primary, 0.12), rgba($color-primary, 0.06));
-  border: 2rpx solid rgba($color-primary, 0.35);
+  background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.12), rgba(var(--primary-rgb, 255, 107, 61), 0.06));
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.35);
   border-radius: $radius-md;
   flex-shrink: 0;
   @include press-feedback;
@@ -449,7 +455,7 @@
 // 识别结果卡：物种图标 + 识别名 + 置信度 + 操作按钮
 .add-pet__breed-panel-recognize-result {
   background: $color-bg-card;
-  border: 2rpx solid rgba($color-primary, 0.3);
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.3);
   border-radius: $radius-md;
   padding: $spacing-md;
   margin-bottom: $spacing-md;
@@ -497,10 +503,12 @@
   flex: 1;
   height: 72rpx;
   @include flex-center;
+  /* 图标与文字间距（原来 emoji 内联在文字里） */
+  gap: 8rpx;
   font-size: $font-size-sm;
   color: $color-primary;
-  background: rgba($color-primary, 0.1);
-  border: 2rpx solid rgba($color-primary, 0.3);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.3);
   border-radius: $radius-round;
   @include press-feedback;
 
@@ -522,7 +530,7 @@
 .add-pet__breed-panel-mask {
   position: absolute;
   inset: 0;
-  background: rgba($color-bg-card, 0.85);
+  background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.85);
   border-radius: $radius-xl $radius-xl 0 0;
   display: flex;
   flex-direction: column;
@@ -535,7 +543,7 @@
 .add-pet__breed-panel-mask-spinner {
   width: 56rpx;
   height: 56rpx;
-  border: 6rpx solid rgba($color-primary, 0.2);
+  border: 6rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.2);
   border-top-color: $color-primary;
   border-radius: $radius-full;
   animation: spin 0.8s linear infinite;
@@ -554,8 +562,8 @@
 
 // 「不确定品种」固定行：顶置高亮，帮不知道品种（混血/串串/流浪猫狗）的用户快速兜底
 .add-pet__breed-panel-item--unknown {
-  background: rgba($color-primary, 0.08);
-  border: 2rpx solid rgba($color-primary, 0.25);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.25);
   border-radius: $radius-md;
   padding: $spacing-md;
   margin-bottom: $spacing-md;
@@ -628,4 +636,221 @@
   margin-top: $spacing-sm;
   font-size: $font-size-sm;
   color: $color-text-hint;
+}
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖）
+// ============================================
+// 【一份样式管两页】edit 页 `import '../add/index.scss'`，所以这层同时覆盖「添加宠物」与
+// 「编辑档案」两页，改一次两页生效。
+// 【配色本来就走 token】本页没有硬编码色（实测计算值为 rgba(var(--primary-rgb),.08) 等），
+// 所以这里只做**形状与排版**的手账化，不涉及配色纠偏。
+// 【看不到的状态】品种搜索面板（含拍照识别结果、识别中遮罩）在预览里复现不了
+// （要真机点「品种」才展开），按已知类名一并统一，避免两套观感。
+.add-pet {
+  // 浅色面统一钉"卡内 token"（深色主题下 --text-* / --glass-bg 会被转浅，纸面恒为浅底）
+  &__input,
+  &__textarea,
+  &__picker,
+  &__species-btn,
+  &__gender-btn,
+  &__photo-area,
+  &__breed-info,
+  &__breed-panel,
+  &__breed-panel-recognize,
+  &__breed-panel-item {
+    @include journal-paper-tokens;
+  }
+
+  // —— 表单字段：纸色底 + 虚线边（手账里待填的格子） ——
+  &__form-item {
+    margin-bottom: 22rpx;
+  }
+
+  &__label {
+    display: block;
+    margin-bottom: 10rpx;
+    font-size: 22rpx;
+    font-weight: 600;
+    letter-spacing: 1rpx;
+    color: $color-text-secondary;
+  }
+
+  &__input,
+  &__textarea,
+  &__picker {
+    height: 84rpx;
+    padding: 0 22rpx;
+    border-radius: 24rpx;
+    background: #fffaf3;
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.5);
+    font-size: 26rpx;
+    color: $color-text-primary;
+  }
+
+  &__textarea {
+    height: auto;
+    min-height: 140rpx;
+    padding: 18rpx 22rpx;
+    line-height: 1.6;
+  }
+
+  &__input-placeholder,
+  &__textarea-placeholder,
+  &__picker-placeholder {
+    color: $color-text-placeholder;
+    font-size: 25rpx;
+  }
+
+  // —— 物种 / 性别：贴纸按钮（未选虚线 / 选中实线 + 主色淡底） ——
+  &__species-btn,
+  &__gender-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10rpx;
+    min-height: 88rpx;
+    border-radius: 26rpx;
+    background: #fffdf8;
+    border: 3rpx dashed $color-border;
+    @include press-feedback;
+  }
+
+  &__species-btn--active,
+  &__gender-btn--active {
+    border-style: solid;
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+    box-shadow: 0 8rpx 18rpx -12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.9);
+  }
+
+  // —— 头像上传区：把虚线框做成"照片位"（相纸感） ——
+  &__photo-area {
+    border-radius: 28rpx;
+    background: #fffdf8;
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.4);
+    overflow: hidden;
+  }
+
+  &__photo-preview {
+    border-radius: 24rpx;
+    overflow: hidden;
+  }
+
+  // —— 品种特征卡：虚线便签 ——
+  &__breed-info {
+    @include journal-note(primary, 0.42);
+    padding: 22rpx 24rpx 18rpx;
+  }
+
+  &__breed-info-title {
+    @include journal-serif(28rpx);
+  }
+
+  &__breed-info-label {
+    font-size: 22rpx;
+    color: $color-text-secondary;
+  }
+
+  &__breed-info-value {
+    font-size: 24rpx;
+    font-weight: 700;
+    color: $color-text-primary;
+  }
+
+  &__breed-info-tag {
+    display: inline-flex;
+    align-items: center;
+    height: 44rpx;
+    padding: 0 16rpx;
+    border-radius: $radius-round;
+    background: #fff6ea;
+    border: 2rpx solid rgba(var(--gold-rgb, 255, 176, 32), 0.35);
+    font-size: 20rpx;
+    font-weight: 700;
+    color: $color-text-secondary;
+  }
+
+  &__breed-info-tag--warn {
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.14);
+    border-color: rgba(var(--gold-rgb, 255, 176, 32), 0.55);
+    color: $color-gold-deep;
+  }
+
+  &__breed-info-tag--danger {
+    background: rgba(var(--danger-rgb, 255, 90, 95), 0.12);
+    border-color: rgba(var(--danger-rgb, 255, 90, 95), 0.5);
+    color: $color-danger;
+  }
+
+  // —— 提交按钮：手账主按钮（全页唯一） ——
+  &__submit-btn {
+    @include journal-button;
+  }
+
+  // —— 品种选择面板（预览看不到，按已知类名统一成纸卡） ——
+  &__breed-panel {
+    border-radius: 40rpx 40rpx 0 0;
+    background: #fffdf8;
+    border-top: 3rpx solid rgba(var(--gold-rgb, 255, 176, 32), 0.5);
+  }
+
+  &__breed-panel-title {
+    @include journal-serif(30rpx);
+  }
+
+  &__breed-panel-search {
+    border-radius: 24rpx;
+    background: #fffaf3;
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.5);
+  }
+
+  // 「拍照识别品种」入口：主色淡底虚线卡（与板块内"可点卡片"同款）
+  &__breed-panel-recognize {
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.45);
+    border-radius: 26rpx;
+  }
+
+  &__breed-panel-recognize-title {
+    font-size: 26rpx;
+    font-weight: 800;
+    color: $color-primary-dark;
+  }
+
+  &__breed-panel-recognize-sub {
+    font-size: 20rpx;
+    color: $color-text-secondary;
+  }
+
+  // 品种列表项：贴纸行（选中实线 + 主色淡底）
+  &__breed-panel-item {
+    border-radius: 22rpx;
+    background: #fffdf8;
+    border: 3rpx dashed $color-border;
+    @include press-feedback;
+  }
+
+  &__breed-panel-item--active {
+    border-style: solid;
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+  }
+
+  // 「不确定品种」兜底行：金底强调（与其它行区分开）
+  &__breed-panel-item--unknown {
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.14);
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.6);
+  }
+
+  &__breed-panel-item-name {
+    font-size: 26rpx;
+    font-weight: 700;
+    color: $color-text-primary;
+  }
+
+  &__breed-panel-item-alias,
+  &__breed-panel-item-origin {
+    font-size: 20rpx;
+    color: $color-text-secondary;
+  }
 }
