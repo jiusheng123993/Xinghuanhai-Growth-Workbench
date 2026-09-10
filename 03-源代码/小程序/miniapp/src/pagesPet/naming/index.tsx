@@ -4,14 +4,16 @@
  * 业务接回：recommendNames / interpretName（真实 AI 服务 + 本地降级）
  */
 import { View, Text, Input } from '@tarojs/components'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import Taro from '@tarojs/taro'
 import { useThemeClass } from '../../hooks/useThemeClass'
 import { usePetStore } from '../../stores/petStore'
 import { interpretName, recommendNames } from '../../services/namingService'
 import { parseRecommendResult, generateFallbackNames } from '../../utils/namingFallback'
+import { AuthenticationError } from '../../utils/authGuard'
 import type { NamingResult } from '../../types/chatTypes'
 import './index.scss'
+import { PageBackground, Icon  } from '../../components'
 
 type NamingMode = 'ai' | 'interpret' | 'inspire' | 'pair'
 
@@ -53,7 +55,9 @@ export default function NamingPage() {
   const { currentPet } = usePetStore()
 
   const [mode, setMode] = useState<NamingMode>('ai')
-  const [species, setSpecies] = useState<'cat' | 'dog'>('cat')
+  // 物种默认跟随当前宠物档案（2026-09-10 审查 P1 修复）：写死 'cat' 会让狗主人
+  // 得到"为一只柯基（猫咪）推荐…"这类错误提示词——species 本轮起会真正进提示词
+  const [species, setSpecies] = useState<'cat' | 'dog'>(currentPet?.species === 'dog' ? 'dog' : 'cat')
   const [breed, setBreed] = useState(currentPet?.breed || '')
   const [birthDate, setBirthDate] = useState(currentPet?.birthDate || '')
   const [gender, setGender] = useState<'male' | 'female'>('female')
@@ -74,9 +78,31 @@ export default function NamingPage() {
   const [generated, setGenerated] = useState(false)
 
   const isRecommendMode = mode !== 'interpret'
+  /** 生成中（同步 ref）：防止慢响应时连点"开始取名"并发多次付费 LLM 调用 */
+  const generatingRef = useRef(false)
+
+  // 页面内切换宠物时同步物种（2026-09-10 审查 P1）：useState 初值只在首次挂载生效，
+  // 不同步会出现"切到狗以后仍按猫咪取提示词"
+  useEffect(() => {
+    if (currentPet?.species === 'cat' || currentPet?.species === 'dog') {
+      setSpecies(currentPet.species)
+    }
+  }, [currentPet?.id, currentPet?.species])
+
+  /**
+   * 判断 AI 返回文本是否为错误占位文案
+   *
+   * aiProvider.chat 在网络失败/服务异常时**不抛错**，而是返回固定文案
+   * （'AI服务暂不可用，请稍后再试' / '网络异常，请检查网络连接后重试'）。
+   * 不判断就会把错误提示当成本次解读正文展示给用户（2026-09-10 修复）。
+   */
+  const isAiErrorText = (text: string): boolean =>
+    !text || text.startsWith('AI服务暂不可用') || text.startsWith('网络异常')
 
   /** 开始取名 */
   const handleGenerate = useCallback(async () => {
+    // 防连点：每次点击=一次付费 LLM 调用，此前只改按钮文案未拦截重复点击
+    if (generatingRef.current) return
     if (!breed.trim()) {
       Taro.showToast({ title: '请先填写品种', icon: 'none' })
       return
@@ -86,6 +112,7 @@ export default function NamingPage() {
       return
     }
 
+    generatingRef.current = true
     setLoading(true)
     setGenerated(true)
     setInterpretText('')
@@ -93,7 +120,14 @@ export default function NamingPage() {
     try {
       if (mode === 'interpret') {
         const text = await interpretName(interpretInput.trim(), breed.trim(), birthDate)
-        setInterpretText(text || '解读服务暂时不可用，请稍后再试。')
+        if (isAiErrorText(text)) {
+          // 失败时不显示假结果（此前会把 'AI服务暂不可用' 当解读正文渲染）
+          setInterpretText('')
+          setGenerated(false)
+          Taro.showToast({ title: '解读服务暂时不可用，请稍后再试', icon: 'none' })
+          return
+        }
+        setInterpretText(text)
         setNames([])
         return
       }
@@ -111,6 +145,9 @@ export default function NamingPage() {
         birthDate,
         gender,
         style,
+        // 物种必须传下去（2026-09-10 修复）：此前页面上的"🐱猫/🐶狗"chip 是无效控件，
+        // 用户选"狗"也只会得到没有任何物种信息的提示词
+        species,
         description: description || undefined,
       })
       const parsed = parseRecommendResult(res)
@@ -124,18 +161,49 @@ export default function NamingPage() {
 
       setNames(resultList.slice(0, 5))
       setExpandedIndex(0)
-    } catch {
+    } catch (err) {
+      // 未登录/登录过期：requireAuth 内部已跳登录页，这里不再生成"假成功"的本地名字
+      if (err instanceof AuthenticationError || (err as Error)?.name === 'AuthenticationError') {
+        setGenerated(false)
+        Taro.showToast({ title: '请先登录后再使用 AI 取名', icon: 'none' })
+        return
+      }
       if (mode === 'interpret') {
-        setInterpretText('解读服务暂时不可用，请稍后再试。')
+        setGenerated(false)
+        Taro.showToast({ title: '解读服务暂时不可用，请稍后再试', icon: 'none' })
       } else {
         const style = mode === 'inspire' ? inspireStyle : keywords.trim() || '不限风格'
         setNames(generateFallbackNames(style).slice(0, 5))
         setExpandedIndex(0)
       }
     } finally {
+      generatingRef.current = false
       setLoading(false)
     }
-  }, [mode, breed, birthDate, gender, coatColor, keywords, interpretInput, inspireStyle, pairName])
+  }, [mode, breed, birthDate, gender, species, coatColor, keywords, interpretInput, inspireStyle, pairName])
+
+  /**
+   * 就用这个名字：把候选名字写入当前宠物档案（重命名）
+   *
+   * 2026-09-10 新增（结果闭环）：此前取名页只能"看"，用户想用还得去宠物编辑页重敲一遍。
+   * @param name - 选中的名字
+   */
+  const handleApplyName = useCallback(async (name: string) => {
+    if (!currentPet) {
+      Taro.showToast({ title: '请先添加宠物', icon: 'none' })
+      return
+    }
+    if (currentPet.name === name) {
+      Taro.showToast({ title: '宝贝已经叫这个名字啦', icon: 'none' })
+      return
+    }
+    try {
+      await usePetStore.getState().updatePet(currentPet.id, { name })
+      Taro.showToast({ title: `已改名为「${name}」`, icon: 'success' })
+    } catch {
+      Taro.showToast({ title: '改名失败，请稍后再试', icon: 'none' })
+    }
+  }, [currentPet])
 
   const switchMode = useCallback((m: NamingMode) => {
     setMode(m)
@@ -147,6 +215,7 @@ export default function NamingPage() {
 
   return (
     <View className={`naming ${themeClass}`}>
+      <PageBackground />
       {/* 页面标题区 */}
       <View className='naming__head'>
         <View className='naming__title-row'>
@@ -179,7 +248,7 @@ export default function NamingPage() {
       {/* 宠物信息输入卡 */}
       <View className='xhh-card naming__form'>
         <View className='naming__form-title'>
-          <Text className='naming__form-title-icon'>🐾</Text>
+          <Icon name='paw-print' size={18} tone='primary' className='naming__form-title-icon' />
           <Text className='naming__form-title-text'>宠物信息</Text>
         </View>
 
@@ -207,7 +276,9 @@ export default function NamingPage() {
                     className={`naming__chip ${species === opt.value ? 'naming__chip--active' : ''}`}
                     onClick={() => setSpecies(opt.value)}
                   >
-                    <Text className='naming__chip-text'>{opt.label}</Text>
+                    {/* 物种属功能性图标位：emoji 换面性 Icon，可随主题换色（与全站图标体系一致） */}
+                    <Icon name={opt.value === 'cat' ? 'cat' : 'dog'} size={14} tone={species === opt.value ? 'primary' : 'muted'} />
+                    <Text className='naming__chip-text'>{opt.value === 'cat' ? '猫' : '狗'}</Text>
                   </View>
                 ))}
               </View>
@@ -403,6 +474,15 @@ export default function NamingPage() {
                         <Text className='naming__insight-title'>寓意详解</Text>
                         <Text className='naming__insight-text'>{item.meaning}</Text>
                       </View>
+                    </View>
+
+                    {/* 结果闭环：一键用这个名字重命名当前宠物（2026-09-10） */}
+                    <View
+                      className='naming__apply-btn'
+                      hoverClass='naming__apply-btn--hover'
+                      onClick={(e) => { e.stopPropagation(); handleApplyName(item.name) }}
+                    >
+                      <Text className='naming__apply-btn-text'>就用这个名字 ✨</Text>
                     </View>
                   </View>
                 )}

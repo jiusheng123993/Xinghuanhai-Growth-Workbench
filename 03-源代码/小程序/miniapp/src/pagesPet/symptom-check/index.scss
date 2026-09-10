@@ -996,7 +996,7 @@
     padding: 0 16rpx;
     border-radius: $radius-round;
     background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
-    border: 2rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.4);
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.4);
     flex-shrink: 0;
   }
 
@@ -1039,7 +1039,7 @@
     padding: 0 20rpx;
     border-radius: 24rpx;
     background: #fffaf3;
-    border: 2rpx dashed $color-border;
+    border: 3rpx dashed $color-border;
     @include press-feedback;
   }
 
@@ -1135,7 +1135,7 @@
     padding: 14rpx 18rpx;
     border-radius: 20rpx;
     background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
-    border: 2rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
   }
 
   &__tip-note-text {
@@ -1196,12 +1196,12 @@
 
   &__btn--hospital {
     background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
-    border: 2rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.45);
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.45);
   }
 
   &__btn--outline {
     background: $glass-bg;
-    border: 2rpx dashed $color-border;
+    border: 3rpx dashed $color-border;
   }
 
   &__btn-text {
@@ -1220,6 +1220,6 @@
     padding: 18rpx 22rpx;
     border-radius: 24rpx;
     background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
-    border: 2rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
   }
 }

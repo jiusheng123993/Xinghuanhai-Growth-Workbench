@@ -536,7 +536,7 @@
   &__search-wrapper {
     background: #fffdf8;
     border-radius: 28rpx;
-    border: 2rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.4);
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.4);
     box-shadow: $shadow-xs;
   }
 
@@ -563,7 +563,7 @@
     margin-right: 14rpx;
     border-radius: $radius-round;
     background: #fffdf8;
-    border: 2rpx dashed $color-border;
+    border: 3rpx dashed $color-border;
     font-size: 24rpx;
     font-weight: 700;
     color: $color-text-secondary;
@@ -662,7 +662,7 @@
     padding: 18rpx 22rpx;
     border-radius: 24rpx;
     background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
-    border: 2rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
   }
 
   &__disclaimer-text {

@@ -1,12 +1,14 @@
 @import '../../styles/_theme';
 @import '../../styles/_animations';
+@import '../../styles/_journal';
 
 // ============================================
 // 取名引擎页 · 原型 1:1
 // ============================================
 .naming {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
   padding: $spacing-xl $spacing-lg $spacing-xxl;
   display: flex;
   flex-direction: column;
@@ -363,7 +365,7 @@
   }
 
   &--info {
-    background: rgba($color-teal, 0.14);
+    background: rgba(var(--teal-rgb, 79, 163, 227), 0.14);
     color: $color-teal;
   }
 }
@@ -430,7 +432,7 @@
   flex-shrink: 0;
 
   &--success {
-    background: rgba($color-success, 0.14);
+    background: rgba(var(--success-rgb, 47, 201, 142), 0.14);
   }
 
   &--gold {
@@ -438,7 +440,7 @@
   }
 
   &--info {
-    background: rgba($color-teal, 0.14);
+    background: rgba(var(--teal-rgb, 79, 163, 227), 0.14);
   }
 
   &--coral {
@@ -466,6 +468,30 @@
   color: $color-text-secondary;
 }
 
+// —— 「就用这个名字」按钮（2026-09-10 结果闭环）——
+.naming__apply-btn {
+  margin-top: 20rpx;
+  padding: 20rpx 0;
+  border-radius: $radius-md;
+  background-image: linear-gradient(135deg, $color-primary-light, $color-primary);
+  box-shadow: 0 6rpx 16rpx rgba(255, 107, 61, 0.24);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.naming__apply-btn--hover {
+  opacity: 0.9;
+  transform: scale(0.985);
+}
+
+.naming__apply-btn-text {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: #ffffff;
+  letter-spacing: 1rpx;
+}
+
 // —— 免责提示 ——
 .naming__disclaimer {
   display: block;
@@ -473,4 +499,211 @@
   font-size: $font-size-xs;
   color: $color-text-tertiary;
   padding: $spacing-md 0 $spacing-xl;
+}
+
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖）
+// ============================================
+// 本页 501 行；「取名结果卡 / 深度解读 / 灵感探索」等状态在 H5 预览里复现不了（要点按钮走 AI 流程），
+// 故采用追加覆盖（同特异性 + 顺序在后取胜）只改可见模块，完整重写时再并回对应段落。
+//
+// 图标口径：物种 chip 的 🐱🐶 与解析标题的 🔍 属功能性 → 换面性 Icon；
+// ✨🪄📜 属"文化解码/玄学"氛围装饰（KEEP_EMOJI 一类）→ 保留。
+.naming {
+  // 浅色面统一钉"卡内 token"（深色主题下 --text-* / --glass-bg 会被转浅）
+  &__head,
+  &__mode-card,
+  &__form,
+  &__chip,
+  &__input,
+  &__name-card,
+  &__interpret-result,
+  &__generate,
+  &__disclaimer {
+    @include journal-paper-tokens;
+  }
+
+  // —— 页头：衬线标题 + 虚线短横 + 金底徽章 ——
+  &__title {
+    @include journal-serif(44rpx);
+    letter-spacing: 3rpx;
+  }
+
+  &__badge {
+    height: 40rpx;
+    padding: 0 16rpx;
+    border-radius: $radius-round;
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.16);
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.45);
+  }
+
+  &__badge-text {
+    font-size: 19rpx;
+    font-weight: 700;
+    color: $color-gold-deep;
+  }
+
+  &__subtitle {
+    font-size: 22rpx;
+    line-height: 1.6;
+    color: $color-text-secondary;
+  }
+
+  &__section-title {
+    @include journal-serif(30rpx);
+    padding-left: 18rpx;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 8rpx;
+      height: 30rpx;
+      border-radius: $radius-round;
+      background: $gradient-gold;
+    }
+  }
+
+  // —— 取名方式：贴纸卡（未选虚线 / 选中实线 + 主色淡底） ——
+  &__mode-card {
+    border-radius: 30rpx;
+    background: #fffdf8;
+    border: 3rpx dashed $color-border;
+    box-shadow: $shadow-xs;
+    @include press-feedback;
+  }
+
+  &__mode-card--active {
+    border-style: solid;
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+    box-shadow: 0 10rpx 22rpx -16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.9);
+  }
+
+  &__mode-title {
+    font-size: 27rpx;
+    font-weight: 800;
+    color: $color-text-primary;
+  }
+
+  &__mode-desc {
+    font-size: 20rpx;
+    line-height: 1.55;
+    color: $color-text-secondary;
+  }
+
+  // —— 宠物信息：虚线便签 ——
+  &__form {
+    @include journal-note(primary, 0.42);
+    padding: 24rpx 26rpx 20rpx;
+  }
+
+  &__form-title-text {
+    @include journal-serif(28rpx);
+  }
+
+  &__label {
+    font-size: 22rpx;
+    font-weight: 600;
+    color: $color-text-secondary;
+  }
+
+  // 输入框：纸色 + 虚线边（像手账里待填的格子）
+  &__input {
+    height: 80rpx;
+    padding: 0 20rpx;
+    border-radius: 22rpx;
+    background: #fffaf3;
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.5);
+    font-size: 26rpx;
+    color: $color-text-primary;
+  }
+
+  &__placeholder {
+    color: $color-text-placeholder;
+  }
+
+  // —— chips（物种/性别）：贴纸胶囊 ——
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8rpx;
+    min-height: 64rpx;
+    padding: 0 24rpx;
+    border-radius: $radius-round;
+    background: #fffdf8;
+    border: 3rpx dashed $color-border;
+    @include press-feedback;
+  }
+
+  &__chip--active {
+    border-style: solid;
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+  }
+
+  &__chip-text {
+    font-size: 24rpx;
+    font-weight: 700;
+    color: $color-text-secondary;
+  }
+
+  &__chip--active &__chip-text {
+    color: $color-primary-dark;
+  }
+
+  // —— 开始取名：唯一主按钮 ——
+  &__generate {
+    @include journal-button;
+  }
+
+  &__generate-text {
+    font-size: 30rpx;
+    font-weight: 800;
+    letter-spacing: 2rpx;
+    color: #ffffff;
+  }
+
+  // —— 取名结果卡：纸卡 + 虚线边（结果状态预览看不到，按已知类名一并统一） ——
+  &__name-card {
+    border-radius: 30rpx;
+    background: #fffdf8;
+    border: 3rpx dashed $color-border;
+    box-shadow: $shadow-xs;
+  }
+
+  &__name-card--expanded {
+    border-style: solid;
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.5);
+  }
+
+  &__name {
+    @include journal-serif(34rpx);
+    letter-spacing: 2rpx;
+  }
+
+  &__apply-btn {
+    @include journal-ghost;
+    min-height: 72rpx;
+  }
+
+  &__interpret-result {
+    border-radius: 30rpx;
+    background: #fffdf8;
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.5);
+  }
+
+  // —— 免责声明 ——
+  &__disclaimer {
+    padding: 18rpx 22rpx;
+    border-radius: 24rpx;
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+    font-size: 20rpx;
+    line-height: 1.6;
+    color: $color-text-secondary;
+  }
 }
