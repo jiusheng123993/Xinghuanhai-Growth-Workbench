@@ -1,9 +1,11 @@
 @import '../../styles/_theme';
 @import '../../styles/_animations';
+@import '../../styles/_journal';
 
 .pet-symptom-check {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
   padding-bottom: 200rpx;
   position: relative;
   z-index: 1;
@@ -94,7 +96,7 @@
   gap: 8rpx;
   padding: 8rpx 20rpx;
   border-radius: 999rpx;
-  background: rgba($color-primary, 0.1);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
   flex-shrink: 0;
 }
 
@@ -169,7 +171,7 @@
   flex-shrink: 0;
   padding: 8rpx 20rpx;
   border-radius: 999rpx;
-  background: rgba($color-primary, 0.1);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
   font-size: 22rpx;
   font-weight: $font-weight-semibold;
   color: $color-primary;
@@ -191,11 +193,11 @@
 }
 
 .pet-symptom-check__subhead-icon--gold {
-  background: rgba($color-gold, 0.16);
+  background: rgba(var(--gold-rgb, 255, 176, 32), 0.16);
 }
 
 .pet-symptom-check__subhead-icon--coral {
-  background: rgba($color-primary, 0.14);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.14);
 }
 
 .pet-symptom-check__subhead-icon-text {
@@ -479,7 +481,7 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  border: 4rpx solid rgba($color-primary, 0.2);
+  border: 4rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.2);
   animation: pulse-ring 2s ease-out infinite;
 }
 
@@ -593,13 +595,13 @@
 }
 
 .pet-symptom-check__result--caution .pet-symptom-check__result-advice {
-  background: rgba($color-primary, 0.06);
-  border: 1px solid rgba($color-primary, 0.12);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
+  border: 1px solid rgba(var(--primary-rgb, 255, 107, 61), 0.12);
 }
 
 .pet-symptom-check__result--warning .pet-symptom-check__result-advice {
-  background: rgba($color-primary, 0.08);
-  border: 1px solid rgba($color-primary, 0.15);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
+  border: 1px solid rgba(var(--primary-rgb, 255, 107, 61), 0.15);
 }
 
 .pet-symptom-check__result--emergency .pet-symptom-check__result-advice {
@@ -650,7 +652,7 @@
   font-size: 22rpx;
   padding: 8rpx 20rpx;
   border-radius: 20rpx;
-  background: rgba($color-primary, 0.08);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
   color: $color-text-secondary;
 }
 
@@ -690,8 +692,8 @@
 
 .pet-symptom-check__result-disclaimer {
   padding: 20rpx;
-  background: rgba($color-primary, 0.06);
-  border: 1px solid rgba($color-primary, 0.12);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
+  border: 1px solid rgba(var(--primary-rgb, 255, 107, 61), 0.12);
   border-radius: 16rpx;
   margin-top: 8rpx;
 }
@@ -723,11 +725,11 @@
 
 .pet-symptom-check__btn--primary {
   background: linear-gradient(135deg, $color-primary, $color-primary-dark);
-  box-shadow: 0 8rpx 32rpx rgba($color-primary, 0.3);
+  box-shadow: 0 8rpx 32rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
 }
 
 .pet-symptom-check__btn--primary:active {
-  box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.2);
+  box-shadow: 0 4rpx 16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.2);
 }
 
 .pet-symptom-check__btn--hospital {
@@ -931,3 +933,293 @@
   color: #4A90D9;
 }
 
+
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖）
+// ============================================
+// 【为什么追加而不是重写】本页 934 行、140 个选择器，其中「分析中」遮罩、「深度分析结果」卡
+// 等状态在 H5 预览里复现不了（要真机走完分析流程）。为避免误删不可见状态的样式，
+// 本轮只对**可见模块**做追加覆盖（同特异性 + 顺序在后取胜）；待完整重写时并回对应段落。
+//
+// 【症状按钮为什么保留 emoji】🤮🫁💧🤧⚡ 这些是"症状形象"本身（内容型），
+// 换成抽象线性图标反而降低辨识度（如"呕吐"没有合适图标）；按 emojiIconMap 的取舍原则，
+// 情绪/内容类 emoji 保留、功能性 emoji 才换图标。这里的图标位保留 emoji 属有意取舍。
+.pet-symptom-check {
+  // 所有浅色面统一钉"卡内 token"：深色主题（.theme-starry）会把 --text-* / --glass-bg 转浅，
+  // 纸面恒为浅底，不钉就是白字压白纸
+  &__pet-bar,
+  &__card,
+  &__sym-btn,
+  &__level,
+  &__tips-grid,
+  &__tip-item,
+  &__disclaimer,
+  &__result,
+  &__result-actions-bar {
+    @include journal-paper-tokens;
+  }
+
+  // —— 宠物信息条：纸卡 + 暖色描边（"这次给谁自查"要一眼看清） ——
+  &__pet-bar {
+    @include journal-note(primary, 0.38);
+    padding: 20rpx 22rpx;
+    display: flex;
+    align-items: center;
+    gap: 18rpx;
+  }
+
+  &__pet-bar-avatar {
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 0 6rpx rgba(var(--gold-rgb, 255, 176, 32), 0.3);
+  }
+
+  &__pet-bar-name {
+    @include journal-serif(30rpx);
+    display: block;
+    letter-spacing: 1rpx;
+  }
+
+  &__pet-bar-desc {
+    display: block;
+    margin-top: 4rpx;
+    font-size: 21rpx;
+    color: $color-text-secondary;
+  }
+
+  &__pet-bar-badge {
+    display: flex;
+    align-items: center;
+    gap: 6rpx;
+    height: 44rpx;
+    padding: 0 16rpx;
+    border-radius: $radius-round;
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+    border: 2rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.4);
+    flex-shrink: 0;
+  }
+
+  &__pet-bar-badge-text {
+    font-size: 20rpx;
+    font-weight: 700;
+    color: $color-primary-dark;
+  }
+
+  // —— 便签卡（症状选择 / AI 初步评估 / 就医建议共用） ——
+  &__card {
+    @include journal-note(primary, 0.42);
+    padding: 24rpx 26rpx 20rpx;
+  }
+
+  &__card-title {
+    @include journal-serif(30rpx);
+  }
+
+  // 卡头左侧的竖条改成渐变（与板块内其它便签标题同款记号）
+  &__card-title-bar {
+    width: 8rpx;
+    height: 30rpx;
+    border-radius: $radius-round;
+    background: $gradient-gold;
+  }
+
+  &__card-hint,
+  &__card-title-sub {
+    font-size: 21rpx;
+    color: $color-text-secondary;
+  }
+
+  // —— 症状按钮：贴纸格（未选虚线 / 选中实线 + 主色淡底） ——
+  &__sym-btn {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+    min-height: 84rpx;
+    padding: 0 20rpx;
+    border-radius: 24rpx;
+    background: #fffaf3;
+    border: 2rpx dashed $color-border;
+    @include press-feedback;
+  }
+
+  &__sym-btn--selected {
+    border-style: solid;
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+    box-shadow: 0 8rpx 18rpx -12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.9);
+  }
+
+  &__sym-btn-icon {
+    font-size: 32rpx;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  &__sym-btn-label {
+    font-size: 24rpx;
+    font-weight: 700;
+    color: $color-text-secondary;
+  }
+
+  &__sym-btn--selected &__sym-btn-label {
+    color: $color-primary-dark;
+  }
+
+  // —— 分级说明：每级一张小纸卡，左侧圆点用状态色 ——
+  &__level {
+    display: flex;
+    align-items: flex-start;
+    gap: 16rpx;
+    padding: 18rpx 20rpx;
+    border-radius: 26rpx;
+    background: #fffaf3;
+    border: 2rpx solid $color-border;
+  }
+
+  &__level--active {
+    border-style: solid;
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.55);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+  }
+
+  &__level-name {
+    font-size: 26rpx;
+    font-weight: 800;
+    color: $color-text-primary;
+  }
+
+  &__level-desc {
+    display: block;
+    margin-top: 4rpx;
+    font-size: 21rpx;
+    line-height: 1.6;
+    color: $color-text-secondary;
+  }
+
+  // —— 主按钮：手账渐变胶囊 ——
+  &__analyze-btn {
+    @include journal-button;
+  }
+
+  &__analyze-btn-text {
+    font-size: 30rpx;
+    font-weight: 800;
+    letter-spacing: 2rpx;
+    color: #ffffff;
+  }
+
+  // —— 就医建议：便签 + 玻璃底虚线入口 ——
+  &__tip-item {
+    @include journal-ghost;
+    flex-direction: column;
+    gap: 8rpx;
+    padding: 18rpx 12rpx;
+  }
+
+  &__tip-icon {
+    flex-shrink: 0;
+  }
+
+  &__tip-label {
+    font-size: 23rpx;
+    font-weight: 700;
+    color: $color-text-secondary;
+  }
+
+  &__tip-note {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+    margin-top: 16rpx;
+    padding: 14rpx 18rpx;
+    border-radius: 20rpx;
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+    border: 2rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+  }
+
+  &__tip-note-text {
+    flex: 1;
+    font-size: 20rpx;
+    line-height: 1.6;
+    color: $color-text-secondary;
+  }
+
+  // —— 分析结果卡：纸卡 + 状态色虚线边（normal 绿 / caution 金 / warning 深金 / emergency 红） ——
+  &__result {
+    @include journal-note(sage, 0.5);
+    padding: 26rpx 26rpx 22rpx;
+  }
+
+  &__result--caution {
+    border-color: rgba(var(--gold-rgb, 255, 176, 32), 0.6);
+  }
+
+  &__result--warning {
+    border-color: rgba(var(--gold-deep-rgb, 232, 146, 10), 0.65);
+  }
+
+  &__result--emergency {
+    border-color: rgba(var(--danger-rgb, 255, 90, 95), 0.65);
+  }
+
+  &__result-level,
+  &__result-section-title {
+    @include journal-serif(30rpx);
+  }
+
+  // 结果标签/结论依据做成小贴纸
+  &__result-tag,
+  &__conclusion-basis {
+    height: 44rpx;
+    padding: 0 16rpx;
+    display: flex;
+    align-items: center;
+    border-radius: $radius-round;
+    background: #fff6ea;
+    border: 2rpx solid rgba(var(--gold-rgb, 255, 176, 32), 0.35);
+    font-size: 20rpx;
+    font-weight: 700;
+    color: $color-text-secondary;
+  }
+
+  // —— 结果底部按钮组 ——
+  &__btn {
+    @include journal-ghost;
+    min-height: 88rpx;
+  }
+
+  &__btn--primary {
+    @include journal-button;
+    height: 88rpx;
+  }
+
+  &__btn--hospital {
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+    border: 2rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.45);
+  }
+
+  &__btn--outline {
+    background: $glass-bg;
+    border: 2rpx dashed $color-border;
+  }
+
+  &__btn-text {
+    font-size: 26rpx;
+    font-weight: 700;
+    color: $color-text-secondary;
+  }
+
+  &__btn-text--white {
+    color: #ffffff;
+    font-weight: 800;
+  }
+
+  // —— 免责声明 ——
+  &__disclaimer {
+    padding: 18rpx 22rpx;
+    border-radius: 24rpx;
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+    border: 2rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+  }
+}
