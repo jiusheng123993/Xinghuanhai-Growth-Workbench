@@ -138,7 +138,7 @@ function getModel(): string {
 
 // ========== 记忆系统：构建系统提示词 ==========
 
-export async function buildSystemPrompt(context: AgentContext, userMessage: string): Promise<string> {
+export async function buildSystemPrompt(context: AgentContext, userMessage: string, intentHint?: string): Promise<string> {
   // 立项 v0.2 P0-4（§七.4 ①）：定位工具化——去人格化承诺/恋人化语气，规避「拟人化互动」类目
   // （强制自有算法备案 3.7-13.5 万）。吉祥物形象保留，但语气始终是"工具助手"而非"情感角色"。
   let prompt = `你是"团团"，星河宠记的 AI 宠物管家（戴金色星冠的橘猫吉祥物形象）。你的定位是宠物健康记录与养宠工具助手，语气专业、友好、简洁。
@@ -429,6 +429,14 @@ export async function buildSystemPrompt(context: AgentContext, userMessage: stri
 - 如果用户没有指定宠物，默认使用当前活跃宠物
 - 回复时用第二人称"你"，语气温暖自然`;
 
+  // 意图提示（2026-09-10）：思考模式不支持强制指定函数的 tool_choice，
+  // 高置信度意图改用 auto + 这里注入的确定性提示，保证模型仍调用正确工具，
+  // 而不是凭记忆臆测（否则会重演"西瓜=safe 却被答成不能吃"的事故）。
+  if (intentHint) {
+    prompt += `\n\n## 🎯 本轮意图提示（务必遵守）
+意图分类器已判定本条消息需要调用工具 **${intentHint}**。请先调用该工具获取权威数据，再基于工具返回的数据如实回答，严禁跳过工具、凭记忆臆测。`;
+  }
+
   return prompt;
 }
 
@@ -586,6 +594,31 @@ interface LLMResponse {
 /** tool_choice 参数类型：'auto' | 'none' | 指定工具 */
 type ToolChoice = 'auto' | 'none' | { type: 'function'; function: { name: string } };
 
+/**
+ * 组装 callLLM 请求体（导出供单测）
+ *
+ * 关键兼容（2026-09-10 生产实测）：DeepSeek V4 Flash 默认开启思考模式，
+ * 「强制指定函数」的 tool_choice 会被 API 直接 400 拒绝：
+ *   "Thinking mode does not support this tool_choice"
+ * 因此 Agent 路由不再强制指定函数，改用 auto + 意图提示（见 agentLoop）。
+ * 此处保持思考模式默认开启（不传 thinking 参数）——思考模式能显著提升工具参数提取质量
+ * （如从"猫咪能吃西瓜吗"里准确抽出"西瓜"），实测 auto + 思考模式 200 且正确返回 tool_calls。
+ */
+export function buildLLMRequestBody(
+  messages: ChatMessage[],
+  toolChoice?: ToolChoice,
+): Record<string, unknown> {
+  return {
+    model: getModel(),
+    messages,
+    temperature: 0.7,
+    max_tokens: 1024,
+    stream: false,
+    tools: getToolDefinitionsForLLM(),
+    tool_choice: toolChoice || 'auto',
+  };
+}
+
 async function callLLM(
   messages: ChatMessage[],
   stream: boolean,
@@ -596,17 +629,7 @@ async function callLLM(
     throw new Error('AI 服务未配置');
   }
 
-  const body: Record<string, unknown> = {
-    model: getModel(),
-    messages,
-    temperature: 0.7,
-    max_tokens: 1024,
-    stream: false,
-    tools: getToolDefinitionsForLLM(),
-    tool_choice: toolChoice || 'auto',
-  };
-
-  const response = await fetch(`${getBaseUrl()}/chat/completions`, {
+  const postChat = (body: Record<string, unknown>) => fetch(`${getBaseUrl()}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -615,6 +638,8 @@ async function callLLM(
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(30_000),
   });
+
+  const response = await postChat(buildLLMRequestBody(messages, toolChoice));
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => '');
@@ -717,8 +742,9 @@ export async function* agentLoop(
       completionTokens += intentResult.usage.completion_tokens;
     }
 
-    // 根据意图决定 tool_choice
+    // 根据意图决定 tool_choice + 意图提示
   let initialToolChoice: ToolChoice = 'auto';
+  let intentHint = '';
   const CONFIDENCE_THRESHOLD = 0.7;
 
   if (intentResult.confidence >= CONFIDENCE_THRESHOLD) {
@@ -728,9 +754,11 @@ export async function* agentLoop(
       initialToolChoice = 'none';
       console.log('[Agent] 路由决策: chat → 禁用工具，直接回复');
     } else if (mappedTool && mappedTool !== '__auto__') {
-      // 明确工具 → 强制调用
-      initialToolChoice = { type: 'function', function: { name: mappedTool } };
-      console.log(`[Agent] 路由决策: ${intentResult.intent} → 强制调用 ${mappedTool}`);
+      // 思考模式模型不支持「强制指定函数」的 tool_choice（会 400），
+      // 改用 auto + 意图提示：既保证模型调用正确工具，又保留思考推理（参数提取更准）。
+      initialToolChoice = 'auto';
+      intentHint = mappedTool;
+      console.log(`[Agent] 路由决策: ${intentResult.intent} → auto + 意图提示调用 ${mappedTool}`);
     } else {
       // 多工具意图 → auto
       console.log(`[Agent] 路由决策: ${intentResult.intent} → auto（多工具候选）`);
@@ -739,8 +767,8 @@ export async function* agentLoop(
     console.log(`[Agent] 路由决策: 置信度 ${intentResult.confidence} < ${CONFIDENCE_THRESHOLD} → auto（降级）`);
   }
 
-  // 构建系统提示词（传入用户消息以检索相关记忆）
-  const systemPrompt = await buildSystemPrompt(context, userMessage);
+  // 构建系统提示词（传入用户消息以检索相关记忆；intentHint 注入确定性路由提示）
+  const systemPrompt = await buildSystemPrompt(context, userMessage, intentHint);
 
   // 构建消息列表
   const messages: ChatMessage[] = [
