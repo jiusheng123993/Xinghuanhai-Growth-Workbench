@@ -179,9 +179,12 @@ export async function* agentChat(params: AgentChatParams): AsyncGenerator<AgentE
         if (typeof res.data === 'string') {
           text = res.data
         } else {
+          // ArrayBuffer → base64 → UTF-8 解码。不用 TextDecoder：微信小程序 JSCore 部分
+          // 基础库无 TextDecoder（ReferenceError 被下方 catch 静默吞掉 → buffer 空 → 上层
+          // 显示"走神"），改用 storage.ts 同款 atob + escape/decodeURIComponent
+          // （ES3 全局函数，微信必可用）做 UTF-8 解码
           const b64 = Taro.arrayBufferToBase64(res.data as ArrayBuffer)
-          const uint8 = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))
-          text = new TextDecoder().decode(uint8)
+          text = decodeURIComponent(escape(atob(b64)))
         }
 
           buffer += text
@@ -190,8 +193,26 @@ export async function* agentChat(params: AgentChatParams): AsyncGenerator<AgentE
         }
       })
 
-      // 请求完成
-      requestTask.then(() => resolve(true)).catch((err) => reject(err))
+      // 请求完成：onChunkReceived 偶发收不到完整分块（微信 enableChunked 竞态/环境差异），
+      // 用 success 的完整响应兜底 buffer（responseType:'text' 时 res.data 为完整 SSE 文本）。
+      // 双保险：正常时 buffer 已被 chunk 填充，此处不动；onChunkReceived 完全失效时用它兜底。
+      requestTask.then((res) => {
+        if (!buffer) {
+          try {
+            const data = (res as { data?: string | ArrayBuffer }).data
+            if (typeof data === 'string') {
+              buffer = data
+            } else if (data) {
+              // 同 onChunkReceived：用 atob + escape/decodeURIComponent 解码 UTF-8（避开 TextDecoder）
+              const b64 = Taro.arrayBufferToBase64(data as ArrayBuffer)
+              buffer = decodeURIComponent(escape(atob(b64)))
+            }
+          } catch {
+            // 兜底解码失败则保持空，交由上层降级
+          }
+        }
+        resolve(true)
+      }).catch((err) => reject(err))
     })
 
     // 请求完成后，解析 buffer 中的所有 SSE 事件

@@ -511,6 +511,33 @@ export function useChatCore(params: UseChatCoreParams) {
     let pendingFlowAction: string | null = null
     let pendingFlowData: Record<string, unknown> | null = null
 
+    // 流式兜底：Agent SSE 在微信 enableChunked 下偶发收不到完整分块（竞态/切块），
+    // 会落到 catch 或"无 done"分支。统一降级：fullContent 已有有效 token 就直接用
+    // （部分成功），否则降级旧版非流式 /api/ai/chat 兜底——后端日志已确认 Agent 实际
+    // 成功返回，不能把"走神"文案直接甩给用户。
+    const fallbackToLegacy = async () => {
+      let content = fullContent
+      if (!content) {
+        try {
+          const result = await sendChatMessage(text, context, chatHistory)
+          content = result.reply
+        } catch {
+          content = '抱歉，我刚走神了，请再问一次。'
+        }
+      }
+      setMessages(prev =>
+        prev.map(m => m.id === aiMsgId ? { ...m, content } : m)
+      )
+      setChatHistory(prev => [
+        ...prev.slice(-18),
+        { role: 'user', content: text },
+        { role: 'assistant', content: content },
+      ])
+      setIsTyping(false)
+      setAgentToolStatus(null)
+      setStreamingId(null)
+    }
+
     try {
       for await (const event of agentChat({
         message: text,
@@ -624,35 +651,14 @@ export function useChatCore(params: UseChatCoreParams) {
         return
       }
     } catch (err) {
-      setIsTyping(false)
-      setAgentToolStatus(null)
-      setStreamingId(null)
       logger.error('index', 'Agent chat failed', err)
-      setMessages(prev =>
-        prev.map(m => m.id === aiMsgId
-          ? { ...m, content: '抱歉，我现在有点走神了…请稍后再试。' }
-          : m
-        )
-      )
+      // 流式异常：降级旧版非流式兜底，不再直接显示"走神"
+      await fallbackToLegacy()
+      return
     }
 
-    // 正常结束（无 done 事件的情况，兜底）
-    // 排查「为什么不能吃 → 空白气泡」：Agent 事件流若因分块/断开丢失了 done/token，
-    // 循环会提前出栈落到这里，而占位 AI 消息 content 仍是 ''（空白气泡）。
-    // 修复：把已累积的 fullContent 或兜底文案写入占位消息，保证气泡永远有内容。
-    const fallbackContent = fullContent || '抱歉，我刚走神了，请再问一次。'
-    setMessages(prev =>
-      prev.map(m => m.id === aiMsgId ? { ...m, content: fallbackContent } : m)
-    )
-    // 同步写入会话上下文（与 done 正常路径一致），保证后续追问能带上本次回复语境
-    setChatHistory(prev => [
-      ...prev.slice(-18),
-      { role: 'user', content: text },
-      { role: 'assistant', content: fallbackContent },
-    ])
-    setIsTyping(false)
-    setAgentToolStatus(null)
-    setStreamingId(null)
+    // 正常结束但没收到 done 事件（分块竞态/丢失）：同样走降级兜底
+    await fallbackToLegacy()
   }
 
   return {

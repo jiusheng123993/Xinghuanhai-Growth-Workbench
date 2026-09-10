@@ -11,7 +11,7 @@ import { describe, it, expect, vi } from 'vitest'
 vi.mock('@tarojs/taro', () => ({
   default: {
     request: vi.fn(),
-    arrayBufferToBase64: (b: ArrayBuffer) => '',
+    arrayBufferToBase64: vi.fn(() => ''),
   },
 }))
 vi.mock('../../config', () => ({ CONFIG: { API_BASE_URL: 'http://test' } }))
@@ -65,5 +65,55 @@ describe('agentChat 服务端 blocked 兜底（P2-4）', () => {
     expect(events[0].type).toBe('done')
     expect(String(events[0].data.content)).toBe('正常回复')
     expect(events[0].data.blocked).toBeUndefined()
+  })
+
+  it('onChunkReceived 失效（微信 enableChunked 分块竞态）时，then 的完整响应兜底解析出全部事件', async () => {
+    const sseText = `event: thinking\ndata: {"iteration":1}\n\nevent: token\ndata: {"text":"你好"}\n\nevent: done\ndata: {"content":"你好呀","iterations":1}\n\n`
+    const requestMock = Taro.request as unknown as ReturnType<typeof vi.fn>
+    const requestTask = {
+      // 模拟竞态：onChunkReceived 注册成功但回调从未触发（buffer 始终为空）
+      onChunkReceived: (_cb: (res: { data: string | ArrayBuffer }) => void) => {},
+      // success（then）携带完整 SSE 文本（responseType:'text'）
+      then: (cb: (res: { data: string }) => void) => {
+        cb({ data: sseText })
+        return Promise.resolve()
+      },
+      catch: () => {},
+    }
+    requestMock.mockReturnValue(requestTask)
+    const events: Array<{ type: string; data: Record<string, unknown> }> = []
+    for await (const ev of agentChat({ message: '测试' })) {
+      events.push(ev as unknown as { type: string; data: Record<string, unknown> })
+    }
+    // 兜底后应完整解析出 thinking/token/done，而非 0 事件（否则上层显示"走神"）
+    expect(events.map(e => e.type)).toEqual(['thinking', 'token', 'done'])
+    expect(String(events[2].data.content)).toBe('你好呀')
+  })
+
+  it('onChunkReceived 返回 ArrayBuffer（含中文）时用 atob+escape 解码，不依赖 TextDecoder', async () => {
+    // 完整 SSE 文本 `event: done\ndata: {"content":"你好","iterations":1}\n\n` 的 UTF-8 base64
+    // （硬编码，避免测试环境引入 Node Buffer 类型）
+    const b64 = 'ZXZlbnQ6IGRvbmUKZGF0YTogeyJjb250ZW50Ijoi5L2g5aW9IiwiaXRlcmF0aW9ucyI6MX0KCg=='
+    ;(Taro.arrayBufferToBase64 as unknown as ReturnType<typeof vi.fn>).mockReturnValue(b64)
+
+    const requestMock = Taro.request as unknown as ReturnType<typeof vi.fn>
+    const requestTask = {
+      // res.data 为 ArrayBuffer → 走 else 分支（旧实现用 TextDecoder，微信端会 ReferenceError）
+      onChunkReceived: (cb: (res: { data: ArrayBuffer }) => void) => {
+        cb({ data: new ArrayBuffer(0) })
+      },
+      then: (cb: (res: { data?: unknown }) => void) => {
+        cb({ data: undefined })
+        return Promise.resolve()
+      },
+      catch: () => {},
+    }
+    requestMock.mockReturnValue(requestTask)
+    const events: Array<{ type: string; data: Record<string, unknown> }> = []
+    for await (const ev of agentChat({ message: '测试' })) {
+      events.push(ev as unknown as { type: string; data: Record<string, unknown> })
+    }
+    expect(events.map(e => e.type)).toEqual(['done'])
+    expect(String(events[0].data.content)).toBe('你好')
   })
 })
