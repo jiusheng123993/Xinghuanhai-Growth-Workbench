@@ -99,3 +99,24 @@ export function tierUnavailableReason(tier: MemoirTier, photoCount: number): str
   if (photoCount < b.minPhotos) return `需至少 ${b.minPhotos} 张照片`
   return `最多 ${b.maxPhotos} 张照片`
 }
+
+/**
+ * 由页面路由推导「本页服务的档位」
+ *
+ * 背景（2026-09-11 修复存量 P0）：
+ * `memoir-vlog`（标准档）与 `memoir-full`（完整档）原本是两份**逐字节完全相同**的实现，
+ * 复制时把 standard 的照片边界（5-7）一起复制了过去，于是完整档页面的选照片上限被死锁在 7 张，
+ * `isTierAvailable('full', n≤7)` 恒为 false —— **最贵的完整档（8-15 张）在任何入口都选不出来**。
+ * 同期该页 toast 还写着"最多选择15张照片"，文案与逻辑自相矛盾，反证原意就是支持 15 张。
+ *
+ * 修复口径：**本页服务的档位由路由决定，档位边界一律从 MEMOIR_TIER_BOUNDS 派生**，
+ * 禁止再在页面里硬编码某个档位的边界（这是防止同一 bug 被再次复制出来的关键）。
+ *
+ * @param routePath - 当前页面路由（`Taro.getCurrentInstance().router?.path`）
+ * @returns 该路由服务的档位；未知或缺失路由按 `standard` 兜底（对旧链接最保守）
+ */
+export function tierFromRoutePath(routePath?: string): MemoirTier {
+  if (routePath?.includes('memoir-full')) return 'full'
+  if (routePath?.includes('memoir-daily')) return 'light'
+  return 'standard'
+}

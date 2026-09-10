@@ -12,6 +12,7 @@ import {
   pickTierPrice,
   formatYuan,
   tierUnavailableReason,
+  tierFromRoutePath,
 } from '../memoirTier'
 
 describe('MEMOIR_TIER_BOUNDS 三档边界（与后端 MEMOIR_TIER_CONFIG 同步锁）', () => {
@@ -121,5 +122,50 @@ describe('formatYuan / tierUnavailableReason 展示工具', () => {
     expect(tierUnavailableReason('standard', 3)).toBe('需至少 5 张照片')
     expect(tierUnavailableReason('light', 5)).toBe('最多 3 张照片')
     expect(tierUnavailableReason('full', 5)).toBe('需至少 8 张照片')
+  })
+})
+
+/**
+ * 2026-09-11 存量 P0 回归锁：完整档（8-15 张）在页面上曾永远选不出来
+ *
+ * 事故经过：memoir-full 与 memoir-vlog 是两份逐字节相同的实现，复制时把 standard 的照片边界
+ * 一起复制了过去，导致 memoir-full 页面的选照片上限被死锁在 7 张，
+ * isTierAvailable('full', n≤7) 恒为 false —— 最贵的完整档在任何入口都买不到。
+ * 下面第一组断言就是"这个 bug 是否复发"的判定线。
+ */
+describe('tierFromRoutePath 路由→档位推导（防"复制页面连档位边界一起复制"复发）', () => {
+  it('三条路由各自映射到正确档位', () => {
+    expect(tierFromRoutePath('/pagesMemoir/memoir-full/index')).toBe('full')
+    expect(tierFromRoutePath('/pagesMemoir/memoir-vlog/index')).toBe('standard')
+    expect(tierFromRoutePath('/pagesMemoir/memoir-daily/index')).toBe('light')
+  })
+
+  it('带查询串/带前导斜杠差异的路由同样识别', () => {
+    expect(tierFromRoutePath('pagesMemoir/memoir-full/index?petId=p1&tier=full')).toBe('full')
+    expect(tierFromRoutePath('/pagesMemoir/memoir-vlog/index?petId=p1')).toBe('standard')
+  })
+
+  it('路由缺失或未知：兜底 standard（对旧链接最保守，不会误升档位）', () => {
+    expect(tierFromRoutePath(undefined)).toBe('standard')
+    expect(tierFromRoutePath('')).toBe('standard')
+    expect(tierFromRoutePath('/pages/unknown/index')).toBe('standard')
+  })
+
+  it('【P0 回归线】完整档页面必须能选到 8 张及以上照片', () => {
+    const fullRouteTier = tierFromRoutePath('/pagesMemoir/memoir-full/index')
+    const bounds = MEMOIR_TIER_BOUNDS[fullRouteTier]
+    // 上限必须够得着完整档的下限，否则该档永远不可选（本次事故就是这个不等式被破坏）
+    expect(bounds.maxPhotos).toBeGreaterThanOrEqual(MEMOIR_TIER_BOUNDS.full.minPhotos)
+    expect(bounds).toEqual(MEMOIR_TIER_BOUNDS.full)
+    expect(isTierAvailable(fullRouteTier, 8)).toBe(true)
+    expect(isTierAvailable(fullRouteTier, 15)).toBe(true)
+    // 且完整档页面在 8 张时确实推荐完整档（而不是退化成标准档）
+    expect(recommendTier(8)).toBe('full')
+  })
+
+  it('标准档页面仍按 5-7 张限制（不能被"顺手上调"到完整档边界）', () => {
+    const standardRouteTier = tierFromRoutePath('/pagesMemoir/memoir-vlog/index')
+    expect(MEMOIR_TIER_BOUNDS[standardRouteTier]).toEqual(MEMOIR_TIER_BOUNDS.standard)
+    expect(isTierAvailable(standardRouteTier, 8)).toBe(false)
   })
 })
