@@ -3,6 +3,19 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import { api } from '../api'
+import {
+  getTrendData,
+  getTrendSummary,
+  getMonthlyReport,
+  getWeightTrend,
+  getAppetiteTrend,
+  getStoolTrend,
+  getAbnormalDays,
+} from '../trendService'
+import type { TrendDataPoint, TrendSummary } from '../trendService'
+import type { PetHealthEntry } from '../checkinService'
+
 const mockStorage: Record<string, string> = {}
 
 vi.mock('../../utils/storage', () => ({
@@ -37,19 +50,6 @@ const mockGetCheckinsByDateRange = vi.fn()
 vi.mock('../checkinService', () => ({
   getCheckinsByDateRange: (...args: unknown[]) => mockGetCheckinsByDateRange(...args),
 }))
-
-import { api } from '../api'
-import {
-  getTrendData,
-  getTrendSummary,
-  getMonthlyReport,
-  getWeightTrend,
-  getAppetiteTrend,
-  getStoolTrend,
-  getAbnormalDays,
-} from '../trendService'
-import type { TrendDataPoint, TrendSummary } from '../trendService'
-import type { PetHealthEntry } from '../checkinService'
 
 const today = new Date().toISOString().split('T')[0]
 
@@ -132,6 +132,26 @@ describe('trendService', () => {
 
       expect(result).toHaveLength(1)
       expect(result[0].date).toBe('2024-01-01')
+    })
+
+    /**
+     * 返回顺序必须是升序（旧 → 新）（2026-09-11 新增）
+     *
+     * 云端 `/checkins` 是 `ORDER BY created_at DESC`（新 → 旧），而消费端（趋势页）
+     * 把 `points[0]` 当最早、`points[points.length - 1]` 当最新 —— 直接透传会让
+     * 「最新体重」显示成最旧的、体重变化量符号取反、折线图 x 轴反向。
+     * 这条用例喂**降序**输入，锁住"服务层负责排成升序"这个契约。
+     */
+    it('应按日期升序返回（不依赖接口返回顺序）', async () => {
+      mockGetCheckinsByDateRange.mockResolvedValue([
+        makeCheckinEntry({ id: 'c3', createdAt: new Date('2024-01-03T00:00:00.000Z') }),
+        makeCheckinEntry({ id: 'c2', createdAt: new Date('2024-01-02T00:00:00.000Z') }),
+        makeCheckinEntry({ id: 'c1', createdAt: new Date('2024-01-01T00:00:00.000Z') }),
+      ])
+
+      const result = await getTrendData('pet-001', '2024-01-01', '2024-01-31')
+
+      expect(result.map((d) => d.date)).toEqual(['2024-01-01', '2024-01-02', '2024-01-03'])
     })
 
     it('should return empty array when all sources fail with no local data', async () => {

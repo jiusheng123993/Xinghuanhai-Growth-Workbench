@@ -387,6 +387,22 @@ function generateRecommendations(
   return recommendations
 }
 
+/**
+ * 按日期升序排序（旧 → 新）
+ *
+ * 2026-09-11 修复一个页面级的顺序 bug：`getTrendData` 之前**直接透传**打卡接口的顺序，
+ * 而云端 `/checkins` 是 `ORDER BY created_at DESC`（新 → 旧）、本地缓存兜底又是另一个方向，
+ * 于是消费端（趋势页）的一切"首/尾"假设都可能是反的：
+ *   · `points[points.length - 1]` 被当作「最新体重」→ 实际取到**最旧**的；
+ *   · 近 30 天体重变化的 first/last 取反 → 变化量符号都可能反；
+ *   · 折线图按数组顺序绘制 → x 轴从新到旧。
+ * 页面本来就是按"升序"写的（`points[0]` 当最早），所以这里统一成升序是**修复**而非改变约定。
+ */
+function sortByDateAsc(points: TrendDataPoint[]): TrendDataPoint[] {
+  // YYYY-MM-DD 可直接字典序比较；用 slice 复制，避免就地排序污染调用方数组
+  return [...points].sort((a, b) => a.date.localeCompare(b.date))
+}
+
 export async function getTrendData(
   petId: string,
   startDate: string,
@@ -400,15 +416,17 @@ export async function getTrendData(
     // 注意：后端 /checkins 只识别 days 参数，startDate/endDate 会被剥离，
     // 云端可能返回窗口外数据，这里映射后按日期范围再过滤一次。
     const checkins = await getCheckinsByDateRange(petId, userId || '', startDate, endDate)
-    const trendData = checkins
-      .map(checkinToTrendDataPoint)
-      .filter((d) => d.date >= startDate && d.date <= endDate)
+    const trendData = sortByDateAsc(
+      checkins
+        .map(checkinToTrendDataPoint)
+        .filter((d) => d.date >= startDate && d.date <= endDate)
+    )
     saveLocalTrendData(petId, trendData)
     return trendData
   } catch (error) {
-    // 云端/本地打卡均不可用时，回退到趋势本地缓存（按日期过滤）
+    // 云端/本地打卡均不可用时，回退到趋势本地缓存（按日期过滤、同样升序）
     const local = getLocalTrendData(petId)
-    return local.filter((d) => d.date >= startDate && d.date <= endDate)
+    return sortByDateAsc(local.filter((d) => d.date >= startDate && d.date <= endDate))
   }
 }
 
