@@ -1,12 +1,14 @@
 @import '../../styles/_theme';
 @import '../../styles/_animations';
+@import '../../styles/_journal';
 
 // ============================================
 // 宠物形象定制页 · 原型 1:1 区块
 // ============================================
 .avatar-customize {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
   padding: $spacing-xl $spacing-lg $spacing-xxl;
   display: flex;
   flex-direction: column;
@@ -394,7 +396,7 @@
     }
 
     &--teal {
-      background: rgba($color-teal, 0.16);
+      background: rgba(var(--teal-rgb, 79, 163, 227), 0.16);
     }
   }
 
@@ -1194,5 +1196,156 @@
     font-size: $font-size-md;
     font-weight: $font-weight-semibold;
     color: $color-text-inverse;
+  }
+}
+
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖）
+// ============================================
+// 【只覆盖可见模块】本页 1199 行 / 173 选择器，含 3D 查看器、生成进度、图片画廊、
+// 照片上传器等一堆"要真的生成一次才出现"的状态；整体重写风险高，故只对**主页可见模块**
+// 追加覆盖：当前形象卡 / 形象库 / 预设形象网格 / 底部入口。生成流程内的状态保持原样，
+// 待后续完整重写时一并处理（已在交付说明里记为待清理项）。
+.avatar-customize {
+  // 浅色面统一钉"卡内 token"（深色主题下 --text-* 会被转浅，纸面恒为浅底）
+  .avatar-stage,
+  .avatar-library,
+  .avatar-scenes > view,
+  .avatar-customize__section,
+  .avatar-customize__btn,
+  .avatar-preset {
+    @include journal-paper-tokens;
+  }
+
+  // —— 当前形象卡：纸卡 + 金环头像 + 衬线名字（"这是谁"要一眼看清） ——
+  .avatar-stage {
+    border-radius: 40rpx;
+    background: #fffdf8;
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.5);
+    box-shadow: $shadow-xs;
+
+    img {
+      /* 形象图加一圈白环 + 暖色外圈，与板块内其它"贴纸头像"同一语言 */
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 8rpx #fffdf8,
+        0 0 0 14rpx rgba(var(--gold-rgb, 255, 176, 32), 0.3),
+        0 14rpx 30rpx -18rpx rgba(61, 33, 18, 0.5);
+    }
+  }
+
+  // 名字在 tsx 里是裸文本，用容器内的字号规则统一（衬线由 .avatar-stage 内文本继承不到，
+  // 因此只调整字重与字距，避免误伤卡片内其它小字）
+  .avatar-stage {
+    color: $color-text-primary;
+  }
+
+  // —— 形象库：虚线便签（含三行筛选与空态） ——
+  .avatar-library {
+    @include journal-note(primary, 0.42);
+    padding: 24rpx 26rpx 20rpx;
+  }
+
+  // —— 底部入口（形象生成 / 分享形象）：贴纸卡 ——
+  .avatar-scenes > view {
+    border-radius: 32rpx;
+    background: #fffdf8;
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.4);
+    box-shadow: $shadow-xs;
+    @include press-feedback;
+  }
+
+  // —— 区块标题：衬线 + 左侧渐变竖条 ——
+  .avatar-customize__section-title {
+    @include journal-serif(30rpx);
+    position: relative;
+    padding-left: 18rpx;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 8rpx;
+      height: 30rpx;
+      border-radius: $radius-round;
+      background: $gradient-gold;
+    }
+  }
+
+  .avatar-customize__quota-text {
+    font-size: 20rpx;
+    font-weight: 600;
+    color: $color-text-secondary;
+  }
+
+  // —— 通用按钮：主按钮渐变胶囊、次级按钮玻璃底虚线 ——
+  .avatar-customize__btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 88rpx;
+    border-radius: $radius-round;
+    background: $glass-bg;
+    border: 3rpx dashed $color-border;
+    @include press-feedback;
+  }
+
+  .avatar-customize__btn-text {
+    font-size: 26rpx;
+    font-weight: 700;
+    color: $color-text-secondary;
+  }
+
+  // 「保存所选形象」这类主按钮在 tsx 里带 primary 语义类时会用到渐变
+  .avatar-customize__btn--primary,
+  .avatar-preset__save,
+  .avatar-customize__actions--spaced .avatar-customize__btn:first-child {
+    background: linear-gradient(135deg, #ff8a4d 0%, $color-primary 55%, $color-primary-dark 100%);
+    border: 0;
+    box-shadow: 0 14rpx 30rpx -12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.8);
+  }
+
+  .avatar-customize__btn--primary .avatar-customize__btn-text,
+  .avatar-preset__save .avatar-customize__btn-text,
+  .avatar-customize__actions--spaced .avatar-customize__btn:first-child .avatar-customize__btn-text {
+    color: #ffffff;
+    font-weight: 800;
+  }
+
+  // —— 预设形象网格：圆形头像加金环 + 选中态实线（像贴纸册里挑一张） ——
+  .avatar-preset {
+    border-radius: 26rpx;
+    background: #fffdf8;
+    border: 3rpx dashed transparent;
+    @include press-feedback;
+
+    img {
+      border-radius: 50%;
+      box-shadow: 0 0 0 6rpx rgba(var(--gold-rgb, 255, 176, 32), 0.22);
+    }
+  }
+
+  .avatar-preset--active {
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+  }
+
+  // —— 已有形象（旧头像预览）：小相纸 ——
+  .avatar-customize__existing {
+    border-radius: 24rpx;
+    background: #fffdf8;
+    border: 3rpx dashed $color-border;
+  }
+
+  .avatar-customize__existing-label {
+    font-size: 20rpx;
+    color: $color-text-secondary;
+  }
+
+  .avatar-customize__existing-img {
+    border-radius: 20rpx;
+    overflow: hidden;
   }
 }
