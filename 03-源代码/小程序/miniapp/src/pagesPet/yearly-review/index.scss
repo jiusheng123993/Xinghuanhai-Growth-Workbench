@@ -1,5 +1,9 @@
 @import '../../styles/_theme';
 @import '../../styles/_animations';
+// 手账皮肤 mixin（方向 C）：本页末尾的皮肤层要用 journal-paper-tokens / journal-note /
+// journal-serif / journal-button / journal-stamp 等。_journal 内部已 @import '_theme'，
+// 重复导入会被 sass 去重，不会产生重复输出。
+@import '../../styles/_journal';
 
 // ============================================
 // 年度回忆页 — 原型 1:1：珊瑚渐变头部 + 年度数据 + AI 总结 + 年度视频
@@ -7,7 +11,8 @@
 
 .review-page {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
   position: relative;
   z-index: 1;
   animation: pageEnter 0.4s ease-out;
@@ -383,4 +388,363 @@
   text-align: center;
   font-size: 22rpx;
   color: $color-text-tertiary;
+}
+
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖）
+// ============================================
+// 【为什么追加而不是重写】
+// 本页是「年度回顾」这种情感向页面，一整年的记录、数据和回忆都堆在这里，
+// 手账语言可以稍浓：珊瑚渐变头部当"封面"，下面全是纸面便签 + 衬线标题 + 虚线分隔 + 贴纸图章；
+// 但**不加跳跃动效**（只保留原有 fadeInUp 与进度条平移动画），避免把"回顾"做成"热闹的活动页"。
+//
+// 本页有大量「H5 预览里复现不了」的状态，所以只追加、不删改任何原规则：
+//   ① 加载态 —— 后端数据拿不到，预览里长期停在这一屏；
+//   ② 空态 review-empty —— 只有接口失败/无数据才渲染；
+//   ③ 视频三态 —— 只有 video_status = completed / processing / failed 才出现播放器、进度条、状态卡；
+//      其中 `--completed` 是 display: none 的"隐藏态"，`--failed` 才有 danger 描边；
+//   ④ 会员/非会员、单宠/多宠 —— 只有 pets.length > 1 才渲染宠物切换胶囊那一行。
+// 以上状态若删除原规则会静默坏掉（例如预览里看不到的 --completed 一旦被覆盖成 flex 就会常年显示）。
+
+.review-page {
+  // ① 纸面容器统一钉"卡内 token"：深色主题（.theme-starry）会把 --text-* / --glass-bg 转成浅色，
+  //    而下面这些都是恒为浅底的纸面，不钉住就是白字压白纸。
+  &__loading,
+  &__loading-text,
+  &__spinner {
+    @include journal-paper-tokens;
+  }
+
+  // ② 加载态：文字像手写批注（图标仍是原 spinner，不动它的旋转动画）
+  &__loading-text {
+    font-size: 23rpx;
+    letter-spacing: 2rpx;
+    color: $color-text-secondary;
+  }
+}
+
+// ============================================
+// 年度头部：珊瑚渐变 "封面" + 年份贴纸胶囊
+// ============================================
+// 【为什么保留渐变】这页原本的视觉主语就是"珊瑚渐变头部"，它是整页唯一的彩色锚点；
+// 手账化改造把它当成年历封面 —— 保留渐变与白字，只把标题换成衬线、把胶囊做成贴纸。
+.annual-hero {
+  border-radius: 32rpx;
+  background: linear-gradient(140deg, $color-primary-light 0%, $color-primary 58%, $color-primary-dark 100%);
+  box-shadow: 0 18rpx 44rpx -20rpx rgba(var(--primary-dark-rgb, 240, 78, 29), 0.72);
+}
+
+// 年份/宠物胶囊：原来只是半透明白；这里加虚线边做成"贴在封面上的标签"
+// 注意：胶囊底色在原文件里就是 rgba(255,255,255,·)，位于渐变之上，属有意为之，故保留（不是"非法通道写法"那种问题）。
+.annual-hero__pill {
+  border: 3rpx dashed rgba(255, 255, 255, 0.55);
+
+  // 选中态＝"贴牢了"：外实线 + 纸白底 + 纸屑投影
+  &--active {
+    background: #fffdf8;
+    border: 3rpx solid #fffdf8;
+    box-shadow: 0 6rpx 16rpx -8rpx rgba(120, 50, 20, 0.6);
+  }
+}
+
+.annual-hero__pill-text {
+  font-weight: $font-weight-bold;
+  letter-spacing: 1rpx;
+}
+
+.annual-hero__title {
+  @include journal-serif(42rpx);
+  letter-spacing: 3rpx;
+  color: #ffffff;
+  text-shadow: 0 4rpx 18rpx rgba(120, 50, 20, 0.35);
+}
+
+// 右上角「年度回忆」徽记：做成贴在封面上的白贴纸
+// 【为什么随手旋转】贴纸贴上去总有几度歪，这是手账语言的"手感"；静态旋转不是动效，符合"不加跳跃动效"的约束。
+.annual-hero__badge {
+  transform: rotate(3deg);
+  background: rgba(255, 255, 255, 0.94);
+  border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.45);
+  box-shadow: 0 8rpx 18rpx -14rpx rgba(120, 50, 20, 0.6);
+}
+
+.annual-hero__badge-text {
+  // 徽记坐在白贴纸上，白字会看不见 —— 必须翻成主色
+  color: $color-primary-dark;
+  letter-spacing: 1rpx;
+}
+
+.annual-hero__sub {
+  display: block;
+  margin-top: 18rpx;
+  font-size: 23rpx;
+  line-height: 1.65;
+  letter-spacing: 1rpx;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+// ============================================
+// 空态：一张虚线便签 + 图标贴纸方块
+// ============================================
+.review-empty {
+  @include journal-paper-tokens;
+  @include journal-note(gold, 0.42);
+  padding: 76rpx 48rpx;
+}
+
+// 【为什么用 journal-row-icon】空态图标原本是个大白块（72rpx 的 emoji 尺寸），
+// 改成"贴纸方块"后与空态便签同源；size 由 tsx 的 Icon prop 控制，这里只给底与圆角。
+.review-empty__icon {
+  @include journal-row-icon(gold);
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 28rpx;
+}
+
+.review-empty__text {
+  font-size: 24rpx;
+  line-height: 1.85;
+  letter-spacing: 1rpx;
+  color: $color-text-secondary;
+}
+
+// ============================================
+// 年度数据：主便签 + 2×2 数据贴纸格（衬线大数字）
+// ============================================
+.annual-section {
+  @include journal-paper-tokens;
+  @include journal-note(primary, 0.42);
+  padding: 28rpx 26rpx 24rpx;
+}
+
+.annual-section__title {
+  @include journal-serif(30rpx);
+  position: relative;
+  display: inline-block;
+  padding-bottom: 16rpx;
+  margin-bottom: 22rpx;
+
+  // 标题下的金色虚线（手账里"标题下面画一道"的习惯），用背景渐变画虚线，避免额外元素
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 4rpx;
+    width: 100%;
+    height: 3rpx;
+    background-image: linear-gradient(90deg, rgba(var(--gold-rgb, 255, 176, 32), 0.55) 0, rgba(var(--gold-rgb, 255, 176, 32), 0.55) 12rpx, transparent 12rpx, transparent 24rpx);
+    background-size: 24rpx 3rpx;
+    background-repeat: repeat-x;
+  }
+}
+
+// 每格＝一张贴在数据页上的小贴纸（微旋转由 :nth-child 给出，四格错开才像手贴的，不整齐才自然）
+.annual-stat {
+  @include journal-paper-tokens;
+  padding: 24rpx 20rpx;
+  border-radius: 26rpx;
+  background: #fffaf3;
+  border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.35);
+  box-shadow: 0 10rpx 22rpx -18rpx rgba(61, 33, 18, 0.5);
+
+  &:nth-child(1) { transform: rotate(-0.7deg); }
+  &:nth-child(2) { transform: rotate(0.6deg); }
+  &:nth-child(3) { transform: rotate(0.5deg); }
+  &:nth-child(4) { transform: rotate(-0.5deg); }
+}
+
+.annual-stat__icon {
+  @include journal-row-icon(primary);
+  font-size: 24rpx;
+}
+
+.annual-stat__label {
+  font-size: 22rpx;
+  letter-spacing: 1rpx;
+  color: $color-text-secondary;
+}
+
+// 大数字用衬线：年度数据是"手账里最想被看见的几笔"
+.annual-stat__num {
+  font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
+  font-size: 46rpx;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+  color: $color-primary-dark;
+  // 数字等宽，四格数字跳变时不会左右抖
+  font-variant-numeric: tabular-nums;
+}
+
+// 单位做成"填空下划线"（手账里写上数字后面画一条短横）
+.annual-stat__unit {
+  padding-bottom: 4rpx;
+  border-bottom: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.42);
+  color: $color-text-secondary;
+}
+
+// ============================================
+// AI 年度总结：暖色便签 + 右上角图章
+// ============================================
+.annual-summary {
+  @include journal-paper-tokens;
+  @include journal-note(primary, 0.45);
+  // 这是全页"最不像表格、最像一封信"的一块，底色调成暖色到手写纸的渐变
+  background: linear-gradient(180deg, rgba(var(--primary-rgb, 255, 107, 61), 0.1), #fffdf8 62%);
+  padding: 30rpx 28rpx 26rpx;
+}
+
+// 【为什么加右内边距】图章固定在右上角，文案区必须让开，否则长文案会钻到图章底下
+.annual-summary__head {
+  padding-right: 124rpx;
+  margin-bottom: 22rpx;
+}
+
+// AI 图标：从"圆渐变徽章"改成"贴纸方块"（渐变圆是现代 App 语言，与手账纸面不同源）
+.annual-summary__icon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 20rpx;
+  background: #fffdf8;
+  border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.45);
+  box-shadow: 0 0 0 6rpx rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+}
+
+.annual-summary__title {
+  @include journal-serif(30rpx);
+}
+
+.annual-summary__sub {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 21rpx;
+  letter-spacing: 1rpx;
+  color: $color-text-secondary;
+}
+
+// 正文按"信纸"排：行高给足，读起来慢一点
+.annual-summary__text {
+  font-size: 25rpx;
+  line-height: 1.9;
+  letter-spacing: 0.5rpx;
+  color: $color-text-primary;
+}
+
+// 落款：左侧一道竖线 + 缩进，像信末的署名
+.annual-summary__sign {
+  display: block;
+  margin-top: 22rpx;
+  padding-left: 16rpx;
+  border-left: 4rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.55);
+  font-size: 21rpx;
+  letter-spacing: 1rpx;
+  color: $color-primary-dark;
+}
+
+// 图章：手账里"这一年值得被盖章"的意思。
+// 【为什么用 ::after 而不是往 tsx 里塞元素】本工作包不许改 tsx —— 所以文字由 CSS content 生成，
+// 绝对定位挂在便签右上角，不参与布局；journal-stamp 自带 -11deg 旋转与内外双圈虚线，是静态装饰而非动效。
+.annual-summary {
+  // 图章偏出便签一点点（右下方向也可能越界），overflow 保持可见
+  overflow: visible;
+
+  &::after {
+    @include journal-stamp(primary-dark);
+    content: '年度手账';
+    position: absolute;
+    top: 22rpx;
+    right: 22rpx;
+    font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
+    font-size: 19rpx;
+    font-weight: 700;
+    letter-spacing: 1rpx;
+    line-height: 1.25;
+    text-align: center;
+    color: rgba(var(--primary-dark-rgb, 240, 78, 29), 0.92);
+  }
+}
+
+// ============================================
+// 年度视频：播放器贴纸 + 三态状态便签 + 手账主按钮
+// ============================================
+// 【看不见的状态】播放器只在 video_status = 'completed' 且 video_url 非空时渲染；
+// 预览里拿不到数据，所以这里按类名推断为 16:9 视频块，用图钉（胶带）把它"钉"在纸上。
+.annual-video__player {
+  display: block;
+  width: 100%;
+  height: 360rpx;
+  border-radius: 28rpx;
+  background: #2a1a12;
+  box-shadow:
+    0 0 0 8rpx #fffdf8,
+    0 0 0 11rpx rgba(var(--gold-rgb, 255, 176, 32), 0.32),
+    0 16rpx 34rpx -20rpx rgba(61, 33, 18, 0.6);
+}
+
+// 状态三态：等待/生成中 = 青蓝便签，生成失败 = 珊瑚红便签。
+// 【务必保留 --completed 的 display: none】那是"可播放时不显示状态卡"的隐藏规则，
+// 覆盖时绝不能把它一起改掉，否则完成态会常年多出一张"可播放"的卡。
+// 【为什么不用 dashed 覆盖 --failed】原规则用的是 border-color 覆盖，
+// 且 status 卡自带 inline-flex 的 flex: 1 进度条；这里用属性选择器给实线红边，不碰原优先级链。
+.annual-video__status {
+  @include journal-paper-tokens;
+  @include journal-note(teal, 0.45);
+  padding: 22rpx 26rpx;
+}
+
+.annual-video__status--failed {
+  border-style: solid;
+  border-width: 3rpx;
+  border-color: rgba(var(--danger-rgb, 255, 90, 95), 0.6);
+  background: linear-gradient(180deg, rgba(var(--danger-rgb, 255, 90, 95), 0.1), #fffdf8 70%);
+}
+
+.annual-video__status-text {
+  font-size: 24rpx;
+  font-weight: 800;
+  letter-spacing: 1rpx;
+  color: $color-text-primary;
+}
+
+// 进度条：原来是实心圆角条，改成手账的"虚线槽 + 实心进度"
+// journal-track 默认 transparent，这里补上淡底，让没画满的部分看得见；
+// progressSlide 平移是原文件的动效（进度感所必需），保留不改。
+.annual-video__progress {
+  height: 10rpx;
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+  overflow: hidden;
+  @include journal-track;
+}
+
+.annual-video__progress-bar {
+  border-radius: $radius-round;
+  background: $gradient-gold;
+}
+
+// 主按钮＝手账按钮（渐变 + 投影 + 按压反馈），外面再套一圈金色虚线做"贴纸外框"
+.annual-video__btn {
+  @include journal-button;
+  border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.5);
+}
+
+.annual-video__btn-text {
+  font-size: 30rpx;
+  font-weight: 800;
+  letter-spacing: 2rpx;
+  color: #ffffff;
+}
+
+.annual-video__btn-arrow {
+  color: #ffffff;
+}
+
+// 价格说明：做成虚线小胶囊，弱化成一枚"注脚"
+.annual-video__price {
+  align-self: center;
+  padding: 8rpx 22rpx;
+  border-radius: $radius-round;
+  background: #fffaf3;
+  border: 3rpx dashed $color-border;
+  font-size: 21rpx;
+  letter-spacing: 1rpx;
+  color: $color-text-secondary;
 }
