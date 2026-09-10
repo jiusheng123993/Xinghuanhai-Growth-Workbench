@@ -20,6 +20,8 @@ import { calculateHealthScore } from './utils'
 import FamilyPetAvatar from './FamilyPetAvatar'
 import { redirectToLoginIfNeeded } from '../../utils/authGuard'
 import './index.scss'
+import { Icon, PageHero, Illustration } from '../../components'
+import PageBackground from '../../components/PageBackground'
 
 /** 食欲等级文案（1-6） */
 const APPETITE_TEXT: Record<number, string> = {
@@ -147,7 +149,11 @@ export default function FamilyPage() {
             breed: pet.breed,
             score,
             scoreTrend: 'stable',
-            checkinDays: stats.weeklyCount,
+            // 口径对齐（2026-09-11）：`checkinDays` 要的是**天数**，必须传按日期去重的
+            // `weeklyDays`。原来传的是 `weeklyCount`（打卡次数）—— 一天补记两次就会
+            // 让后端印出「本周坚持了 8 天打卡」这种虚高数字（本项目一周只有 7 天）。
+            checkinDays: stats.weeklyDays,
+            // anomalyDays 保持条数：后端那条文案已改成「本周有 N 次异常记录」，与条数一致
             anomalyDays: stats.totalAnomalyDays,
             streak: stats.streak,
             recentMoments: [],
@@ -325,8 +331,22 @@ export default function FamilyPage() {
     }
   }, [])
 
+  /**
+   * 点家庭里的宠物 → 切成当前宠物并跳到它的档案页
+   *
+   * 2026-09-11 补失败兜底：petStore.switchPet 失败时会 throw，原来这里既不接错、
+   * 后续的 switchTab 也不会执行 —— 用户点一下宠物"什么都没发生"。
+   * 失败时明确提示并**不跳转**：否则会跳到"其实没切成功的那只（还是旧宠物）"的档案页，更容易误解。
+   */
   const handlePetClick = async (petId: string) => {
-    await switchPet(petId)
+    try {
+      await switchPet(petId)
+    } catch (err) {
+      // 优先用本次捕获的异常：store.error 可能是上一次无关操作留下的旧消息（审查 P2-5）
+      const msg = err instanceof Error ? err.message : ''
+      Taro.showToast({ title: msg || usePetStore.getState().error || '切换失败，请重试', icon: 'none' })
+      return
+    }
     Taro.switchTab({ url: '/pages/pet-profile/index' })
   }
 
@@ -513,27 +533,23 @@ export default function FamilyPage() {
   if (!currentFamily && !familyLoading) {
     return (
       <View className='family-page'>
-        <View className='xhh-bg-layer'>
-          <View className='xhh-blob xhh-blob-a' />
-          <View className='xhh-blob xhh-blob-b' />
-          <View className='xhh-blob xhh-blob-c' />
-          <View className='xhh-blob xhh-blob-d' />
-        </View>
+        <PageBackground />
         <View className='family-empty-state'>
-          <Text className='family-empty-icon'>🏡</Text>
+          {/* 空态主视觉改用品牌插画（原来是一个 house 图标，太素） */}
+          <Illustration name='empty-family' size={140} className='family-empty-illus' />
           <Text className='family-empty-title'>欢迎来到星澜小筑</Text>
           <Text className='family-empty-desc'>创建您的宠物家庭，管理毛孩子们的日常、健康与温馨回忆</Text>
           <View className='family-empty-features'>
             <View className='family-empty-feature'>
-              <Text className='family-empty-feature-icon'>🧬</Text>
+              <Icon name='dna' size={24} tone='primary' className='family-empty-feature-icon' />
               <Text className='family-empty-feature-label'>家族图谱</Text>
             </View>
             <View className='family-empty-feature'>
-              <Text className='family-empty-feature-icon'>📸</Text>
+              <Icon name='camera' size={24} tone='primary' className='family-empty-feature-icon' />
               <Text className='family-empty-feature-label'>全家福</Text>
             </View>
             <View className='family-empty-feature'>
-              <Text className='family-empty-feature-icon'>📅</Text>
+              <Icon name='calendar-check' size={24} tone='primary' className='family-empty-feature-icon' />
               <Text className='family-empty-feature-label'>家庭日历</Text>
             </View>
           </View>
@@ -555,20 +571,24 @@ export default function FamilyPage() {
 
   return (
     <ScrollView className='family-page' scrollY>
-      {/* 全屏动态背景光斑层 */}
-      <View className='xhh-bg-layer'>
-        <View className='xhh-blob xhh-blob-a' />
-        <View className='xhh-blob xhh-blob-b' />
-        <View className='xhh-blob xhh-blob-c' />
-        <View className='xhh-blob xhh-blob-d' />
-        <View className='xhh-bg-glow' />
-      </View>
+      {/* 全屏动态背景层（统一走 PageBackground 组件，才能响应背景自定义） */}
+      <PageBackground />
 
       <View className='family-content'>
+        {/* ===== 页面头图：品牌插画横幅（始终可见） =====
+            标题只写页面名、不写具体家庭名 —— 下方 family-head 已经展示家庭名 + 编辑入口，
+            页头再写一遍就重复了（与时光页「两套标题冲突」是同一类问题；
+            且多家庭场景下页头挂某个家庭名也会失效）。 */}
+        <PageHero
+          illustration='page-family'
+          title='宠物家庭'
+          subtitle='和家人一起，记录毛孩子的每一天'
+        />
+
         {/* ===== 1. 家庭头部 ===== */}
         <View className='family-head'>
           <View className='family-head__avatar'>
-            <Text className='family-head__avatar-icon'>🐾</Text>
+            <Icon name='paw-print' size={20} tone='primary' className='family-head__avatar-icon' />
           </View>
           <View className='family-head__info'>
             <Text className='family-head__name'>{familyName}</Text>
@@ -578,7 +598,7 @@ export default function FamilyPage() {
             className='family-head__edit'
             onClick={() => Taro.navigateTo({ url: '/pagesPet/family/dashboard/index' })}
           >
-            <Text className='family-head__edit-icon'>✏️</Text>
+            <Icon name='pencil-simple' size={14} tone='primary' className='family-head__edit-icon' />
           </View>
         </View>
 
@@ -628,7 +648,7 @@ export default function FamilyPage() {
         <View className='family-co-care'>
           <View className='family-card__head'>
             <View className='family-card__title-wrap'>
-              <Text className='family-card__icon'>👥</Text>
+              <Icon name='users' size={14} tone='primary' className='family-card__icon' />
               <Text className='family-card__title'>共同养宠</Text>
             </View>
             <Text className='family-card__meta'>{users.length} 位家人</Text>
@@ -642,7 +662,7 @@ export default function FamilyPage() {
                       <Image className='family-user-card__avatar' src={u.avatarUrl} mode='aspectFill' />
                     ) : (
                       <View className='family-user-card__avatar family-user-card__avatar--fallback'>
-                        <Text className='family-user-card__avatar-emoji'>🐾</Text>
+                        <Icon name='paw-print' size={22} tone='primary' className='family-user-card__avatar-emoji' />
                       </View>
                     )}
                   </View>
@@ -686,7 +706,7 @@ export default function FamilyPage() {
         <View className='family-card'>
           <View className='family-card__head'>
             <View className='family-card__title-wrap'>
-              <Text className='family-card__icon'>❤️</Text>
+              <Icon name='heart' size={14} tone='primary' className='family-card__icon' />
               <Text className='family-card__title'>今日健康摘要</Text>
             </View>
             <Text className='family-card__meta'>{todayLabel} · {checkedCount}/{pets.length}打卡</Text>
@@ -796,7 +816,7 @@ export default function FamilyPage() {
         <View className='family-card'>
           <View className='family-card__head'>
             <View className='family-card__title-wrap'>
-              <Text className='family-card__icon'>📅</Text>
+              <Icon name='calendar-check' size={14} tone='primary' className='family-card__icon' />
               <Text className='family-card__title'>家庭日历</Text>
             </View>
             <Text className='family-card__meta'>本月 {calendarEvents.length} 件事</Text>
@@ -830,7 +850,7 @@ export default function FamilyPage() {
           onClick={() => Taro.navigateTo({ url: '/pagesPet/weekly-report/index' })}
         >
           <View className='family-report-entry__icon'>
-            <Text className='family-report-entry__icon-text'>📄</Text>
+            <Icon name='clipboard-text' size={20} tone='primary' className='family-report-entry__icon-text' />
           </View>
           <View className='family-report-entry__info'>
             <Text className='family-report-entry__title'>家庭周报</Text>
@@ -865,7 +885,7 @@ export default function FamilyPage() {
               {moments.slice(0, 2).map((moment) => (
                 <View key={moment.id} className='family-feed__item'>
                   <View className='family-feed__avatar'>
-                    <Text className='family-feed__avatar-emoji'>🐾</Text>
+                    <Icon name='paw-print' size={16} tone='primary' className='family-feed__avatar-emoji' />
                   </View>
                   <Text className='family-feed__text'>
                     <Text className='family-feed__text-bold'>{getMomentPetName(moment)}</Text>

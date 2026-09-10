@@ -240,9 +240,32 @@ describe('checkinService', () => {
 
       expect(result.totalCheckins).toBe(2)
       expect(result.lastCheckinDate).toBe(today)
+      // 「次」与「天」两个口径都要有：weeklyCount 是次数、weeklyDays 是按日期去重的天数
       expect(result.weeklyCount).toBeGreaterThanOrEqual(1)
+      expect(result.weeklyDays).toBeGreaterThanOrEqual(1)
       expect(result.monthlyCount).toBe(2)
       expect(api.get).not.toHaveBeenCalled()
+    })
+
+    /**
+     * 「次」与「天」两个口径必须分开（2026-09-11 新增）
+     *
+     * 家庭页生成周报时原来传的是 `weeklyCount`（次数），后端却印成
+     * 「本周坚持了 N 天打卡」—— 一天补记两次就会虚高（一周只有 7 天）。
+     * 这条用例钉住新字段 `weeklyDays` 的语义。
+     */
+    it('同一天补记两条：weeklyCount 记 2 次、weeklyDays 只算 1 天', async () => {
+      const morning = new Date(); morning.setHours(9, 0, 0, 0)
+      const night = new Date(); night.setHours(21, 0, 0, 0)
+      mockStorage['xhh_checkins_pet-001_user-001'] = JSON.stringify([
+        makeCheckinResponse({ id: 'd1', createdAt: morning }),
+        makeCheckinResponse({ id: 'd2', createdAt: night }),
+      ])
+
+      const result = await getCheckinStats('pet-001', userId)
+
+      expect(result.weeklyCount).toBe(2)   // 按次
+      expect(result.weeklyDays).toBe(1)    // 按天
     })
 
     it('should return empty stats when no records exist', async () => {

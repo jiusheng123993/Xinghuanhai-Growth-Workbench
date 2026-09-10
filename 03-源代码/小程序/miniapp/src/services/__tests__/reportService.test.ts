@@ -175,6 +175,35 @@ describe('reportService', () => {
       expect(report!.checkinStats.checkinRate).toBe('7%')
     })
 
+    /**
+     * 连续打卡按天去重（2026-09-11 新增）
+     *
+     * 旧实现直接遍历**记录**并维护 expectedDate 游标：同一天补记两条会连续命中两次
+     * （第一条 diffDays=0、第二条相对新游标又是 1）→ "连续 2 天"被算成 3 天。
+     * 这份数字会写进导出给兽医看的报告，必须钉住。
+     */
+    it('同一天补记两条时，连续打卡天数按天去重（一天不会被算成两天）', async () => {
+      const todayMorning = new Date(); todayMorning.setHours(9, 0, 0, 0)
+      const todayNight = new Date(); todayNight.setHours(21, 0, 0, 0)
+      const yesterday = new Date(todayMorning.getTime() - 86400000)
+
+      const entries: PetHealthEntry[] = [
+        makeEntry({ createdAt: todayMorning }),
+        makeEntry({ createdAt: todayNight }),   // 与上一条同一天
+        makeEntry({ createdAt: yesterday }),
+      ]
+
+      vi.mocked(getPetById).mockResolvedValue(makePetProfile())
+      vi.mocked(getCheckinsByDateRange).mockResolvedValue(entries)
+      vi.mocked(getVaccineRecords).mockResolvedValue([])
+
+      const report = await generateHealthReport(userId, petId)
+
+      expect(report).not.toBeNull()
+      // 今天 + 昨天 = 连续 2 天；旧实现会给出 3
+      expect(report!.checkinStats.streakDays).toBe(2)
+    })
+
     it('should generate report with normal data', async () => {
       const pet = makePetProfile()
       const entries: PetHealthEntry[] = [

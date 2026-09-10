@@ -8,7 +8,7 @@ import type { PetHealthEntry } from '../memory-body/types/memoryBodyTypes'
 import { getVaccineRecords } from './vaccineService'
 import { getPetById, type PetProfile } from './petService'
 import { requirePetOwnership } from '../utils/petOwnership'
-import { formatPetAge } from '../utils/date'
+import { formatPetAge, localDateString, parseLocalDate } from '../utils/date'
 
 export interface HealthReport {
   title: string
@@ -96,29 +96,41 @@ function calculateAge(birthday?: string): string {
   return formatPetAge(birthday, { fallback: '未知' })
 }
 
+/**
+ * 连续打卡天数（**按天去重**）
+ *
+ * 2026-09-11 修复：原实现直接遍历**记录**并维护一个 expectedDate 游标 ——
+ * 同一天补记两条时会连续命中两次 `diffDays`（第一条 0、第二条 1），
+ * 把"连续打卡 3 天"算成 6 天（这份数字会写进给兽医看的报告）。
+ * 现在先按本地日历日去重，再在去重后的日期序列上走游标。
+ *
+ * @param entries - 周期内的打卡记录（顺序任意，内部会排序）
+ * @returns 连续天数；首条允许是"今天或昨天"（今天还没打卡不算断，与原实现一致）
+ */
 function calculateStreak(entries: PetHealthEntry[]): number {
   if (entries.length === 0) return 0
-  const sorted = [...entries].sort((a, b) => {
-    const da = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt)
-    const db = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt)
-    return db.getTime() - da.getTime()
-  })
 
+  // 1) 取「本地日历日」并去重、按新→旧排序（YYYY-MM-DD 可直接字典序比较）
+  const dayKeys = entries
+    .map((e) => localDateString(e.createdAt))
+    .filter((d): d is string => !!d)
+  const sortedDays = Array.from(new Set(dayKeys)).sort().reverse()
+
+  // 2) 从今天往回走游标
   let streak = 0
-  let expectedDate = new Date()
-  expectedDate.setHours(0, 0, 0, 0)
-
-  for (const entry of sorted) {
-    const entryDate = entry.createdAt instanceof Date ? entry.createdAt : new Date(entry.createdAt)
-    entryDate.setHours(0, 0, 0, 0)
-    const diffDays = Math.floor((expectedDate.getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24))
-
-    if (diffDays === 0 || (streak === 0 && diffDays <= 1)) {
+  const cursor = parseLocalDate(new Date())!
+  const ONE_DAY_MS = 86400000
+  for (const dayKey of sortedDays) {
+    const expected = localDateString(cursor)!
+    const isFirst = streak === 0
+    // 首条允许落在"昨天"：今天尚未打卡时不该把昨天之前的连续记录算断
+    const yesterday = localDateString(new Date(cursor.getTime() - ONE_DAY_MS))!
+    if (dayKey === expected) {
       streak++
-      expectedDate = new Date(entryDate.getTime() - 86400000)
-    } else if (diffDays === 1) {
+      cursor.setDate(cursor.getDate() - 1)
+    } else if (isFirst && dayKey === yesterday) {
       streak++
-      expectedDate = new Date(entryDate.getTime() - 86400000)
+      cursor.setDate(cursor.getDate() - 2)
     } else {
       break
     }
@@ -152,7 +164,11 @@ export async function generateHealthReport(
 
   const endDate = new Date()
   const startDate = new Date()
-  startDate.setDate(startDate.getDate() - days)
+  // 窗口恰好是「含今天在内的 days 个自然日」（2026-09-11 修复）：
+  // 原实现减 `days` 天，而取数区间是**双闭区间**（`>= start && <= end`）→ 实际横跨 days+1 天，
+  // 于是"打卡率 = 打卡天数 / days"在打满时能算出 103%（一天补记两次那类"超过 100%"只是被压小）。
+  // 改成减 `days - 1` 后，区间天数与分母 days、与报告里的「共 N 天」三者一致。
+  startDate.setDate(startDate.getDate() - (days - 1))
 
   const entries = await getCheckinsByDateRange(petId, userId, formatDate(startDate), formatDate(endDate))
   const vaccines = await getVaccineRecords(petId)

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 健康打卡服务
  *
  * 宠物健康打卡的查询/创建/统计，含本地缓存与云端同步、风险评估与 AI 反馈
@@ -24,6 +24,13 @@ export interface HealthCheckinStats {
    * 这里直接复用本函数已经算好的去重日期数组，零额外成本。
    */
   totalDays: number;
+  /**
+   * 本周 / 本月**打卡天数**（按日期去重）—— 2026-09-11 新增。
+   * 家庭页生成周报时原来传的是 `weeklyCount`（**次数**），
+   * 后端却把它印成「本周坚持了 N 天打卡」 —— 一天补记两次就会多算一天。
+   */
+  weeklyDays: number;
+  monthlyDays: number;
   streak: number;
   lastCheckinDate: string | null;
   weeklyCount: number;
@@ -413,9 +420,17 @@ function calculateLocalStats(entries: PetHealthEntry[]): HealthCheckinStats {
     totalDays: sortedDates.length,
     streak,
     lastCheckinDate: sortedDates.length > 0 ? sortedDates[0] : null,
+    // 按次计数（标签写「次」的地方用它）
     weeklyCount: entries.filter((e) => entryDateStr(e) >= weekStartStr).length,
     monthlyCount: entries.filter((e) => entryDateStr(e) >= monthStartStr).length,
+    // 按天去重（标签写「天」的地方用它）—— 2026-09-11 新增：
+    // 家庭页原来把 weeklyCount（次数）当"天"传给周报，一天补记两次就会多算一天
+    weeklyDays: sortedDates.filter((d) => d >= weekStartStr).length,
+    monthlyDays: sortedDates.filter((d) => d >= monthStartStr).length,
     consecutiveAnomalyDays,
+    // ⚠️ 历史命名：这个字段其实是**异常记录条数**（不是天数），
+    // 目前被 pages/family/utils 与 effect-tracking 当作 anomalyRatio 的分子使用，
+    // 为避免悄悄改变评分口径，本轮保持原语义未动（已登记在验收清单的遗留项里）
     totalAnomalyDays,
     lastAnomalyDate,
   };
