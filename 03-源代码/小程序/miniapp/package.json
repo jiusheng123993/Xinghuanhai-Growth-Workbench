@@ -14,6 +14,7 @@
     "cap:copy": "cap copy android",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "lint:ci": "eslint src --ext .ts,.tsx --max-warnings 260",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
