@@ -363,10 +363,14 @@
   border-radius: 0 4rpx 4rpx 0;
 }
 
+// 【2026-09-11 舰长裁决修正】原来 caution 与 dangerous 都用品牌橙（$color-primary / -dark），
+// 只靠深浅区分 —— 但这是"能不能吃"的安全页，四档必须一眼可辨。现按语义色重排：
+// 可吃=绿 / 慎吃=金 / 危险=红 / 剧毒=深红
 .pet-food-query__result--safe::before { background: $color-success; }
-.pet-food-query__result--caution::before { background: $color-primary; }
-.pet-food-query__result--dangerous::before { background: $color-primary-dark; }
-.pet-food-query__result--toxic::before { background: $color-danger; }
+.pet-food-query__result--caution::before { background: $color-warning; }
+.pet-food-query__result--dangerous::before { background: $color-danger; }
+/* 剧毒用更深的红（主题里没有 danger-deep 通道，故直接给深红回退色） */
+.pet-food-query__result--toxic::before { background: var(--danger-deep, #C81E1E); }
 
 .pet-food-query__result-header {
   display: flex;
@@ -390,10 +394,11 @@
   color: #FFFFFF;
 }
 
+/* 徽章与色条同一套语义色（金=慎吃 / 红=危险 / 深红=剧毒），保证一眼可辨 */
 .pet-food-query__result-badge--safe { background: $color-success; }
-.pet-food-query__result-badge--caution { background: $color-primary; color: $color-text-inverse; }
-.pet-food-query__result-badge--dangerous { background: $color-primary-dark; }
-.pet-food-query__result-badge--toxic { background: $color-danger; }
+.pet-food-query__result-badge--caution { background: $color-warning; color: $color-text-primary; }
+.pet-food-query__result-badge--dangerous { background: $color-danger; color: #ffffff; }
+.pet-food-query__result-badge--toxic { background: var(--danger-deep, #C81E1E); color: #ffffff; }
 
 .pet-food-query__result-section {
   margin-top: 20rpx;
@@ -588,9 +593,9 @@
   color: #FFFFFF;
 }
 
-.pet-food-query__breed-warning-level--toxic { background: $color-danger; }
-.pet-food-query__breed-warning-level--dangerous { background: $color-primary-dark; }
-.pet-food-query__breed-warning-level--caution { background: $color-primary; color: $color-text-inverse; }
+.pet-food-query__breed-warning-level--toxic { background: var(--danger-deep, #C81E1E); color: #ffffff; }
+.pet-food-query__breed-warning-level--dangerous { background: $color-danger; color: #ffffff; }
+.pet-food-query__breed-warning-level--caution { background: $color-warning; color: $color-text-primary; }
 .pet-food-query__breed-warning-level--info { background: $color-teal; }
 
 .pet-food-query__breed-warning-reason {
