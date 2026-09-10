@@ -1,4 +1,8 @@
 @import '../../../styles/_theme';
+// 手账皮肤公共 mixin（纸面 token / 虚线便签 / 衬线标题 / 手账按钮 …）
+// 【为什么必须显式引入】本页要复用全板块统一的手账语言，不引入就得在本页重抄一套纸面写法，
+// 日后全板块改配色时必然漏掉这一页；_journal 自身已 import 了 _theme，这里只需补它一条。
+@import '../../../styles/_journal';
 
 .family-dashboard {
   min-height: 100vh;
@@ -39,7 +43,7 @@
   padding: 10rpx 20rpx;
   border-radius: 16rpx;
   background: linear-gradient(135deg, $color-primary, $color-primary-dark);
-  box-shadow: 0 4rpx 12rpx rgba($color-primary, 0.3);
+  box-shadow: 0 4rpx 12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
   @include press-feedback;
 
   &:active {
@@ -87,7 +91,7 @@
   align-items: center;
   gap: 12rpx;
   padding: 20rpx 24rpx;
-  background: linear-gradient(135deg, rgba($color-sage, 0.08), rgba($color-primary, 0.06));
+  background: linear-gradient(135deg, rgba(var(--sage-rgb, 47, 201, 142), 0.08), rgba(var(--primary-rgb, 255, 107, 61), 0.06));
   border-bottom: 1px solid $color-border;
 }
 
@@ -157,8 +161,8 @@
   border: 1px solid $color-border;
 
   &--checked {
-    background: rgba($color-sage, 0.08);
-    border-color: rgba($color-sage, 0.2);
+    background: rgba(var(--sage-rgb, 47, 201, 142), 0.08);
+    border-color: rgba(var(--sage-rgb, 47, 201, 142), 0.2);
   }
 }
 
@@ -173,8 +177,8 @@
   overflow: hidden;
 
   &--checked {
-    border-color: rgba($color-sage, 0.4);
-    background: rgba($color-sage, 0.1);
+    border-color: rgba(var(--sage-rgb, 47, 201, 142), 0.4);
+    background: rgba(var(--sage-rgb, 47, 201, 142), 0.1);
   }
 }
 
@@ -200,7 +204,7 @@
 .fd-health-checked-badge {
   padding: 4rpx 10rpx;
   border-radius: 10rpx;
-  background: rgba($color-sage, 0.12);
+  background: rgba(var(--sage-rgb, 47, 201, 142), 0.12);
 }
 
 .fd-health-checked-text {
@@ -278,10 +282,10 @@
   padding: 6rpx 14rpx;
   border-radius: 12rpx;
   background: $color-primary-bg;
-  border: 1px solid rgba($color-primary, 0.2);
+  border: 1px solid rgba(var(--primary-rgb, 255, 107, 61), 0.2);
 
   &:active {
-    background: rgba($color-primary, 0.15);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.15);
   }
 }
 
@@ -319,7 +323,7 @@
   text-align: center;
 
   &:active {
-    background: rgba($color-danger, 0.05);
+    background: rgba(var(--danger-rgb, 255, 90, 95), 0.05);
   }
 }
 
@@ -1045,13 +1049,13 @@
 
 @keyframes albumHighlight {
   0% {
-    box-shadow: 0 0 0 0 rgba($color-primary, 0.3);
+    box-shadow: 0 0 0 0 rgba(var(--primary-rgb, 255, 107, 61), 0.3);
   }
   50% {
-    box-shadow: 0 0 0 12rpx rgba($color-primary, 0.05);
+    box-shadow: 0 0 0 12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.05);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba($color-primary, 0);
+    box-shadow: 0 0 0 0 rgba(var(--primary-rgb, 255, 107, 61), 0);
   }
 }
 
@@ -1130,7 +1134,7 @@
   right: 12rpx;
   padding: 4rpx 12rpx;
   border-radius: 10rpx;
-  background: rgba($color-primary, 0.85);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.85);
 }
 
 .fd-album-item-badge-text {
@@ -1227,10 +1231,347 @@
 }
 
 .fd-album-item--uploaded {
-  border-color: rgba($color-primary, 0.25);
+  border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.25);
   background: linear-gradient(135deg, #FFFAF8, #FFFBF6);
 
   .fd-album-item-placeholder {
     background: linear-gradient(135deg, #FFFEFA, #FFFDF8);
   }
+}
+
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖）
+// ============================================
+// 【为什么追加而不是重写】本页（改前 1236 行）里有大量"要真操作才出现"的状态，H5 预览里复现不了：
+//   ① 整页空态 fd-empty —— 只在 currentFamily 为空（还没创建家庭）时渲染；
+//   ② 全家福空态 fd-photo-empty、相册空态 fd-album-empty —— 要"有家庭但没成员/没照片"；
+//   ③ 相册加载态 fd-album-loading —— photosLoading 一闪而过；
+//   ④ AI 生成中 fd-photo-generating 与生成结果 fd-photo-preview（含保存/分享/重新生成三按钮）；
+//   ⑤ 可邀请列表 fd-invite-* —— 要"名下有未入家庭的宠物"；
+//   ⑥ 会员状态分支：fd-health-member--checked（已打卡）、fd-health-checked-badge / fd-health-pending-badge、
+//      fd-order__btn--disabled（排位到头）、fd-scene-tab--active / fd-scene-chip--active、
+//      fd-album-item--uploaded（用户上传的照片）、fd-album-list--highlight（保存后的高亮）。
+// 预览环境没有家庭数据，上面这些看不到真实样子；直接重写会把它们的样式一起丢掉，
+// 所以本轮只做"同特异性 + 顺序在后"的追加覆盖，一条原规则都没删。
+//
+// 【本轮一律不动颜色】本页实测 43 处硬编码色（#FF8C42×12 / #D4A574×9 / #fff×8 / #FFF5EC×3 等，
+// 清单见自述文件）。按工作包要求"只登记不纠偏"，因此凡是靠硬编码色撑起来的块
+// （上传按钮 / 场景 tab 与 chip / 生成全家福按钮 / AI 生成中 / 相册占位图 / NEW 角标 / 排位卡奶黄底）
+// 下面都不覆盖它们的颜色，只改形状、边框样式与排版；是否统一配色由队长裁决。
+//
+// 【为什么总是成对写"修饰符"】追加段落在原文件之后，而 `.x` 与 `.x--mod` 特异性完全相同，
+// 后写的 `.x` 会反过来盖掉前面 `.x--mod` 设过的同属性（例如 fd-health-member--checked 的沙绿底、
+// fd-album-item--uploaded 的照片底）。所以下面每次覆盖带修饰符的基础类，都紧跟一条修饰符规则
+// 把"已打卡 / 已上传 / 已选中"的样式重新写回来。
+// ============================================
+
+// —— 页面根：把纸面 token 钉在这一层 ——
+.family-dashboard {
+  // 本页所有卡片都坐在这一层纸上；深色主题（.theme-starry）会把 --text-* / --glass-bg 转成浅色，
+  // 不钉回浅色取值就是"白字压白纸"。放在根上只写一处，后加的子块自动继承。
+  @include journal-paper-tokens;
+
+  // 页面底由渐变改为平铺纸面：原来的 $gradient-page 是"上浅下深"的渐变，
+  // 一张张浅色纸卡压在渐变上，越往下卡片边界越糊；平铺后卡片与页面分层干净。
+  background: var(--bg-page, #fff6ee);
+}
+
+// —— 模块 ① 页头（家庭名 + 成员数）——
+.fd-title {
+  // 不动 $gradient-gold 渐变字（那是主题 token，不在硬编码清单里），只换衬线字族 + 放大字距，
+  // 让页头读起来像"本子封面上手写的家庭名"，而不是系统标题。
+  font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
+  letter-spacing: 4rpx;
+}
+
+.fd-subtitle {
+  // 成员数原本是压在大标题下的一行 26rpx 灰字，容易被当成副标题忽略；
+  // 改成一条"名字条"（纸底 + 金色虚线框），既接住页头，也和下面的卡片拉开层次。
+  margin: 0 auto 24rpx;
+  padding: 10rpx 0;
+  border-radius: 20rpx;
+  background: #fffdf8;
+  border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.45);
+  letter-spacing: 2rpx;
+}
+
+// —— 模块 ② 今日健康看板（表头 / 三格统计 / 成员打卡行）——
+.fd-health-board {
+  // 整块做成虚线便签：原来的 1px 实线 + 56rpx 大圆角更像"系统面板"，
+  // 换 36rpx 圆角（journal-note 的取值）后与下面的小卡片有了大小层次。
+  @include journal-note(primary, 0.42);
+}
+
+.fd-health-board-header {
+  // 表头与内容的分隔改成虚线：手账里"撕口/分栏"用虚线，实线更像表格网格。
+  border-bottom: 3rpx dashed $color-border;
+}
+
+.fd-health-board-title {
+  // 原色就是 $color-text-primary，用 journal-serif 只换字族/字距，不会改到颜色。
+  @include journal-serif(28rpx);
+}
+
+.fd-health-board-date {
+  // 日期数字用等宽：避免"9-9"与"12-31"长度变化时右侧日期左右跳动。
+  font-variant-numeric: tabular-nums;
+}
+
+.fd-health-stat-num {
+  // 统计数字走衬线体（手账里的"记账数字"），但保留原本的主色橙 —— 只写字族与等宽，
+  // 不套 journal-serif（那个 mixin 会把颜色改成墨棕，属于配色调整，本轮不做）。
+  font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
+  letter-spacing: 1rpx;
+  font-variant-numeric: tabular-nums;
+}
+
+.fd-health-divider {
+  // 竖分隔线改成虚线段（手账里分栏是"没画满的线"）：宽度置 0，
+  // 否则原 2rpx 实底会和虚线描边并排变成一条双线。
+  width: 0;
+  height: 56rpx;
+  background: transparent;
+  border-left: 3rpx dashed $color-border;
+}
+
+.fd-health-member {
+  // 每个成员一张"迷你卡片"：原底色是主色 8% 淡橙，与纸底几乎同色、边界看不出来，
+  // 换成纸白 + 虚线框后，一眼能数清家里有几口。
+  background: #fffdf8;
+  border: 3rpx dashed $color-border;
+  border-radius: 26rpx;
+
+  // 已打卡态必须重新写回：上面的 background/border 与 .fd-health-member--checked 特异性相同，
+  // 追加段落更靠后会把原规则盖掉。已打卡＝沙绿实线圈，与"未打卡＝虚线灰"形成对照。
+  &--checked {
+    background: rgba(var(--sage-rgb, 47, 201, 142), 0.08);
+    border: 3rpx solid rgba(var(--sage-rgb, 47, 201, 142), 0.45);
+  }
+}
+
+.fd-health-checked-badge {
+  // 打卡状态做成"贴纸胶囊"：原来的 10rpx 小方角在手账语言里太像系统控件。
+  padding: 2rpx 16rpx;
+  border-radius: $radius-round;
+  border: 3rpx dashed rgba(var(--sage-rgb, 47, 201, 142), 0.5);
+  background: rgba(var(--sage-rgb, 47, 201, 142), 0.12);
+}
+
+.fd-health-pending-badge {
+  // 待打卡用同款胶囊但换暖橙虚线，避免只有"已打卡"有形状、未打卡还是一块秃底。
+  padding: 2rpx 16rpx;
+  border-radius: $radius-round;
+  border: 3rpx dashed rgba(var(--danger-rgb, 255, 90, 95), 0.45);
+  background: rgba(var(--danger-rgb, 255, 90, 95), 0.1);
+}
+
+// —— 模块 ③ 家庭成员（分区标题 / 成员卡 / 角色按钮 / 移出家庭）——
+.fd-section-title {
+  // 原色已是 $color-text-primary，套衬线只改字族与字距。
+  @include journal-serif(28rpx);
+}
+
+.fd-section-count {
+  // "3位"这类计数用等宽，切换家庭时数字不抖。
+  font-variant-numeric: tabular-nums;
+}
+
+.fd-member-card {
+  // 成员卡＝贴在纸上的一张便签（虚线框 + 纸白底）。
+  @include journal-note(primary, 0.42);
+  padding: 24rpx 20rpx 18rpx;
+}
+
+.fd-member-role-btn {
+  // "角色"是卡片里唯一的操作入口，原来的淡橙方片太低调；
+  // 换成虚线小胶囊把它点出来（颜色仍是原来的主色淡底，只改形状）。
+  padding: 4rpx 18rpx;
+  border-radius: $radius-round;
+  border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.45);
+}
+
+.fd-member-remove {
+  // 危险操作的分隔线：实线改虚线，统一手账语言；文字颜色仍由原规则决定（不纠偏）。
+  border-top: 3rpx dashed $color-border;
+}
+
+// —— 模块 ④ 可邀请的毛孩子（列表行 + 邀请按钮）——
+.fd-invite-item {
+  // 原规则已是 1px 虚线，这里统一到 3rpx（2rpx 在真机上细到看不清），并换成纸白底。
+  background: #fffdf8;
+  border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.35);
+  border-radius: 28rpx;
+}
+
+.fd-invite-btn {
+  // 保留 $gradient-gold 金色渐变（主题 token，不纠偏），只把 20rpx 方角修成胶囊，
+  // 与页面里其它按钮同一套形状语言。
+  border-radius: $radius-round;
+  padding: 12rpx 26rpx;
+}
+
+// —— 模块 ⑤ 全家福（区块 / 表头 / 空态 / 生成区 / 排位 / 场景选择 / 预览）——
+.fd-photo-section {
+  // 全家福区块同理做成虚线便签；overflow: hidden 由原规则保留（画布与外框需要裁切）。
+  @include journal-note(primary, 0.42);
+}
+
+.fd-photo-header {
+  // 表头底纹是硬编码的橙色渐变（#FF8C42 / #D4A574），本轮不纠偏；
+  // 只把底下那条实线分隔换成虚线。
+  border-bottom: 3rpx dashed $color-border;
+}
+
+.fd-photo-header-title {
+  @include journal-serif(28rpx);
+}
+
+.fd-photo-empty {
+  // 空态原来是"灰色小字浮在白卡中间"，读起来像页脚注释；
+  // 改成一张金色虚线便签（与日历页空态同一语言），并在卡片里留出边距不贴边。
+  margin: 24rpx 26rpx 30rpx;
+  padding: 40rpx 32rpx;
+  border-radius: 28rpx;
+  background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+  border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+}
+
+.fd-photo-generate-label {
+  @include journal-serif(28rpx);
+}
+
+.fd-order__title {
+  // 排位区小标题用衬线，与分区标题同一家族。
+  @include journal-serif(24rpx);
+}
+
+.fd-order__item {
+  // 只把"实线小方框"换成虚线的排位卡；奶黄底 + 金边是硬编码色，本轮原样保留。
+  border-style: dashed;
+  border-width: 3rpx;
+  border-radius: 26rpx;
+}
+
+.fd-scene-chip {
+  // 未选中的场景 chip 用虚线表示"可选"；边框颜色照旧（硬编码金棕，待裁决），
+  // 只动线宽与线型。
+  border-style: dashed;
+  border-width: 3rpx;
+
+  // 选中态回到实线：手账里"已选＝描实、未选＝虚线"，与原 --active 的橙底共同表达选中。
+  &--active {
+    border-style: solid;
+  }
+}
+
+.fd-scene-custom-input {
+  // 自定义场景输入框：与 chip 同一套虚线语言，边框颜色沿用原值。
+  border-style: dashed;
+  border-width: 3rpx;
+  border-radius: 28rpx;
+}
+
+.fd-photo-preview-img-wrap {
+  // 生成的合影做成"贴进本子里的照片"：纸白衬边 + 金色虚线外框。
+  padding: 10rpx;
+  background: #fffdf8;
+  border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.45);
+  border-radius: 28rpx;
+}
+
+.fd-photo-preview-img {
+  // 外框已有 28rpx 圆角，图自身圆角收小，避免"框内套一圈圆角"的重影。
+  border-radius: 20rpx;
+}
+
+// —— 模块 ⑥ 快捷操作（家族图谱 / 家庭日历两张入口卡）——
+.fd-action-card {
+  // 入口卡由"白底实线"改为"虚线便签"：它们是页面底部最主要的两个去处，
+  // 便签形态比系统卡片更有"翻本子"的暗示。
+  @include journal-note(primary, 0.42);
+  padding: 36rpx 20rpx 30rpx;
+}
+
+.fd-action-label {
+  font-weight: 600;
+  letter-spacing: 2rpx;
+}
+
+// —— 模块 ⑦ 整页空态（还没创建家庭）——
+.fd-empty-text {
+  // 整页空态只有"图标 + 一句话 + 一个按钮"，给这句话一张虚线便签，
+  // 避免文字直接浮在页面底色上；display: block 才能让 Text 吃下内边距。
+  display: block;
+  margin-bottom: 36rpx;
+  padding: 20rpx 36rpx;
+  border-radius: 28rpx;
+  background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+  border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+}
+
+.fd-empty-btn {
+  // 手账主按钮：渐变 + 投影 + 按压缩放，覆盖原来的 $gradient-gold 平底；
+  // 用 padding 撑宽（mixin 已定高 96rpx），不再是原来的"小胶囊"。
+  @include journal-button;
+  padding: 0 64rpx;
+
+  // tsx 里按钮文字是裸 <Text>（无类名），只能靠子选择器命中。
+  // 必须钉白字：原规则用 $color-text-inverse，深色主题下它会变成深色，压在橙金渐变底上读不出来。
+  > Text {
+    color: #ffffff;
+    font-size: 30rpx;
+    font-weight: 700;
+    letter-spacing: 2rpx;
+  }
+}
+
+// —— 模块 ⑧ 全家福相册（空态 / 月份分组 / 照片卡 / 删除）——
+.fd-album-loading-text {
+  // 加载态原本只有一行灰字，给个极淡的金色小底，和别的空/加载态保持同一观感。
+  padding: 8rpx 26rpx;
+  border-radius: 20rpx;
+  background: rgba(var(--gold-rgb, 255, 176, 32), 0.12);
+}
+
+.fd-album-empty {
+  // 相册空态由"白底实线卡"改为金色虚线便签（内边距沿用原规则，不重复声明）。
+  @include journal-note(gold, 0.45);
+}
+
+.fd-album-empty-title {
+  @include journal-serif(30rpx);
+}
+
+.fd-album-group-header {
+  // 月份分组头加一条虚线下划线，像手账里的"月份分页"。
+  padding-bottom: 10rpx;
+  border-bottom: 3rpx dashed rgba(243, 226, 210, 0.95);
+}
+
+.fd-album-group-label {
+  @include journal-serif(28rpx);
+}
+
+.fd-album-item {
+  // 照片卡＝贴在相册页上的小纸片。
+  @include journal-note(primary, 0.35);
+
+  // "用户上传"态必须重新写回：上面 journal-note 设的 background/border 会盖掉原修饰符
+  // （特异性相同、追加在后）。颜色照抄原值，不做纠偏；占位图渐变由原嵌套规则继续生效。
+  &--uploaded {
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.25);
+    background: linear-gradient(135deg, #FFFAF8, #FFFBF6);
+  }
+}
+
+.fd-album-item-actions {
+  // 卡片底部操作条的分隔线：实线改虚线。
+  border-top: 3rpx dashed $color-border;
+}
+
+.fd-album-item-del {
+  // 删除按钮做成虚线危险胶囊（底色仍是原来的 $color-danger-light），
+  // 既是手账语言，也让"危险操作"在小卡片里更容易被看见。
+  border-radius: $radius-round;
+  border: 3rpx dashed rgba(var(--danger-rgb, 255, 90, 95), 0.4);
 }
