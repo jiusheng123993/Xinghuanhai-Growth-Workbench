@@ -34,6 +34,16 @@ Rules:
 - 项目服务器信息（IP/账号/路径/进程名）以部署配置文档为准，不臆造（如星河宠记 PM2 进程实际是 `xinghuanhai-server`）。
 - 迁移遇 "must be owner of table"：用 `sudo -u postgres psql -d <库名>` 执行，并 `ALTER TABLE ... OWNER TO <应用用户>`。
 
+### 生产数据安全红线（2026-09-10 事故后新增，强制执行）
+
+> 事故背景：2026-09-10 多会话改造部署时，冒烟脚本用**真实用户**做测试 fixture，其 MERGE（`UPDATE ... WHERE user_id AND pet_id AND session_id IS NULL`）把该用户 43 条存量消息归并到测试会话，紧接着 `DELETE ... WHERE session_id` 级联删除，**32 条真实对话永久丢失**（`archive_mode=off` 无 PITR）。以下三条为强制规则：
+
+- **① 生产冒烟/验证脚本禁止触碰真实用户数据**：fixture 必须用专用测试账号 + 测试宠物（无数据或可丢弃），禁止 `SELECT ... FROM <业务表> LIMIT 1` 直接拿真实用户当样例，禁止对真实 `user_id`/`pet_id` 执行任何写操作。
+- **② 任何 UPDATE / DELETE 验证必须在事务内且以 ROLLBACK 结束**：`BEGIN; ...验证...; ROLLBACK;`，禁止 COMMIT。确需落库的验证数据必须可识别（如 `title='__smoke_test__'`）且验证后立即清理，清理动作本身也需在事务中确认影响行数。
+- **③ 写操作前先报告影响行数并核对预期**：执行 destructive SQL 前先跑同条件 `SELECT count(*)` 核对，脚本必须打印 `rowCount` 并对超出预期的行数**中止**而非继续。
+- 生产库只读排查优先：能用 `SELECT` 验证的不要用写操作；需要验证写入链路时优先在测试库/临时库进行。
+- 数据库备份现状（2026-09-10 事故后加固）：①每日 03:00 逻辑备份（`/var/backups/xinghuanhai/`，保留 15 份）+ 本地 07:00 拉取（`E:\Backups\xinghuanhai\`，保留 30 份）；②**已开启 WAL 归档（`archive_mode=on`，归档目录 `/var/backups/pg_wal_archive`）** + 首个基础备份（`/var/backups/pg_basebackup/`），维护脚本 `05-部署配置/monitor/pg-pitr-maintenance.sh`（cron：每周日 04:10 基础备份保留 4 份、每日 04:30 清理 7 天前 WAL）→ **已具备 PITR 能力**，可恢复到任意时间点，最坏损失从"一天"降到"分钟级"。
+
 ## 项目记忆
 
 ### 2026-08-08 · 运营应急准备（与情侣消消乐同步）
