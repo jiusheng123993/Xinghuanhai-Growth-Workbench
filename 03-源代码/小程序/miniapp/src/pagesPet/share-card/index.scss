@@ -1,10 +1,11 @@
 @import '../../styles/_theme';
+@import '../../styles/_journal';
 
 // ===== 容器 =====
 .card-container {
   min-height: 100vh;
   padding: 32rpx 28rpx 140rpx;
-  background: #FFF0F5;
+  background: transparent;
   animation: pageEnter 0.4s ease-out;
 }
 
@@ -19,14 +20,14 @@
   display: block;
   font-size: 44rpx;
   font-weight: 700;
-  color: #D08AA8;
+  color: var(--primary-dark, #F04E1D);
   margin-bottom: 8rpx;
 }
 
 .card-header__subtitle {
   display: block;
   font-size: 24rpx;
-  color: #C88EA8;
+  color: var(--text-secondary, #8B6E58);
 }
 
 // ===== 筛选标签 =====
@@ -42,23 +43,23 @@
   padding: 12rpx 28rpx;
   margin-right: 16rpx;
   border-radius: 28rpx;
-  background: #fff;
-  box-shadow: 0 2rpx 8rpx rgba(208, 138, 168, 0.12);
+  background: #FFFDF8;
+  box-shadow: 0 2rpx 8rpx rgba(var(--primary-rgb, 255, 107, 61), 0.12);
   transition: all 0.25s ease;
 
   &--active {
-    background: linear-gradient(135deg, #D08AA8, #C88EA8);
+    background: linear-gradient(135deg, var(--primary-dark, #F04E1D), var(--text-secondary, #8B6E58));
     box-shadow: 0 4rpx 16rpx rgba(208, 138, 168, 0.35);
   }
 }
 
 .filter-tabs__text {
   font-size: 26rpx;
-  color: #888;
+  color: var(--text-secondary, #8B6E58);
   font-weight: 500;
 
   .filter-tabs__item--active & {
-    color: #fff;
+    color: #FFFDF8;
   }
 }
 
@@ -78,7 +79,7 @@
 .card-item {
   width: calc(50% - 10rpx);
   border-radius: 20rpx;
-  background: #fff;
+  background: #FFFDF8;
   overflow: hidden;
   box-shadow: 0 4rpx 20rpx rgba(208, 138, 168, 0.1);
   transition: transform 0.2s ease;
@@ -91,7 +92,7 @@
 .card-item__image {
   width: 100%;
   height: 280rpx;
-  background: #FCE4EC;
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
 }
 
 .card-item__info {
@@ -104,12 +105,12 @@
 .card-type-tag {
   padding: 4rpx 16rpx;
   border-radius: 12rpx;
-  background: linear-gradient(135deg, #D08AA8, #E8C8D8);
+  background: linear-gradient(135deg, var(--primary-dark, #F04E1D), var(--border, #F3E2D2));
 }
 
 .card-type-tag__text {
   font-size: 20rpx;
-  color: #fff;
+  color: #FFFDF8;
   font-weight: 500;
 }
 
@@ -120,7 +121,7 @@
 
 .card-share-count__text {
   font-size: 22rpx;
-  color: #999;
+  color: var(--text-secondary, #8B6E58);
 }
 
 // ===== 空状态 =====
@@ -141,7 +142,7 @@
 
 .card-grid__empty-text {
   font-size: 28rpx;
-  color: #999;
+  color: var(--text-secondary, #8B6E58);
   margin-bottom: 8rpx;
 }
 
@@ -159,7 +160,7 @@
   width: 400rpx;
   padding: 24rpx 0;
   border-radius: 48rpx;
-  background: linear-gradient(135deg, #D08AA8, #C06080);
+  background: linear-gradient(135deg, var(--primary-dark, #F04E1D), var(--primary, #FF6B3D));
   box-shadow: 0 8rpx 28rpx rgba(208, 138, 168, 0.45);
   text-align: center;
   z-index: 10;
@@ -171,7 +172,7 @@
 
 .generate-btn__text {
   font-size: 30rpx;
-  color: #fff;
+  color: #FFFDF8;
   font-weight: 600;
 }
 
@@ -195,7 +196,7 @@
   right: 0;
   padding: 40rpx 32rpx 60rpx;
   border-radius: 32rpx 32rpx 0 0;
-  background: #fff;
+  background: #FFFDF8;
   animation: slideUp 0.3s ease-out;
 }
 
@@ -203,7 +204,7 @@
   display: block;
   font-size: 32rpx;
   font-weight: 700;
-  color: #D08AA8;
+  color: var(--primary-dark, #F04E1D);
   text-align: center;
   margin-bottom: 32rpx;
 }
@@ -220,25 +221,25 @@
   flex-shrink: 0;
   padding: 20rpx 28rpx;
   border-radius: 16rpx;
-  border: 2rpx solid #F0E0E8;
-  background: #FFF5F8;
+  border: 2rpx solid var(--border, #F3E2D2);
+  background: #FFFDF8;
   text-align: center;
   transition: all 0.2s ease;
 
   &--active {
-    border-color: #D08AA8;
-    background: linear-gradient(135deg, rgba(208, 138, 168, 0.12), rgba(232, 200, 216, 0.2));
+    border-color: var(--primary-dark, #F04E1D);
+    background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.12), rgba(232, 200, 216, 0.2));
   }
 }
 
 .generate-form__type-text {
   font-size: 26rpx;
-  color: #888;
+  color: var(--text-secondary, #8B6E58);
   font-weight: 500;
   white-space: nowrap;
 
   .generate-form__type--active & {
-    color: #D08AA8;
+    color: var(--primary-dark, #F04E1D);
     font-weight: 600;
   }
 }
@@ -251,7 +252,7 @@
 .generate-form__label {
   display: block;
   font-size: 26rpx;
-  color: #888;
+  color: var(--text-secondary, #8B6E58);
   margin-bottom: 14rpx;
   font-weight: 500;
 }
@@ -268,13 +269,13 @@
   gap: 8rpx;
   padding: 14rpx 24rpx;
   border-radius: 24rpx;
-  border: 2rpx solid #F0E0E8;
-  background: #fff;
+  border: 2rpx solid var(--border, #F3E2D2);
+  background: #FFFDF8;
   transition: all 0.2s ease;
 
   &--active {
-    border-color: #D08AA8;
-    background: linear-gradient(135deg, rgba(208, 138, 168, 0.08), rgba(232, 200, 216, 0.12));
+    border-color: var(--primary-dark, #F04E1D);
+    background: linear-gradient(135deg, rgba(208, 138, 168, 0.08), rgba(var(--primary-rgb, 255, 107, 61), 0.1));
   }
 }
 
@@ -287,11 +288,11 @@
 
 .theme-option__text {
   font-size: 24rpx;
-  color: #888;
+  color: var(--text-secondary, #8B6E58);
   font-weight: 500;
 
   .theme-option--active & {
-    color: #D08AA8;
+    color: var(--primary-dark, #F04E1D);
     font-weight: 600;
   }
 }
@@ -299,13 +300,13 @@
 // ===== 自定义文字输入 =====
 .generate-form__textarea-wrap {
   border-radius: 16rpx;
-  border: 2rpx solid #F0E0E8;
-  background: #FFF5F8;
+  border: 2rpx solid var(--border, #F3E2D2);
+  background: #FFFDF8;
   padding: 4rpx;
   transition: border-color 0.2s ease;
 
   &:focus-within {
-    border-color: #D08AA8;
+    border-color: var(--primary-dark, #F04E1D);
   }
 }
 
@@ -314,7 +315,7 @@
   min-height: 120rpx;
   padding: 16rpx 20rpx;
   font-size: 26rpx;
-  color: #555;
+  color: var(--text-primary, #40281C);
   line-height: 1.6;
   background: transparent;
   border: none;
@@ -344,21 +345,21 @@
 }
 
 .generate-form__btn--cancel {
-  background: #F5F5F5;
+  background: var(--bg-secondary, #FFFDF9);
 }
 
 .generate-form__btn--cancel .generate-form__btn-text {
-  color: #999;
+  color: var(--text-secondary, #8B6E58);
   font-size: 28rpx;
   font-weight: 500;
 }
 
 .generate-form__btn--confirm {
-  background: linear-gradient(135deg, #D08AA8, #C06080);
+  background: linear-gradient(135deg, var(--primary-dark, #F04E1D), var(--primary, #FF6B3D));
 }
 
 .generate-form__btn--confirm .generate-form__btn-text {
-  color: #fff;
+  color: #FFFDF8;
   font-size: 28rpx;
   font-weight: 600;
 }
@@ -409,14 +410,14 @@
 
 .card-preview-modal__close-text {
   font-size: 28rpx;
-  color: #fff;
+  color: #FFFDF8;
   font-weight: 700;
 }
 
 .card-preview-image {
   width: 100%;
   border-radius: 20rpx;
-  background: #fff;
+  background: #FFFDF8;
   box-shadow: 0 12rpx 48rpx rgba(0, 0, 0, 0.3);
 }
 
@@ -448,7 +449,7 @@
 
 .share-btn__text {
   font-size: 20rpx;
-  color: #fff;
+  color: #FFFDF8;
   white-space: nowrap;
 }
 
@@ -490,7 +491,7 @@
 .share-hero__title {
   font-size: 40rpx;
   font-weight: \-weight-bold;
-  color: #FFFFFF;
+  color: #FFFDF8;
 }
 
 .share-hero__sub {
@@ -560,4 +561,222 @@
   font-size: 22rpx;
   font-weight: \-weight-medium;
   color: \-text-secondary;
+}
+
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖 + 配色纠偏）
+// ============================================
+// 【本页为什么例外地做了"配色替换"】这页原本是**写死的粉紫配色**（#FFF0F5 底、#D08AA8 标题、
+// #E8C8D8 描边…），与宠物板块其它页面的品牌暖色完全脱节；且这些色值散落在
+// 生成面板、预览弹窗等**预览里看不到的状态**里，只靠追加皮肤层盖不干净。
+// 所以先把粉紫色系统一映射成主题 token（#FFF0F5→transparent 交给 PageBackground、
+// 主粉→var(--primary)、灰阶→var(--text-*)、描边→var(--border)），再追加下面这层布局皮肤。
+//
+// 布局部分：标题衬线化、筛选改贴纸胶囊、空态改虚线便签、生成按钮改手账渐变胶囊、
+// 面板/弹窗改纸卡（这些状态预览复现不了，按已知类名一并统一）。
+.card-container {
+  min-height: 100vh;
+  /* 背景交给 <PageBackground />（原来是写死粉底，切主题/壁纸在这页看不出变化） */
+  background: transparent;
+  padding: 32rpx 28rpx 140rpx;
+  animation: pageEnter 0.4s ease-out;
+
+  // 浅色面统一钉"卡内 token"
+  .card-item,
+  .filter-tabs__item,
+  .card-grid__empty,
+  .generate-panel__body,
+  .card-preview-modal__body,
+  .share-hero,
+  .template-item {
+    @include journal-paper-tokens;
+  }
+
+  // —— 页头：衬线标题 + 虚线短横 ——
+  .card-header__title {
+    @include journal-serif(44rpx);
+    display: inline-block;
+    position: relative;
+    padding-bottom: 12rpx;
+    letter-spacing: 3rpx;
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 120rpx;
+      height: 4rpx;
+      transform: translateX(-50%);
+      border-bottom: 4rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.45);
+    }
+  }
+
+  .card-header__subtitle {
+    display: block;
+    margin-top: 10rpx;
+    font-size: 22rpx;
+    color: var(--text-secondary, #8B6E58);
+  }
+
+  // —— 筛选：贴纸胶囊（沿用父级 nowrap + 子级 inline-flex 的横排方式） ——
+  .filter-tabs {
+    white-space: nowrap;
+  }
+
+  .filter-tabs__item {
+    display: inline-flex;
+    align-items: center;
+    height: 64rpx;
+    padding: 0 26rpx;
+    margin-right: 14rpx;
+    border-radius: $radius-round;
+    background: #FFFDF8;
+    border: 3rpx dashed var(--border, #F3E2D2);
+    @include press-feedback;
+  }
+
+  .filter-tabs__item--active {
+    border-style: solid;
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+  }
+
+  .filter-tabs__text {
+    font-size: 24rpx;
+    font-weight: 700;
+    color: var(--text-secondary, #8B6E58);
+  }
+
+  .filter-tabs__item--active .filter-tabs__text {
+    color: var(--primary-dark, #F04E1D);
+  }
+
+  // —— 卡片网格里的卡片：纸卡 + 虚线边 ——
+  .card-item {
+    border-radius: 28rpx;
+    background: #FFFDF8;
+    border: 3rpx dashed var(--border, #F3E2D2);
+    box-shadow: $shadow-xs;
+    overflow: hidden;
+    @include press-feedback;
+  }
+
+  .card-type-tag {
+    display: inline-flex;
+    align-items: center;
+    height: 40rpx;
+    padding: 0 14rpx;
+    border-radius: $radius-round;
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+    border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.28);
+  }
+
+  .card-type-tag__text,
+  .card-share-count__text {
+    font-size: 19rpx;
+    font-weight: 700;
+    color: var(--primary-dark, #F04E1D);
+  }
+
+  // —— 空态：虚线便签（📋 图标已由 tsx 的 Icon 呈现） ——
+  .card-grid__empty {
+    padding: 60rpx 30rpx;
+    border-radius: 36rpx;
+    background: #FFFDF8;
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.4);
+  }
+
+  .card-grid__empty-text {
+    display: block;
+    margin-top: 16rpx;
+    font-size: 26rpx;
+    font-weight: 700;
+    color: var(--text-primary, #40281C);
+  }
+
+  .card-grid__empty-desc {
+    display: block;
+    margin-top: 8rpx;
+    font-size: 21rpx;
+    color: var(--text-secondary, #8B6E58);
+  }
+
+  // —— 生成类型选择 / 主题选择：贴纸格 ——
+  .generate-form__type,
+  .theme-option,
+  .template-item {
+    border-radius: 22rpx;
+    background: #FFFDF8;
+    border: 3rpx dashed var(--border, #F3E2D2);
+    @include press-feedback;
+  }
+
+  .generate-form__type--active,
+  .theme-option--active,
+  .template-item--active {
+    border-style: solid;
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+  }
+
+  .generate-form__label {
+    font-size: 22rpx;
+    font-weight: 600;
+    color: var(--text-secondary, #8B6E58);
+  }
+
+  .generate-form__textarea {
+    border-radius: 24rpx;
+    background: #FFFAF3;
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.5);
+    font-size: 26rpx;
+    color: var(--text-primary, #40281C);
+  }
+
+  // —— 主按钮：手账渐变胶囊 ——
+  .generate-btn,
+  .share-hero__btn,
+  .generate-form__btn--confirm {
+    @include journal-button;
+  }
+
+  .generate-btn__text,
+  .share-hero__btn-text,
+  .generate-form__btn--confirm .generate-form__btn-text {
+    font-size: 29rpx;
+    font-weight: 800;
+    letter-spacing: 1rpx;
+    color: #FFFFFF;
+  }
+
+  .generate-form__btn--cancel,
+  .share-btn {
+    @include journal-ghost;
+    min-height: 84rpx;
+  }
+
+  .generate-form__btn--cancel .generate-form__btn-text,
+  .share-btn__text {
+    font-size: 25rpx;
+    font-weight: 700;
+    color: var(--text-secondary, #8B6E58);
+  }
+
+  // —— 面板 / 预览弹窗：纸卡 ——
+  .generate-panel__body,
+  .card-preview-modal__body {
+    border-radius: 40rpx;
+    background: #FFFDF8;
+    border: 3rpx solid rgba(var(--gold-rgb, 255, 176, 32), 0.5);
+    box-shadow:
+      inset 0 0 0 8rpx #FFFDF8,
+      inset 0 0 0 10rpx rgba(var(--gold-rgb, 255, 176, 32), 0.24),
+      0 24rpx 60rpx -30rpx rgba(61, 33, 18, 0.6);
+  }
+
+  .generate-panel__title,
+  .share-hero__title {
+    @include journal-serif(32rpx);
+  }
 }
