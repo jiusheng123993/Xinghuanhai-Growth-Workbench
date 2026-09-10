@@ -14,6 +14,13 @@
   animation: pageEnter 0.4s ease-out;
 }
 
+// 多宠切换器：覆盖全局 PetSwitcher 的白底/下边框，融入创作页米白暖色主题
+.cve .pet-switcher {
+  background: transparent;
+  border-bottom: none;
+  margin-bottom: 20rpx;
+}
+
 // ==================== 宠物头排 ====================
 .cve-petrow {
   display: flex;

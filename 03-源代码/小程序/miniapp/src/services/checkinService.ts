@@ -69,6 +69,25 @@ export interface CheckinInput {
   note?: string;
 }
 
+/** 健康分：存储等级 → 分数（健康分语义 = "正常=最健康=满分"，偏离正常按程度降分） */
+const POOP_SCORE: Record<number, number> = { 1: 0, 2: 1, 3: 5, 4: 3, 5: 2 };
+const APPETITE_SCORE: Record<number, number> = { 1: 0, 2: 2, 3: 5, 4: 4, 5: 1, 6: 1 };
+const SPIRIT_SCORE: Record<number, number> = { 1: 0, 2: 3, 3: 5, 4: 4, 5: 2 };
+
+/**
+ * 计算健康分（0-100），供宠物详情页/创作页等统一使用。
+ * 满分 15 = 便便成型(5) + 食欲正常(5) + 精神正常(5)——"正常"即最健康状态。
+ * "都正常"（成型 + 正常吃完 + 正常活动）= 15 → 100 分。
+ * 修复历史 bug（2026-09-10）：此前直接用存储等级（poopLevel 等）算分，把"正常=3"
+ * 当中间值 → "都正常"只给 64 分，与"状态满分"文案自相矛盾（用户反馈"都正常怎么才 62 分"）。
+ */
+export function calcHealthScore(poop: number, appetite: number, spirit: number): number {
+  const p = POOP_SCORE[poop] ?? 3;
+  const a = APPETITE_SCORE[appetite] ?? 3;
+  const s = SPIRIT_SCORE[spirit] ?? 3;
+  return Math.round(((p + a + s) / 15) * 100);
+}
+
 function calculateRiskLevel(entry: CheckinInput): HealthRiskLevel {
   let legacy: LegacyRiskLevel = 'normal';
 

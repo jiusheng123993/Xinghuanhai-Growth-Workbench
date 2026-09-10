@@ -3,8 +3,9 @@ import Taro from '@tarojs/taro'
 import { View, Text, Image } from '@tarojs/components'
 import { usePetStore } from '../../stores/petStore'
 import { useAuthStore } from '../../stores/authStore'
-import { getTodayCheckin } from '../../services/checkinService'
+import { getTodayCheckin, calcHealthScore } from '../../services/checkinService'
 import type { PetHealthEntry } from '../../services/checkinService'
+import PetSwitcher from '../../components/PetSwitcher'
 
 import './index.scss'
 
@@ -16,14 +17,6 @@ import './index.scss'
  * - 更多区：时光线（原 tab 页收口）+ 疫苗日历
  * 导航栏标题动态为家庭名/宠物名（原型「可乐的家庭」）。
  */
-
-/** 健康评分（与宠物详情页同算法）：poop/spirit 0-5，appetite 0-4 */
-function calcHealthScore(poop: number, appetite: number, spirit: number): number {
-  const poopScore = Math.max(0, Math.min(5, poop))
-  const spiritScore = Math.max(0, Math.min(5, spirit))
-  const appetiteScore = Math.max(0, Math.min(4, appetite))
-  return Math.round(((poopScore + spiritScore + appetiteScore) / 14) * 100)
-}
 
 /** 出生日期 → 中文年龄（岁X月） */
 function formatAge(birthDate: string): string {
@@ -39,6 +32,8 @@ function formatAge(birthDate: string): string {
 
 const CreativeHub = () => {
   const currentPet = usePetStore((s) => s.currentPet)
+  const pets = usePetStore((s) => s.pets)
+  const switchPet = usePetStore((s) => s.switchPet)
   const user = useAuthStore((s) => s.user)
   const [todayCheckin, setTodayCheckin] = useState<PetHealthEntry | null>(null)
   const [avatarFailed, setAvatarFailed] = useState(false)
@@ -86,6 +81,15 @@ const CreativeHub = () => {
 
   return (
     <View className='cve'>
+      {/* ===== 宠物切换器：多宠家庭可切换，头像/名字/健康分随当前宠物联动 ===== */}
+      {pets.length > 1 && (
+        <PetSwitcher
+          pets={pets}
+          currentPetId={currentPet?.id || null}
+          onSwitch={(id) => { setAvatarFailed(false); switchPet(id).catch(() => {}) }}
+        />
+      )}
+
       {/* ===== 宠物头排：宠物卡 + 健康分卡（原型屏1 顶排） ===== */}
       <View className='cve-petrow'>
         <View className='cve-petcard'>
@@ -107,7 +111,7 @@ const CreativeHub = () => {
             </Text>
           </View>
         </View>
-        <View className='cve-scorecard'>
+        <View className='cve-scorecard' onClick={() => goWithPet('/pagesPet/health-report/index')}>
           <Text className='cve-scorecard-label'>今日健康分</Text>
           <Text className={`cve-scorecard-value${healthScore !== null ? ' cve-scorecard-value--ok' : ''}`}>
             {healthScore !== null ? healthScore : '--'}

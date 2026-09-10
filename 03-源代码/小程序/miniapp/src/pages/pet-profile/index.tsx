@@ -14,7 +14,7 @@ import PetAvatar from '../../components/PetAvatar'
 import { useThemeClass } from '../../hooks/useThemeClass'
 import { redirectToLoginIfNeeded } from '../../utils/authGuard'
 import { getPetFacts, type PetFact } from '../../services/petService'
-import { getCheckinStats, getCheckinsByDateRange, getLatestCheckin } from '../../services/checkinService'
+import { getCheckinStats, getCheckinsByDateRange, getLatestCheckin, calcHealthScore } from '../../services/checkinService'
 import { getVaccineRecords } from '../../services/vaccineService'
 // 主包体积优化：pet-profile 是主包 tab 页，只用品种的 3 项特征（遗传病/体重/饮食禁忌），
 // 引用精简版 breedsLight（45KB）而非全量 breeds（148KB），避免拖爆主包体积
@@ -64,13 +64,7 @@ function calcAge(birthDate: string): string {
   return `${Math.floor(months / 12)}岁${months % 12}月`
 }
 
-/** 根据最近打卡计算健康评分（0-100） */
-function calcHealthScore(poop: number, appetite: number, spirit: number): number {
-  const poopScore = Math.max(0, Math.min(5, poop))
-  const spiritScore = Math.max(0, Math.min(5, spirit))
-  const appetiteScore = Math.max(0, Math.min(4, appetite))
-  return Math.round(((poopScore + spiritScore + appetiteScore) / 14) * 100)
-}
+/** 根据最近打卡计算健康评分（0-100）——已收敛到 checkinService.calcHealthScore（正常档高分，历史 64 分 bug 修复） */
 
 export default function PetProfile() {
   const user = useAuthStore(state => state.user)

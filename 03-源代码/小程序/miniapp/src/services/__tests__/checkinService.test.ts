@@ -13,6 +13,7 @@ import {
   getCheckinsByDateRange,
   getCheckins,
   getLatestCheckin,
+  calcHealthScore,
 } from '../checkinService'
 import type { PetHealthEntry } from '../checkinService'
 
@@ -337,5 +338,28 @@ describe('checkinService', () => {
       expect(results).toHaveLength(2)
       expect(api.post).toHaveBeenCalledTimes(2)
     })
+  })
+})
+
+describe('calcHealthScore 健康分（正常=满分，2026-09-10 修复"都正常仅 64 分"）', () => {
+  it('都正常（成型+正常吃完+正常活动）应为 100 分（满分）', () => {
+    expect(calcHealthScore(3, 3, 3)).toBe(100)
+  })
+
+  it('偏软便 + 正常 + 正常应略低于满分', () => {
+    expect(calcHealthScore(4, 3, 3)).toBe(87)
+  })
+
+  it('多吃 + 兴奋（略偏离正常）应略低于满分', () => {
+    expect(calcHealthScore(3, 4, 4)).toBe(87)
+  })
+
+  it('明显异常（腹泻+少吃+萎靡）应为低分', () => {
+    const score = calcHealthScore(2, 2, 2)
+    expect(score).toBeLessThan(50)
+  })
+
+  it('越界值回退默认档（不崩溃）', () => {
+    expect(() => calcHealthScore(99, 99, 99)).not.toThrow()
   })
 })
