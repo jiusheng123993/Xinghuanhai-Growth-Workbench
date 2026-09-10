@@ -146,14 +146,16 @@ async function buildRealReportData(
 
   // 6 个聚合查询并行执行（Promise.all 内部按数组顺序同步发起 query 调用，mock 顺序确定）
   const [healthAgg, symptomAgg, foodAgg, feedAgg, bestDayAgg, memberAgg] = await Promise.all([
-    // 1. 健康打卡聚合：COUNT + AVG + 异常计数
+    // 1. 健康打卡聚合：COUNT + AVG + 异常天数（异常按自然日去重，口径同 best_day）
     pool.query(
       `SELECT
          COUNT(*) AS checkin_count,
          COALESCE(AVG(poop_level), 0)::float AS avg_poop,
          COALESCE(AVG(appetite_level), 0)::float AS avg_appetite,
          COALESCE(AVG(spirit_level), 0)::float AS avg_spirit,
-         COUNT(*) FILTER (WHERE has_anomaly) AS anomaly_count
+         -- 异常天数：同一自然日补记多条只算 1 天（按北京时区归日，与 best_day 口径一致）；
+         -- 注意：checkin_count 不要去重（前端标签是“本周打卡（次）”，按条数才是对的）
+         COUNT(DISTINCT (h.created_at AT TIME ZONE 'Asia/Shanghai')::date) FILTER (WHERE has_anomaly) AS anomaly_count
        FROM pet_health_entries h
        JOIN pet_family_members m ON m.pet_id = h.pet_id
        WHERE m.family_id = $1 AND h.created_at BETWEEN $2 AND $3`,

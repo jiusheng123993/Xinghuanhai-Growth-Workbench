@@ -498,6 +498,12 @@ describe('POST /api/families/:id/weekly-reports/generate - 手动生成周报', 
     expect(aggCalls[0][0]).toContain('pet_health_entries');
     expect(aggCalls[0][0]).toContain('pet_family_members');
     expect(aggCalls[0][0]).toContain('checkin_count');
+    // healthAgg 的异常指标必须按自然日去重（异常天数），且沿用全站北京时区归日口径：
+    // 若退回 COUNT(*) FILTER，同一天补记两条就会被算成 2 天，与前端“次/天”展示口径不符
+    expect(aggCalls[0][0]).toContain('COUNT(DISTINCT (h.created_at AT TIME ZONE');
+    expect(aggCalls[0][0]).toContain(')::date) FILTER (WHERE has_anomaly) AS anomaly_count');
+    // checkin_count 语义就是“次”（打卡条数），不能被顺手改成去重
+    expect(aggCalls[0][0]).toContain('COUNT(*) AS checkin_count');
     // symptomAgg：FROM pet_symptom_checks JOIN pet_family_members
     expect(aggCalls[1][0]).toContain('pet_symptom_checks');
     // foodAgg：FROM pet_food_queries JOIN pet_families
