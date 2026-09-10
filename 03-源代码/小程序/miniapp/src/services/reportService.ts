@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 健康报告服务
  *
  * 生成宠物健康报告文本，格式化输出
@@ -8,6 +8,7 @@ import type { PetHealthEntry } from '../memory-body/types/memoryBodyTypes'
 import { getVaccineRecords } from './vaccineService'
 import { getPetById, type PetProfile } from './petService'
 import { requirePetOwnership } from '../utils/petOwnership'
+import { formatPetAge } from '../utils/date'
 
 export interface HealthReport {
   title: string
@@ -65,15 +66,34 @@ function formatDate(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
+/**
+ * 按「本地日历日」去重后的天数
+ *
+ * 2026-09-11 修复：报告里的「打卡率 / 正常天数 / 异常天数」原来都用 **记录条数**
+ * （`entries.length`、`normalEntries.length`…），于是一天补记两次就会算出
+ * 「打卡率 200%」这种荒谬值，正常/异常天数也会虚高——而这是要导出给兽医看的报告。
+ * 统一改成按天去重：一次打卡记录只代表那一天的状况。
+ */
+function countUniqueDays(list: PetHealthEntry[]): number {
+  const days = new Set<string>()
+  for (const entry of list) {
+    const raw = entry.createdAt
+    const d = raw instanceof Date ? raw : new Date(String(raw))
+    // 无法解析的记录不参与计数（不给它硬塞一个 1970-01-01）
+    if (Number.isNaN(d.getTime())) continue
+    days.add(formatDate(d))
+  }
+  return days.size
+}
+
+/**
+ * 年龄文案 —— 统一走 utils/date 的 formatPetAge（2026-09-11 收敛）
+ *
+ * 原实现只精确到「岁」（2岁3个月的宠物也显示「2岁」），且按 UTC 解析出生日期。
+ * 现在会带上剩余月份，报告中"年龄: 2岁3个月"比"年龄: 2岁"更准确。
+ */
 function calculateAge(birthday?: string): string {
-  if (!birthday) return '未知'
-  const birth = new Date(birthday)
-  const now = new Date()
-  const yearDiff = now.getFullYear() - birth.getFullYear()
-  const monthDiff = now.getMonth() - birth.getMonth()
-  if (monthDiff < 0) return `${yearDiff - 1}岁`
-  if (monthDiff === 0 && now.getDate() < birth.getDate()) return `${yearDiff - 1}岁`
-  return `${yearDiff}岁`
+  return formatPetAge(birthday, { fallback: '未知' })
 }
 
 function calculateStreak(entries: PetHealthEntry[]): number {
@@ -183,6 +203,11 @@ export async function generateHealthReport(
     else riskLevels.low++
   }
 
+  // 全部按「天」去重（见 countUniqueDays 注释）：报告里的天数/比率类指标必须按天算
+  const checkinDays = countUniqueDays(entries)
+  const normalDayCount = countUniqueDays(normalEntries)
+  const anomalyDayCount = countUniqueDays(anomalyEntries)
+
   return {
     title: `${pet.name} 健康报告`,
     generatedAt: new Date().toISOString(),
@@ -200,10 +225,12 @@ export async function generateHealthReport(
     },
     checkinStats: {
       totalCheckins: entries.length,
-      checkinRate: `${Math.round((entries.length / days) * 100)}%`,
-      normalDays: normalEntries.length,
-      anomalyDays: anomalyEntries.length,
-      anomalyRate: entries.length > 0 ? `${Math.round((anomalyEntries.length / entries.length) * 100)}%` : '0%',
+      // 打卡率 = 去重天数 / 周期天数（原来用记录条数，一天两次会算出 >100%）
+      checkinRate: `${Math.round((checkinDays / days) * 100)}%`,
+      normalDays: normalDayCount,
+      anomalyDays: anomalyDayCount,
+      // 异常率同样按天算：异常天数 / 打卡天数
+      anomalyRate: checkinDays > 0 ? `${Math.round((anomalyDayCount / checkinDays) * 100)}%` : '0%',
       streakDays: calculateStreak(sortedEntries),
     },
     healthMetrics: {

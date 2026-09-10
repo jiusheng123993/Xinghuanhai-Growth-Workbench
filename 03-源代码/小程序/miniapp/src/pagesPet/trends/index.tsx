@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 健康趋势页面
  * AI月度小结 + 体重/食欲/便便趋势图同屏展示，健康报告导出
  */
@@ -32,6 +32,8 @@ import { getActiveBreeds } from '../../data/petKnowledge/breeds'
 import { useAnalytics, usePageView } from '../../hooks/useAnalytics'
 import { AnalyticsEventName } from '../../types/analyticsTypes'
 import './index.scss'
+import { Icon } from '../../components'
+import PageBackground from '../../components/PageBackground'
 
 type TimeRange = 'week' | 'month' | 'quarter'
 type TrendTab = 'weight' | 'appetite' | 'stool' | 'summary'
@@ -206,8 +208,17 @@ export default function PetTrendsPage() {
     }
   }, [currentPet?.id, timeRange, trendData, clearError, fetchWeightTrend, fetchAppetiteTrend, fetchStoolTrend, fetchSummary, fetchMonthlyReport])
 
+  /**
+   * 切换宠物
+   * 2026-09-11 补失败兜底：petStore.switchPet 失败时会 throw，
+   * 原来这里不接 promise —— 用户点另一只宠物"没反应"，控制台还多一条未处理拒绝。
+   */
   const handlePetSwitch = useCallback((petId: string) => {
-    switchPet(petId)
+    switchPet(petId).catch((err: unknown) => {
+      // 优先用本次捕获的异常：store.error 可能是上一次无关操作留下的旧消息（审查 P2-5）
+      const msg = err instanceof Error ? err.message : ''
+      Taro.showToast({ title: msg || usePetStore.getState().error || '切换失败，请重试', icon: 'none' })
+    })
   }, [switchPet])
 
   const handleTimeRangeChange = useCallback((range: TimeRange) => {
@@ -233,15 +244,16 @@ export default function PetTrendsPage() {
 
     setGenerating(true)
     try {
-      const reportData = await generateHealthReportData(user.id, currentPet.id)
-      await downloadHealthReport(reportData, currentPet.name)
+      // 局部改名 generatedReport / err：避免遮蔽组件状态 reportData 与外层 error（no-shadow）
+      const generatedReport = await generateHealthReportData(user.id, currentPet.id)
+      await downloadHealthReport(generatedReport, currentPet.name)
       const npsStatus = checkNpsEligibility(user.id, user.createdAt || new Date().toISOString())
       if (npsStatus.isEligible) {
         setShowNpsSurvey(true)
         setNpsTriggerEvent('after_export')
       }
-    } catch (error) {
-      logger.error('Trends', 'Failed to generate report', error)
+    } catch (err) {
+      logger.error('Trends', 'Failed to generate report', err)
       Taro.showToast({ title: '导出报告失败', icon: 'none' })
     } finally {
       setGenerating(false)
@@ -260,11 +272,11 @@ export default function PetTrendsPage() {
 
     setGenerating(true)
     try {
-      const reportData = await generateHealthReportData(user.id, currentPet.id)
-      setReportData(reportData)
+      const generatedReport = await generateHealthReportData(user.id, currentPet.id)
+      setReportData(generatedReport)
       setShowReport(true)
-    } catch (error) {
-      logger.error('Trends', 'Failed to preview report', error)
+    } catch (err) {
+      logger.error('Trends', 'Failed to preview report', err)
       Taro.showToast({ title: '预览报告失败', icon: 'none' })
     } finally {
       setGenerating(false)
@@ -296,10 +308,10 @@ export default function PetTrendsPage() {
 
     setGenerating(true)
     try {
-      const reportData = await generateHealthReportData(user.id, currentPet.id)
-      await downloadHealthReportCsv(reportData, currentPet.name)
-    } catch (error) {
-      logger.error('Trends', 'Failed to export CSV', error)
+      const generatedReport = await generateHealthReportData(user.id, currentPet.id)
+      await downloadHealthReportCsv(generatedReport, currentPet.name)
+    } catch (err) {
+      logger.error('Trends', 'Failed to export CSV', err)
       Taro.showToast({ title: '导出CSV失败', icon: 'none' })
     } finally {
       setGenerating(false)
@@ -319,10 +331,10 @@ export default function PetTrendsPage() {
 
     setGenerating(true)
     try {
-      const reportData = await generateHealthReportData(user.id, currentPet.id)
-      await shareReportToVet(reportData, currentPet.name)
-    } catch (error) {
-      logger.error('Trends', 'Failed to share to vet', error)
+      const generatedReport = await generateHealthReportData(user.id, currentPet.id)
+      await shareReportToVet(generatedReport, currentPet.name)
+    } catch (err) {
+      logger.error('Trends', 'Failed to share to vet', err)
       Taro.showToast({ title: '分享给兽医失败', icon: 'none' })
     } finally {
       setGenerating(false)
@@ -725,13 +737,7 @@ export default function PetTrendsPage() {
   return (
     <View className='pet-trends-page'>
       {/* 全小程序统一动态背景层 */}
-      <View className='xhh-bg-layer'>
-        <View className='xhh-blob xhh-blob-a' />
-        <View className='xhh-blob xhh-blob-b' />
-        <View className='xhh-blob xhh-blob-c' />
-        <View className='xhh-blob xhh-blob-d' />
-        <View className='xhh-bg-glow' />
-      </View>
+      <PageBackground />
 
       <PetSwitcher
         pets={pets}
@@ -783,11 +789,11 @@ export default function PetTrendsPage() {
             <View className='trends-chart-card'>
               <View className='trends-chart-card__head'>
                 <View className='trends-chart-card__title-wrap'>
-                  <Text className='trends-chart-card__icon'>⚖️</Text>
+                  <Icon name='scales' size={16} tone='primary' className='trends-chart-card__icon' />
                   <Text className='trends-chart-card__title'>体重曲线</Text>
                 </View>
                 <View className={`trends-chart-card__metric${weightChangeText && weightChangeText.startsWith('-') ? ' trends-chart-card__metric--down' : ''}`}>
-                  <Text className='trends-chart-card__metric-icon'>📈</Text>
+                  <Icon name='chart-line' size={12} tone='primary' className='trends-chart-card__metric-icon' />
                   <Text className='trends-chart-card__metric-text'>
                     近30天 {weightChangeText || '暂无变化'}
                   </Text>
@@ -800,11 +806,11 @@ export default function PetTrendsPage() {
             <View className='trends-chart-card'>
               <View className='trends-chart-card__head'>
                 <View className='trends-chart-card__title-wrap'>
-                  <Text className='trends-chart-card__icon'>🍽️</Text>
+                  <Icon name='bowl-food' size={16} tone='primary' className='trends-chart-card__icon' />
                   <Text className='trends-chart-card__title'>食欲趋势</Text>
                 </View>
                 <View className='trends-chart-card__metric'>
-                  <Text className='trends-chart-card__metric-icon'>✅</Text>
+                  <Icon name='check-circle' size={12} tone='primary' className='trends-chart-card__metric-icon' />
                   <Text className='trends-chart-card__metric-text'>
                     {appetiteStreak > 0 ? `连续${appetiteStreak}天正常` : '近期有波动'}
                   </Text>
@@ -817,11 +823,11 @@ export default function PetTrendsPage() {
             <View className='trends-chart-card'>
               <View className='trends-chart-card__head'>
                 <View className='trends-chart-card__title-wrap'>
-                  <Text className='trends-chart-card__icon'>💧</Text>
+                  <Icon name='drop' size={16} tone='primary' className='trends-chart-card__icon' />
                   <Text className='trends-chart-card__title'>便便评分</Text>
                 </View>
                 <View className='trends-chart-card__metric'>
-                  <Text className='trends-chart-card__metric-icon'>⭐</Text>
+                  <Icon name='star' size={12} tone='primary' className='trends-chart-card__metric-icon' />
                   <Text className='trends-chart-card__metric-text'>
                     {stoolAvgScore ? `平均${stoolAvgScore}分` : '暂无评分'}
                   </Text>
@@ -837,37 +843,37 @@ export default function PetTrendsPage() {
             </View>
 
             {/* ===== 健康报告导出（业务保留） ===== */}
-            <View className="export-section">
+            <View className='export-section'>
               <Button
-                className="preview-btn"
+                className='preview-btn'
                 onClick={handlePreviewReport}
                 disabled={generating || !currentPet}
               >
                 {generating ? '生成中...' : '预览报告'}
               </Button>
               <Button
-                className="export-btn"
+                className='export-btn'
                 onClick={handleExportReport}
                 disabled={generating || !currentPet}
               >
                 {generating ? '生成中...' : '保存图片'}
               </Button>
               <Button
-                className="csv-btn"
+                className='csv-btn'
                 onClick={handleExportCsv}
                 disabled={generating || !currentPet}
               >
                 {generating ? '生成中...' : '导出CSV'}
               </Button>
               <Button
-                className="vet-btn"
+                className='vet-btn'
                 onClick={handleShareToVet}
                 disabled={generating || !currentPet}
               >
                 分享给兽医
               </Button>
               <Button
-                className="share-btn"
+                className='share-btn'
                 onClick={handleShareTrend}
                 disabled={!currentPet || !summary}
               >
@@ -881,25 +887,25 @@ export default function PetTrendsPage() {
 
       <PaywallPopup
         visible={paywallVisible}
-        featureName="健康趋势"
+        featureName='健康趋势'
         remainingFree={0}
         onUpgrade={() => { setPaywallVisible(false); Taro.navigateTo({ url: '/pagesUser/member/index' }) }}
         onClose={() => setPaywallVisible(false)}
       />
 
       {showReport && reportData && (
-        <View className="report-modal">
-          <View className="modal-overlay" onClick={() => setShowReport(false)} />
-          <View className="modal-content">
-            <View className="modal-header">
-              <Text className="modal-title">健康报告预览</Text>
-              <Text className="modal-close" onClick={() => setShowReport(false)}>✕</Text>
+        <View className='report-modal'>
+          <View className='modal-overlay' onClick={() => setShowReport(false)} />
+          <View className='modal-content'>
+            <View className='modal-header'>
+              <Text className='modal-title'>健康报告预览</Text>
+              <Text className='modal-close' onClick={() => setShowReport(false)}>✕</Text>
             </View>
-            <View className="modal-body">
+            <View className='modal-body'>
               <HealthReportPreview data={reportData} />
             </View>
-            <View className="modal-footer">
-              <Button className="download-btn" onClick={handleExportReport}>
+            <View className='modal-footer'>
+              <Button className='download-btn' onClick={handleExportReport}>
                 保存到相册
               </Button>
             </View>

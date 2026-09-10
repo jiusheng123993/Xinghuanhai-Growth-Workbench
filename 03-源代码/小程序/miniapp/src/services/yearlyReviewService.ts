@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 年度回顾服务
  *
  * 生成宠物年度回顾数据（统计/亮点/回忆），用于分享展示
@@ -6,8 +6,9 @@
 import Taro from '@tarojs/taro'
 import type { PetProfile } from './petService'
 import type { PetHealthEntry } from '../memory-body/types/memoryBodyTypes'
-import { getCheckins } from './checkinService'
-import { getCheckinStats } from './checkinService'
+import { getCheckins , getCheckinStats } from './checkinService'
+import { localDateString } from '../utils/date'
+
 
 export interface YearlyReviewData {
   year: number
@@ -23,11 +24,15 @@ export interface YearlyReviewData {
   summary: string
 }
 
+/**
+ * 记录所属的「本地日历日」（YYYY-MM-DD）
+ *
+ * 2026-09-11 全站口径收口：原实现用 toISOString().slice(0,10) / slice(0,10) 取的是 **UTC 日期** ——
+ * 东八区 00:00-08:00 的记录会被算成前一天，于是「打卡天数 / 连续天数 / 去重天数」
+ * 在早上齐齐差一天，并与已改用本地日的 checkinService、reportService 口径不一致。
+ */
 function entryDateStr(entry: PetHealthEntry): string {
-  if (entry.createdAt instanceof Date) {
-    return entry.createdAt.toISOString().slice(0, 10)
-  }
-  return String(entry.createdAt).slice(0, 10)
+  return localDateString(entry.createdAt) ?? ''
 }
 
 export async function generateYearlyReview(
@@ -153,7 +158,9 @@ function generateSummary(
   } else if (totalCheckins >= 50) {
     parts.push(`${year}年，${petName}和你一起度过了${totalDays}个被记录的日子。`)
   } else if (totalCheckins > 0) {
-    parts.push(`${year}年，${petName}和你一起走过了${totalDays}天。`)
+    // 文案纠正（2026-09-11）：totalDays 是"当年有记录的天数"，不是相处时长，
+    // 原句「和你一起走过了 N 天」会把记录天数说成陪伴天数。
+    parts.push(`${year}年，有${totalDays}天留下了${petName}的记录。`)
   } else {
     parts.push(`${year}年，${petName}安静地陪伴在你身边。`)
   }
@@ -441,8 +448,9 @@ export async function renderYearlyReview(
             destWidth: CANVAS_WIDTH * pixelRatio,
             destHeight: CANVAS_HEIGHT * pixelRatio,
             fileType: 'png',
-            success: (res: { tempFilePath: string }) => {
-              resolve({ tempFilePath: res.tempFilePath, width: CANVAS_WIDTH, height: CANVAS_HEIGHT })
+            // 回调参数改名 result：外层 exec 回调已有同名 res（no-shadow）
+            success: (result: { tempFilePath: string }) => {
+              resolve({ tempFilePath: result.tempFilePath, width: CANVAS_WIDTH, height: CANVAS_HEIGHT })
             },
             fail: (err: { errMsg: string }) => {
               reject(new Error(`Canvas export failed: ${err.errMsg}`))

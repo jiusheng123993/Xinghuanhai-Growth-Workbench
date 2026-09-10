@@ -6,12 +6,14 @@
 import { api } from './api'
 import { mockApi } from './mock'
 import { CONFIG } from '../config'
+import { parseLocalDate } from '../utils/date'
 import type { PetMoment } from '../types/familyTypes'
 
-const useMock = () => CONFIG.USE_MOCK
+/** 是否启用 Mock 模式（原名 useMock，以 "use" 开头会被 react-hooks 规则误判为 Hook，2026-09-11 改名） */
+const isMockMode = () => CONFIG.USE_MOCK
 
 export async function getFamilyMoments(familyId: string, limit?: number): Promise<PetMoment[]> {
-  if (useMock()) return mockApi.getMoments(familyId, limit)
+  if (isMockMode()) return mockApi.getMoments(familyId, limit)
   const params: Record<string, string> = {}
   if (limit) params.limit = String(limit)
   const data = await api.get<PetMoment[]>(`/api/families/${familyId}/moments`, params)
@@ -19,7 +21,7 @@ export async function getFamilyMoments(familyId: string, limit?: number): Promis
 }
 
 export async function getNewMoments(familyId: string, since: string): Promise<PetMoment[]> {
-  if (useMock()) return mockApi.getNewMoments(familyId, since)
+  if (isMockMode()) return mockApi.getNewMoments(familyId, since)
   const data = await api.get<PetMoment[]>(`/api/families/${familyId}/moments/new`, { since })
   return data || []
 }
@@ -36,9 +38,12 @@ export function formatMomentTime(isoString: string): string {
   if (diffMin < 60) return `${diffMin}分钟前`
   if (diffHour < 24) return `${diffHour}小时前`
   if (diffDay < 7) return `${diffDay}天前`
-  const month = date.getMonth() + 1
-  const day = date.getDate()
-  return `${month}月${day}日`
+  // 超过 7 天改显示具体日期：必须取**本地日历日**。
+  // isoString 是 UTC 串（如 2026-09-10T20:00:00.000Z），直接用 getMonth/getDate
+  // 在东八区 20:00 之后会显示成前一天（2026-09-11 排查）。
+  const localDay = parseLocalDate(isoString)
+  if (!localDay) return ''
+  return `${localDay.getMonth() + 1}月${localDay.getDate()}日`
 }
 
 export function getMomentTypeInfo(type: string): { icon: string; label: string } {

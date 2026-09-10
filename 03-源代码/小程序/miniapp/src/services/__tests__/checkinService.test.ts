@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { AnomalyItem } from '../../memory-body/types/memoryBodyTypes'
 
 import { api as _api } from '../api'
+import { localDateString } from '../../utils/date'
 import {
   createCheckin,
   batchCreateCheckins,
@@ -52,7 +53,15 @@ vi.mock('../../utils/petOwnership', () => ({
 }))
 const api = _api as any
 
-const today = new Date().toISOString().split('T')[0]
+/**
+ * 今天的日期串 —— **本地日历日**，不是 UTC
+ *
+ * 2026-09-11 修复：这里原来写 `new Date().toISOString().split('T')[0]`（UTC），
+ * 与被测实现当时的 UTC 口径"自洽"→ 双方一起错：东八区 08:00 之前跑用例/打卡，
+ * 都会把当天算成前一天。实现已改为本地日历日（`utils/date.localDateString`），
+ * fixture 必须同步，否则这条用例只是在复述旧 bug。
+ */
+const today = localDateString(new Date())!
 const userId = 'user-001'
 
 const mockEntry = {

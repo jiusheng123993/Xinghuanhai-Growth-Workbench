@@ -17,6 +17,7 @@ import { useAuthStore } from '../../../stores/authStore'
 import { useFamilyStore } from '../../../stores/familyStore'
 import { familyService } from '../../../services/familyService'
 import { useThemeClass } from '../../../hooks/useThemeClass'
+import { formatPetAge } from '../../../utils/date'
 import type { PetProfile } from '../../../services/petService'
 import type { LineageResponse, LineageChild, LineageMate, FamilyOverviewResponse, OverviewMember, OverviewRelationship } from '../../../types/familyTypes'
 import SpeciesAvatar from './SpeciesAvatar'
@@ -44,19 +45,10 @@ function getSiblingLabel(selfGender: string | undefined, siblingGender: string |
   return '兄弟姐妹'
 }
 
-function calcAge(birthDate?: string): string {
-  if (!birthDate) return ''
-  const birth = new Date(birthDate)
-  const now = new Date()
-  const years = now.getFullYear() - birth.getFullYear()
-  const months = now.getMonth() - birth.getMonth()
-  const totalMonths = years * 12 + months
-  if (totalMonths < 12) return `${totalMonths}月`
-  const ageYears = Math.floor(totalMonths / 12)
-  const remainingMonths = totalMonths % 12
-  if (remainingMonths === 0) return `${ageYears}岁`
-  return `${ageYears}岁${remainingMonths}月`
-}
+/**
+ * 年龄文案已收敛到 utils/date 的 formatPetAge（2026-09-11）
+ * 原实现按月相减但**不减「日」**（生日 20 号、今天 5 号会多算一个月）且按 UTC 解析。
+ */
 
 function getGenderIcon(gender?: string): string {
   switch (gender) {
@@ -428,7 +420,7 @@ export default function LineagePage() {
     const isSelected = pet.id === selectedPetId
     const genderIcon = getGenderIcon(pet.gender)
     const genderClass = getGenderClass(pet.gender)
-    const age = calcAge(pet.birthDate)
+    const age = formatPetAge(pet.birthDate)
 
     return (
       <View
@@ -573,7 +565,8 @@ export default function LineagePage() {
             </View>
           ) : overviewData && overviewData.members.length > 0 ? (() => {
             // ===== 图谱布局计算 =====
-            const { members, lineages, relationships } = overviewData
+            // 图谱数据解构：members 别名 graphMembers，避免遮蔽组件顶层的 members（useFamilyStore，no-shadow）
+            const { members: graphMembers, lineages, relationships } = overviewData
             const childToParents = new Map<string, string[]>()
             const parentToChildren = new Map<string, string[]>()
             lineages.forEach(l => {
@@ -584,7 +577,7 @@ export default function LineagePage() {
             })
 
             // BFS 分层
-            const roots = members.filter(m => !childToParents.has(m.petId)).map(m => m.petId)
+            const roots = graphMembers.filter(m => !childToParents.has(m.petId)).map(m => m.petId)
             const levels: string[][] = []
             const visited = new Set<string>()
             let current = roots
@@ -600,14 +593,14 @@ export default function LineagePage() {
               })
               current = next
             }
-            members.forEach(m => {
+            graphMembers.forEach(m => {
               if (!visited.has(m.petId)) {
                 levels.push([m.petId])
                 visited.add(m.petId)
               }
             })
 
-            const memberMap = new Map(members.map(m => [m.petId, m]))
+            const memberMap = new Map(graphMembers.map(m => [m.petId, m]))
             const siblingRels = relationships.filter(r => r.relationType === 'sibling')
             const mateRels = relationships.filter(r => r.relationType === 'mate')
 
@@ -645,8 +638,8 @@ export default function LineagePage() {
             }
 
             // 根节点（无父节点的成员）依次展开整棵子树；未覆盖到的成员（异常数据）补位到最右
-            members.filter(m => !childToParents.has(m.petId)).forEach(m => assignSubtree(m.petId))
-            members.forEach(m => {
+            graphMembers.filter(m => !childToParents.has(m.petId)).forEach(m => assignSubtree(m.petId))
+            graphMembers.forEach(m => {
               if (!nodeX.has(m.petId)) {
                 nodeX.set(m.petId, colCursor * (NODE_W + NODE_GAP) + NODE_GAP / 2 + NODE_W / 2)
                 colCursor += 1
@@ -682,7 +675,7 @@ export default function LineagePage() {
                 {/* 图谱统计栏 */}
                 <View className='graph-stats-bar'>
                   <View className='graph-stats-item'>
-                    <Text className='graph-stats-num'>{members.length}</Text>
+                    <Text className='graph-stats-num'>{graphMembers.length}</Text>
                     <Text className='graph-stats-label'>成员</Text>
                   </View>
                   <View className='graph-stats-divider' />
@@ -742,8 +735,9 @@ export default function LineagePage() {
                         // 横向位置取布局计算出的节点中心（回退到按序排列，避免 undefined 导致布局崩坏）
                         const centerX = nodeX.get(petId) ?? idx * (NODE_W + NODE_GAP) + NODE_GAP / 2 + NODE_W / 2
                         const left = centerX - NODE_W / 2
-                        const hasOwnerRoot = childToParents.size === 0 && !!user
-                        const top = hasOwnerRoot ? (levelIdx + 1) * LAYER_GAP + 20 : levelIdx * LAYER_GAP + 20
+                        // 改名 isOwnerRootNode：避免遮蔽外层同名 hasOwnerRoot（no-shadow）
+                        const isOwnerRootNode = childToParents.size === 0 && !!user
+                        const top = isOwnerRootNode ? (levelIdx + 1) * LAYER_GAP + 20 : levelIdx * LAYER_GAP + 20
 
                         return (
                           <View
@@ -1080,7 +1074,7 @@ export default function LineagePage() {
                         </View>
                         <Text className='lineage-self-breed'>
                           {selectedPet.breed || '未知品种'}
-                          {calcAge(selectedPet.birthDate) ? ` · ${calcAge(selectedPet.birthDate)}` : ''}
+                          {formatPetAge(selectedPet.birthDate) ? ` · ${formatPetAge(selectedPet.birthDate)}` : ''}
                         </Text>
                       </View>
                     </View>

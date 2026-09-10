@@ -3,6 +3,15 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import { getCheckinsByDateRange } from '../checkinService'
+import { getVaccineRecords } from '../vaccineService'
+import { getPetById } from '../petService'
+import { generateHealthReport, formatReportAsText } from '../reportService'
+import type { HealthReport } from '../reportService'
+import type { PetHealthEntry } from '../checkinService'
+import type { VaccineRecord } from '../vaccineService'
+import type { PetProfile } from '../petService'
+
 vi.mock('../checkinService', () => ({
   getCheckinsByDateRange: vi.fn(),
   getCheckinStats: vi.fn(),
@@ -20,15 +29,6 @@ vi.mock('../../utils/petOwnership', () => ({
   requirePetOwnership: vi.fn(),
   isPetOwnerLocal: vi.fn(() => true),
 }))
-
-import { getCheckinsByDateRange } from '../checkinService'
-import { getVaccineRecords } from '../vaccineService'
-import { getPetById } from '../petService'
-import { generateHealthReport, formatReportAsText } from '../reportService'
-import type { HealthReport } from '../reportService'
-import type { PetHealthEntry } from '../checkinService'
-import type { VaccineRecord } from '../vaccineService'
-import type { PetProfile } from '../petService'
 
 const userId = 'user-001'
 const petId = 'pet-001'
@@ -140,6 +140,41 @@ describe('reportService', () => {
   })
 
   describe('generateHealthReport', () => {
+    /**
+     * 同一天补记两条时的天数口径（2026-09-11 新增）
+     *
+     * 这是本轮 `countUniqueDays` 改动的**回归锁**：旧实现按记录条数算
+     * （`normalEntries.length` / `anomalyEntries.length`、`checkinRate = entries.length / days`），
+     * 于是"一天补记两条"会让正常+异常天数虚高、打卡率可能超过 100%。
+     * 注意既有 24 条用例的 createdAt **互不相同**（条数==天数），新旧实现结果相同，
+     * 只有这一条能区分 —— 所以它必须留着。
+     */
+    it('同一天补记两条时，天数类指标按天去重，打卡率不可能超过 100%', async () => {
+      // 构造要点：**同一天有两条"正常"记录** —— 这样"去重前 2 天 / 去重后 1 天"才不同，
+      // 用例才真的能区分新旧实现（只有一条时两边都是 1，是无效用例，已用变异验证确认过）。
+      // 晚上那条用本地 21:00：东八区按 UTC 口径会被算成次日，正是要防的坑。
+      const entries: PetHealthEntry[] = [
+        makeEntry({ createdAt: new Date(2026, 5, 20, 9, 0) }),                     // 6/20 正常
+        makeEntry({ createdAt: new Date(2026, 5, 20, 21, 0) }),                    // 6/20 第二条正常
+        makeEntry({ createdAt: new Date(2026, 5, 21, 10, 0), hasAnomaly: true }),  // 6/21 异常
+      ]
+
+      vi.mocked(getPetById).mockResolvedValue(makePetProfile())
+      vi.mocked(getCheckinsByDateRange).mockResolvedValue(entries)
+      vi.mocked(getVaccineRecords).mockResolvedValue([])
+
+      const report = await generateHealthReport(userId, petId)
+
+      expect(report).not.toBeNull()
+      // 「总打卡次数」按次计是 3
+      expect(report!.checkinStats.totalCheckins).toBe(3)
+      // 但"天数"必须是去重后的：6/20 的两条只算 1 天（旧实现会给出 2）
+      expect(report!.checkinStats.normalDays).toBe(1)
+      expect(report!.checkinStats.anomalyDays).toBe(1)
+      // 打卡天数 2 / 周期 30 天 → 7%（旧实现按 3 条算会得 10%）
+      expect(report!.checkinStats.checkinRate).toBe('7%')
+    })
+
     it('should generate report with normal data', async () => {
       const pet = makePetProfile()
       const entries: PetHealthEntry[] = [

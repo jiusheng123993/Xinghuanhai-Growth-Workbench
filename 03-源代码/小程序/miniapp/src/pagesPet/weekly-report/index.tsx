@@ -10,6 +10,8 @@ import { getLatestWeeklyReport, getWeeklyReportList, mapBackendReportRowToView }
 import type { BackendWeeklyReport, BackendReportRow } from '../../services/weeklyReportService'
 import { useFamilyStore } from '../../stores/familyStore'
 import './index.scss'
+import { Icon } from '../../components'
+import PageBackground from '../../components/PageBackground'
 
 const EMOJI: Record<string, string> = { cat: '🐱', dog: '🐕' }
 
@@ -108,7 +110,9 @@ export default function WeeklyReport() {
     const a = latestReport?.reportData?.activities
     return [
       { value: `${h?.checkin_count ?? 0}`, label: '本周打卡（次）' },
-      { value: `${h?.anomaly_count ?? 0}`, label: '需关注天数' },
+      // 标签纠正（2026-09-11）：后端是 `COUNT(*) FILTER (WHERE has_anomaly)`＝异常**条数**，
+      // 不是"天数"（一天补记两条会算 2）。同排其它三格都带单位，这里统一成「（次）」。
+      { value: `${h?.anomaly_count ?? 0}`, label: '需关注（次）' },
       { value: `${a?.symptom_checks ?? 0}`, label: '症状初筛（次）' },
       { value: `${a?.new_moments ?? 0}`, label: '新增动态（条）' },
     ]
@@ -118,7 +122,7 @@ export default function WeeklyReport() {
     return (
       <View className='report-page'>
         <View className='report-page__empty'>
-          <Text className='report-page__empty-icon'>📋</Text>
+          <Icon name='clipboard-text' size={48} tone='primary' className='report-page__empty-icon' />
           <Text className='report-page__empty-text'>请先创建家庭</Text>
         </View>
       </View>
@@ -130,13 +134,7 @@ export default function WeeklyReport() {
   return (
     <ScrollView className='report-page' scrollY>
       {/* 全屏动态背景层 */}
-      <View className='xhh-bg-layer'>
-        <View className='xhh-blob xhh-blob-a' />
-        <View className='xhh-blob xhh-blob-b' />
-        <View className='xhh-blob xhh-blob-c' />
-        <View className='xhh-blob xhh-blob-d' />
-        <View className='xhh-bg-glow' />
-      </View>
+      <PageBackground />
 
       <View className='report-page__content'>
         {/* 生成入口 */}
@@ -160,7 +158,7 @@ export default function WeeklyReport() {
                 <View className='fr-banner__info'>
                   <Text className='fr-banner__title'>{currentFamily.name} · 本周周报</Text>
                   <View className='fr-banner__meta'>
-                    <Text className='fr-banner__meta-icon'>📅</Text>
+                    <Icon name='calendar-check' size={12} tone='primary' className='fr-banner__meta-icon' />
                     <Text className='fr-banner__meta-text'>{formatDateRange(report.reportDate)}</Text>
                   </View>
                 </View>
@@ -174,7 +172,7 @@ export default function WeeklyReport() {
             {report.highlights.length > 0 && (
               <View className='fr-highlights'>
                 <View className='fr-card__title-row'>
-                  <Text className='fr-card__title-icon'>⭐</Text>
+                  <Icon name='star' size={14} tone='primary' className='fr-card__title-icon' />
                   <Text className='fr-card__title'>本周亮点</Text>
                 </View>
                 <View className='fr-highlights__list'>
@@ -243,7 +241,7 @@ export default function WeeklyReport() {
 
             {/* ===== 分享周报按钮 ===== */}
             <View className='fr-share-btn' onClick={handleShare}>
-              <Text className='fr-share-btn__icon'>📤</Text>
+              <Icon name='share-network' size={16} tone='primary' className='fr-share-btn__icon' />
               <Text className='fr-share-btn__text'>分享周报</Text>
             </View>
           </>

@@ -3,6 +3,7 @@
  * 提供宠物资料的增删改查、切换及状态管理
  */
 import { useEffect, useCallback } from 'react';
+import Taro from '@tarojs/taro';
 import { usePetStore, type PetProfile } from '../stores/petStore';
 import { useAuthStore } from '../stores/authStore';
 
@@ -91,9 +92,24 @@ export function usePet(): UsePetReturn {
     [markPetDeceased]
   );
 
+  /**
+   * 切换当前宠物（带失败兜底）
+   *
+   * 2026-09-11 统一：petStore.switchPet 失败时会 `throw err`，而本 hook 被
+   * 打卡 / 疫苗 / 症状自查 / 食物查询 四个页面的 <PetSwitcher onSwitch={switchPet}> 直接引用，
+   * 原先这里不接这个 promise —— 切换失败时既没有提示（用户点另一只宠物"没反应"），
+   * 又会冒未处理的 Promise rejection。在此统一兜住，四处页面一起修好。
+   */
   const handleSwitchPet = useCallback(
     async (id: string): Promise<void> => {
-      await switchPet(id);
+      try {
+        await switchPet(id);
+      } catch (err) {
+        // 优先用**本次**捕获的异常信息：store.error 可能是上一次无关操作留下的旧消息
+        // （例如 fetchPets 失败只写 error、不抛错）—— 2026-09-11 审查 P2-5
+        const msg = err instanceof Error ? err.message : '';
+        Taro.showToast({ title: msg || usePetStore.getState().error || '切换失败，请重试', icon: 'none' });
+      }
     },
     [switchPet]
   );

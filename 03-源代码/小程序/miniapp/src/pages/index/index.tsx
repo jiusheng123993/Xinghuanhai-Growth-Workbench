@@ -16,30 +16,29 @@ import { usePetStore } from '../../stores/petStore'
 import { useAuthStore } from '../../stores/authStore'
 import { useFamilyStore } from '../../stores/familyStore'
 import { getTodayCheckin } from '../../services/checkinService'
-import type { CardData, Message, NamingDetail, PetInfo } from '../../types/chatTypes'
+import type { CardData, Message, PetInfo } from '../../types/chatTypes'
 import type { PetHealthEntry } from '../../memory-body/types/memoryBodyTypes'
 import HomeSkeleton from '../../components/HomeSkeleton'
+import { Icon, type FillIconName } from '../../components'
+// 品牌 IP（2026-09-11 换毛毡质感版，与全站插画统一）
+import catDogHero from '../../assets/logo-catdog-felt.jpg'
 import CheckinPopup from '../../components/CheckinPopup'
 import AiAvatar from './AiAvatar'
 import { suggestQuickActions, type QuickAction } from '../../utils/suggestQuickActions'
 import { chooseImageWithPrivacy } from '../../utils/privacy'
+import { formatPetAge } from '../../utils/date'
 import { getCachedRiskScan } from '../../services/chronicService'
 import { resolvePetAvatarUrl } from '../../data/homeStyleAvatars'
 import './index.scss'
+import PageBackground from '../../components/PageBackground'
 
-function calcAge(birthDate: string): string {
-  if (!birthDate) return ''
-  const birth = new Date(birthDate)
-  const now = new Date()
-  const years = now.getFullYear() - birth.getFullYear()
-  const months = now.getMonth() - birth.getMonth()
-  const totalMonths = years * 12 + months
-  if (totalMonths < 12) return `${totalMonths}月`
-  const ageYears = Math.floor(totalMonths / 12)
-  const remainingMonths = totalMonths % 12
-  if (remainingMonths === 0) return `${ageYears}岁`
-  return `${ageYears}岁${remainingMonths}月`
-}
+/**
+ * 年龄文案已收敛到 utils/date 的 formatPetAge（2026-09-11）
+ *
+ * 本页原实现按月相减但**不减「日」**（生日 20 号、今天 5 号会多算一个月），
+ * 且用 `new Date('YYYY-MM-DD')`（UTC 解析）。首页宠物卡与宠物档案页
+ * 因此可能显示不同年龄 —— 这是用户最容易同时看到两处的地方。
+ */
 
 /** 食欲等级 → 文案（对齐打卡页） */
 const APPETITE_LABEL: Record<number, string> = { 1: '不吃', 2: '少吃', 3: '正常', 4: '多吃', 5: '亢进', 6: '呕吐' }
@@ -67,20 +66,21 @@ function usePetInfo(): PetInfo {
     name: activePet?.name || '',
     emoji: activePet?.species === 'cat' ? '🐱' : activePet?.species === 'dog' ? '🐕' : '🐾',
     breed: activePet?.breed || '',
-    age: activePet?.birthDate ? calcAge(activePet.birthDate) : '',
+    age: activePet?.birthDate ? formatPetAge(activePet.birthDate) : '',
     hasPet: pets.length > 0,
     isLoading,
     activePet,
   }
 }
 
-const PLUS_MENU_ITEMS = [
-  { icon: '📷', label: '拍摄照片', sub: '相机拍摄', bg: 'rgba(255,107,61,0.12)' },
-  { icon: '🖼️', label: '相册图片', sub: '从相册选择', bg: 'rgba(232,168,56,0.12)' },
-  { icon: '📋', label: '健康打卡', sub: '5项日常检查，1分钟完成', bg: 'rgba(232,168,56,0.12)' },
-  { icon: '📸', label: '记录回忆', sub: '上传照片 + 写一段话', bg: 'rgba(140,173,126,0.12)' },
-  { icon: '🐱', label: '品种百科', sub: '40+品种特征和护理要点', bg: 'rgba(166,143,120,0.12)' },
-  { icon: '🏠', label: '看家庭', sub: '家人动态 + 家庭周报', bg: 'rgba(224,133,107,0.12)' },
+/** 加号菜单项：icon 改存面性图标名（原为 emoji），带类型标注以便直接传给 Icon 组件 */
+const PLUS_MENU_ITEMS: Array<{ icon: FillIconName; label: string; sub: string; bg: string }> = [
+  { icon: 'camera', label: '拍摄照片', sub: '相机拍摄', bg: 'rgba(255,107,61,0.12)' },
+  { icon: 'image', label: '相册图片', sub: '从相册选择', bg: 'rgba(232,168,56,0.12)' },
+  { icon: 'clipboard-text', label: '健康打卡', sub: '5项日常检查，1分钟完成', bg: 'rgba(232,168,56,0.12)' },
+  { icon: 'note-pencil', label: '记录回忆', sub: '上传照片 + 写一段话', bg: 'rgba(140,173,126,0.12)' },
+  { icon: 'cat', label: '品种百科', sub: '40+品种特征和护理要点', bg: 'rgba(166,143,120,0.12)' },
+  { icon: 'house', label: '看家庭', sub: '家人动态 + 家庭周报', bg: 'rgba(224,133,107,0.12)' },
 ]
 
 export default function Index() {
@@ -97,9 +97,9 @@ export default function Index() {
   // 慢性病风险角标：进入首页读取缓存的风险扫描结果，有风险信号时在快捷入口显示角标
   const [chronicRiskCount, setChronicRiskCount] = useState(0)
   const [currentQuickActions, setCurrentQuickActions] = useState<QuickAction[]>([
-    { action: 'checkin', label: '健康打卡', emoji: '💩' },
-    { action: 'food', label: '食物查询', emoji: '🔍' },
-    { action: 'symptom', label: '症状初筛', emoji: '💊' },
+    { action: 'checkin', label: '健康打卡', icon: 'clipboard-text' },
+    { action: 'food', label: '食物查询', icon: 'magnifying-glass' },
+    { action: 'symptom', label: '症状初筛', icon: 'stethoscope' },
   ])
   // 多成员共同养宠：家庭成员（人）列表 + 引导横幅开关（情侣引导 2026-08-24）
   const familyUsers = useFamilyStore((s) => s.users)
@@ -507,127 +507,11 @@ export default function Index() {
                   onClick={() => naming.refreshNaming()}
                   hoverClass='msg-naming-refresh-btn--hover'
                 >
-                  <Text className='msg-naming-refresh-icon'>🔄</Text>
+                  <Icon name='arrows-clockwise' size={14} tone='primary' className='msg-naming-refresh-icon' />
                   <Text className='msg-naming-refresh-label'>不满意？换一批</Text>
                 </View>
               </>
             )}
-          </View>
-        )
-      }
-      case 'naming_detail': {
-        const d = card.detail as NamingDetail | undefined
-        if (!d) return null
-        return (
-          <View className='msg-naming-detail'>
-            {/* 头部 */}
-            <View className='msg-naming-detail-header'>
-              <Text className='msg-naming-detail-name'>{d.name}</Text>
-              <Text className='msg-naming-detail-subtitle'>命理深度分析</Text>
-            </View>
-
-            {/* 八字命理 */}
-            <View className='msg-naming-detail-section'>
-              <View className='msg-naming-detail-section-title'>
-                <Text className='msg-naming-detail-icon'>☯</Text>
-                <Text>八字命理</Text>
-              </View>
-              <Text className='msg-naming-detail-text'>{d.bazi}</Text>
-            </View>
-
-            {/* 整体运势 */}
-            <View className='msg-naming-detail-section msg-naming-detail-section--fortune'>
-              <View className='msg-naming-detail-section-title'>
-                <Text className='msg-naming-detail-icon'>⭐</Text>
-                <Text>整体运势</Text>
-              </View>
-              <Text className='msg-naming-detail-text'>{d.fortune}</Text>
-            </View>
-
-            {/* 事业/生活运势 */}
-            <View className='msg-naming-detail-section'>
-              <View className='msg-naming-detail-section-title'>
-                <Text className='msg-naming-detail-icon'>🌟</Text>
-                <Text>事业/生活运势</Text>
-              </View>
-              <Text className='msg-naming-detail-text'>{d.careerFortune}</Text>
-            </View>
-
-            {/* 感情/人际运势 */}
-            <View className='msg-naming-detail-section'>
-              <View className='msg-naming-detail-section-title'>
-                <Text className='msg-naming-detail-icon'>💕</Text>
-                <Text>感情/人际运势</Text>
-              </View>
-              <Text className='msg-naming-detail-text'>{d.loveFortune}</Text>
-            </View>
-
-            {/* 健康运势 */}
-            <View className='msg-naming-detail-section'>
-              <View className='msg-naming-detail-section-title'>
-                <Text className='msg-naming-detail-icon'>🍀</Text>
-                <Text>健康运势</Text>
-              </View>
-              <Text className='msg-naming-detail-text'>{d.healthFortune}</Text>
-            </View>
-
-            {/* 性格特质 */}
-            <View className='msg-naming-detail-section'>
-              <View className='msg-naming-detail-section-title'>
-                <Text className='msg-naming-detail-icon'>🎭</Text>
-                <Text>性格特质</Text>
-              </View>
-              <Text className='msg-naming-detail-text'>{d.personality}</Text>
-            </View>
-
-            {/* 笔画数理 */}
-            <View className='msg-naming-detail-section'>
-              <View className='msg-naming-detail-section-title'>
-                <Text className='msg-naming-detail-icon'>✍</Text>
-                <Text>笔画数理</Text>
-              </View>
-              <Text className='msg-naming-detail-text'>{d.strokes}</Text>
-            </View>
-
-            {/* 吉祥三宝 */}
-            <View className='msg-naming-detail-section'>
-              <View className='msg-naming-detail-section-title'>
-                <Text className='msg-naming-detail-icon'>🔮</Text>
-                <Text>吉祥三宝</Text>
-              </View>
-              <View className='msg-naming-detail-lucky'>
-                <View className='msg-naming-detail-lucky-item'>
-                  <Text className='msg-naming-detail-lucky-label'>方位</Text>
-                  <Text className='msg-naming-detail-lucky-val'>{d.luckyDirection}</Text>
-                </View>
-                <View className='msg-naming-detail-lucky-item'>
-                  <Text className='msg-naming-detail-lucky-label'>颜色</Text>
-                  <Text className='msg-naming-detail-lucky-val'>{d.luckyColor}</Text>
-                </View>
-                <View className='msg-naming-detail-lucky-item'>
-                  <Text className='msg-naming-detail-lucky-label'>数字</Text>
-                  <Text className='msg-naming-detail-lucky-val'>{d.luckyNumber}</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* 与主人缘分 */}
-            <View className='msg-naming-detail-section'>
-              <View className='msg-naming-detail-section-title'>
-                <Text className='msg-naming-detail-icon'>🤝</Text>
-                <Text>与主人缘分</Text>
-              </View>
-              <Text className='msg-naming-detail-text'>{d.karmaWithOwner}</Text>
-            </View>
-
-            {/* 总结寄语 */}
-            <View className='msg-naming-detail-section msg-naming-detail-section--summary'>
-              <View className='msg-naming-detail-section-title'>
-                <Text className='msg-naming-detail-icon'>✨</Text>
-                <Text>总结寄语</Text>
-              </View>
-              <Text className='msg-naming-detail-text msg-naming-detail-text--summary'>{d.summary}</Text>
-            </View>
           </View>
         )
       }
@@ -640,21 +524,16 @@ export default function Index() {
     <View className={`chat-home-page ${themeClass}`}>
 
       {/* 全屏动态背景光斑层 */}
-      <View className='xhh-bg-layer'>
-        <View className='xhh-blob xhh-blob-a' />
-        <View className='xhh-blob xhh-blob-b' />
-        <View className='xhh-blob xhh-blob-c' />
-        <View className='xhh-blob xhh-blob-d' />
-      </View>
+      <PageBackground />
 
       {/* 爪印粒子装饰 */}
       <View className='chat-paw-particles'>
-        <Text className='chat-paw chat-paw--1'>🐾</Text>
-        <Text className='chat-paw chat-paw--2'>🐾</Text>
-        <Text className='chat-paw chat-paw--3'>🐾</Text>
-        <Text className='chat-paw chat-paw--4'>🐾</Text>
-        <Text className='chat-paw chat-paw--5'>🐾</Text>
-        <Text className='chat-paw chat-paw--6'>🐾</Text>
+        <Icon name='paw-print' size={16} tone='primary' className='chat-paw chat-paw--1' />
+        <Icon name='paw-print' size={16} tone='primary' className='chat-paw chat-paw--2' />
+        <Icon name='paw-print' size={16} tone='primary' className='chat-paw chat-paw--3' />
+        <Icon name='paw-print' size={16} tone='primary' className='chat-paw chat-paw--4' />
+        <Icon name='paw-print' size={16} tone='primary' className='chat-paw chat-paw--5' />
+        <Icon name='paw-print' size={16} tone='primary' className='chat-paw chat-paw--6' />
       </View>
 
       {/* 星星装饰 */}
@@ -671,13 +550,31 @@ export default function Index() {
         /* 加载中：骨架屏 */
         <HomeSkeleton />
       ) : !petInfo.hasPet ? (
-        /* 空状态：引导用户添加宠物 */
+        /* 空状态：引导用户添加宠物
+           优化点：① 主视觉换成猫狗 IP 形象（原来是一个浅色爪印，太弱、缺情感）
+                  ② 补一句品牌 slogan（带小星星点缀），空态也有品牌感
+                  ③ 按钮补 + 图标，不再是裸文字 */
         <View className='chat-empty'>
-          <View className='chat-empty-icon'>🐾</View>
+          <View className='chat-empty-mascot'>
+            <View className='chat-empty-mascot__halo' />
+            <View className='chat-empty-mascot__ring' />
+            <Image className='chat-empty-mascot__img' src={catDogHero} mode='aspectFit' />
+          </View>
+
+          <View className='chat-empty-slogan'>
+            <Icon name='sparkle' size={16} tone='primary' className='chat-empty-slogan__star' />
+            <Text className='chat-empty-slogan__text'>
+              它的可爱 要一颗一颗收进<Text className='chat-empty-slogan__accent'>星河</Text>里
+            </Text>
+            <Icon name='sparkle' size={16} tone='primary' className='chat-empty-slogan__star' />
+          </View>
+
           <Text className='chat-empty-title'>欢迎来到星河宠记</Text>
           <Text className='chat-empty-desc'>添加你的第一位宠物伙伴，{'\n'}开始记录温馨的每一天</Text>
+
           <View className='chat-empty-btn' onClick={() => Taro.navigateTo({ url: '/pagesPet/add/index' })}>
-            <Text className='chat-empty-btn-text'>+ 添加宠物</Text>
+            <Icon name='plus' size={16} tone='white' />
+            <Text className='chat-empty-btn-text'>添加宠物</Text>
           </View>
         </View>
       ) : (
@@ -690,21 +587,57 @@ export default function Index() {
           </View>
         </View>
         <View className='chat-top-right'>
+          {/* 新建对话：主入口常驻顶栏（用户反馈「放历史里找不到」，对齐豆包式一屏可见） */}
+          <View className='chat-top-new-btn' onClick={handleNewSession}>
+            <Icon name='note-pencil' size={16} tone='white' />
+            <Text className='chat-top-new-text'>新建</Text>
+          </View>
           <View className='chat-top-memory-btn' onClick={() => setSessionDrawerOpen(true)}>
-            <Text className='chat-top-memory-icon'>📋</Text>
+            <Icon name='clipboard-text' size={18} tone='primary' />
             <Text className='chat-top-memory-text'>历史</Text>
           </View>
           <View className='chat-top-memory-btn' onClick={() => Taro.navigateTo({ url: '/pagesUser/memory/index' })}>
-            <Text className='chat-top-memory-icon'>🧠</Text>
+            <Icon name='brain' size={18} tone='primary' />
             <Text className='chat-top-memory-text'>记忆</Text>
           </View>
         </View>
       </View>
 
+      {/* 品牌 Hero：情绪 slogan + 猫狗 IP 主视觉
+          首页原本从品牌栏直接跳到消息流，缺少「这是谁的家」的情感锚点；
+          这里用一句 slogan + 吉祥物补上，高度刻意克制，避免挤压消息列表 */}
+      <View className='home-hero'>
+        {/* 散落星点：既呼应「星河」品牌意象，也填掉 Hero 的空白感（绝对定位，不占布局） */}
+        <Icon name='sparkle' size={18} tone='primary' className='home-hero__spark home-hero__spark--1' />
+        <Icon name='sparkle' size={13} tone='primary' className='home-hero__spark home-hero__spark--2' />
+        <Icon name='sparkle' size={16} tone='primary' className='home-hero__spark home-hero__spark--3' />
+        <Icon name='sparkle' size={12} tone='primary' className='home-hero__spark home-hero__spark--4' />
+        <Icon name='sparkle' size={14} tone='primary' className='home-hero__spark home-hero__spark--5' />
+        <Icon name='sparkle' size={11} tone='primary' className='home-hero__spark home-hero__spark--6' />
+
+        <View className='home-hero__slogan'>
+          {/* 第一行：两侧大星星对称点缀 */}
+          <View className='home-hero__line'>
+            <Icon name='sparkle' size={20} tone='primary' className='home-hero__star' />
+            <Text className='home-hero__line-text'>它的可爱</Text>
+            <Icon name='sparkle' size={20} tone='primary' className='home-hero__star' />
+          </View>
+          {/* 第二行：落点在「星河」上，用主色点出呼应品牌名；行末再缀一颗 */}
+          <View className='home-hero__line'>
+            <Text className='home-hero__line-text'>
+              要一颗一颗收进<Text className='home-hero__accent'>星河</Text>里
+            </Text>
+            <Icon name='sparkle' size={15} tone='primary' className='home-hero__star home-hero__star--end' />
+          </View>
+        </View>
+
+        <Image className='home-hero__mascot' src={catDogHero} mode='aspectFit' />
+      </View>
+
       {/* 多成员共同养宠：情侣引导横幅（有宠物但家庭仅自己时提示邀请 TA，2026-08-24） */}
       {showCoCareTip && petInfo.hasPet && familyUsers.length <= 1 && (
         <View className='home-co-care-tip' onClick={() => Taro.navigateTo({ url: '/pages/family/index' })}>
-          <Text className='home-co-care-tip__icon'>👥</Text>
+          <Icon name='users' size={15} tone='primary' className='home-co-care-tip__icon' />
           <Text className='home-co-care-tip__text'>邀请 TA 一起养宠，共同记录毛孩子的每一天</Text>
           <Text className='home-co-care-tip__close' onClick={(e) => { e.stopPropagation(); setShowCoCareTip(false) }}>✕</Text>
         </View>
@@ -723,7 +656,7 @@ export default function Index() {
         {/* ===== 长对话软提示（多会话：满 30 轮建议新建，不强制） ===== */}
         {showLongChatTip && (
           <View className='chat-long-tip' onClick={handleNewSession}>
-            <Text className='chat-long-tip-icon'>💡</Text>
+            <Icon name='lightbulb' size={15} color='#a06a3f' className='chat-long-tip-icon' />
             <Text className='chat-long-tip-text'>当前对话已较长，新建对话 AI 会更记得住</Text>
             <Text className='chat-long-tip-action'>＋ 新建对话</Text>
           </View>
@@ -781,7 +714,7 @@ export default function Index() {
         <View className='home-checkin-cta' onClick={openCheckin} hoverClass='home-checkin-cta--hover'>
           <View className='home-checkin-cta-left'>
             <View className='home-checkin-cta-icon'>
-              <Text>🐾</Text>
+              <Icon name='paw-print' size={18} tone='primary' />
             </View>
             <View className='home-checkin-cta-texts'>
               <Text className='home-checkin-cta-title'>3秒健康打卡</Text>
@@ -789,20 +722,6 @@ export default function Index() {
             </View>
           </View>
           <Text className='home-checkin-cta-arrow'>→</Text>
-        </View>
-
-        {/* ===== 回忆录馆入口卡（2026-09-09 用户拍板：创作板块 IA，首页直达回忆录馆） ===== */}
-        <View className='home-memoir-card' onClick={() => Taro.navigateTo({ url: '/pagesMemoir/memoir-center/index' })}>
-          <View className='home-memoir-card__glow' />
-          <View className='home-memoir-card__icon'><Text>🎬</Text></View>
-          <View className='home-memoir-card__body'>
-            <View className='home-memoir-card__titlerow'>
-              <Text className='home-memoir-card__title'>回忆录馆</Text>
-              <View className='home-memoir-card__tag'><Text>NEW</Text></View>
-            </View>
-            <Text className='home-memoir-card__desc'>轻纪念 · 标准 · 完整，真实记忆讲成片</Text>
-          </View>
-          <Text className='home-memoir-card__arrow'>›</Text>
         </View>
 
         <View className='msg-row ai'>
@@ -817,7 +736,8 @@ export default function Index() {
               <View className='msg-quick-actions'>
                 {currentQuickActions.map(qa => (
                   <View key={qa.action} className='msg-quick-btn' onClick={() => handleQuickAction(qa.action)}>
-                    <Text>{qa.emoji} {qa.label}</Text>
+                    <Icon name={qa.icon} size={14} tone='primary' />
+                    <Text>{qa.label}</Text>
                   </View>
                 ))}
               </View>
@@ -831,7 +751,8 @@ export default function Index() {
               {msg.type === 'ai' ? (
                 <AiAvatar imgClass='msg-avatar-img' emojiClass='msg-avatar-emoji' />
               ) : (
-                <Text>😊</Text>
+                // 用户头像占位：原来用 😊 emoji，改用图标与 AI 头像（图片）保持体例一致
+                <Icon name='user' size={16} tone='primary' className='msg-avatar-emoji' />
               )}
             </View>
             <View className='msg-bubble-wrap'>
@@ -855,7 +776,8 @@ export default function Index() {
                 <View className='msg-quick-actions'>
                   {currentQuickActions.map(qa => (
                     <View key={qa.action} className='msg-quick-btn' onClick={() => handleQuickAction(qa.action)}>
-                      <Text>{qa.emoji} {qa.label}</Text>
+                      <Icon name={qa.icon} size={14} tone='primary' />
+                      <Text>{qa.label}</Text>
                     </View>
                   ))}
                 </View>
@@ -957,41 +879,44 @@ export default function Index() {
 
         <View className='chat-bottom-spacer' />
 
-        {/* ===== 快捷功能网格 2x2（设计稿对齐） ===== */}
+        {/* ===== 快捷功能网格 3×2（设计稿对齐） ===== */}
         <View className='home-shortcuts'>
           <Text className='home-shortcuts-title'>快捷功能</Text>
           <View className='home-shortcuts-grid'>
             <View className='home-shortcut' onClick={() => food.handleFoodQuery()} hoverClass='home-shortcut--hover'>
               <View className='home-shortcut-icon home-shortcut-icon--coral'>
-                <Text>🔍</Text>
+                {/* 食物碗：原先是放大镜，只表达“搜索”，看不出是查食物 */}
+                <Icon name='bowl-food' size={18} tone='primary' />
               </View>
               <Text className='home-shortcut-label'>食物查询</Text>
-              <Text className='home-shortcut-desc'>查一查毛孩子能不能吃</Text>
+              <Text className='home-shortcut-desc'>毛孩子能吃吗</Text>
             </View>
             <View className='home-shortcut' onClick={() => openSymptom()} hoverClass='home-shortcut--hover'>
               <View className='home-shortcut-icon home-shortcut-icon--gold'>
-                <Text>🩺</Text>
+                {/* tone='gold-deep' 与宫格底色 rgba(var(--gold-deep-rgb),·) 同源，切换主题一起变 */}
+                <Icon name='stethoscope' size={18} tone='gold-deep' />
               </View>
               <Text className='home-shortcut-label'>症状初筛</Text>
               <Text className='home-shortcut-desc'>不舒服先问问我</Text>
             </View>
             <View className='home-shortcut' onClick={() => Taro.navigateTo({ url: '/pagesPet/vaccine/index' })} hoverClass='home-shortcut--hover'>
               <View className='home-shortcut-icon home-shortcut-icon--sage'>
-                <Text>💉</Text>
+                <Icon name='syringe' size={18} tone='sage' />
               </View>
               <Text className='home-shortcut-label'>疫苗日历</Text>
               <Text className='home-shortcut-desc'>接种提醒不遗漏</Text>
             </View>
             <View className='home-shortcut' onClick={() => Taro.navigateTo({ url: '/pagesPet/trends/index' })} hoverClass='home-shortcut--hover'>
               <View className='home-shortcut-icon home-shortcut-icon--teal'>
-                <Text>📈</Text>
+                <Icon name='chart-line' size={18} tone='teal' />
               </View>
               <Text className='home-shortcut-label'>健康趋势</Text>
               <Text className='home-shortcut-desc'>看看成长变化</Text>
             </View>
             <View className='home-shortcut' onClick={() => Taro.navigateTo({ url: '/pagesPet/chronic-tracking/index' })} hoverClass='home-shortcut--hover'>
               <View className='home-shortcut-icon home-shortcut-icon--coral'>
-                <Text>🩺</Text>
+                {/* 心跳：原先是 stethoscope，与「症状初筛」撞了同一个图标 */}
+                <Icon name='heartbeat' size={18} tone='primary' />
                 {chronicRiskCount > 0 && (
                   <View className='home-shortcut-badge'>
                     <Text className='home-shortcut-badge-text'>{chronicRiskCount}</Text>
@@ -1003,7 +928,7 @@ export default function Index() {
             </View>
             <View className='home-shortcut' onClick={() => Taro.navigateTo({ url: '/pages/family/index' })} hoverClass='home-shortcut--hover'>
               <View className='home-shortcut-icon home-shortcut-icon--coral'>
-                <Text>👨‍👩‍👧‍👦</Text>
+                <Icon name='users' size={18} tone='primary' />
               </View>
               <Text className='home-shortcut-label'>宠物家庭</Text>
               <Text className='home-shortcut-desc'>一页看全家健康</Text>
@@ -1033,7 +958,7 @@ export default function Index() {
                     onClick={() => handlePlusMenuItem(idx)}
                   >
                     <View className='plus-panel-icon-wrap' style={{ background: item.bg }}>
-                      <Text className='plus-panel-icon'>{item.icon}</Text>
+                        <Icon name={item.icon} size={20} tone='primary' className='plus-panel-icon' />
                     </View>
                     <Text className='plus-panel-label'>{item.label}</Text>
                   </View>
@@ -1076,7 +1001,12 @@ export default function Index() {
               setPlusPanelOpen(false)
             }}
           >
-            <Text className='wx-toggle-icon'>{inputMode === 'text' ? '🎤' : '⌨️'}</Text>
+            <Icon
+              name={inputMode === 'text' ? 'microphone' : 'keyboard'}
+              size={16}
+              tone='primary'
+              className='wx-toggle-icon'
+            />
           </View>
 
           {/* 文字模式：输入框 */}
@@ -1201,7 +1131,7 @@ export default function Index() {
               {/* 整体运势 */}
               <View className='msg-naming-detail-section msg-naming-detail-section--fortune'>
                 <View className='msg-naming-detail-section-title'>
-                  <Text className='msg-naming-detail-icon'>⭐</Text>
+                  <Icon name='star' size={14} tone='primary' className='msg-naming-detail-icon' />
                   <Text>整体运势</Text>
                 </View>
                 <Text className='msg-naming-detail-text'>{naming.namingDetailPopup.fortune}</Text>
@@ -1210,7 +1140,7 @@ export default function Index() {
               {/* 事业/生活运势 */}
               <View className='msg-naming-detail-section'>
                 <View className='msg-naming-detail-section-title'>
-                  <Text className='msg-naming-detail-icon'>🌟</Text>
+                  <Icon name='star' size={14} tone='primary' className='msg-naming-detail-icon' />
                   <Text>事业/生活运势</Text>
                 </View>
                 <Text className='msg-naming-detail-text'>{naming.namingDetailPopup.careerFortune}</Text>
@@ -1219,7 +1149,7 @@ export default function Index() {
               {/* 感情/人际运势 */}
               <View className='msg-naming-detail-section'>
                 <View className='msg-naming-detail-section-title'>
-                  <Text className='msg-naming-detail-icon'>💕</Text>
+                  <Icon name='heart' size={14} tone='primary' className='msg-naming-detail-icon' />
                   <Text>感情/人际运势</Text>
                 </View>
                 <Text className='msg-naming-detail-text'>{naming.namingDetailPopup.loveFortune}</Text>
@@ -1228,7 +1158,7 @@ export default function Index() {
               {/* 健康运势 */}
               <View className='msg-naming-detail-section'>
                 <View className='msg-naming-detail-section-title'>
-                  <Text className='msg-naming-detail-icon'>🍀</Text>
+                  <Icon name='clover' size={14} tone='primary' className='msg-naming-detail-icon' />
                   <Text>健康运势</Text>
                 </View>
                 <Text className='msg-naming-detail-text'>{naming.namingDetailPopup.healthFortune}</Text>
@@ -1237,7 +1167,7 @@ export default function Index() {
               {/* 性格特质 */}
               <View className='msg-naming-detail-section'>
                 <View className='msg-naming-detail-section-title'>
-                  <Text className='msg-naming-detail-icon'>🎭</Text>
+                  <Icon name='mask-happy' size={14} tone='primary' className='msg-naming-detail-icon' />
                   <Text>性格特质</Text>
                 </View>
                 <Text className='msg-naming-detail-text'>{naming.namingDetailPopup.personality}</Text>
@@ -1255,7 +1185,7 @@ export default function Index() {
               {/* 吉祥三宝 */}
               <View className='msg-naming-detail-section'>
                 <View className='msg-naming-detail-section-title'>
-                  <Text className='msg-naming-detail-icon'>🔮</Text>
+                  <Icon name='sparkle' size={14} tone='primary' className='msg-naming-detail-icon' />
                   <Text>吉祥三宝</Text>
                 </View>
                 <View className='msg-naming-detail-lucky'>
@@ -1277,7 +1207,7 @@ export default function Index() {
               {/* 与主人缘分 */}
               <View className='msg-naming-detail-section'>
                 <View className='msg-naming-detail-section-title'>
-                  <Text className='msg-naming-detail-icon'>🤝</Text>
+                  <Icon name='handshake' size={14} tone='primary' className='msg-naming-detail-icon' />
                   <Text>与主人缘分</Text>
                 </View>
                 <Text className='msg-naming-detail-text'>{naming.namingDetailPopup.karmaWithOwner}</Text>
@@ -1291,6 +1221,23 @@ export default function Index() {
                 </View>
                 <Text className='msg-naming-detail-text msg-naming-detail-text--summary'>{naming.namingDetailPopup.summary}</Text>
               </View>
+
+              {/* 结果闭环：一键把名字写进宠物档案（2026-09-10）——此前用户看完名字还得
+                  自己去宠物编辑页重新敲一遍 */}
+              {petInfo.hasPet && (
+                <View
+                  className='naming-popup-apply'
+                  hoverClass='naming-popup-apply--hover'
+                  onClick={async () => {
+                    const target = naming.namingDetailPopup
+                    if (!target) return
+                    const ok = await naming.applyNamingName(target.name)
+                    if (ok) naming.closeNamingDetail()
+                  }}
+                >
+                  <Text className='naming-popup-apply-text'>就用这个名字 ✨</Text>
+                </View>
+              )}
                 </>
               )}
             </ScrollView>
@@ -1315,7 +1262,7 @@ export default function Index() {
             <ScrollView className='session-drawer-list' scrollY>
               {sessions.length === 0 ? (
                 <View className='session-drawer-empty'>
-                  <Text className='session-drawer-empty-icon'>💬</Text>
+                  <Icon name='chat-circle' size={32} color='#b6a594' className='session-drawer-empty-icon' />
                   <Text className='session-drawer-empty-text'>还没有对话，点上方「新建对话」开始吧</Text>
                 </View>
               ) : (

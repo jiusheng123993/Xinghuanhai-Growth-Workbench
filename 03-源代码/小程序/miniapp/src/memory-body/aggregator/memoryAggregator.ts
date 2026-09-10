@@ -9,6 +9,7 @@ import type {
   PetMilestone,
   MemoryFragment,
 } from '../types/memoryBodyTypes'
+import { formatPetAge } from '../../utils/date'
 
 interface PetBasicInfo {
   id: string
@@ -159,12 +160,14 @@ export class MemoryAggregator {
     return parts.join('，')
   }
 
+  /**
+   * 年龄文案 —— 统一走 utils/date 的 formatPetAge（2026-09-11 收敛）
+   *
+   * 这是全站第 11 处、也是最后一处各写各的年龄实现：原来"按月相减不减「日」"
+   * 且按 UTC 解析出生日期，不足一个月时还用 Math.ceil 算天数（会多算一天）。
+   * 这份文案会进 AI 记忆上下文，口径与页面不一致时模型也会跟着说错年龄。
+   */
   private calcAge(birthDate: string): string {
-    const birth = new Date(birthDate)
-    const now = new Date()
-    const months = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
-    if (months < 1) return `${Math.ceil((now.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24))}天`
-    if (months < 12) return `${months}个月`
-    return `${Math.floor(months / 12)}岁${months % 12}个月`
+    return formatPetAge(birthDate)
   }
 }

@@ -4,6 +4,7 @@
  */
 import { View, Text, Image } from '@tarojs/components';
 import type { PetProfile } from '../services/petService';
+import { formatPetAge } from '../utils/date';
 import './PetCard.scss';
 
 interface PetCardProps {
@@ -13,17 +14,17 @@ interface PetCardProps {
   onLongPress?: (pet: PetProfile) => void;
 }
 
-const calculateAge = (birthDate: string): string => {
-  const birth = new Date(birthDate);
-  const now = new Date();
-  const years = now.getFullYear() - birth.getFullYear();
-  const months = now.getMonth() - birth.getMonth();
-  if (years > 0) return `${years}岁${months > 0 ? months + '个月' : ''}`;
-  if (months > 0) return `${months}个月`;
-  const days = Math.floor((now.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24));
-  return `${days}天`;
-};
-
+/**
+ * 年龄文案已收敛到 utils/date 的 formatPetAge（2026-09-11）
+ *
+ * 这里原本有一份局部实现，缺陷有三个：
+ *  ① **跨年分支**只按月相减、不减「日」（`years > 0` 时直接拼 `${years}岁${months}个月`）：
+ *     生日 2025-09-20 的宠物在 2026-09-11 会显示「1岁」，而创作页/形象定制页显示「11个月」；
+ *     （不足岁那个分支其实减了日，所以本质是"两个分支口径不一致"，不只是"忘了减"。）
+ *  ② 不足一个月时用 `new Date('YYYY-MM-DD')`（按 UTC 解析，东八区=当天 08:00）算天数；
+ *  ③ 出生日期为空时 `new Date('')` → NaN，会渲染出「NaN天」，现在走兜底不显示。
+ * 全站 11 处各写各的实现现已统一，规则与"有意保留的异口径"清单见 formatPetAge 的注释。
+ */
 const getDefaultAvatar = (species: 'dog' | 'cat'): string => {
   return species === 'dog' ? '🐕' : '🐱';
 };
@@ -37,7 +38,7 @@ const PetCard: React.FC<PetCardProps> = ({ pet, isCurrent = false, onClick, onLo
     onLongPress?.(pet);
   };
 
-  const age = calculateAge(pet.birthDate);
+  const age = formatPetAge(pet.birthDate);
   const defaultAvatar = getDefaultAvatar(pet.species);
 
   return (

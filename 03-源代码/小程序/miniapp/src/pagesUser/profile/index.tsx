@@ -12,7 +12,7 @@ import { usePetStore } from '../../stores/petStore';
 import { generateHealthReport, formatReportAsText } from '../../services/reportService';
 import { APP_VERSION, HOTLINE_NUMBER } from '../../constants';
 import { useAnalytics, usePageView } from '../../hooks/useAnalytics';
-import { PageLoading, PageError } from '../../components';
+import { PageBackground, PageLoading, PageError, Icon  } from '../../components';
 import { useThemeClass } from '../../hooks/useThemeClass';
 import { isWeapp } from '../../platform';
 import { api } from '../../services/api';
@@ -221,6 +221,7 @@ export default function Profile() {
   if (isLoading) {
     return (
       <View className={'profile-page ' + themeClass}>
+        <PageBackground />
         <PageLoading />
       </View>
     )
@@ -245,7 +246,7 @@ export default function Profile() {
             <Image className='avatar' src={user.avatar} mode='aspectFill' lazyLoad />
           ) : (
             <View className='avatar-placeholder'>
-              <Text className='avatar-icon'>👤</Text>
+              <Icon name='user' size={32} tone='primary' className='avatar-icon' />
             </View>
           )}
           <View className='user-info'>
@@ -284,7 +285,7 @@ export default function Profile() {
                     <Image className='avatar-pick-img' src={user.avatar} mode='aspectFill' />
                   ) : (
                     <View className='avatar-pick-placeholder'>
-                      <Text className='avatar-pick-icon'>👤</Text>
+                      <Icon name='user' size={28} tone='primary' className='avatar-pick-icon' />
                     </View>
                   )}
                 </Button>
@@ -317,7 +318,14 @@ export default function Profile() {
         <View className='stats-grid'>
           <View className='stat-item'>
             <Text className='stat-value'>{stats.usageDays}</Text>
-            <Text className='stat-label'>使用天数</Text>
+            {/* 标签纠正（2026-09-11）：这个数字来自 `useUserStats.usageDays`，
+                算的是**当前宠物、首次打卡至今的时间跨度**（没有打卡记录时为 0），不是 App 使用天数。
+                ⚠️ 别当成与别处"同一口径"（审查指出上一版注释写错了）：
+                  · 这里 = 单个宠物「首次打卡 → 今天」的跨度（且只读全局 checkinStore，冷启动可能为 0）
+                  · 「我的」页「打卡天数」= Σ 各宠物**按天去重**后的天数
+                  · 年度回顾「记录天数」= 当年**按天去重**后的天数
+                三者可以是三个不同的数，同名不同量。 */}
+            <Text className='stat-label'>记录天数</Text>
           </View>
           <View className='stat-item'>
             <Text className='stat-value'>{stats.petCount}</Text>
@@ -336,17 +344,17 @@ export default function Profile() {
 
       <View className='menu-section ink-item' style={{ animationDelay: '0.3s' }}>
         <View className='menu-item' onClick={handleHealthReport}>
-          <Text className='menu-icon'>📋</Text>
+          <Icon name='clipboard-text' size={20} tone='primary' className='menu-icon' />
           <Text className='menu-text'>健康报告</Text>
           <Text className='menu-arrow'>›</Text>
         </View>
         <View className='menu-item' onClick={handleSubscribeClick}>
-          <Text className='menu-icon'>🔔</Text>
+          <Icon name='bell' size={20} tone='primary' className='menu-icon' />
           <Text className='menu-text'>消息提醒</Text>
           <Text className='menu-arrow'>›</Text>
         </View>
         <View className='menu-item' onClick={handleSettingsClick}>
-          <Text className='menu-icon'>⚙️</Text>
+          <Icon name='gear' size={20} tone='primary' className='menu-icon' />
           <Text className='menu-text'>设置</Text>
           <Text className='menu-arrow'>›</Text>
         </View>

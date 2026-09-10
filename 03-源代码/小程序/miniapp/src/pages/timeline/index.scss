@@ -9,175 +9,77 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: $gradient-page;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
   animation: pageEnter 0.4s ease-out;
 }
 
+// 【已删除】`.timeline-page > .pet-switcher` 那两条弹性规则
+// （flex-shrink: 0 / z-index: 10）随顶部宠物切换条一起移除 ——
+// 2026-09-11 共用回忆录改造后本页不再有 .pet-switcher，留着就是永不匹配的死样式。
+
 // ===== 固定顶部区域 =====
+// 原来装的是全宽页头（自带 40rpx 左右内边距），所以这里不设左右 padding；
+// 现在改由 <PageHero>（有 36rpx 圆角卡片）承担，必须补上左右内边距，否则卡片会顶到屏幕边。
 .timeline-fixed-top {
   flex-shrink: 0;
   background: $gradient-page;
-  padding-bottom: 16rpx;
+  padding: 16rpx 28rpx 0;
   z-index: 10;
+
+  // 卡片自带 margin-bottom，固定区里不需要（避免页头与滚动区之间空太多）
+  .page-hero {
+    margin-bottom: 12rpx;
+  }
 }
 
 // ===== 头部 =====
-.timeline-header {
+// 2026-09-11：原「{宠物名}的时光线 + 副标题 + 记录按钮」这一整套页头已删除，
+// 与滚动区里的 <PageHero> 合并为唯一页头（用户反馈「冲突了 融合一下」；
+// 且多宠物场景下标题不该挂具体宠物名）。原 .timeline-header / -title / -subtitle /
+// -add-btn 四组样式随之废弃，改由组件 PageHero 承担。
+
+// ===== 时光速览（原「回忆精选」位置，改为真实数据摘要） =====
+// 「回忆精选」三张卡已整体移除（回忆录类入口统一收口到「创作 → 回忆录馆」），
+// 这里换成对用户真正有信息量的数字，避免撤掉入口后顶部塌成一大段空白。
+.timeline-overview {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding: 56rpx 40rpx 16rpx;
+  align-items: center;
+  margin: 8rpx 32rpx 28rpx;
+  padding: 24rpx 8rpx;
+  border-radius: $radius-lg;
+  background: $color-bg-card;
+  box-shadow: $shadow-card, $glow-sm;
 }
 
-.timeline-header-left {
+.timeline-overview-item {
+  flex: 1;
   min-width: 0;
-}
-
-.timeline-title {
-  display: block;
-  font-size: 52rpx;
-  font-weight: 700;
-  line-height: 1.2;
-  color: $color-text-primary;
-}
-
-.timeline-subtitle {
-  display: block;
-  margin-top: 12rpx;
-  font-size: 26rpx;
-  color: $color-text-tertiary;
-}
-
-.timeline-add-round-btn {
-  width: 88rpx;
-  height: 88rpx;
-  border-radius: 50%;
-  flex-shrink: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, $color-primary-light, $color-primary);
-  box-shadow: $shadow-button;
-  transition: transform 0.15s ease;
-
-  &:active {
-    transform: scale(0.9);
-  }
-}
-
-.timeline-add-round-icon {
-  font-size: 48rpx;
-  color: $color-text-inverse;
-  font-weight: 400;
-  line-height: 1;
-}
-
-// ===== 回忆精选（横向滚动，原型对齐） =====
-.timeline-featured {
-  margin-top: 24rpx;
-}
-
-.timeline-featured-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 40rpx;
-  margin-bottom: 24rpx;
-}
-
-.timeline-featured-title {
-  font-size: 36rpx;
-  font-weight: 700;
-  color: $color-text-primary;
-}
-
-.timeline-featured-hint {
-  font-size: 24rpx;
-  color: $color-text-tertiary;
-}
-
-.timeline-featured-scroll {
-  white-space: nowrap;
-  padding: 0 40rpx;
-}
-
-.timeline-featured-card {
-  display: inline-flex;
   flex-direction: column;
-  position: relative;
-  overflow: hidden;
-  width: 512rpx;
-  height: 320rpx;
-  border-radius: 48rpx;
-  padding: 40rpx;
-  margin-right: 24rpx;
-  transition: transform 0.2s ease;
-
-  &:active {
-    transform: scale(0.98);
-  }
-
-  &--coral {
-    background: linear-gradient(135deg, $color-primary-light, $color-primary);
-    box-shadow: $shadow-sm;
-  }
-
-  &--gold {
-    background: linear-gradient(135deg, $color-gold-soft, $color-gold);
-    box-shadow: $shadow-sm;
-  }
-
-  &--sage {
-    background: linear-gradient(135deg, #8AD390, #54B460);
-    box-shadow: $shadow-sm;
-  }
-}
-
-.timeline-featured-card-glow {
-  position: absolute;
-  right: -56rpx;
-  top: -72rpx;
-  width: 224rpx;
-  height: 224rpx;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
-  pointer-events: none;
-}
-
-.timeline-featured-card-icon {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
-  display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 6rpx;
+}
+
+.timeline-overview-value {
   font-size: 40rpx;
-}
-
-.timeline-featured-card-text {
-  margin-top: auto;
-}
-
-.timeline-featured-card-title {
-  display: block;
-  font-size: 36rpx;
   font-weight: 700;
-  color: #FFFFFF;
-  line-height: 1.3;
+  color: $color-text-primary;
+  line-height: 1.1;
 }
 
-.timeline-featured-card-desc {
-  display: block;
-  margin-top: 8rpx;
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.85);
+.timeline-overview-label {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
 }
 
-// ===== 加载中状态（回忆精选卡片复用） =====
-.timeline-func-card--loading {
-  opacity: 0.7;
-  pointer-events: none;
+// 【已删除】`.timeline-overview-sub`：它是"相伴天数"那一格的副行样式，
+// 该格已按用户要求整格撤掉（换成「毛孩子 N 只」纯计数），副行随之不再渲染 → 死 CSS。
+
+.timeline-overview-divider {
+  width: 1rpx;
+  height: 56rpx;
+  background: $color-border;
 }
 
 // ===== 添加时光记录主按钮（原型对齐：全宽圆角渐变） =====
@@ -242,7 +144,7 @@
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(ellipse at center, rgba($color-primary, 0.08), transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(var(--primary-rgb, 255, 107, 61), 0.08), transparent 70%);
   pointer-events: none;
 }
 
@@ -336,22 +238,22 @@
 
   &--milestone {
     background: $gradient-gold;
-    box-shadow: 0 0 20rpx rgba($color-primary, 0.5);
+    box-shadow: 0 0 20rpx rgba(var(--primary-rgb, 255, 107, 61), 0.5);
     animation: rootGlow 2.5s ease-in-out infinite;
   }
 
   &--memory {
     background: linear-gradient(135deg, $color-coral, $color-primary-dark);
-    box-shadow: 0 0 14rpx rgba($color-coral, 0.4);
+    box-shadow: 0 0 14rpx rgba(var(--coral-rgb, 255, 107, 61), 0.4);
   }
 
   &--flashback {
     background: linear-gradient(135deg, $color-teal, $color-primary-dark);
-    box-shadow: 0 0 14rpx rgba($color-teal, 0.4);
+    box-shadow: 0 0 14rpx rgba(var(--teal-rgb, 79, 163, 227), 0.4);
   }
 
   &--ghost {
-    background: rgba($color-text-hint, 0.4);
+    background: rgba(var(--text-hint-rgb, 150, 122, 98), 0.4);
     box-shadow: none;
   }
 }
@@ -365,7 +267,7 @@
   width: 3rpx;
   flex: 1;
   min-height: 40rpx;
-  background: linear-gradient(180deg, $color-primary 0%, rgba($color-primary, 0.1) 100%);
+  background: linear-gradient(180deg, $color-primary 0%, rgba(var(--primary-rgb, 255, 107, 61), 0.1) 100%);
   opacity: 0.5;
 }
 
@@ -387,12 +289,12 @@
   &--ghost {
     opacity: 0.55;
     border-style: dashed;
-    border-color: rgba($color-text-hint, 0.3);
+    border-color: rgba(var(--text-hint-rgb, 150, 122, 98), 0.3);
   }
 
   &--flashback {
-    border-color: rgba($color-teal, 0.4);
-    background: linear-gradient(135deg, rgba($color-teal, 0.08), $color-bg-card);
+    border-color: rgba(var(--teal-rgb, 79, 163, 227), 0.4);
+    background: linear-gradient(135deg, rgba(var(--teal-rgb, 79, 163, 227), 0.08), $color-bg-card);
   }
 }
 
@@ -408,6 +310,8 @@
   display: flex;
   align-items: center;
   gap: 12rpx;
+  /* 多宠共同回忆会在这一行出现多枚宠物标签 → 允许换行，别把日期/徽章挤出去 */
+  flex-wrap: wrap;
   margin-bottom: 12rpx;
 }
 
@@ -432,8 +336,8 @@
 .timeline-flashback-badge {
   padding: 4rpx 14rpx;
   border-radius: 20rpx;
-  background: rgba($color-teal, 0.14);
-  border: 1px solid rgba($color-teal, 0.35);
+  background: rgba(var(--teal-rgb, 79, 163, 227), 0.14);
+  border: 1px solid rgba(var(--teal-rgb, 79, 163, 227), 0.35);
 }
 
 .timeline-flashback-badge-text {
@@ -446,8 +350,8 @@
 .timeline-memory-badge {
   padding: 4rpx 14rpx;
   border-radius: 20rpx;
-  background: rgba($color-success, 0.14);
-  border: 1px solid rgba($color-success, 0.35);
+  background: rgba(var(--success-rgb, 47, 201, 142), 0.14);
+  border: 1px solid rgba(var(--success-rgb, 47, 201, 142), 0.35);
 }
 
 .timeline-memory-badge-text {
@@ -459,8 +363,8 @@
 .timeline-ghost-badge {
   padding: 4rpx 14rpx;
   border-radius: 20rpx;
-  background: rgba($color-text-hint, 0.15);
-  border: 1px solid rgba($color-text-hint, 0.3);
+  background: rgba(var(--text-hint-rgb, 150, 122, 98), 0.15);
+  border: 1px solid rgba(var(--text-hint-rgb, 150, 122, 98), 0.3);
 }
 
 .timeline-ghost-badge-text {
@@ -499,34 +403,20 @@
   border: 1rpx solid $color-border-light;
 }
 
+// 无照片时的纯提示
+// （原为「+ 添加照片」的虚线按钮样式，但整张卡片点击只打开详情、
+//   并不支持给这条记录补照片 —— 那是个点不出预期结果的假按钮，故去掉按钮感）
 .timeline-photo-empty {
-  margin-top: 4rpx;
-}
-
-.timeline-photo-dashed {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 8rpx;
-  height: 120rpx;
+  margin-top: 12rpx;
+  padding: 16rpx 20rpx;
   border-radius: 12rpx;
   background: $color-bg-secondary;
-  border: 1rpx solid $color-border-light;
-  transition: all 0.2s ease;
-  @include press-feedback;
-
-  &:active {
-    border-color: $color-primary;
-    background: $color-primary-bg;
-  }
 }
 
-.timeline-photo-add-icon {
-  font-size: 32rpx;
-  color: $color-text-tertiary;
-}
-
-.timeline-photo-add-text {
+.timeline-photo-empty-text {
   font-size: 22rpx;
   color: $color-text-tertiary;
 }
@@ -548,18 +438,6 @@
   align-items: center;
   justify-content: center;
   animation: fadeIn 0.25s ease-out;
-}
-
-.timeline-review-modal {
-  width: 92%;
-  max-width: 680rpx;
-  max-height: 90vh;
-  border-radius: $radius-xl;
-  background: $color-bg-card;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  animation: modalSlideUp 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .timeline-review-header {
@@ -588,21 +466,6 @@
   &:active {
     background: $color-primary-bg;
   }
-}
-
-.timeline-review-image-wrap {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16rpx;
-}
-
-.timeline-review-image {
-  width: 100%;
-  padding-top: 177.8%;
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-  border-radius: $radius-md;
 }
 
 .timeline-review-actions {
@@ -641,11 +504,6 @@
   }
 }
 
-.timeline-review-canvas {
-  pointer-events: none;
-  opacity: 0;
-}
-
 @keyframes modalSlideUp {
   from {
     opacity: 0;
@@ -674,9 +532,8 @@
   box-sizing: border-box;
 }
 
-.timeline-add-memory-photo-icon {
-  font-size: 36rpx;
-}
+// 【已删除】`.timeline-add-memory-photo-icon { font-size: 36rpx }`：
+// 该处早已改成 <Icon> 组件（渲染为 <Image>，尺寸由 size 属性决定），font-size 不再生效。
 
 .timeline-add-memory-photo-label {
   font-size: 26rpx;
@@ -721,6 +578,23 @@
   animation: modalSlideUp 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
+// ===== 卡片上的「宠物标签」（2026-09-11 共用回忆录改造新增）=====
+// 本页从"按宠物分开"改成"所有宠物共用一条时间线"后，卡片必须能看出"这是谁的回忆"。
+// 视觉上刻意比「里程碑 / 回忆 / 旧时光」三种状态徽章更轻（浅底 + 细边 + 次级文字色），
+// 因为它是"归属说明"而不是"状态强调"，不该跟状态徽章抢注意力。
+.timeline-pet-tag {
+  padding: 4rpx 14rpx;
+  border-radius: 20rpx;
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
+  border: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.22);
+}
+
+.timeline-pet-tag-text {
+  font-size: 20rpx;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+}
+
 // 回忆日期选择行
 .timeline-add-memory-date-row {
   display: flex;
@@ -731,6 +605,75 @@
   border-radius: $radius-md;
   background: $color-bg-secondary;
   border: 1rpx solid $color-border-light;
+}
+
+// ===== 归属宠物选择行（新增回忆弹窗，2026-09-11 共用回忆录改造新增）=====
+// 复用「回忆日期」那一行的纸面卡片样式，保持弹窗内两行视觉成对
+.timeline-add-memory-pet-row {
+  margin-bottom: 16rpx;
+  padding: 16rpx 20rpx;
+  border-radius: $radius-md;
+  background: $color-bg-secondary;
+  border: 1rpx solid $color-border-light;
+}
+
+// 标题行：左边「🐾 记给谁」，右边「可多选」提示（否则用户不知道能选两只）
+.timeline-add-memory-pet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.timeline-add-memory-pet-hint {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+}
+
+// 横滑容器：宠物多时（>4 只）也不换行挤爆弹窗
+.timeline-add-memory-pet-scroll {
+  width: 100%;
+  white-space: nowrap;
+  margin-top: 12rpx;
+}
+
+.timeline-add-memory-pet-list {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12rpx;
+}
+
+// 宠物胶囊：未选＝虚线描边，选中＝主色淡底 + 实线（与全站"贴纸筛选"同一套语言）
+.timeline-pet-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 20rpx;
+  border-radius: $radius-round;
+  background: $color-bg-card;
+  border: 3rpx dashed $color-border;
+  flex-shrink: 0;
+}
+
+.timeline-pet-chip--active {
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+  border-style: solid;
+  border-color: $color-primary;
+}
+
+.timeline-pet-chip-emoji {
+  font-size: 24rpx;
+  line-height: 1;
+}
+
+.timeline-pet-chip-text {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+}
+
+.timeline-pet-chip--active .timeline-pet-chip-text {
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
 }
 
 .timeline-add-memory-date-label {
@@ -764,13 +707,13 @@
   padding: 16rpx 0;
   border-radius: $radius-full;
   text-align: center;
-  background: linear-gradient(135deg, rgba($color-primary, 0.12), rgba($color-coral, 0.12));
-  border: 1rpx solid rgba($color-primary, 0.35);
+  background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.12), rgba(var(--coral-rgb, 255, 107, 61), 0.12));
+  border: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.35);
   transition: all 0.2s ease;
   @include press-feedback;
 
   &:active {
-    background: linear-gradient(135deg, rgba($color-primary, 0.22), rgba($color-coral, 0.22));
+    background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.22), rgba(var(--coral-rgb, 255, 107, 61), 0.22));
   }
 
   &--disabled {
@@ -892,31 +835,38 @@
 }
 
 // ===== 空状态 =====
-.timeline-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 120rpx 60rpx;
-  text-align: center;
+// 空态已改由公共 <EmptyState> 组件渲染（含品牌插画），此处样式随之废弃
 
-  &__icon {
-    font-size: 80rpx;
-    margin-bottom: 24rpx;
+// ===== 星空银河（唯一的深色主题）页面级兜底 =====
+//
+// 【问题】`.theme-starry` 把 `--text-*` 整体转成白色，而 `--bg-card` 仍是 `#FFFFFF`
+//   —— 于是"白卡 + 主题文字色"的组合变成白底白字。本页受影响的浅色纸面有四处：
+//   · 速览卡 `.timeline-overview`（白底 + 主文字色的三个数字）
+//   · 时间线卡片 `.timeline-card`（白底，含新增的宠物标签 `.timeline-pet-tag-text`）
+//   · 两个弹窗 `.timeline-add-memory-modal` / `.timeline-detail-modal`（白纸，含新增的宠物胶囊）
+//   · 固定页头里的 `<PageHero>`（自带硬编码浅奶油底，标题却吃主题文字色）
+//   实测（2026-09-11 审查 P1-2）：星空主题下速览数字与宠物标签直接看不见。
+// 【这是既有全站缺陷】不是本页引入：全局修复要动 100+ 个页面、需整体回归，属另案。
+// 【做法】沿用宠物档案页/打卡页/我的页已用的**页面级兜底**：在"浅底纸面"作用域内把
+//   卡内 token 钉回浅色取值（底色是浅的，因此必须配深色文字）。只影响本页。
+.timeline-page.theme-starry {
+  .timeline-overview,
+  .timeline-card,
+  .timeline-add-memory-modal,
+  .timeline-detail-modal,
+  .timeline-fixed-top .page-hero {
+    --text-primary: #40281C;
+    --text-secondary: #8B6E58;
+    --text-tertiary: #B69B83;
+    --bg-secondary: #FFFDF9;
+    --border: #F3E2D2;
+    --border-light: rgba(243, 226, 210, 0.5);
   }
 
-  &__title {
-    display: block;
-    font-size: 32rpx;
-    font-weight: 600;
-    color: $color-text-primary;
-    margin-bottom: 16rpx;
-  }
-
-  &__desc {
-    display: block;
-    font-size: 26rpx;
-    color: $color-text-secondary;
-    line-height: 1.6;
+  // 弹窗纸面用的是 --bg-secondary（星空主题下是深蓝）→ 底也一并钉回纸白，
+  // 否则会变成"深蓝底 + 深棕字"（比白底白字更难读）
+  .timeline-add-memory-modal,
+  .timeline-detail-modal {
+    background: #FFFDF9;
   }
 }

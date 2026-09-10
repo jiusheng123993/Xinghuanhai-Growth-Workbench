@@ -186,19 +186,32 @@ export const usePetStore = create<PetState>((set, get) => ({
 
   /**
    * 切换当前宠物
-   * @param id - 宠物 ID
+   *
+   * 2026-09-11 审查（P2-3 / P2-4）修掉两个边界：
+   *  · **乐观切换失败要回滚**：原来先 `set({currentPet})` 再持久化，失败时不还原 →
+   *    界面上已经切成新宠物、页面数据也按新宠物重拉了，而调用方弹的却是「切换失败」，前后矛盾。
+   *  · **id 不在列表里要报错**：原来 `if (pet)` 为假时静默 resolve，调用方的 catch 根本接不到，
+   *    用户点了没反应（典型场景：列表过期、宠物已被删）。
+   *
+   * @param id - 目标宠物 ID
+   * @throws 未登录 / 宠物不存在 / 持久化失败（同时写入 store.error）
    */
   switchPet: async (id) => {
-    const { userId } = get()
+    const { userId, currentPet: prevPet } = get()
     if (!userId) throw new Error('用户未登录')
     try {
       const pet = get().pets.find(p => p.id === id)
-      if (pet) {
-        set({ currentPet: pet })
-        await setCurrentPet(userId, id)
+      if (!pet) {
+        const notFound = new Error('宠物不存在或已删除')
+        set({ error: notFound.message })
+        throw notFound
       }
+      set({ currentPet: pet })
+      await setCurrentPet(userId, id)
     } catch (err) {
       set({
+        // 回滚到切换前的宠物：失败时界面必须与"切换失败"的提示保持一致
+        currentPet: prevPet,
         error: err instanceof Error ? err.message : '切换宠物失败',
       })
       throw err

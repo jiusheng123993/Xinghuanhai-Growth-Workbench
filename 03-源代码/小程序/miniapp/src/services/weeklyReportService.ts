@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 周报服务
  *
  * 生成宠物健康周报，汇总一周健康数据
@@ -386,7 +386,7 @@ function highlightsFromReportData(rd: ReportData): string[] {
 /** 由聚合数据生成需关注事项文案 */
 function concernsFromReportData(rd: ReportData): string[] {
   const out: string[] = []
-  if (rd.health.anomaly_count > 0) out.push(`本周有 ${rd.health.anomaly_count} 天异常记录，请留意毛孩子状态`)
+  if (rd.health.anomaly_count > 0) out.push(`本周有 ${rd.health.anomaly_count} 次异常记录，请留意毛孩子状态`)
   if (rd.health.checkin_count === 0) out.push('本周没有健康打卡，建议恢复每日记录')
   return out
 }

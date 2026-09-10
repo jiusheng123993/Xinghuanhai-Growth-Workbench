@@ -15,6 +15,7 @@ import { useThemeClass } from '../../hooks/useThemeClass'
 import { useAvatar2DTask } from '../../hooks/useAvatar2DTask'
 import { useAvatar3DTask } from '../../hooks/useAvatar3DTask'
 import { safeNavigateBack } from '../../utils/navigation'
+import { formatPetAge } from '../../utils/date'
 import PetAvatar from '../../components/PetAvatar'
 import PhotoUploader from '../../components/PetAvatar/PhotoUploader'
 import ImageGallery from '../../components/PetAvatar/ImageGallery'
@@ -52,6 +53,7 @@ import { usePetStore } from '../../stores/petStore'
 import { useMembership } from '../../hooks/useMembership'
 import { useAnalytics } from '../../hooks/useAnalytics'
 import './index.scss'
+import { PageBackground, Icon  } from '../../components'
 
 // 生成画风（单选，key 与服务端 AVATAR_STYLE_OPTIONS 对齐，15 种）
 // 来源：现有 5 种 + 项目提示词库《宠物回忆录-提示词库.md》§6/§7.1 通用视觉风格库
@@ -98,18 +100,11 @@ const GEN_STYLE_LABELS: Record<string, string> = {
 /** 表情 key → 中文名（形象库分类用） */
 const GEN_EXPR_LABELS: Record<string, string> = Object.fromEntries(GEN_EXPRESSIONS.map(e => [e.key, e.label]))
 
-/** 计算年龄（岁/月） */
-function calcAge(birthDate?: string): string {
-  if (!birthDate) return '年龄未知'
-  const birth = new Date(birthDate.replace(/-/g, '/'))
-  if (Number.isNaN(birth.getTime())) return '年龄未知'
-  const now = new Date()
-  let months = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
-  if (now.getDate() < birth.getDate()) months -= 1
-  if (months < 0) months = 0
-  if (months < 12) return `${months}个月`
-  return `${Math.floor(months / 12)}岁${months % 12 ? `${months % 12}个月` : ''}`
-}
+/**
+ * 年龄文案已收敛到 utils/date 的 formatPetAge（2026-09-11）
+ * 本页原来的实现是少数"正确规避了 UTC 解析"的（用了 replace(/-/g,'/')），
+ * 但格式与别页不统一（`1岁2个月` vs 别处的 `1岁2月`）。统一后规则见 formatPetAge 注释。
+ */
 
 export default function AvatarCustomizePage() {
   const themeClass = useThemeClass()
@@ -194,7 +189,7 @@ export default function AvatarCustomizePage() {
   const petDesc = useMemo(() => {
     const speciesLabel = species === 'cat' ? '猫咪' : '狗狗'
     const breed = currentPet?.breed || speciesLabel
-    const age = calcAge(currentPet?.birthDate)
+    const age = formatPetAge(currentPet?.birthDate, { fallback: '年龄未知' })
     const status = currentPet?.isDeceased ? '永远的宝贝' : '元气满满'
     return `${breed} · ${age} · ${status}`
   }, [species, currentPet])
@@ -664,6 +659,7 @@ export default function AvatarCustomizePage() {
 
   return (
     <View className={`avatar-customize ${themeClass}`}>
+      <PageBackground />
       {/* 1. 当前形象展示卡（移除冗余的预览画风/表情切换，直接展示当前形象） */}
       <View className='xhh-card avatar-stage'>
         <View className='avatar-stage__head'>
@@ -1073,7 +1069,7 @@ export default function AvatarCustomizePage() {
                         )}
                       </View>
                       {/* 设定图小角标：有全方位图的套显示 📋，提示这套信息更全 */}
-                      {option.sheetUrl && <Text className='avatar-options__sheet-badge'>📋</Text>}
+                      {option.sheetUrl && <Icon name='clipboard-text' size={12} tone='primary' className='avatar-options__sheet-badge' />}
                       <Text className='avatar-options__label'>{option.label}</Text>
                     </View>
                   ))}

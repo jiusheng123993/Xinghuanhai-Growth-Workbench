@@ -1,7 +1,13 @@
-/**
+﻿/**
  * 打卡状态管理 - 单元测试
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+
+import { useCheckinStore } from '../checkinStore'
+import type { Checkin } from '../../types'
+// 日期 fixture 必须用「本地日历日」（与实现同口径）：原来用 toISOString() 取的是 UTC 日期，
+// 东八区 08:00 之前会与本地「今天」差一天，用例就成了在复述旧 bug（2026-09-11 修复）
+import { localDateString } from '../../utils/date'
 
 const { mockApi } = vi.hoisted(() => {
   return {
@@ -16,15 +22,12 @@ vi.mock('../../services/api', () => ({
   api: mockApi,
 }))
 
-import { useCheckinStore } from '../checkinStore'
-import type { Checkin } from '../../types'
-
 function makeCheckin(overrides: Partial<Checkin> = {}): Checkin {
   return {
     id: 'checkin_001',
     petId: 'pet_001',
     userId: 'user_001',
-    date: new Date().toISOString().split('T')[0],
+    date: localDateString(new Date())!,
     mood: 'happy',
     appetite: 'good',
     stool: 'normal',
@@ -90,7 +93,7 @@ describe('checkinStore', () => {
     })
 
     it('should set todayCheckin when today has a checkin', async () => {
-      const today = new Date().toISOString().split('T')[0]
+      const today = localDateString(new Date())!
       const mockCheckins = [makeCheckin({ date: today })]
       mockApi.getCheckins.mockResolvedValue(mockCheckins)
 

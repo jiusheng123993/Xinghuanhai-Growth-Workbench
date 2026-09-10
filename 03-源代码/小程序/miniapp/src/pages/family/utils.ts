@@ -1,6 +1,7 @@
 /** 家庭页面工具函数和类型定义 */
 import type { PetProfile } from '../../services/petService'
 import type { PetMoment } from '../../types/familyTypes'
+import { formatPetAge } from '../../utils/date'
 
 export interface WeeklyReportWithPet {
   petName: string
@@ -33,18 +34,15 @@ export const ROLE_CONFIG: { role: string; icon: string; check: (index: number, s
   { role: '乖宝宝', icon: '🌟', check: () => true },
 ]
 
+/**
+ * 年龄文案 —— 统一走 utils/date 的 formatPetAge（2026-09-11 收敛）
+ *
+ * 原实现按月相减但**不减「日」**（生日 20 号、今天 5 号会多算一个月），
+ * 且用 `new Date('YYYY-MM-DD')`（UTC 解析）。这里保留函数名与「未知」兜底，
+ * 供 FamilyPetList 等处继续按 calcAge 引用。
+ */
 export function calcAge(birthDate: string): string {
-  if (!birthDate) return '未知'
-  const birth = new Date(birthDate)
-  const now = new Date()
-  const years = now.getFullYear() - birth.getFullYear()
-  const months = now.getMonth() - birth.getMonth()
-  const totalMonths = years * 12 + months
-  if (totalMonths < 12) return `${totalMonths}月`
-  const ageYears = Math.floor(totalMonths / 12)
-  const remainingMonths = totalMonths % 12
-  if (remainingMonths === 0) return `${ageYears}岁`
-  return `${ageYears}岁${remainingMonths}月`
+  return formatPetAge(birthDate, { fallback: '未知' })
 }
 
 export function getScoreLevel(score: number): string {

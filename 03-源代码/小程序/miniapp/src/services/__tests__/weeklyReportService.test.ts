@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 周报服务测试
  */
 import { describe, it, expect } from 'vitest'
@@ -362,7 +362,7 @@ describe('weeklyReportService', () => {
       expect(view.highlights).toContain('本周健康打卡 7 次')
       expect(view.highlights).toContain('最佳打卡日 2026-08-05')
       expect(view.highlights).toContain('新增 1 条家庭动态')
-      expect(view.concerns).toContain('本周有 1 天异常记录，请留意毛孩子状态')
+      expect(view.concerns).toContain('本周有 1 次异常记录，请留意毛孩子状态')
       expect(view.overallMood).toBe('fair')
       expect(view.petReports).toEqual([]) // 后端暂无 per-pet 明细
       expect(view.reportData.health.checkin_count).toBe(7)

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 症状查询服务
  *
  * 宠物症状分类浏览、搜索与 AI 辅助分析
@@ -14,12 +14,17 @@ import { BREED_LIGHT } from '../data/petKnowledge/breedsLight'
 // 医学知识图谱：规则/疾病数据已外置，风险等级评估与置信度推导统一走图谱（见 设计方案-2026-08-22）
 import { evaluateRiskLevel, enrichResultWithConfidence, getPossibleConditions } from '../data/petKnowledge/medicalGraph'
 import type { Confidence, AnalysisConclusion } from '../data/petKnowledge/medicalGraph'
+import { localDateString } from '../utils/date'
 
+/**
+ * 记录所属的「本地日历日」（YYYY-MM-DD）
+ *
+ * 2026-09-11 全站口径收口：原实现用 toISOString().slice(0,10) / slice(0,10) 取的是 **UTC 日期** ——
+ * 东八区 00:00-08:00 的记录会被算成前一天，于是「打卡天数 / 连续天数 / 去重天数」
+ * 在早上齐齐差一天，并与已改用本地日的 checkinService、reportService 口径不一致。
+ */
 function entryDateStr(entry: PetHealthEntry): string {
-  if (entry.createdAt instanceof Date) {
-    return entry.createdAt.toISOString().slice(0, 10)
-  }
-  return String(entry.createdAt).slice(0, 10)
+  return localDateString(entry.createdAt) ?? ''
 }
 
 export interface HistoricalMemoryInsight {

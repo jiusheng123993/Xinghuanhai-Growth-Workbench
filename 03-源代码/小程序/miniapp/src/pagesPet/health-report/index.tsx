@@ -7,6 +7,7 @@ import { View, Text, Image } from '@tarojs/components'
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import Taro from '@tarojs/taro'
 import { useThemeClass } from '../../hooks/useThemeClass'
+import { formatPetAge } from '../../utils/date'
 import { useAuthStore } from '../../stores/authStore'
 import { usePetStore } from '../../stores/petStore'
 import {
@@ -18,6 +19,7 @@ import type { HealthReportData } from '../../types/reportTypes'
 import MemberGate from '../../components/MemberGate'
 import { useMemberGate } from '../../hooks/useMemberGate'
 import './index.scss'
+import { PageBackground, Icon  } from '../../components'
 
 /** 食欲值 → 5 级 */
 function appetiteLevel(v: string): number {
@@ -40,18 +42,10 @@ function shortDate(dateStr: string): string {
   return `${m}/${d}`
 }
 
-/** 计算年龄 */
-function calcAge(birthDate?: string): string {
-  if (!birthDate) return '年龄未知'
-  const birth = new Date(birthDate.replace(/-/g, '/'))
-  if (Number.isNaN(birth.getTime())) return '年龄未知'
-  const now = new Date()
-  let months = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
-  if (now.getDate() < birth.getDate()) months -= 1
-  if (months < 0) months = 0
-  if (months < 12) return `${months}个月`
-  return `${Math.floor(months / 12)}岁`
-}
+/**
+ * 年龄文案已收敛到 utils/date 的 formatPetAge（2026-09-11）
+ * 本页原实现只精确到「岁」（1岁3个月会显示成「1岁」），且格式与别页不统一。
+ */
 
 export default function HealthReportPage() {
   const themeClass = useThemeClass()
@@ -165,7 +159,7 @@ export default function HealthReportPage() {
   const petMeta = useMemo(() => {
     if (!report) return ''
     const { breed, birthDate, weight } = report.pet
-    const age = calcAge(birthDate)
+    const age = formatPetAge(birthDate, { fallback: '年龄未知' })
     return `${breed || '未知品种'} · ${age} · ${weight ? `${weight}kg` : '体重未知'}`
   }, [report])
 
@@ -178,6 +172,7 @@ export default function HealthReportPage() {
 
   return (
     <View className={`health-report ${themeClass}`}>
+      <PageBackground />
       {/* 1. 报告头部 */}
       <View className='xhh-card hr-card'>
         <View className='hr-card__head'>
@@ -198,7 +193,7 @@ export default function HealthReportPage() {
         </View>
         <View className='hr-card__rows'>
           <View className='hr-card__row'>
-            <Text className='hr-card__row-icon'>📅</Text>
+            <Icon name='calendar-check' size={16} tone='muted' className='hr-card__row-icon' />
             <Text className='hr-card__row-text'>
               报告周期 <Text className='hr-card__row-bold'>{report?.period || '--'}</Text>
             </Text>

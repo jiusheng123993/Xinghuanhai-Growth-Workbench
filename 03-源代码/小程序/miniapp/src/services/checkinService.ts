@@ -7,6 +7,7 @@ import { api } from './api';
 import { getStorage, setStorage } from '../utils/storage';
 import { queueSync } from './syncHelper';
 import { requirePetOwnership } from '../utils/petOwnership';
+import { localDateString, parseLocalDate } from '../utils/date';
 import type { PetHealthEntry, HealthRiskLevel, AnomalyItem } from '../memory-body/types/memoryBodyTypes';
 import { HealthIndexAdapter } from '../memory-body/adapters/healthIndexAdapter';
 
@@ -14,7 +15,15 @@ export type { PetHealthEntry, HealthRiskLevel } from '../memory-body/types/memor
 
 /** 健康打卡统计 */
 export interface HealthCheckinStats {
+  /** 打卡**条数**（同一天补记多次会算多条）——「打卡 N 次」这类按次计数的场景用它 */
   totalCheckins: number;
+  /**
+   * 打卡**天数**（按日期去重）—— 2026-09-11 新增。
+   * 「我的」页原来把 `totalCheckins`（条数）跨宠物累加后标成「打卡天数」，
+   * 3 只宠物各打 100 天会显示「300 打卡天数」（多宠放大）。
+   * 这里直接复用本函数已经算好的去重日期数组，零额外成本。
+   */
+  totalDays: number;
   streak: number;
   lastCheckinDate: string | null;
   weeklyCount: number;
@@ -133,11 +142,17 @@ function generateAiFeedback(entry: CheckinInput, riskLevel: HealthRiskLevel): st
   }
 }
 
+/**
+ * 打卡记录所属的「本地日历日」（YYYY-MM-DD）
+ *
+ * 2026-09-11 修复：原实现用 `toISOString().slice(0, 10)` / `String(...).slice(0, 10)`，
+ * 取到的是 **UTC 日期** —— 东八区 20:00 之后打的卡会被算成"前一天"，于是
+ * 「打卡天数（totalDays）/ 连续打卡（streak）/ 本周打卡（weeklyCount）」在晚上齐齐差一天。
+ * 统一走 utils/date 的本地日历日实现（与 reportService 的按天去重是同一个口径）。
+ */
 function entryDateStr(entry: PetHealthEntry): string {
-  if (entry.createdAt instanceof Date) {
-    return entry.createdAt.toISOString().slice(0, 10);
-  }
-  return String(entry.createdAt).slice(0, 10);
+  // 解析不出来时退回空串：调用方（去重/比较）会把它们当成同一类无效值，不会凭空多算一天
+  return localDateString(entry.createdAt) ?? '';
 }
 
 /**
@@ -291,7 +306,10 @@ export async function getTodayCheckin(petId: string, userId: string): Promise<Pe
     console.warn('getTodayCheckin: petId is required');
     return null;
   }
-  const today = new Date().toISOString().slice(0, 10);
+  // 查询"今天的打卡"必须用**本地日历日**（2026-09-11 修复）：
+  // 原 `toISOString().slice(0,10)` 是 UTC 日期，东八区 08:00 之前会查成昨天 →
+  // 用户凌晨打卡后返回首页，会看到「今天还没打卡」。
+  const today = localDateString(new Date())!;
   try {
     const result = await api.get<PetHealthEntry | null>(
       `/api/pets/${petId}/checkins/today?date=${today}`
@@ -348,25 +366,32 @@ export function calculateConsecutiveAnomalyDays(
 
 function calculateLocalStats(entries: PetHealthEntry[]): HealthCheckinStats {
   const now = new Date();
-  const todayStr = now.toISOString().slice(0, 10);
+  // 全部改用**本地日历日**（2026-09-11 修复）：原来这几处都用 toISOString()，
+  // 东八区 08:00 之前 todayStr 会退到前一天、20:00 之后 weekStart/monthStart 也会错位，
+  // 于是「今日是否已打卡 / 本周打卡 / 连续打卡」在早上和晚上各错一次。
+  const todayStr = localDateString(now)!;
 
   const weekStart = new Date(now);
   weekStart.setDate(now.getDate() - now.getDay());
-  const weekStartStr = weekStart.toISOString().slice(0, 10);
+  const weekStartStr = localDateString(weekStart)!;
 
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthStartStr = monthStart.toISOString().slice(0, 10);
+  const monthStartStr = localDateString(monthStart)!;
 
+  // 去重日期按「本地日历日」字符串排序（YYYY-MM-DD 可直接字典序比较）
   const sortedDates = entries
     .map((e) => entryDateStr(e))
+    .filter((d) => d !== '')
     .filter((d, i, arr) => arr.indexOf(d) === i)
     .sort()
     .reverse();
 
   let streak = 0;
-  const checkDate = new Date(todayStr);
+  // 连续打卡的比对基准也必须用本地日历日：不能用 new Date(todayStr)
+  // （那会按 UTC 解析，再 toISOString 回来在部分时区会整体偏一天）
+  const checkDate = parseLocalDate(now)!;
   for (const dateStr of sortedDates) {
-    const expected = checkDate.toISOString().slice(0, 10);
+    const expected = localDateString(checkDate)!;
     if (dateStr === expected) {
       streak++;
       checkDate.setDate(checkDate.getDate() - 1);
@@ -384,6 +409,8 @@ function calculateLocalStats(entries: PetHealthEntry[]): HealthCheckinStats {
 
   return {
     totalCheckins: entries.length,
+    // 去重后的日期数 = 打卡天数（sortedDates 上面已经算好）
+    totalDays: sortedDates.length,
     streak,
     lastCheckinDate: sortedDates.length > 0 ? sortedDates[0] : null,
     weeklyCount: entries.filter((e) => entryDateStr(e) >= weekStartStr).length,

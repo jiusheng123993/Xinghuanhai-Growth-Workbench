@@ -10,6 +10,8 @@ import { useMembership } from '../../hooks/useMembership'
 import { api } from '../../services/api'
 import type { PetProfile } from '../../services/petService'
 import './index.scss'
+import { Icon } from '../../components'
+import PageBackground from '../../components/PageBackground'
 
 interface YearlyReview {
   id: string; pet_id: string; year: number
@@ -90,13 +92,7 @@ export default function YearlyReviewPage() {
   return (
     <View className='review-page'>
       {/* 全屏动态背景层 */}
-      <View className='xhh-bg-layer'>
-        <View className='xhh-blob xhh-blob-a' />
-        <View className='xhh-blob xhh-blob-b' />
-        <View className='xhh-blob xhh-blob-c' />
-        <View className='xhh-blob xhh-blob-d' />
-        <View className='xhh-bg-glow' />
-      </View>
+      <PageBackground />
 
       <View className='review-page__content'>
         {/* ===== 年度头部：珊瑚渐变横幅 ===== */}
@@ -143,13 +139,19 @@ export default function YearlyReviewPage() {
             </View>
           </View>
           <Text className='annual-hero__sub'>
-            {review ? `${review.total_days} 个日夜的陪伴与成长，都在这里` : '记录毛孩子的温暖时光'}
+            {/* 文案纠正（2026-09-11）：total_days 是"当年有记录的天数"，不是"陪伴天数"，
+                原来写「N 个日夜的陪伴与成长」会把记录天数说成相处时长。
+                ⚠️ 独立审查发现：本页接口声明里的 total_days / total_checkins / max_streak 等字段
+                **后端 toDetailResponse 并不返回**（只回 { id, pet_id, year, status, review_data, ... }），
+                所以这里必须做 0 兜底，否则直接渲染出「undefined 天有记录的日子」。
+                要真正显示数字，需要后端由 review_data.stats 派生这些字段（或前端改读 review_data）。 */}
+            {review ? `${review.total_days ?? 0} 天有记录的日子，都在这里` : '记录毛孩子的温暖时光'}
           </Text>
         </View>
 
         {error || !review ? (
           <View className='review-empty'>
-            <Text className='review-empty__icon'>📖</Text>
+            <Icon name='book-open' size={36} tone='primary' className='review-empty__icon' />
             <Text className='review-empty__text'>{error || '暂无年度回忆\n去打卡记录更多美好时光吧'}</Text>
           </View>
         ) : (
@@ -160,28 +162,33 @@ export default function YearlyReviewPage() {
               <View className='annual-stats'>
                 <View className='annual-stat'>
                   <View className='annual-stat__head'>
-                    <Text className='annual-stat__icon'>📅</Text>
-                    <Text className='annual-stat__label'>陪伴</Text>
+                    <Icon name='calendar-check' size={14} tone='primary' className='annual-stat__icon' />
+                    {/* 标签纠正（2026-09-11）：这一格的值是 review.total_days =
+                        当年**有打卡记录的去重天数**（yearlyReviewService 里就叫「记录天数」），
+                        原先标成「陪伴」会让人误以为是"陪伴了多少天"（等于把记录天数当相处时长）。
+                        与右侧的「打卡 N 次」区分：这个按天去重，那个按次计数。 */}
+                    <Text className='annual-stat__label'>记录天数</Text>
                   </View>
-                  <Text className='annual-stat__num'>{review.total_days}<Text className='annual-stat__unit'>天</Text></Text>
+                  {/* 0 兜底的原因见上方 hero 的注释：后端当前不返回 total_days（契约缺失） */}
+                  <Text className='annual-stat__num'>{review.total_days ?? 0}<Text className='annual-stat__unit'>天</Text></Text>
                 </View>
                 <View className='annual-stat'>
                   <View className='annual-stat__head'>
-                    <Text className='annual-stat__icon'>✅</Text>
+                    <Icon name='check-circle' size={14} tone='primary' className='annual-stat__icon' />
                     <Text className='annual-stat__label'>打卡</Text>
                   </View>
-                  <Text className='annual-stat__num'>{review.total_checkins}<Text className='annual-stat__unit'>次</Text></Text>
+                  <Text className='annual-stat__num'>{review.total_checkins ?? 0}<Text className='annual-stat__unit'>次</Text></Text>
                 </View>
                 <View className='annual-stat'>
                   <View className='annual-stat__head'>
                     <Text className='annual-stat__icon'>🔥</Text>
                     <Text className='annual-stat__label'>最长连续</Text>
                   </View>
-                  <Text className='annual-stat__num'>{review.max_streak}<Text className='annual-stat__unit'>天</Text></Text>
+                  <Text className='annual-stat__num'>{review.max_streak ?? 0}<Text className='annual-stat__unit'>天</Text></Text>
                 </View>
                 <View className='annual-stat'>
                   <View className='annual-stat__head'>
-                    <Text className='annual-stat__icon'>📈</Text>
+                    <Icon name='chart-line' size={14} tone='primary' className='annual-stat__icon' />
                     <Text className='annual-stat__label'>体重</Text>
                   </View>
                   <Text className='annual-stat__num'>
@@ -228,7 +235,7 @@ export default function YearlyReviewPage() {
                 className={`annual-video__btn${generating ? ' annual-video__btn--loading' : ''}${review.video_status === 'processing' ? ' annual-video__btn--disabled' : ''}`}
                 onClick={handleGenerateVideo}
               >
-                <Text className='annual-video__btn-icon'>🎬</Text>
+                <Icon name='film-strip' size={18} tone='primary' className='annual-video__btn-icon' />
                 <Text className='annual-video__btn-text'>
                   {generating ? '⏳ 提交中...' : review.video_status === 'completed' ? '🔄 重新生成' : '生成年度视频'}
                 </Text>

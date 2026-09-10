@@ -4,22 +4,18 @@ import { render, fireEvent } from '@testing-library/react'
 import { createElement } from 'react'
 // 被测组件正常置于顶部导入；vi.mock 由 vitest 自动提升到文件最前，mock 生效不受影响
 import Index from '../index'
+import { formatPetAge } from '../../../utils/date'
 
 // ============================================================
-// calcAge — 纯函数（从源码复制，用于测试私有函数）
+// 年龄文案：2026-09-11 起全站统一到 utils/date 的 formatPetAge
+// 这里**直接 import 真身**。此前本文件在测试里复制了一份 calcAge 的实现
+// （注释写"从源码复制，用于测试私有函数"），源码改成别的实现它也照样绿——
+// 是典型的假绿测试。现在页面已改为调用 formatPetAge，测试直接测它。
 // ============================================================
-function calcAge(birthDate: string): string {
-  if (!birthDate) return ''
-  const birth = new Date(birthDate)
-  const now = new Date()
-  const years = now.getFullYear() - birth.getFullYear()
-  const months = now.getMonth() - birth.getMonth()
-  const totalMonths = years * 12 + months
-  if (totalMonths < 12) return `${totalMonths}月`
-  const ageYears = Math.floor(totalMonths / 12)
-  const remainingMonths = totalMonths % 12
-  if (remainingMonths === 0) return `${ageYears}岁`
-  return `${ageYears}岁${remainingMonths}月`
+
+/** 本地时区 YYYY-MM-DD（不能用 toISOString：东八区晚上会退到前一天） */
+function localDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 // ============================================================
@@ -32,6 +28,7 @@ const {
   mockSwitchTab,
   mockSetClipboardData,
   mockSetFlowHandlers,
+  mockHandleNewSession,
   mockPet,
   mockMessages,
   mockSessionId,
@@ -53,8 +50,10 @@ const {
     mockSwitchTab: vi.fn(),
     mockSetClipboardData: vi.fn(),
     mockSetFlowHandlers: vi.fn(),
+    mockHandleNewSession: vi.fn(),
     mockPet: mockPetData,
-    mockMessages: [{ id: 'msg_1', type: 'ai' as const, content: '你好' }],
+    // 显式声明元素类型：初始值只有 'ai' 会让类型推断收窄成字面量，push 'user' 时类型不兼容
+    mockMessages: [{ id: 'msg_1', type: 'ai' as const, content: '你好' }] as Array<{ id: string; type: 'ai' | 'user'; content: string }>,
     mockSessionId: { value: null as string | null },
     petStoreState: {
       currentPet: mockPetData as any,
@@ -104,6 +103,9 @@ vi.mock('@tarojs/taro', () => ({
 // ============================================================
 vi.mock('../../../hooks/useThemeClass', () => ({
   useThemeClass: () => 'theme-sakura-dream',
+  // PageBackground 组件内部会用到这两个导出，mock 必须一并提供
+  useThemeKey: () => 'autumn',
+  usePetWallpaper: () => null,
 }))
 
 vi.mock('../../../hooks/useChatCore', () => ({
@@ -133,7 +135,7 @@ vi.mock('../../../hooks/useChatCore', () => ({
     // 多会话（豆包式「新建对话」）
     sessionId: mockSessionId.value,
     sessions: [],
-    handleNewSession: vi.fn(),
+    handleNewSession: mockHandleNewSession,
     handleSwitchSession: vi.fn(),
     handleDeleteSession: vi.fn(),
   }),
@@ -202,49 +204,36 @@ vi.mock('../index.scss', () => ({}))
 // ============================================================
 // 测试套件
 // ============================================================
-describe('calcAge', () => {
+describe('calcAge（已统一到 utils/date 的 formatPetAge）', () => {
   it('returns empty string for falsy input', () => {
-    expect(calcAge('')).toBe('')
+    expect(formatPetAge('')).toBe('')
   })
 
   it('calculates months-only age (< 12 months)', () => {
-    // 构造一个距今 5 个月的日期
+    // 用「5 个月前的 1 号」：任何一天都 ≥ 1 号，必然满 5 个月，期望值不随日历抖动
     const now = new Date()
-    const fiveMonthsAgo = new Date(now)
-    fiveMonthsAgo.setMonth(now.getMonth() - 5)
-    const dateStr = fiveMonthsAgo.toISOString().split('T')[0]
-
-    const result = calcAge(dateStr)
-    expect(result).toMatch(/^\d+月$/)
-    expect(result).not.toContain('岁')
+    const target = new Date(now.getFullYear(), now.getMonth() - 5, 1)
+    expect(formatPetAge(localDateStr(target))).toBe('5个月')
   })
 
   it('calculates exact years (no remaining months)', () => {
-    // 构造一个距今恰好 2 年的日期（同月同日）
+    // 2 年前的当月 1 号 → 恰好 24 个月，不多不少
     const now = new Date()
-    const twoYearsAgo = new Date(now)
-    twoYearsAgo.setFullYear(now.getFullYear() - 2)
-    const dateStr = twoYearsAgo.toISOString().split('T')[0]
-
-    const result = calcAge(dateStr)
-    expect(result).toBe('2岁')
+    const target = new Date(now.getFullYear() - 2, now.getMonth(), 1)
+    expect(formatPetAge(localDateStr(target))).toBe('2岁')
   })
 
   it('calculates years and months', () => {
-    // 构造一个距今 2 年 3 个月的日期（用本地时间拼字符串避免时区偏移，月中 15 号避免月末溢出）
     const now = new Date()
-    const target = new Date(now.getFullYear() - 2, now.getMonth() - 3, 15)
-    const dateStr = `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, '0')}-${String(target.getDate()).padStart(2, '0')}`
-
-    const result = calcAge(dateStr)
-    expect(result).toBe('2岁3月')
+    const target = new Date(now.getFullYear() - 2, now.getMonth() - 3, 1)
+    // 统一后的格式是「2岁3个月」（旧实现输出「2岁3月」）
+    expect(formatPetAge(localDateStr(target))).toBe('2岁3个月')
   })
 
-  it('handles future date gracefully (returns negative months)', () => {
-    const futureDate = '2099-01-01'
-    const result = calcAge(futureDate)
-    // 负月数 < 12，走 `${totalMonths}月` 分支
-    expect(result).toMatch(/^-?\d+月$/)
+  it('未来日期不再输出负数年龄，而是走兜底文案', () => {
+    // 旧实现会返回「-890月」这种明显错误的文案
+    expect(formatPetAge('2099-01-01')).toBe('')
+    expect(formatPetAge('2099-01-01', { fallback: '年龄未知' })).toBe('年龄未知')
   })
 })
 
@@ -540,5 +529,38 @@ describe('Index page — 长对话软提示（多会话）', () => {
     const tip = container.querySelector('.chat-long-tip')
     expect(tip).toBeTruthy()
     expect(tip!.textContent).toContain('新建对话')
+  })
+})
+
+describe('Index page — 新建对话入口（顶部常驻，用户反馈修复）', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    petStoreState.currentPet = mockPet
+    petStoreState.pets = [mockPet]
+    petStoreState.isLoading = false
+    mockMessages.length = 0
+    mockMessages.push({ id: 'msg_1', type: 'ai' as const, content: '你好' })
+    mockSessionId.value = null
+  })
+
+  it('顶部栏常驻「新建」按钮，不依赖历史抽屉（无需展开即可见）', () => {
+    const { container } = render(createElement(Index))
+
+    const newBtn = container.querySelector('.chat-top-new-btn')
+    expect(newBtn).toBeTruthy()
+    expect(newBtn!.textContent).toContain('新建')
+    // 抽屉关闭态下按钮仍在 → 证明入口不藏在历史里
+    expect(container.querySelector('.session-drawer-overlay')).toBeFalsy()
+  })
+
+  it('点击顶部「新建」按钮直接新建会话', () => {
+    const { container } = render(createElement(Index))
+
+    const newBtn = container.querySelector('.chat-top-new-btn')
+    expect(newBtn).toBeTruthy()
+
+    fireEvent.click(newBtn!)
+
+    expect(mockHandleNewSession).toHaveBeenCalledTimes(1)
   })
 })

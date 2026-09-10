@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 健康趋势服务
  *
  * 宠物健康趋势数据查询（体重/食欲/排便/异常天），月报生成
@@ -13,12 +13,17 @@ import { getStorage, setStorage } from '../utils/storage'
 import type { PetHealthEntry } from './checkinService'
 import type { AppetiteLevel, SpiritLevel, PoopLevel, HealthRiskLevel } from '../memory-body/types/memoryBodyTypes'
 import { getCheckinsByDateRange } from './checkinService'
+import { localDateString } from '../utils/date'
 
+/**
+ * 记录所属的「本地日历日」（YYYY-MM-DD）
+ *
+ * 2026-09-11 全站口径收口：原实现用 toISOString().slice(0,10) / slice(0,10) 取的是 **UTC 日期** ——
+ * 东八区 00:00-08:00 的记录会被算成前一天，于是「打卡天数 / 连续天数 / 去重天数」
+ * 在早上齐齐差一天，并与已改用本地日的 checkinService、reportService 口径不一致。
+ */
 function entryDateStr(entry: PetHealthEntry): string {
-  if (entry.createdAt instanceof Date) {
-    return entry.createdAt.toISOString().slice(0, 10)
-  }
-  return String(entry.createdAt).slice(0, 10)
+  return localDateString(entry.createdAt) ?? ''
 }
 
 function mapAppetiteLevel(level: AppetiteLevel): 'normal' | 'decreased' | 'increased' | 'none' | 'vomiting' {
