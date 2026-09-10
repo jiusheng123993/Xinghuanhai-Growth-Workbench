@@ -1,12 +1,14 @@
 @import '../../styles/_theme';
 @import '../../styles/_animations';
+@import '../../styles/_journal';
 
 // ============================================
 // 情绪陪伴页 · 原型 1:1
 // ============================================
 .grief {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
   padding: $spacing-xl $spacing-lg $spacing-xxl;
   display: flex;
   flex-direction: column;
@@ -42,7 +44,7 @@
 .grief__hero-shade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba($color-text-primary, 0.5), transparent);
+  background: linear-gradient(to top, rgba(var(--text-primary-rgb, 64, 40, 28), 0.5), transparent);
 }
 
 .grief__hero-caption {
@@ -59,7 +61,7 @@
   font-size: $font-size-xl;
   font-weight: $font-weight-bold;
   color: $color-text-inverse;
-  text-shadow: 0 2rpx 12rpx rgba($color-text-primary, 0.45);
+  text-shadow: 0 2rpx 12rpx rgba(var(--text-primary-rgb, 64, 40, 28), 0.45);
 }
 
 .grief__hero-sub {
@@ -74,7 +76,7 @@
   gap: $spacing-sm;
   padding: $spacing-md $spacing-lg;
   border-radius: $radius-round;
-  background: rgba($color-teal, 0.12);
+  background: rgba(var(--teal-rgb, 79, 163, 227), 0.12);
 }
 
 .grief__privacy-icon {
@@ -285,7 +287,7 @@
   border-radius: $radius-round;
   background: $color-gold-deep;
   text-align: center;
-  box-shadow: 0 12rpx 32rpx -12rpx rgba($color-gold-deep, 0.55);
+  box-shadow: 0 12rpx 32rpx -12rpx rgba(var(--gold-deep-rgb, 232, 146, 10), 0.55);
   @include press-feedback;
 }
 
@@ -310,4 +312,189 @@
 .grief__back-text {
   font-size: $font-size-sm;
   color: $color-text-tertiary;
+}
+
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖）
+// ============================================
+// 这页是"告别"场景，情绪敏感 —— 手账语言在这里要**收着用**：
+// 保留柔和渐变与留白，不加大面积高饱和色、不加跳跃动效；标题用衬线、容器用纸面与虚线边，
+// 让人感觉像一本安静的纪念册，而不是一个功能页。
+.grief {
+  &__privacy,
+  &__mem-card,
+  &__soft-card,
+  &__companion-entry,
+  &__support,
+  &__back {
+    @include journal-paper-tokens;
+  }
+
+  // —— Hero：保留渐变，但标题改衬线、副题降权（安静而不是热闹） ——
+  &__hero-title {
+    @include journal-serif(40rpx);
+    letter-spacing: 3rpx;
+    color: #ffffff;
+    text-shadow: 0 4rpx 18rpx rgba(40, 20, 10, 0.35);
+  }
+
+  &__hero-sub {
+    display: block;
+    margin-top: 8rpx;
+    font-size: 22rpx;
+    letter-spacing: 1rpx;
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  // —— 隐私提示：虚线便签（"只你自己可见"这种事要写得明确） ——
+  &__privacy {
+    display: flex;
+    align-items: center;
+    gap: 10rpx;
+    padding: 14rpx 20rpx;
+    border-radius: 20rpx;
+    background: #fffdf8;
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.32);
+  }
+
+  &__privacy-text {
+    font-size: 21rpx;
+    color: $color-text-secondary;
+  }
+
+  // —— 区块标题：衬线 + 左侧渐变竖条 ——
+  &__section-title {
+    @include journal-serif(30rpx);
+    position: relative;
+    padding-left: 18rpx;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 8rpx;
+      height: 30rpx;
+      border-radius: $radius-round;
+      background: $gradient-gold;
+    }
+  }
+
+  // —— 纪念专区 4 卡：贴纸卡 ——
+  &__mem-card {
+    border-radius: 28rpx;
+    background: #fffdf8;
+    border: 3rpx dashed $color-border;
+    box-shadow: $shadow-xs;
+    @include press-feedback;
+  }
+
+  &__mem-title {
+    font-size: 27rpx;
+    font-weight: 800;
+    color: $color-text-primary;
+  }
+
+  &__mem-desc {
+    font-size: 20rpx;
+    line-height: 1.55;
+    color: $color-text-secondary;
+  }
+
+  // —— 「想对你说」：像一叠小纸条 ——
+  &__soft-card {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+    padding: 20rpx 22rpx;
+    border-radius: 26rpx;
+    background: #fffdf8;
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.28);
+    box-shadow: $shadow-xs;
+  }
+
+  &__soft-text {
+    flex: 1;
+    font-size: 25rpx;
+    line-height: 1.7;
+    color: $color-text-primary;
+  }
+
+  // —— 「和小橘说说话」入口：纸卡 + 虚线箭头区 ——
+  &__companion-entry {
+    border-radius: 28rpx;
+    background: #fffdf8;
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+    box-shadow: $shadow-xs;
+    @include press-feedback;
+  }
+
+  &__companion-entry-title {
+    font-size: 27rpx;
+    font-weight: 800;
+    color: $color-text-primary;
+  }
+
+  &__companion-entry-desc {
+    font-size: 20rpx;
+    color: $color-text-secondary;
+  }
+
+  // —— 支持卡 + 热线按钮 ——
+  &__support {
+    border-radius: 32rpx;
+    background: #fffdf8;
+    border: 3rpx dashed $color-border;
+    box-shadow: $shadow-xs;
+  }
+
+  &__support-title {
+    font-size: 28rpx;
+    font-weight: 800;
+    color: $color-text-primary;
+  }
+
+  &__support-desc {
+    font-size: 21rpx;
+    line-height: 1.6;
+    color: $color-text-secondary;
+  }
+
+  &__hotline-btn {
+    @include journal-button;
+    height: 88rpx;
+    /* 这是"求助"入口，用沉稳的主色而非高亮金，避免在悲伤语境里显得轻浮 */
+    background: linear-gradient(135deg, #ff8a4d 0%, $color-primary 60%, $color-primary-dark 100%);
+  }
+
+  &__hotline-text {
+    font-size: 27rpx;
+    font-weight: 800;
+    letter-spacing: 1rpx;
+    color: #ffffff;
+  }
+
+  &__support-note {
+    display: block;
+    margin-top: 12rpx;
+    font-size: 20rpx;
+    line-height: 1.6;
+    text-align: center;
+    color: $color-text-tertiary;
+  }
+
+  // —— 返回：弱化的玻璃底虚线按钮 ——
+  &__back {
+    @include journal-ghost;
+    min-height: 84rpx;
+    background: $glass-bg;
+    border: 3rpx dashed $color-border;
+  }
+
+  &__back-text {
+    font-size: 25rpx;
+    font-weight: 700;
+    color: $color-text-secondary;
+  }
 }

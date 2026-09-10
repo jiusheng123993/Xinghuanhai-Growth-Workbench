@@ -1,9 +1,11 @@
 @import '../../styles/_theme';
 @import '../../styles/_animations';
+@import '../../styles/_journal';
 
 .hospital-page {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
   padding-bottom: 200rpx;
   animation: pageEnter 0.4s ease-out;
 }
@@ -32,7 +34,7 @@
 
 .hospital-page__search-input-wrap:focus-within {
   border-color: $color-primary;
-  box-shadow: 0 0 0 6rpx rgba($color-primary, 0.1);
+  box-shadow: 0 0 0 6rpx rgba(var(--primary-rgb, 255, 107, 61), 0.1);
 }
 
 .hospital-page__search-clear {
@@ -76,7 +78,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.25);
+  box-shadow: 0 4rpx 16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.25);
   @include press-feedback;
 }
 
@@ -286,7 +288,7 @@
 }
 
 .hospital-page__card-service-tag--more {
-  background: rgba($color-primary, 0.1);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
   border: 1px solid $color-border;
 }
 
@@ -332,7 +334,7 @@
 .hospital-page__card-detail-tag {
   font-size: 22rpx;
   padding: 8rpx 20rpx;
-  background: rgba($color-primary, 0.1);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
   color: $color-primary-light;
   border-radius: 20rpx;
 }
@@ -356,12 +358,12 @@
 }
 
 .hospital-page__card-btn--call {
-  background: rgba($color-success, 0.1);
-  border: 1px solid rgba($color-success, 0.3);
+  background: rgba(var(--success-rgb, 47, 201, 142), 0.1);
+  border: 1px solid rgba(var(--success-rgb, 47, 201, 142), 0.3);
 }
 
 .hospital-page__card-btn--nav {
-  background: rgba($color-primary, 0.1);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
   border: 1px solid $color-border;
 }
 
@@ -380,4 +382,217 @@
 
 .hospital-page__card-btn--nav .hospital-page__card-btn-text {
   color: $color-primary;
+}
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖）
+// ============================================
+// 本页 384 行；「展开详情」「加载更多」等交互态预览里复现不了，故只覆盖可见模块。
+// 图标口径：卡片信息行的 📍🕐 等由 tsx 的 Icon 组件呈现（本页早已图标化），无需换。
+.hospital-page {
+  // 浅色面统一钉"卡内 token"（深色主题下 --text-* / --glass-bg 会被转浅，纸面恒为浅底）
+  &__search-input-wrap,
+  &__filter-tag,
+  &__card,
+  &__card-service-tag,
+  &__card-btn,
+  &__disclaimer,
+  &__empty {
+    @include journal-paper-tokens;
+  }
+
+  // —— 搜索：纸面 + 虚线边（手账上贴的搜索条） ——
+  &__search-input-wrap {
+    height: 84rpx;
+    padding: 0 22rpx;
+    border-radius: 28rpx;
+    background: #fffdf8;
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.4);
+    box-shadow: $shadow-xs;
+  }
+
+  &__search-icon {
+    flex-shrink: 0;
+  }
+
+  &__search-input {
+    font-size: 26rpx;
+    color: $color-text-primary;
+  }
+
+  &__search-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 84rpx;
+    padding: 0 28rpx;
+    border-radius: $radius-round;
+    background: linear-gradient(135deg, #ff8a4d 0%, $color-primary 55%, $color-primary-dark 100%);
+    box-shadow: 0 12rpx 26rpx -14rpx rgba(var(--primary-rgb, 255, 107, 61), 0.85);
+    @include press-feedback;
+  }
+
+  &__search-btn-text {
+    font-size: 26rpx;
+    font-weight: 800;
+    letter-spacing: 1rpx;
+    color: #ffffff;
+  }
+
+  // —— 筛选标签：贴纸胶囊（未选虚线 / 选中实线 + 主色淡底） ——
+  &__filter-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 64rpx;
+    padding: 0 26rpx;
+    margin-right: 14rpx;
+    border-radius: $radius-round;
+    background: #fffdf8;
+    border: 3rpx dashed $color-border;
+    @include press-feedback;
+  }
+
+  &__filter-tag--active {
+    border-style: solid;
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+  }
+
+  &__filter-tag-text {
+    font-size: 24rpx;
+    font-weight: 700;
+    color: $color-text-secondary;
+  }
+
+  &__filter-tag--active &__filter-tag-text {
+    color: $color-primary-dark;
+  }
+
+  // —— 医院卡：虚线便签 ——
+  &__card {
+    @include journal-note(primary, 0.38);
+    padding: 22rpx 24rpx 20rpx;
+    animation: fadeInUp 0.3s ease-out both;
+  }
+
+  &__card-name {
+    @include journal-serif(30rpx);
+    letter-spacing: 1rpx;
+  }
+
+  // 类型徽章：小贴纸
+  &__card-type {
+    display: inline-flex;
+    align-items: center;
+    height: 40rpx;
+    padding: 0 14rpx;
+    border-radius: $radius-round;
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+    border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.3);
+  }
+
+  &__card-type-text {
+    font-size: 19rpx;
+    font-weight: 700;
+    color: $color-primary-dark;
+  }
+
+  &__card-rating-text {
+    font-size: 21rpx;
+    font-weight: 700;
+    color: $color-gold-deep;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__card-info-item {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+    margin-top: 8rpx;
+  }
+
+  &__card-info-text {
+    font-size: 22rpx;
+    line-height: 1.5;
+    color: $color-text-secondary;
+  }
+
+  // 服务标签：小贴纸
+  &__card-service-tag {
+    display: inline-flex;
+    align-items: center;
+    height: 44rpx;
+    padding: 0 16rpx;
+    margin: 0 10rpx 10rpx 0;
+    border-radius: $radius-round;
+    background: #fff6ea;
+    border: 2rpx solid rgba(var(--gold-rgb, 255, 176, 32), 0.35);
+  }
+
+  &__card-service-tag--more {
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.3);
+  }
+
+  &__card-service-tag-text {
+    font-size: 19rpx;
+    font-weight: 700;
+    color: $color-text-secondary;
+  }
+
+  &__card-service-tag--more &__card-service-tag-text {
+    color: $color-primary-dark;
+  }
+
+  // —— 卡内两个动作按钮：电话＝主色淡底虚线；导航＝玻璃底虚线（可点高度 ≥88rpx） ——
+  &__card-btn {
+    @include journal-ghost;
+    min-height: 88rpx;
+    flex: 1;
+  }
+
+  &__card-btn--call {
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.45);
+  }
+
+  &__card-btn--nav {
+    background: $glass-bg;
+    border: 3rpx dashed $color-border;
+  }
+
+  &__card-btn-text {
+    font-size: 25rpx;
+    font-weight: 700;
+    color: $color-text-secondary;
+  }
+
+  &__card-btn--call &__card-btn-text {
+    color: $color-primary-dark;
+  }
+
+  // —— 免责声明 / 空态 ——
+  &__disclaimer {
+    padding: 18rpx 22rpx;
+    border-radius: 24rpx;
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+  }
+
+  &__disclaimer-text {
+    font-size: 20rpx;
+    line-height: 1.6;
+    color: $color-text-secondary;
+  }
+
+  &__empty-text {
+    font-size: 24rpx;
+    color: $color-text-secondary;
+  }
+
+  &__empty-hint {
+    font-size: 21rpx;
+    margin-top: 8rpx;
+    color: $color-text-tertiary;
+  }
 }
