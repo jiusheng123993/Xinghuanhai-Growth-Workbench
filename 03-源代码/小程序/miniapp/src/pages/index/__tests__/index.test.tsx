@@ -237,14 +237,13 @@ describe('PLUS_MENU_ITEMS', () => {
   // 从源码复制常量用于测试
   const PLUS_MENU_ITEMS = [
     { icon: '📋', label: '健康打卡', sub: '5项日常检查，1分钟完成', bg: 'rgba(232,168,56,0.12)' },
-    { icon: '✨', label: 'AI 取名', sub: '智能推荐 + 寓意解读', bg: 'rgba(91,154,155,0.12)' },
     { icon: '📸', label: '记录回忆', sub: '上传照片 + 写一段话', bg: 'rgba(140,173,126,0.12)' },
     { icon: '🐱', label: '品种百科', sub: '40+品种特征和护理要点', bg: 'rgba(166,143,120,0.12)' },
     { icon: '🏠', label: '看家庭', sub: '家人动态 + 家庭周报', bg: 'rgba(224,133,107,0.12)' },
   ]
 
-  it('has exactly 5 items', () => {
-    expect(PLUS_MENU_ITEMS).toHaveLength(5)
+  it('has exactly 4 items', () => {
+    expect(PLUS_MENU_ITEMS).toHaveLength(4)
   })
 
   it('each item has icon, label, sub, bg properties', () => {
@@ -263,12 +262,6 @@ describe('PLUS_MENU_ITEMS', () => {
   it('first item is 健康打卡', () => {
     expect(PLUS_MENU_ITEMS[0].label).toBe('健康打卡')
     expect(PLUS_MENU_ITEMS[0].icon).toBe('📋')
-  })
-
-  it('contains AI 取名 item', () => {
-    const namingItem = PLUS_MENU_ITEMS.find((item) => item.label === 'AI 取名')
-    expect(namingItem).toBeDefined()
-    expect(namingItem!.icon).toBe('✨')
   })
 
   it('all bg values are rgba strings', () => {

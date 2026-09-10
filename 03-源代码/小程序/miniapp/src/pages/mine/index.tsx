@@ -272,7 +272,7 @@ export default function Mine() {
       </View>
 
       {/* ===== 家庭信息卡（多成员共同养宠，2026-08-24） ===== */}
-      <View className='mine-family-card' onClick={() => Taro.switchTab({ url: '/pages/family/index' })}>
+      <View className='mine-family-card' onClick={() => Taro.navigateTo({ url: '/pages/family/index' })}>
         {currentFamily ? (
           <>
             <View className='mine-family-icon'>

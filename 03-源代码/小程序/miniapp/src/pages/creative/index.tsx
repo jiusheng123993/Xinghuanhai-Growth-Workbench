@@ -141,6 +141,16 @@ const CreativeHub = () => {
           <Text className='cve-ccard-desc'>轻纪念 · 标准 · 完整{'\n'}真实记忆讲成片</Text>
           <Text className='cve-ccard-price'>19.9 起</Text>
         </View>
+        <View
+          className='cve-ccard cve-ccard--teal'
+          onClick={() => goWithPet('/pagesPet/naming/index', false)}
+          style={{ borderRadius: 20, background: 'linear-gradient(150deg,#e8f5f2,#dcedf0)', padding: 14 }}
+        >
+          <Text className='cve-ccard-em'>✨</Text>
+          <Text className='cve-ccard-title'>AI 取名</Text>
+          <Text className='cve-ccard-desc'>智能推荐 · 寓意解读{'\n'}五行星宿讲成故事</Text>
+          <Text className='cve-ccard-price'>免费</Text>
+        </View>
       </View>
 
       {/* ===== 📋 今日 ===== */}

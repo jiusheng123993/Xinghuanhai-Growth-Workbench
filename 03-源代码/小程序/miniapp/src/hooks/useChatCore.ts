@@ -136,8 +136,8 @@ export interface FlowHandlers {
   startFoodQuery?: () => void
   /** 跳转品种百科 */
   navigateToBreed?: () => void
-  /** Agent 工具调用触发的流程动作回调（语义识别第二层） */
-  onToolAction?: (action: string) => void
+  /** Agent 工具调用触发的流程动作回调（语义识别第二层）；data 为工具返回的附加数据（如 breedId） */
+  onToolAction?: (action: string, data?: Record<string, unknown>) => void
 }
 
 export interface UseChatCoreParams {
@@ -166,6 +166,9 @@ export function useChatCore(params: UseChatCoreParams) {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([])
   const [streamingId, setStreamingId] = useState<string | null>(null)
   const [agentToolStatus, setAgentToolStatus] = useState<string | null>(null)
+  // 待发送图片附件（2026-09-10 发图带文字）：选图后先入附件区不发送，用户可继续输入
+  // 补充文字，点发送后图文合并为一条消息发出（对齐微信 IM 习惯）
+  const [pendingImage, setPendingImage] = useState<string | null>(null)
 
   const streamRef = useRef<{
     timer: ReturnType<typeof setInterval> | null
@@ -311,8 +314,13 @@ export function useChatCore(params: UseChatCoreParams) {
     [addMessage]
   )
 
-  /** 从相册/相机选择图片并发送（sourceType 可指定图片来源，默认两者） */
-  const handleImageSend = useCallback(async (sourceType?: ('album' | 'camera')[]) => {
+  /**
+   * 从相册/相机选择图片（sourceType 可指定图片来源，默认两者）
+   *
+   * 2026-09-10 发图带文字改造：选图后不再直接发送，而是进入输入框上方的待发送
+   * 附件区，用户可补充文字后点发送（sendPendingImage），或点 × 取消（clearPendingImage）。
+   */
+  const handleChooseImage = useCallback(async (sourceType?: ('album' | 'camera')[]) => {
     try {
       const res = await chooseImageWithPrivacy({
         count: 1,
@@ -321,95 +329,141 @@ export function useChatCore(params: UseChatCoreParams) {
       })
       if (!res.tempFilePaths.length) return
 
-      const imageUrl = res.tempFilePaths[0]
-      addImageMsg(imageUrl)
-
-      const context: ChatContext = {
-        petId: petInfo.activePet?.id,
-        petName: petInfo.name,
-        petBreed: petInfo.breed,
-        petAge: petInfo.age,
-      }
-
-      // 先上传照片并做视觉分析，把"照片里能看到什么"注入对话上下文，AI 才能基于图片回答。
-      // 此前这里是占位桩：图片从未上传、AI 只收到一句文字 → 表现为"发图后 AI 说收不到照片"。
-      setIsTyping(true)
-      const description = await analyzeChatPhoto(imageUrl)
-      // 视觉分析成功：注入上下文；失败：降级为普通文字问答（如实说明"暂无法分析图片"，不再谎称看不到）
-      if (description) {
-        context.imageAnalysis = description
-      }
-
-      try {
-        const result = await sendChatMessage(
-          description
-            ? '我上传了一张宠物照片，请帮我看看这张照片里的宠物并给出一些建议。'
-            : '我上传了一张宠物照片，请帮我看看并给出一些建议。',
-          context,
-          chatHistory
-        )
-        setIsTyping(false)
-
-        // 历史里把视觉观察一并存下，用户在本会话继续追问时 AI 保有"照片看到什么"的上下文
-        const userHistoryContent = description ? `[图片] 视觉观察：${description}` : '[图片]'
-
-        if (result.blocked) {
-          addAiMsg(result.reply)
-          setChatHistory(prev => [
-            ...prev.slice(-18),
-            { role: 'user', content: userHistoryContent },
-            { role: 'assistant', content: result.reply },
-          ])
-        } else {
-          streamAiReply(result.reply, () => {
-            setChatHistory(prev => [
-              ...prev.slice(-18),
-              { role: 'user', content: userHistoryContent },
-              { role: 'assistant', content: result.reply },
-            ])
-          })
-        }
-      } catch (err) {
-        setIsTyping(false)
-        logger.error('index', 'AI image chat failed', err)
-        // 分析成功但回复生成失败：如实说明是"回复"失败，而不是误导为"照片分析失败"
-        addAiMsg(description ? '回复生成失败，请稍后再试。' : '图片已收到！虽然我现在无法分析图片内容，但你可以描述一下想了解什么～')
-      }
+      // 仅挂起附件；清空输入框历史遗留文字，避免把无关草稿误当图片说明发出
+      setPendingImage(res.tempFilePaths[0])
     } catch (err) {
       const errMsg = (err as { errMsg?: string }).errMsg || ''
       if (errMsg.includes('cancel')) {
         return
       }
-      // chooseImageWithPrivacy 已处理了 errno 112 和 privacy 拒绝的情况
-      // 此处处理其他未预期的错误
-      if (errMsg) {
-        Taro.showToast({ title: '图片选择失败，请重试', icon: 'none', duration: 2000 })
-      }
+      // chooseImageWithPrivacy 已对 errno 112 / privacy 拒绝 / 其他失败做过针对性提示
+      // （modal/toast），此处不再重复 toast——微信 toast 单例会互相覆盖针对性提示，
+      // 仅记录日志（P2 审查项：提示责任收敛于 privacy.ts）
       logger.error('index', 'chooseImage failed', err)
     }
-  }, [petInfo, chatHistory, addImageMsg, addAiMsg, streamAiReply, setIsTyping, setChatHistory])
+  }, [])
+
+  /** 清空待发送图片附件（用户在附件条点 × 取消） */
+  const clearPendingImage = useCallback(() => {
+    setPendingImage(null)
+  }, [])
+
+  /**
+   * 发送待发送图片（可带用户补充文字）
+   * @param text - 用户为图片补充的说明文字，可为空（空则沿用自动分析引导文案）
+   * @remarks 调用契约：本函数不清空输入框，UI 侧必须经 handleSend 的附件分流调用
+   * （由 handleSend 统一清空 inputValue）；请勿绕过 handleSend 直接调用。
+   *
+   * 链路与原"选图即发"一致：图片先上屏（图文同气泡）→ 上传视觉分析 → 旧版聊天
+   * 接口生成回复（分析结果注入 context）→ 历史记录保留视觉观察供本会话追问。
+   */
+  const sendPendingImage = useCallback(async (text?: string) => {
+    const imageUrl = pendingImage
+    if (!imageUrl) return
+    const caption = (text ?? '').trim()
+    // 发送即清附件（无论后续成功失败，图已上屏，附件条不应残留）
+    setPendingImage(null)
+
+    addImageMsg(imageUrl, caption)
+
+    const context: ChatContext = {
+      petId: petInfo.activePet?.id,
+      petName: petInfo.name,
+      petBreed: petInfo.breed,
+      petAge: petInfo.age,
+    }
+
+    // 先上传照片并做视觉分析，把"照片里能看到什么"注入对话上下文，AI 才能基于图片回答。
+    // 此前这里是占位桩：图片从未上传、AI 只收到一句文字 → 表现为"发图后 AI 说收不到照片"。
+    setIsTyping(true)
+    const description = await analyzeChatPhoto(imageUrl)
+    // 视觉分析成功：注入上下文；失败：降级为普通文字问答（如实说明"暂无法分析图片"，不再谎称看不到）
+    if (description) {
+      context.imageAnalysis = description
+    }
+
+    // 历史里把用户补充文字 + 视觉观察一并存下，用户在本会话继续追问时 AI 保有"照片
+    // 看到什么 + 用户说了什么"的完整上下文。观察文本截断到 200 字，与 chatService
+    // sanitizeContextField 的注入口径一致：防止长描述抬高 token 成本、避免 Agent 链路
+    // 1000 字截断切在句子中段。
+    const observationText = description ? description.slice(0, 200) : ''
+    const observationPart = observationText ? `视觉观察：${observationText}` : '（暂无法分析图片内容）'
+    const userHistoryContent = caption
+      ? `[图片] ${caption}｜${observationPart}`
+      : `[图片] ${observationPart}`
+
+    try {
+      const result = await sendChatMessage(
+        caption || (description
+          ? '我上传了一张宠物照片，请帮我看看这张照片里的宠物并给出一些建议。'
+          : '我上传了一张宠物照片，请帮我看看并给出一些建议。'),
+        context,
+        chatHistory,
+        // 服务端持久化用合并文本：与下方 chatHistory 存储逐字一致，Agent 链路精确
+        // 去重才能命中；跨会话重进页面后 Agent 也能从持久化历史召回视觉观察
+        { persistUserContent: userHistoryContent }
+      )
+      setIsTyping(false)
+
+      if (result.blocked) {
+        addAiMsg(result.reply)
+        setChatHistory(prev => [
+          ...prev.slice(-18),
+          { role: 'user', content: userHistoryContent },
+          { role: 'assistant', content: result.reply },
+        ])
+      } else {
+        streamAiReply(result.reply, () => {
+          setChatHistory(prev => [
+            ...prev.slice(-18),
+            { role: 'user', content: userHistoryContent },
+            { role: 'assistant', content: result.reply },
+          ])
+        })
+      }
+    } catch (err) {
+      setIsTyping(false)
+      logger.error('index', 'AI image chat failed', err)
+      // 分析成功但回复生成失败：如实说明是"回复"失败，而不是误导为"照片分析失败"
+      addAiMsg(description ? '回复生成失败，请稍后再试。' : '图片已收到！虽然我现在无法分析图片内容，但你可以描述一下想了解什么～')
+    }
+  }, [pendingImage, petInfo, chatHistory, addImageMsg, addAiMsg, streamAiReply])
 
   /** Agent 模式的发送逻辑（textOverride：外部注入的发送文本，如语音识别结果，优先于 inputValue） */
   const handleSend = async (textOverride?: string) => {
     const text = (textOverride ?? inputValue).trim()
-    if (!text) return
+    // 空守卫：无文字且无待发送附件才忽略——此前"选图后不打字直接点发送"被静默吞掉（P0）
+    if (!text && !pendingImage) return
     setInputValue('')
     setPlusMenuOpen(false)
     setShowGreetingQuickActions(false)
 
     const handlers = flowHandlersRef.current
-    if (handlers.foodActive) {
-      handlers.selectFood(text)
+
+    // ========== 流程分流：进行中的食物/回忆/取名流程优先消费文字输入 ==========
+    if (handlers.foodActive || handlers.memoryActive || handlers.namingTextActive) {
+      // 流程只接受文字答案，图片附件无法与流程输入合并：清理附件并提示，
+      // 防止流程结束后滞留的旧图与下一次输入误合并发送（P1）
+      if (pendingImage) {
+        clearPendingImage()
+        Taro.showToast({ title: '流程进行中，图片已取消', icon: 'none' })
+      }
+      // 流程中的空文字无处消费（附件已清理），直接结束
+      if (!text) return
+      if (handlers.foodActive) {
+        handlers.selectFood(text)
+      } else if (handlers.memoryActive) {
+        handlers.handleMemoryRecord(text)
+      } else {
+        handlers.handleNamingText(text)
+      }
       return
     }
 
-    if (handlers.memoryActive) {
-      handlers.handleMemoryRecord(text)
-      return
-    }
-
-    if (handlers.namingTextActive) {
-      handlers.handleNamingText(text)
+    // 待发送图片附件优先于纯文字发送：输入框文字（可为空，空则走自动分析引导文案）
+    // 作为图片说明，图文合并为一条消息。顺序在流程分流之后——进行中的流程不被打断。
+    if (pendingImage) {
+      await sendPendingImage(text)
       return
     }
 
@@ -453,8 +507,9 @@ export function useChatCore(params: UseChatCoreParams) {
     setStreamingId(aiMsgId)
 
     let fullContent = ''
-    // Layer 2: Agent 工具调用触发的流程动作（如 start_checkin → checkin_flow）
+    // Layer 2: Agent 工具调用触发的流程动作（如 start_checkin → checkin_flow）及附加数据（如 breed_flow → breedId）
     let pendingFlowAction: string | null = null
+    let pendingFlowData: Record<string, unknown> | null = null
 
     try {
       for await (const event of agentChat({
@@ -479,6 +534,7 @@ export function useChatCore(params: UseChatCoreParams) {
             const toolData = event.data.data as Record<string, unknown> | undefined
             if (toolData?.action && typeof toolData.action === 'string') {
               pendingFlowAction = toolData.action
+              pendingFlowData = toolData
               if (event.data.message) {
                 fullContent = event.data.message
               }
@@ -564,7 +620,7 @@ export function useChatCore(params: UseChatCoreParams) {
           { role: 'assistant', content: fullContent },
         ])
         // 触发前端流程
-        flowHandlersRef.current.onToolAction?.(pendingFlowAction)
+        flowHandlersRef.current.onToolAction?.(pendingFlowAction, pendingFlowData ?? undefined)
         return
       }
     } catch (err) {
@@ -615,7 +671,10 @@ export function useChatCore(params: UseChatCoreParams) {
     skipStream,
     scrollToBottom,
     handleSend,
-    handleImageSend,
+    handleChooseImage,
+    pendingImage,
+    clearPendingImage,
+    sendPendingImage,
     setFlowHandlers,
     updateMessageCard,
     agentToolStatus,

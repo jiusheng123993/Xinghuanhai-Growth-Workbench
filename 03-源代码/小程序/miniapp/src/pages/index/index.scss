@@ -527,6 +527,65 @@
   min-height: 24rpx;
 }
 
+// ===== 待发送图片附件条（发图带文字：选图后先预览，可补充文字/取消） =====
+.chat-attach-bar {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 0 6rpx 16rpx;
+  animation: attach-in 0.2s ease;
+}
+
+@keyframes attach-in {
+  from {
+    opacity: 0;
+    transform: translateY(12rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat-attach-thumb-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.chat-attach-thumb {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 16rpx;
+  border: 1rpx solid $color-border;
+  background: rgba($color-border, 0.4);
+}
+
+.chat-attach-remove {
+  position: absolute;
+  top: -16rpx;
+  right: -16rpx;
+  // 48rpx 热区（视觉 40rpx 圆 + 命中区外扩），对齐微信 44px 最小触控建议的等比口径
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-attach-remove-icon {
+  color: #fff;
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+.chat-attach-hint {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  line-height: 1.5;
+}
+
 // ===== 微信风格输入行（胶囊圆角，对齐设计稿） =====
 .chat-input-row {
   display: flex;

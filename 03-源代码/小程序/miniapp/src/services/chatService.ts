@@ -105,12 +105,16 @@ export async function analyzeChatPhoto(tempFilePath: string): Promise<string | n
  * @param userMessage - 用户输入的消息
  * @param context - 对话上下文（宠物信息等）
  * @param history - 历史消息列表
+ * @param options - 可选扩展：persistUserContent 指定服务端持久化历史时的用户消息文本
+ *   （发图轮传"[图片] 文字｜视觉观察：…"合并文本，与前端 chatHistory 逐字一致，
+ *   保证 Agent 链路精确去重命中 + 跨会话召回观察文本；普通文字轮不传，存消息原文）
  * @returns 回复内容和是否被拦截
  */
 export async function sendChatMessage(
   userMessage: string,
   context: ChatContext,
-  history: ChatMessage[] = []
+  history: ChatMessage[] = [],
+  options?: { persistUserContent?: string }
 ): Promise<ChatResult> {
   const { userId } = requireAuth()
 
@@ -180,7 +184,13 @@ export async function sendChatMessage(
   }
 
   try {
-    const reply = await chat({ messages, temperature: 0.7, petId: context.petId })
+    // persistUserContent 仅透传给服务端做持久化，不参与当轮对话（LLM 收到的仍是 userMessage）
+    const reply = await chat({
+      messages,
+      temperature: 0.7,
+      petId: context.petId,
+      persistUserContent: options?.persistUserContent,
+    })
 
     const outputCheck = await guardCheckOutput(reply)
     if (outputCheck.isUnsafeMedicalAdvice) {

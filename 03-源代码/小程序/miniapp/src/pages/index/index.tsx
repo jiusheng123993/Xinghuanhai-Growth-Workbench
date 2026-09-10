@@ -77,7 +77,6 @@ const PLUS_MENU_ITEMS = [
   { icon: '📷', label: '拍摄照片', sub: '相机拍摄', bg: 'rgba(255,107,61,0.12)' },
   { icon: '🖼️', label: '相册图片', sub: '从相册选择', bg: 'rgba(232,168,56,0.12)' },
   { icon: '📋', label: '健康打卡', sub: '5项日常检查，1分钟完成', bg: 'rgba(232,168,56,0.12)' },
-  { icon: '✨', label: 'AI 取名', sub: '智能推荐 + 寓意解读', bg: 'rgba(91,154,155,0.12)' },
   { icon: '📸', label: '记录回忆', sub: '上传照片 + 写一段话', bg: 'rgba(140,173,126,0.12)' },
   { icon: '🐱', label: '品种百科', sub: '40+品种特征和护理要点', bg: 'rgba(166,143,120,0.12)' },
   { icon: '🏠', label: '看家庭', sub: '家人动态 + 家庭周报', bg: 'rgba(224,133,107,0.12)' },
@@ -240,13 +239,23 @@ export default function Index() {
       startSymptom: openSymptom,
       startFoodQuery: food.handleFoodQuery,
       navigateToBreed: () => Taro.navigateTo({ url: '/pagesPet/breed/index' }),
-      // Layer 2: Agent 工具调用触发的流程动作映射
-      onToolAction: (action: string) => {
+      // Layer 2: Agent 工具调用触发的流程动作映射（data 为工具返回的附加数据，如 breed_flow 的 breedId）
+      onToolAction: (action: string, data?: Record<string, unknown>) => {
         switch (action) {
           case 'naming_flow': naming.startNaming(); break
           case 'checkin_flow': openCheckin(); break
           case 'memory_flow': memory.startMemoryRecord(); break
           case 'symptom_flow': openSymptom(); break
+          case 'breed_flow': {
+            // AI 识图/追问品种命中品种库 → 跳品种详情页（详情页底部可一键设为我的宠物品种）
+            const breedId = data?.breedId
+            if (breedId && typeof breedId === 'string') {
+              Taro.navigateTo({ url: `/pagesPet/breed-detail/index?id=${breedId}` })
+            } else {
+              Taro.navigateTo({ url: '/pagesPet/breed/index' })
+            }
+            break
+          }
         }
       },
     })
@@ -303,7 +312,8 @@ export default function Index() {
   // 用户发送消息后，根据消息内容更新快捷操作推荐
   const handleSendWithSuggestions = () => {
     const text = inputValue.trim()
-    if (!text) return
+    // 有待发送图片附件时允许无文字发送（沿用自动分析引导文案）
+    if (!text && !chat.pendingImage) return
     // 分析用户消息，更新推荐
     const suggestions = suggestQuickActions(text)
     setCurrentQuickActions(suggestions)
@@ -315,13 +325,12 @@ export default function Index() {
   const handlePlusMenuItem = (index: number) => {
     setPlusPanelOpen(false)
     switch (index) {
-      case 0: chat.handleImageSend(['camera']); break
-      case 1: chat.handleImageSend(['album']); break
+      case 0: chat.handleChooseImage(['camera']); break
+      case 1: chat.handleChooseImage(['album']); break
       case 2: openCheckin(); break
-      case 3: naming.startNaming(); break
-      case 4: memory.startMemoryRecord(); break
-      case 5: Taro.navigateTo({ url: '/pagesPet/breed/index' }); break
-      case 6: Taro.switchTab({ url: '/pages/family/index' }); break
+      case 3: memory.startMemoryRecord(); break
+      case 4: Taro.navigateTo({ url: '/pagesPet/breed/index' }); break
+      case 5: Taro.navigateTo({ url: '/pages/family/index' }); break
     }
   }
 
@@ -672,7 +681,7 @@ export default function Index() {
 
       {/* 多成员共同养宠：情侣引导横幅（有宠物但家庭仅自己时提示邀请 TA，2026-08-24） */}
       {showCoCareTip && petInfo.hasPet && familyUsers.length <= 1 && (
-        <View className='home-co-care-tip' onClick={() => Taro.switchTab({ url: '/pages/family/index' })}>
+        <View className='home-co-care-tip' onClick={() => Taro.navigateTo({ url: '/pages/family/index' })}>
           <Text className='home-co-care-tip__icon'>👥</Text>
           <Text className='home-co-care-tip__text'>邀请 TA 一起养宠，共同记录毛孩子的每一天</Text>
           <Text className='home-co-care-tip__close' onClick={(e) => { e.stopPropagation(); setShowCoCareTip(false) }}>✕</Text>
@@ -959,7 +968,7 @@ export default function Index() {
               <Text className='home-shortcut-label'>慢性病追踪</Text>
               <Text className='home-shortcut-desc'>自动扫描健康风险</Text>
             </View>
-            <View className='home-shortcut' onClick={() => Taro.switchTab({ url: '/pages/family/index' })} hoverClass='home-shortcut--hover'>
+            <View className='home-shortcut' onClick={() => Taro.navigateTo({ url: '/pages/family/index' })} hoverClass='home-shortcut--hover'>
               <View className='home-shortcut-icon home-shortcut-icon--coral'>
                 <Text>👨‍👩‍👧‍👦</Text>
               </View>
@@ -999,6 +1008,24 @@ export default function Index() {
               </View>
             </View>
           </>
+        )}
+
+        {/* 待发送图片附件条（微信 IM 式）：选图后先在此预览，可补充文字/取消，点发送一起发出 */}
+        {chat.pendingImage && (
+          <View className='chat-attach-bar'>
+            <View className='chat-attach-thumb-wrap'>
+              <Image
+                className='chat-attach-thumb'
+                src={chat.pendingImage}
+                mode='aspectFill'
+                onClick={() => Taro.previewImage({ urls: [chat.pendingImage!], current: chat.pendingImage! })}
+              />
+              <View className='chat-attach-remove' onClick={chat.clearPendingImage}>
+                <Text className='chat-attach-remove-icon'>×</Text>
+              </View>
+            </View>
+            <Text className='chat-attach-hint'>已选图片，可输入文字补充说明</Text>
+          </View>
         )}
 
         {/* 微信风格输入行 */}
@@ -1060,8 +1087,8 @@ export default function Index() {
             </View>
           )}
 
-          {/* + 按钮 / 发送按钮 */}
-          {inputValue.trim() ? (
+          {/* + 按钮 / 发送按钮（有待发送附件时也显示发送） */}
+          {inputValue.trim() || chat.pendingImage ? (
             <View className='wx-send-btn' onClick={handleSendWithSuggestions}>
               <Text className='wx-send-text'>↑</Text>
             </View>

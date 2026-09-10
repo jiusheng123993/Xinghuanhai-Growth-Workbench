@@ -14,6 +14,10 @@ interface ChatRequest {
   temperature?: number
   max_tokens?: number
   petId?: string
+  /** 服务端持久化历史时使用的用户消息文本（可选）：发图轮前端把"[图片] 文字｜视觉观察：…"
+   *  合并文本传给服务端落库，保证与前端 chatHistory 逐字一致——Agent 链路按精确匹配去重，
+   *  双侧一致才能命中去重；跨会话重进页面后也能召回视觉观察文本 */
+  persistUserContent?: string
 }
 
 /**
