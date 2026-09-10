@@ -7,6 +7,7 @@ import { redirectToLoginIfNeeded } from '../../utils/authGuard'
 import { getTodayCheckin, calcHealthScore } from '../../services/checkinService'
 import type { PetHealthEntry } from '../../services/checkinService'
 import PetSwitcher from '../../components/PetSwitcher'
+import { resolvePetAvatarUrl } from '../../data/homeStyleAvatars'
 
 import './index.scss'
 
@@ -76,8 +77,9 @@ const CreativeHub = () => {
 
   const healthScore = todayCheckin ? calcHealthScore(todayCheckin.poopLevel, todayCheckin.appetiteLevel, todayCheckin.spiritLevel) : null
 
-  /** 头像与全局一致：真实照片 > AI 形象 > 物种 emoji */
-  const avatarUrl = currentPet?.avatarPhotoUrl || currentPet?.avatarCartoonUrl || ''
+  /** 头像走全站统一口径：真实照片 > AI 形象 > 按品种匹配的品牌小动物头像
+   *  （未设过头像的新宠物也显示小动物头像，不再退化成一个空圆/裸 emoji） */
+  const avatarUrl = currentPet ? resolvePetAvatarUrl(currentPet) : ''
   const petEmoji = currentPet?.species === 'cat' ? '🐱' : '🐶'
 
   /** 路由封装：无宠物时打卡/管家/时光线等需要宠物上下文的入口先校验 */

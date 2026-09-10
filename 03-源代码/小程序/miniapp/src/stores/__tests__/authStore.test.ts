@@ -48,6 +48,19 @@ const { mockTaroClearStorageSync } = vi.hoisted(() => ({
   mockTaroClearStorageSync: vi.fn(),
 }))
 
+// 宠物 store mock：登录成功后 authStore 需要调 initUser 拉宠物列表
+// （「启动未登录→登录页登录」路径不经过 app.js 的启动 initUser，
+//   不补拉会让首页/创作页等只读 petStore 的 tab 页一直空宠物）
+const { mockPetInitUser } = vi.hoisted(() => ({
+  mockPetInitUser: vi.fn(() => Promise.resolve()),
+}))
+
+vi.mock('../petStore', () => ({
+  usePetStore: {
+    getState: () => ({ initUser: mockPetInitUser }),
+  },
+}))
+
 vi.mock('@tarojs/taro', () => ({
   default: {
     getEnv: vi.fn(() => 'WEAPP'),
@@ -78,6 +91,8 @@ describe('authStore', () => {
     // 每个用例默认「token 有效 + 微信端」，过期/非微信用例在用例内覆盖
     mockIsTokenFormatValid.mockReturnValue(true)
     mockIsWeapp.mockReturnValue(true)
+    // clearAllMocks 会清掉实现，重新给出默认 resolved 实现
+    mockPetInitUser.mockResolvedValue(undefined)
     useAuthStore.setState({
       token: null,
       user: null,
@@ -264,6 +279,33 @@ describe('authStore', () => {
       expect(mockStorage.setToken).toHaveBeenCalledWith('login_token')
       expect(mockStorage.setRefreshToken).toHaveBeenCalledWith('login_refresh_token')
       expect(mockStorage.setUser).toHaveBeenCalledWith(user)
+    })
+
+    it('should load pets via petStore.initUser after login succeeds', async () => {
+      // 回归：登录成功后必须补拉宠物列表，否则首页/创作页等只读 petStore 的
+      // tab 页一直不显示宠物（要手动进「宠物」tab 触发 fetchPets 才出现）
+      const user = makeUser({ id: 'user_pet_001' })
+      mockApi.login.mockResolvedValue({
+        token: 'login_token',
+        refreshToken: 'login_refresh_token',
+        user,
+      })
+
+      await useAuthStore.getState().login()
+
+      expect(mockPetInitUser).toHaveBeenCalledWith('user_pet_001')
+    })
+
+    it('should not load pets when login fails', async () => {
+      mockApi.login.mockRejectedValue(new Error('Network error'))
+
+      try {
+        await useAuthStore.getState().login()
+      } catch {
+        // expected
+      }
+
+      expect(mockPetInitUser).not.toHaveBeenCalled()
     })
 
     it('should set loading during login', async () => {

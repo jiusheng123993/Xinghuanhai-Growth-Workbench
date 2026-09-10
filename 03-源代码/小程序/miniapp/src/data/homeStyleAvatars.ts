@@ -231,3 +231,30 @@ export function getHomeStyleAvatarUrl(pet: Pick<PetProfile, 'species' | 'breed' 
 export function getHomeStyleAvatarUrlByKey(key: string, species: 'dog' | 'cat'): string {
   return resolveAvatarUrl(`/uploads/avatars/home-style/${species}/${key}.png`)
 }
+
+/**
+ * 宠物头像统一解析（全站唯一口径）
+ *
+ * 优先级与家庭页 FamilyPetAvatar 完全一致：
+ *   真实照片 avatarPhotoUrl > AI/卡通形象 avatarCartoonUrl > 按品种匹配的品牌小动物头像。
+ *
+ * 为什么必须有「品牌头像」这一层兜底（2026-09-10 用户反馈）：
+ * 新建宠物默认没有自定义头像，若直接退化成"物种 emoji"，档案页/首页就只剩一个空渐变圆，
+ * 用户会判定为「头像没显示」；而家庭页同一只宠物却能显示小动物头像——同一份数据两处不一致。
+ * 这里收敛为统一口径：任何一只宠物永远有一个"小动物"头像。
+ * 品牌头像由服务器 /uploads 托管（与预设形象同源同图），加载失败时由调用方 onError
+ * 再退回 emoji（两级兜底，保证头像位永不为空）。
+ *
+ * @param pet - 宠物档案（真实照片/AI 形象 + species/breed/breedId 供品种匹配）
+ * @returns 可直接用于 <Image> 的绝对 URL（永远非空）
+ */
+export function resolvePetAvatarUrl(
+  // 头像字段显式放宽为 string | null：服务端与本地缓存都可能返回 null
+  // （见 avatar-customize 保存时把清空字段置 null 的既有约定）
+  pet: Pick<PetProfile, 'species' | 'breed' | 'breedId'> & {
+    avatarPhotoUrl?: string | null
+    avatarCartoonUrl?: string | null
+  },
+): string {
+  return pet.avatarPhotoUrl || pet.avatarCartoonUrl || getHomeStyleAvatarUrl(pet)
+}

@@ -10,6 +10,7 @@ import { isTokenFormatValid } from '../utils/jwt'
 import { wsClient } from '../services/wsClient'
 import { getLoginCode, loginWithPhone, API_BASE_URL, isWeapp } from '../platform'
 import { processPendingReferral } from '../services/shareService'
+import { usePetStore } from './petStore'
 import {
   storage,
   setStorageUserId,
@@ -120,6 +121,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       storage.setRefreshToken(res.refreshToken)
       storage.setUser(res.user)
       set({ user: res.user, token: res.token, isAuthenticated: true, isLoading: false })
+      // 登录成功后加载宠物列表：app.js 的 initUser 只在「启动时已登录」才执行，
+      // 「启动未登录→登录页登录」路径必须在这里补拉，否则首页/创作页等只读
+      // petStore 的 tab 页会一直空宠物、头像不显示，直到用户手动进「宠物」tab。
+      // fetchPets 内部自带 try/catch（失败只写 error 状态不会 reject），fire-and-forget 安全。
+      void usePetStore.getState().initUser(res.user.id)
       // 登录成功后消费启动时记录的邀请码，建立推荐关系
       void processPendingReferral(res.user.id)
     } catch (err) {
@@ -147,6 +153,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
         isLoading: false,
       })
+      // 登录成功后加载宠物列表（与微信登录 login 同理，见 login 注释）
+      void usePetStore.getState().initUser(result.user.id)
       void processPendingReferral(result.user.id)
     } catch (err) {
       set({ isLoading: false })

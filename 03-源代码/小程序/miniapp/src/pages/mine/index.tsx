@@ -14,6 +14,7 @@ import { useFamilyStore } from '../../stores/familyStore'
 import { useThemeStore, type ThemeKey } from '../../stores/themeStore'
 import { getCheckinStats } from '../../services/checkinService'
 import { redirectToLoginIfNeeded } from '../../utils/authGuard'
+import { resolvePetAvatarUrl } from '../../data/homeStyleAvatars'
 import { timelineService } from '../../services/timelineService'
 import PageLoading from '../../components/PageLoading'
 import { useThemeClass } from '../../hooks/useThemeClass'
@@ -301,16 +302,18 @@ export default function Mine() {
       </View>
 
       {/* ===== 宠物切换 chips ===== */}
-      {/* 头像展示优先级与全站一致：真实照片 avatarPhotoUrl > AI 形象 avatarCartoonUrl > 物种 emoji 兜底 */}
+      {/* 头像走全站统一口径：真实照片 avatarPhotoUrl > AI 形象 avatarCartoonUrl > 品种品牌头像；
+          仅当品牌头像也加载失败时才退回物种 emoji */}
       {pets.length > 0 && (
         <View className='mine-pet-chips'>
           <ScrollView className='mine-pet-chips-scroll' scrollX showScrollbar={false}>
             {pets.map(pet => {
               const isActive = currentPet?.id === pet.id
               const emoji = pet.species === 'cat' ? '🐱' : '🐶'
-              // 全站统一优先级解析头像地址；为空或"该地址已加载失败"时退回 emoji
+              // 全站统一优先级解析头像地址（永远非空：没设过头像会给品牌小动物头像）；
+              // 仅当"该地址已加载失败"时退回 emoji
               // （记录失败时的 URL：同一 URL 不反复重试；档案换了新头像地址会自动重试新图）
-              const avatarUrl = pet.avatarPhotoUrl || pet.avatarCartoonUrl || ''
+              const avatarUrl = resolvePetAvatarUrl(pet)
               const showAvatarImg = !!avatarUrl && petAvatarFailed[pet.id] !== avatarUrl
               return (
                 <View

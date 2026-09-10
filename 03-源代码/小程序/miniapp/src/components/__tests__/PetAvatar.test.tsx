@@ -3,7 +3,7 @@
  * 验证：有形象图时展示图片，无形象图时展示渐变 emoji 兜底（不再生成简笔画 SVG）
  */
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 
 vi.mock('@tarojs/components', () => ({
   View: ({ children, className, style, onClick }: any) => (
@@ -12,8 +12,8 @@ vi.mock('@tarojs/components', () => ({
   Text: ({ children, className, style }: any) => (
     <span className={className} style={style}>{children}</span>
   ),
-  Image: ({ src, className, style, mode }: any) => (
-    <img src={src} className={className} style={style} data-mode={mode} />
+  Image: ({ src, className, style, mode, onError }: any) => (
+    <img src={src} className={className} style={style} data-mode={mode} onError={onError} />
   ),
 }))
 
@@ -155,17 +155,45 @@ describe('PetAvatar', () => {
     expect(img.getAttribute('src')).toBe('https://cdn.example.com/explicit.png')
   })
 
-  it('falls back to emoji when pet has no avatar', () => {
+  it('falls back to emoji when no pet is provided at all', () => {
+    // 无档案上下文（如形象定制页生成中态）才走 emoji 占位
+    render(
+      <PetAvatar species='cat' petName='咪咪' expressionContext={defaultContext} />
+    )
+    expect(screen.getByText('🐱')).toBeDefined()
+    expect(screen.queryByRole('img')).toBeNull()
+  })
+
+  it('falls back to brand animal avatar when pet has no custom avatar', () => {
+    // 回归（2026-09-10 用户反馈「头像没显示」）：新建宠物默认没设头像，
+    // 若退化成空渐变圆用户会判定为坏图 —— 必须给按品种匹配的品牌小动物头像
     render(
       <PetAvatar
         species='cat'
         petName='咪咪'
         expressionContext={defaultContext}
-        pet={{ avatarPhotoUrl: undefined, avatarCartoonUrl: undefined }}
+        pet={{ avatarPhotoUrl: undefined, avatarCartoonUrl: undefined, breed: '布偶猫', breedId: 'ragdoll' }}
       />
     )
+    const img = screen.getByRole('img')
+    expect(img.getAttribute('src')).toContain('/uploads/avatars/home-style/cat/cat-08-ragdoll.png')
+    expect(screen.queryByText('🐱')).toBeNull()
+  })
+
+  it('falls back to emoji after the brand avatar image fails to load', () => {
+    // 两级兜底：品牌头像也加载失败时仍不能让头像位空着
+    const { container } = render(
+      <PetAvatar
+        species='cat'
+        petName='咪咪'
+        expressionContext={defaultContext}
+        pet={{ avatarPhotoUrl: undefined, avatarCartoonUrl: undefined, breed: '布偶猫', breedId: 'ragdoll' }}
+      />
+    )
+    const img = screen.getByRole('img')
+    fireEvent.error(img)
     expect(screen.getByText('🐱')).toBeDefined()
-    expect(screen.queryByRole('img')).toBeNull()
+    expect(container.querySelector('.pet-avatar__placeholder--cat')).toBeDefined()
   })
 
   it('treats empty-string imageUrl as absent and falls back to pet avatar', () => {

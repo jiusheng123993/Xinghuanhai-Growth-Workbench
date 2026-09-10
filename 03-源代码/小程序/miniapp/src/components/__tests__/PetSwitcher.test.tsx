@@ -11,8 +11,8 @@ vi.mock('@tarojs/components', () => ({
   Text: ({ children, className, style }: any) => (
     <span className={className} style={style}>{children}</span>
   ),
-  Image: ({ src, className, mode, lazyLoad }: any) => (
-    <img src={src} className={className} data-mode={mode} data-lazyLoad={lazyLoad} />
+  Image: ({ src, className, mode, lazyLoad, onError }: any) => (
+    <img src={src} className={className} data-mode={mode} data-lazyLoad={lazyLoad} onError={onError} />
   ),
   Picker: ({ children, mode, value, onChange }: any) => (
     <div data-mode={mode} data-value={value} onClick={() => onChange?.({ detail: { value: '2026-01-15' } })}>{children}</div>
@@ -114,15 +114,25 @@ describe('PetSwitcher', () => {
     expect(getByText('咪咪')).toBeDefined()
   })
 
-  it('shows dog emoji for dog without avatar', () => {
-    const { getAllByText } = render(<PetSwitcher pets={pets} currentPetId="pet-1" onSwitch={vi.fn()} />)
-    const dogEmojis = getAllByText('🐕')
-    expect(dogEmojis.length).toBe(2)
+  it('shows brand animal avatar for pets without custom avatar', () => {
+    // 全站统一口径（2026-09-10）：没设过头像的宠物给「按品种匹配的品牌小动物头像」，
+    // 不再退化成裸 emoji（否则档案页/首页只剩空圆，用户会判定为头像没显示）
+    const { container, queryByText } = render(<PetSwitcher pets={pets} currentPetId="pet-1" onSwitch={vi.fn()} />)
+    const imgs = container.querySelectorAll('.pet-switcher__avatar-img')
+    expect(imgs.length).toBe(3)
+    // 金毛 → dog-01-golden；咪咪（中华田园猫关键词未命中"金毛"等狗关键词，按猫兜底）→ cat-01-orange-tabby
+    expect(imgs[0].getAttribute('src')).toContain('/uploads/avatars/home-style/dog/dog-01-golden.png')
+    expect(imgs[1].getAttribute('src')).toContain('/uploads/avatars/home-style/cat/')
+    expect(queryByText('🐕')).toBeNull()
+    expect(queryByText('🐱')).toBeNull()
   })
 
-  it('shows cat emoji for cat without avatar', () => {
-    const { getByText } = render(<PetSwitcher pets={pets} currentPetId="pet-1" onSwitch={vi.fn()} />)
-    expect(getByText('🐱')).toBeDefined()
+  it('falls back to species emoji when the avatar image fails to load', () => {
+    // 两级兜底：品牌头像也加载失败时仍不能让头像位空着
+    const { container, getByText } = render(<PetSwitcher pets={pets} currentPetId="pet-1" onSwitch={vi.fn()} />)
+    const imgs = container.querySelectorAll('.pet-switcher__avatar-img')
+    fireEvent.error(imgs[0])
+    expect(getByText('🐕')).toBeDefined()
   })
 
   it('shows image for pets with avatarPhotoUrl', () => {

@@ -24,6 +24,7 @@ import AiAvatar from './AiAvatar'
 import { suggestQuickActions, type QuickAction } from '../../utils/suggestQuickActions'
 import { chooseImageWithPrivacy } from '../../utils/privacy'
 import { getCachedRiskScan } from '../../services/chronicService'
+import { resolvePetAvatarUrl } from '../../data/homeStyleAvatars'
 import './index.scss'
 
 function calcAge(birthDate: string): string {
@@ -103,6 +104,15 @@ export default function Index() {
   // 多成员共同养宠：家庭成员（人）列表 + 引导横幅开关（情侣引导 2026-08-24）
   const familyUsers = useFamilyStore((s) => s.users)
   const [showCoCareTip, setShowCoCareTip] = useState(true)
+  // 今日摘要卡头像：走全站统一口径（真实照片 > AI 形象 > 品种品牌头像），
+  // 未设过头像的新宠物也显示小动物头像而不是空圆；仅加载失败时退回物种 emoji
+  const homeAvatarUrl = petInfo.activePet ? resolvePetAvatarUrl(petInfo.activePet) : ''
+  const [homeAvatarFailed, setHomeAvatarFailed] = useState(false)
+
+  // 头像地址变化（切换宠物 / 换了形象 / 失败地址被替换）时重置失败标记，允许新地址重试
+  useEffect(() => {
+    setHomeAvatarFailed(false)
+  }, [homeAvatarUrl])
 
   // 进入首页若有家庭，加载家庭成员（人）列表（用于"邀请 TA 一起养宠"引导判断）
   useEffect(() => {
@@ -723,13 +733,15 @@ export default function Index() {
         <View className='home-summary-card' onClick={openCheckin}>
           <View className='home-summary-main'>
             <View className='home-summary-avatar'>
-              {/* 头像与全局一致：真实照片/AI 形象优先，没有才回退物种 emoji */}
-              {petInfo.activePet?.avatarPhotoUrl || petInfo.activePet?.avatarCartoonUrl ? (
+              {/* 头像走全站统一口径：真实照片 > AI 形象 > 按品种匹配的品牌小动物头像；
+                  仅当图片加载失败时才退回物种 emoji（未设头像的新宠物也显示小动物头像） */}
+              {homeAvatarUrl && !homeAvatarFailed ? (
                 <Image
                   className='home-summary-avatar-img'
-                  src={petInfo.activePet?.avatarPhotoUrl || petInfo.activePet?.avatarCartoonUrl || ''}
+                  src={homeAvatarUrl}
                   mode='aspectFill'
                   lazyLoad
+                  onError={() => setHomeAvatarFailed(true)}
                 />
               ) : (
                 <Text>{petInfo.emoji || '🐾'}</Text>

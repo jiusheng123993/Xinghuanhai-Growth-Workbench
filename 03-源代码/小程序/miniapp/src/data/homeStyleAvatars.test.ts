@@ -9,14 +9,27 @@ vi.mock('../services/api', () => ({
   resolveAvatarUrl: (path: string) => `https://mock-api.example.com${path}`,
 }))
 
-import { getHomeStyleAvatarKey, getHomeStyleAvatarUrl, getHomeStyleAvatarUrlByKey } from './homeStyleAvatars'
+import {
+  getHomeStyleAvatarKey,
+  getHomeStyleAvatarUrl,
+  getHomeStyleAvatarUrlByKey,
+  resolvePetAvatarUrl,
+} from './homeStyleAvatars'
 
-// 构造最小宠物档案（PetProfile 的 Pick 类型所需字段）
-function makePet(overrides: Partial<{ species: 'dog' | 'cat'; breed: string; breedId: string }>) {
+// 构造最小宠物档案（PetProfile 的 Pick 类型所需字段 + 可选头像字段）
+function makePet(overrides: Partial<{
+  species: 'dog' | 'cat'
+  breed: string
+  breedId: string
+  avatarPhotoUrl?: string | null
+  avatarCartoonUrl?: string | null
+}>) {
   return {
     species: overrides.species ?? 'cat',
     breed: overrides.breed ?? '',
     breedId: overrides.breedId ?? '',
+    ...('avatarPhotoUrl' in overrides ? { avatarPhotoUrl: overrides.avatarPhotoUrl } : {}),
+    ...('avatarCartoonUrl' in overrides ? { avatarCartoonUrl: overrides.avatarCartoonUrl } : {}),
   }
 }
 
@@ -152,5 +165,43 @@ describe('家庭页小动物头像映射', () => {
     expect(getHomeStyleAvatarUrl(pet)).toBe(getHomeStyleAvatarUrlByKey('cat-08-ragdoll', 'cat'))
     const dog = makePet({ species: 'dog', breedId: 'golden_retriever' })
     expect(getHomeStyleAvatarUrl(dog)).toBe(getHomeStyleAvatarUrlByKey('dog-01-golden', 'dog'))
+  })
+
+  // ===== resolvePetAvatarUrl：全站宠物头像统一口径 =====
+
+  it('resolvePetAvatarUrl：真实照片优先于 AI 形象与品牌头像', () => {
+    const pet = makePet({
+      species: 'cat',
+      breedId: 'ragdoll',
+      avatarPhotoUrl: 'https://cdn.example.com/photo.png',
+      avatarCartoonUrl: 'https://cdn.example.com/cartoon.png',
+    })
+    expect(resolvePetAvatarUrl(pet)).toBe('https://cdn.example.com/photo.png')
+  })
+
+  it('resolvePetAvatarUrl：无照片时用 AI 形象', () => {
+    const pet = makePet({
+      species: 'cat',
+      breedId: 'ragdoll',
+      avatarPhotoUrl: null,
+      avatarCartoonUrl: 'https://cdn.example.com/cartoon.png',
+    })
+    expect(resolvePetAvatarUrl(pet)).toBe('https://cdn.example.com/cartoon.png')
+  })
+
+  it('resolvePetAvatarUrl：都没有时回退品种品牌头像（永不返回空串）', () => {
+    // 回归（2026-09-10 用户反馈「头像没显示」）：新建宠物没设头像，
+    // 档案页此前只剩空渐变圆 —— 统一口径必须给出按品种匹配的小动物头像
+    const cat = makePet({ species: 'cat', breedId: 'ragdoll', avatarPhotoUrl: null, avatarCartoonUrl: null })
+    expect(resolvePetAvatarUrl(cat))
+      .toBe('https://mock-api.example.com/uploads/avatars/home-style/cat/cat-08-ragdoll.png')
+    const dog = makePet({ species: 'dog', breedId: 'golden_retriever', avatarPhotoUrl: undefined, avatarCartoonUrl: undefined })
+    expect(resolvePetAvatarUrl(dog))
+      .toBe('https://mock-api.example.com/uploads/avatars/home-style/dog/dog-01-golden.png')
+  })
+
+  it('resolvePetAvatarUrl：品种未知时按物种兜底，仍返回品牌头像', () => {
+    const pet = makePet({ species: 'cat', breed: '', breedId: '', avatarPhotoUrl: null, avatarCartoonUrl: null })
+    expect(resolvePetAvatarUrl(pet)).toContain('/uploads/avatars/home-style/cat/')
   })
 })
