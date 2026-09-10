@@ -14,6 +14,25 @@
  */
 /** 疫苗驱虫日历页面单元测试 */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
+
+// ============================================================
+// 导入真实模块
+// ============================================================
+import { api as _api } from '../../../services/api'
+import {
+  getVaccineRecords,
+  createVaccineRecord,
+  updateVaccineRecord,
+  deleteVaccineRecord,
+  markAsCompleted,
+  getUpcomingRecords,
+  getOverdueRecords,
+  generateInitialPlan,
+  calculateNextDate,
+  VACCINE_INTERVAL_RULES,
+} from '../../../services/vaccineService'
+import type { VaccineRecord, CreateVaccineData } from '../../../services/vaccineService'
 
 // ============================================================
 // Mock 层：共享的 mock storage 和 api
@@ -64,24 +83,6 @@ vi.mock('@tarojs/taro', () => ({
     removeStorageSync: vi.fn(),
   },
 }))
-
-// ============================================================
-// 导入真实模块
-// ============================================================
-import { api as _api } from '../../../services/api'
-import {
-  getVaccineRecords,
-  createVaccineRecord,
-  updateVaccineRecord,
-  deleteVaccineRecord,
-  markAsCompleted,
-  getUpcomingRecords,
-  getOverdueRecords,
-  generateInitialPlan,
-  calculateNextDate,
-  VACCINE_INTERVAL_RULES,
-} from '../../../services/vaccineService'
-import type { VaccineRecord, CreateVaccineData } from '../../../services/vaccineService'
 
 const api = _api as unknown as {
   get: ReturnType<typeof vi.fn>
@@ -647,5 +648,49 @@ describe('VaccineRecord 类型', () => {
     const validTypes = ['vaccine', 'deworm']
     const record = makeRecord()
     expect(validTypes).toContain(record.type)
+  })
+})
+
+// ============================================================
+// 样式契约锁：把"改了视觉但类名/变量没对齐"这类静默故障钉死
+// （读源码断言，手法同 components/__tests__/PageBackground.test.tsx 与 checkin 页）
+// ============================================================
+describe('疫苗页样式契约', () => {
+  const scss = readFileSync('src/pagesPet/vaccine/index.scss', 'utf-8')
+
+  it('动态状态变体必须齐备（tsx 用 `--${status}` 拼接）', () => {
+    // 三组按状态着色的行都在 tsx 里用模板串拼类名，scss 少一个变体不会有任何报错，
+    // 只会静默回落成中性样式（旧版 `--normal/--caution/--warning` 就是这么错的）
+    const families = [
+      'pet-vaccine__next-due-item-status',
+      'pet-vaccine__schedule-item-status',
+      'pet-vaccine__deworming-item-status',
+    ]
+    for (const family of families) {
+      for (const status of ['upcoming', 'due', 'overdue']) {
+        expect(scss).toContain(`.${family}--${status}`)
+      }
+    }
+  })
+
+  it('深色主题兜底要覆盖纸面 token，并且把弹窗算进去', () => {
+    for (const token of ['--text-primary', '--text-secondary', '--text-tertiary', '--glass-bg', '--border']) {
+      expect(scss).toContain(`${token}:`)
+    }
+    // 弹窗是 .pet-vaccine 的直接子节点，不在便签作用域里，漏掉就是白字压白底（审查 P1）
+    expect(scss).toContain('.vaccine-modal')
+  })
+
+  it('写 animation-delay 的选择器必须同时声明 animation（否则声明空转）', () => {
+    // 实测踩过：只有 delay 没有 animation-name，错落入场完全没发生
+    const animGroup = scss.slice(scss.indexOf('区块入场动效'))
+    const delaySelectors = [...animGroup.matchAll(/^([.\w-]+)\s*\{\s*animation-delay/gm)].map((m) => m[1])
+    expect(delaySelectors.length).toBeGreaterThan(0)
+    for (const selector of delaySelectors) {
+      // 该选择器要么在 animation 分组里，要么自己写了 animation
+      const inGroup = new RegExp(`\\n${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')},`).test(animGroup)
+      const selfAnim = new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{[^}]*animation:`).test(animGroup)
+      expect(inGroup || selfAnim).toBe(true)
+    }
   })
 })

@@ -1,35 +1,89 @@
 @import '../../styles/_theme';
 @import '../../styles/_animations';
 
+// ============================================
+// 疫苗日历 — 视觉方向 C「温暖手账」（第 1~942 行为本页模块；943 行之后是
+// 记录卡与添加弹窗两组子组件样式，本轮未动）
+// ============================================
+// 与宠物档案页 / 健康打卡页同一套手账语言：纸面 + 虚线便签 + 贴纸 + 衬线标题 + 图章。
+// 逐个模块处理：进度概览＝接种本封面（双层描边 + 大数字 + 圆环）、下一针提醒＝暖金便签、
+// 三格统计＝贴纸、推荐/驱虫/记录/小知识＝虚线便签、日历＝纸卡（今天实线、标记用圆点）。
+//
+// 【主题安全】颜色走 $color-* 主题变量；淡色底/描边用 rgba(var(--x-rgb), α) 通道写法
+// （直接写 rgba(var(--x), α) 在部分端上是非法 CSS，整条声明会被丢弃）。
+// ============================================
+
 .pet-vaccine {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
   padding: 32rpx 24rpx;
   padding-bottom: 200rpx;
   position: relative;
   animation: pageEnter 0.4s ease-out;
 }
 
-.pet-vaccine__loading {
-  @include flex-center;
-  padding: 80rpx 0;
+// ============================================
+// 纸面 token 兜底（深色主题）
+// ============================================
+// .theme-starry 把 --text-* / --glass-bg 整体转成浅色，但纸面恒为浅底 —— 不钉回就会白字压白纸。
+// 作用域仅限本页（全局修复要动全仓 100+ 页，需整体回归，另案处理）。
+.pet-vaccine__progress-card,
+.pet-vaccine__next-remind,
+.pet-vaccine__next-due,
+.pet-vaccine__reminders,
+.pet-vaccine__auto-schedule,
+.pet-vaccine__deworming,
+.pet-vaccine__section,
+.pet-vaccine__tips,
+.pet-vaccine__disclaimer,
+.pet-vaccine__stats,
+.vaccine-calendar,
+/* 弹窗是 .pet-vaccine 的直接子节点（不在上面那些便签里），必须单独列进来：
+   它同样是白底纸面，漏掉的话星空主题下就是白字压白底（审查 P1） */
+.vaccine-modal {
+  --text-primary: #40281c;
+  --text-secondary: #8b6e58;
+  --text-tertiary: #a98d74;
+  --text-placeholder: #cbb49e;
+  --bg-secondary: #fffdf9;
+  --border: #f3e2d2;
+  --border-light: rgba(243, 226, 210, 0.5);
+  --glass-bg: rgba(255, 255, 255, 0.72);
 }
 
-.pet-vaccine__loading-text {
-  font-size: $font-size-sm;
-  color: $color-text-tertiary;
-}
+// 说明：原 `.pet-vaccine__loading / __loading-text` 是死样式（加载态走 <PageLoading /> 组件），
+// 本次重写时一并删除。
 
+// ============================================
+// 模块 ①：页头（衬线标题 + 虚线下的短横）
+// ============================================
 .pet-vaccine__header {
-  margin: 24rpx 0;
+  margin: 20rpx 0 26rpx;
+  text-align: center;
 }
 
 .pet-vaccine__title {
-  display: block;
-  font-size: $font-size-xl;
-  font-weight: $font-weight-bold;
+  display: inline-block;
+  position: relative;
+  font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
+  font-size: 46rpx;
+  font-weight: 700;
+  letter-spacing: 4rpx;
   color: $color-text-primary;
-  text-align: center;
+  padding-bottom: 14rpx;
+
+  /* 标题下的虚线短横：手账里标题下面常压一道装饰线 */
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 120rpx;
+    height: 4rpx;
+    transform: translateX(-50%);
+    border-bottom: 4rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.45);
+  }
 }
 
 .pet-vaccine__empty {
@@ -41,26 +95,33 @@
 }
 
 .pet-vaccine__empty-icon {
-  font-size: 96rpx;
   margin-bottom: 24rpx;
 }
 
 .pet-vaccine__empty-text {
   font-size: $font-size-md;
-  color: $color-text-tertiary;
+  color: $color-text-secondary;
   text-align: center;
   line-height: 1.6;
 }
 
-// ==================== 疫苗进度概览卡（原型对齐） ====================
+// ============================================
+// 模块 ②：疫苗进度概览 —— 接种本封面（双层描边纸卡）
+// ============================================
 .pet-vaccine__progress-card {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 32rpx;
-  padding: 40rpx 40rpx;
-  border-radius: $radius-lg;
-  background: rgba($color-primary, 0.08);
+  padding: 36rpx 34rpx;
+  border-radius: 44rpx;
+  background: #fffdf8;
+  border: 2rpx solid rgba(var(--gold-rgb, 255, 176, 32), 0.55);
+  box-shadow:
+    inset 0 0 0 8rpx #fffdf8,
+    inset 0 0 0 10rpx rgba(var(--gold-rgb, 255, 176, 32), 0.26),
+    0 10rpx 30rpx -18rpx rgba(61, 33, 18, 0.35);
   animation: fadeInUp 0.3s ease-out;
 }
 
@@ -69,23 +130,27 @@
 }
 
 .pet-vaccine__progress-label {
-  font-size: $font-size-xs;
+  font-size: 22rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
   color: $color-text-secondary;
 }
 
+/* 大数字用衬线 + 等宽数字，像接种本上手写的计数 */
 .pet-vaccine__progress-value {
   display: block;
   margin-top: 8rpx;
-  font-size: 72rpx;
-  font-weight: $font-weight-bold;
+  font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
+  font-size: 76rpx;
+  font-weight: 700;
   line-height: 1;
-  color: $color-primary;
+  color: $color-primary-dark;
   font-variant-numeric: tabular-nums;
 }
 
 .pet-vaccine__progress-total {
   font-size: 40rpx;
-  font-weight: $font-weight-semibold;
+  font-weight: 600;
   color: $color-text-tertiary;
 }
 
@@ -93,13 +158,14 @@
   display: block;
   margin-top: 12rpx;
   font-size: 22rpx;
-  color: $color-text-tertiary;
+  color: $color-text-secondary;
 }
 
 .pet-vaccine__progress-ring-wrap {
   flex-shrink: 0;
 }
 
+/* 圆环本体仍由 tsx 内联 conic-gradient 画（保持原机制不动），这里只负责外框质感 */
 .pet-vaccine__progress-ring {
   width: 160rpx;
   height: 160rpx;
@@ -108,13 +174,14 @@
   align-items: center;
   justify-content: center;
   transform: rotate(-90deg);
+  box-shadow: 0 0 0 6rpx rgba(var(--gold-rgb, 255, 176, 32), 0.2);
 }
 
 .pet-vaccine__progress-ring-inner {
   width: 116rpx;
   height: 116rpx;
   border-radius: 50%;
-  background: rgba($color-primary, 0.08);
+  background: #fffdf8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -123,8 +190,8 @@
 
 .pet-vaccine__progress-ring-text {
   font-size: 28rpx;
-  font-weight: $font-weight-bold;
-  color: $color-primary;
+  font-weight: 800;
+  color: $color-primary-dark;
   font-variant-numeric: tabular-nums;
 }
 
@@ -132,278 +199,229 @@
   display: flex;
   align-items: center;
   gap: 12rpx;
-  margin-top: 12rpx;
+  margin-top: 16rpx;
   padding: 0 8rpx;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
+  font-size: 22rpx;
+  font-weight: 600;
   color: $color-text-secondary;
 }
 
 .pet-vaccine__progress-foot-icon {
-  font-size: 28rpx;
-  color: $color-primary;
+  flex-shrink: 0;
 }
 
-// ==================== 下一针提醒卡（原型对齐：高亮） ====================
+// ============================================
+// 模块 ③：下一针提醒（暖金便签）
+// ============================================
 .pet-vaccine__next-remind {
-  border-radius: $radius-lg;
-  background: $color-bg-card;
-  box-shadow: $shadow-card;
+  position: relative;
+  border-radius: 36rpx;
+  background: #fffdf8;
+  border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.6);
+  box-shadow: $shadow-xs;
   overflow: hidden;
-  margin-top: 24rpx;
-  animation: fadeInUp 0.35s ease-out;
+  animation: fadeInUp 0.32s ease-out;
 }
 
+/* 左侧竖条＝书签带 */
 .pet-vaccine__next-remind-bar {
-  height: 12rpx;
-  background: linear-gradient(135deg, $color-gold-soft, $color-primary);
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 10rpx;
+  background: $gradient-warm;
 }
 
 .pet-vaccine__next-remind-body {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 24rpx;
-  padding: 32rpx 40rpx;
+  gap: 18rpx;
+  padding: 24rpx 26rpx 24rpx 34rpx;
 }
 
 .pet-vaccine__next-remind-info {
-  min-width: 0;
   flex: 1;
+  min-width: 0;
 }
 
 .pet-vaccine__next-remind-label {
   display: block;
-  font-size: 22rpx;
-  font-weight: $font-weight-medium;
+  font-size: 20rpx;
+  font-weight: 700;
+  letter-spacing: 1rpx;
   color: $color-text-tertiary;
-  margin-bottom: 8rpx;
 }
 
 .pet-vaccine__next-remind-name {
   display: block;
+  margin-top: 6rpx;
+  font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
   font-size: 32rpx;
-  font-weight: $font-weight-bold;
+  font-weight: 700;
+  letter-spacing: 1rpx;
   color: $color-text-primary;
-  line-height: 1.3;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .pet-vaccine__next-remind-date {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  margin-top: 12rpx;
-  font-size: $font-size-xs;
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
   color: $color-text-secondary;
-  font-variant-numeric: tabular-nums;
 }
 
 .pet-vaccine__next-remind-arrow {
+  /* 字号与颜色在重写时丢了，导致“›”缩成默认 32rpx —— 审查 P2，补回 */
   font-size: 40rpx;
   color: $color-text-tertiary;
   flex-shrink: 0;
 }
 
-// ==================== 疫苗小知识卡（原型对齐） ====================
-.pet-vaccine__tips {
-  display: flex;
-  gap: 24rpx;
-  padding: 40rpx;
-  border-radius: $radius-lg;
-  background: $color-bg-card;
-  box-shadow: $shadow-card;
-  margin-top: 24rpx;
-  animation: fadeInUp 0.35s ease-out;
-}
-
-.pet-vaccine__tips-icon {
-  @include flex-center;
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: $radius-full;
-  background: $color-gold-bg;
-  color: $color-gold-deep;
-  flex-shrink: 0;
-  font-size: 32rpx;
-}
-
-.pet-vaccine__tips-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.pet-vaccine__tips-title {
-  display: block;
-  font-size: $font-size-md;
-  font-weight: $font-weight-bold;
-  color: $color-text-primary;
-  margin-bottom: 12rpx;
-}
-
-.pet-vaccine__tips-text {
-  display: block;
-  font-size: $font-size-xs;
-  line-height: 1.7;
-  color: $color-text-secondary;
-
-  &--hint {
-    margin-top: 8rpx;
-    color: $color-text-tertiary;
-  }
-}
-
-// ==================== 添加疫苗记录按钮（原型对齐） ====================
-.pet-vaccine__add-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16rpx;
-  height: 112rpx;
-  border-radius: $radius-lg;
-  margin-top: 24rpx;
-  background: linear-gradient(135deg, $color-primary-light, $color-primary);
-  box-shadow: $shadow-button;
-  animation: fadeInUp 0.35s ease-out;
-
-  &:active {
-    transform: scale(0.98);
-    opacity: 0.92;
-  }
-}
-
-.pet-vaccine__add-btn-icon {
-  font-size: 40rpx;
-  color: $color-text-inverse;
-  line-height: 1;
-}
-
-.pet-vaccine__add-btn-text {
-  font-size: 32rpx;
-  font-weight: $font-weight-bold;
-  color: $color-text-inverse;
-}
-
-// ==================== 到期摘要卡片 ====================
+// ============================================
+// 模块 ④：下一针清单（便签 + 贴纸式状态）
+// ============================================
 .pet-vaccine__next-due {
-  @include card-base;
-  padding: 24rpx 32rpx;
-  margin-bottom: 24rpx;
-  border-left: 8rpx solid $color-primary;
-  animation: fadeInUp 0.35s ease-out;
+  position: relative;
+  margin-top: 22rpx;
+  padding: 22rpx 26rpx 18rpx;
+  border-radius: 36rpx;
+  background: #fffdf8;
+  border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.42);
+  box-shadow: $shadow-xs;
 }
 
 .pet-vaccine__next-due-header {
   display: flex;
-  align-items: center;
-  gap: 12rpx;
-  margin-bottom: 16rpx;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
 }
 
 .pet-vaccine__next-due-title {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
+  font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
+  font-size: 30rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
   color: $color-text-primary;
 }
 
 .pet-vaccine__next-due-count {
   font-size: 22rpx;
-  color: $color-text-inverse;
-  background: $color-danger;
-  padding: 2rpx 14rpx;
-  border-radius: 14rpx;
-  font-weight: $font-weight-semibold;
+  font-weight: 700;
+  color: $color-primary-dark;
 }
 
 .pet-vaccine__next-due-list {
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
 }
 
 .pet-vaccine__next-due-item {
   display: flex;
   align-items: center;
-  gap: 12rpx;
-  padding: 12rpx 16rpx;
-  background: $color-primary-bg;
-  border-radius: 16rpx;
+  gap: 16rpx;
+  padding: 16rpx 0;
+  border-bottom: 2rpx dashed rgba(243, 226, 210, 0.95);
+
+  &:last-child {
+    border-bottom: 0;
+    padding-bottom: 4rpx;
+  }
 }
 
 .pet-vaccine__next-due-item-icon {
-  font-size: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 16rpx;
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
   flex-shrink: 0;
 }
 
 .pet-vaccine__next-due-item-info {
   flex: 1;
+  min-width: 0;
 }
 
 .pet-vaccine__next-due-item-name {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  color: $color-text-primary;
   display: block;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: $color-text-primary;
 }
 
 .pet-vaccine__next-due-item-date {
-  font-size: 20rpx;
-  color: $color-text-tertiary;
   display: block;
-  margin-top: 2rpx;
+  margin-top: 4rpx;
+  font-size: 20rpx;
+  color: $color-text-secondary;
+  font-variant-numeric: tabular-nums;
 }
 
+/* 状态贴纸：未选＝虚线、逾期＝实线红、即将＝实线金 */
 .pet-vaccine__next-due-item-status {
+  display: flex;
+  align-items: center;
+  height: 44rpx;
+  padding: 0 16rpx;
+  border-radius: $radius-round;
+  border: 2rpx dashed $color-border;
+  background: #fffaf3;
   font-size: 20rpx;
-  font-weight: $font-weight-medium;
+  font-weight: 700;
+  color: $color-text-secondary;
   flex-shrink: 0;
 }
 
-.pet-vaccine__next-due-item-status--overdue {
-  color: $color-danger;
+.pet-vaccine__next-due-item-status--upcoming {
+  border-style: solid;
+  border-color: rgba(var(--gold-rgb, 255, 176, 32), 0.6);
+  background: rgba(var(--gold-rgb, 255, 176, 32), 0.14);
+  color: $color-gold-deep;
 }
 
 .pet-vaccine__next-due-item-status--due {
-  color: $color-primary;
+  border-style: solid;
+  border-color: rgba(var(--gold-deep-rgb, 232, 146, 10), 0.65);
+  background: rgba(var(--gold-deep-rgb, 232, 146, 10), 0.14);
+  color: $color-gold-deep;
 }
 
-.pet-vaccine__next-due-item-status--upcoming {
-  color: $color-success;
+.pet-vaccine__next-due-item-status--overdue {
+  border-style: solid;
+  border-color: rgba(var(--danger-rgb, 255, 90, 95), 0.65);
+  background: rgba(var(--danger-rgb, 255, 90, 95), 0.12);
+  color: $color-danger;
 }
 
-// ==================== 区块入场动效 ====================
+// ============================================
+// 模块 ⑤：三格统计（贴纸）
+// ============================================
 .pet-vaccine__stats {
-  @include card-base;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  animation: fadeInUp 0.3s ease-out;
+  margin-top: 22rpx;
+  padding: 22rpx 12rpx;
+  border-radius: 36rpx;
+  background: #fffdf8;
+  border: 2rpx solid $color-border;
+  box-shadow: $shadow-xs;
 }
-
-.pet-vaccine__reminders,
-.pet-vaccine__auto-schedule,
-.pet-vaccine__deworming {
-  animation: fadeInUp 0.4s ease-out both;
-}
-
-.pet-vaccine__reminders { animation-delay: 0.05s; }
-.pet-vaccine__auto-schedule { animation-delay: 0.1s; }
-.pet-vaccine__deworming { animation-delay: 0.15s; }
 
 .pet-vaccine__stats-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8rpx;
+  flex: 1;
+  text-align: center;
 }
 
 .pet-vaccine__stats-value {
-  font-size: 40rpx;
-  font-weight: $font-weight-bold;
+  display: block;
+  font-size: 42rpx;
+  font-weight: 800;
+  letter-spacing: -1rpx;
+  color: $color-text-primary;
+  font-variant-numeric: tabular-nums;
 }
 
 .pet-vaccine__stats-value--completed {
@@ -411,7 +429,7 @@
 }
 
 .pet-vaccine__stats-value--pending {
-  color: $color-primary;
+  color: $color-gold-deep;
 }
 
 .pet-vaccine__stats-value--overdue {
@@ -419,320 +437,388 @@
 }
 
 .pet-vaccine__stats-label {
-  font-size: 22rpx;
-  color: $color-text-tertiary;
+  display: block;
+  margin-top: 4rpx;
+  font-size: 20rpx;
+  color: $color-text-secondary;
 }
 
 .pet-vaccine__stats-divider {
   width: 2rpx;
-  height: 48rpx;
-  background: $color-divider;
+  height: 56rpx;
+  background: $color-border;
 }
 
+// ============================================
+// 模块 ⑥：推荐接种计划（可折叠便签）
+// ============================================
 .pet-vaccine__reminders {
-  @include card-base;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
+  position: relative;
+  margin-top: 22rpx;
+  padding: 22rpx 26rpx 18rpx;
+  border-radius: 36rpx;
+  background: #fffdf8;
+  border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.42);
+  box-shadow: $shadow-xs;
 }
 
 .pet-vaccine__reminders-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20rpx;
+  gap: 16rpx;
 }
 
 .pet-vaccine__reminders-title {
-  font-size: $font-size-md;
-  font-weight: $font-weight-semibold;
+  font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
+  font-size: 30rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
   color: $color-text-primary;
 }
 
+/* 展开/收起：虚线胶囊按钮（可点高度 ≥ 88rpx 等效） */
 .pet-vaccine__reminders-toggle {
-  padding: 8rpx 24rpx;
-  border-radius: 20rpx;
-  background: $color-primary-bg;
-  transition: all $transition-normal;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 64rpx;
+  padding: 0 24rpx;
+  border-radius: $radius-round;
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
+  border: 2rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.4);
+  @include press-feedback;
 }
 
 .pet-vaccine__reminders-toggle--on {
-  background: rgba($color-primary, 0.08);
-  border: 1px solid $color-border;
+  border-style: solid;
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.14);
 }
 
 .pet-vaccine__reminders-toggle-text {
-  font-size: $font-size-xs;
-  color: $color-text-tertiary;
-  font-weight: $font-weight-medium;
-}
-
-.pet-vaccine__reminders-toggle--on .pet-vaccine__reminders-toggle-text {
-  color: $color-primary;
+  font-size: 22rpx;
+  font-weight: 700;
+  color: $color-primary-dark;
 }
 
 .pet-vaccine__reminder-list {
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
+  margin-top: 10rpx;
 }
 
 .pet-vaccine__reminder-item {
   display: flex;
   align-items: center;
   gap: 16rpx;
-  padding: 16rpx 20rpx;
-  border-radius: 16rpx;
-  background: $color-primary-bg;
-}
+  padding: 16rpx 0;
+  border-bottom: 2rpx dashed rgba(243, 226, 210, 0.95);
 
-.pet-vaccine__reminder-item--overdue {
-  background: $color-danger-bg;
-}
-
-.pet-vaccine__reminder-item--upcoming {
-  background: rgba($color-primary, 0.06);
+  &:last-child {
+    border-bottom: 0;
+    padding-bottom: 4rpx;
+  }
 }
 
 .pet-vaccine__reminder-icon {
-  font-size: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 16rpx;
+  background: rgba(var(--gold-rgb, 255, 176, 32), 0.16);
+  flex-shrink: 0;
 }
 
 .pet-vaccine__reminder-content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4rpx;
+  min-width: 0;
 }
 
 .pet-vaccine__reminder-name {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
+  display: block;
+  font-size: 26rpx;
+  font-weight: 700;
   color: $color-text-primary;
 }
 
 .pet-vaccine__reminder-date {
-  font-size: 22rpx;
-  color: $color-text-tertiary;
+  display: block;
+  margin-top: 4rpx;
+  font-size: 20rpx;
+  color: $color-text-secondary;
+  font-variant-numeric: tabular-nums;
 }
 
-.pet-vaccine__reminder-item--overdue .pet-vaccine__reminder-date {
-  color: $color-danger;
+.pet-vaccine__reminder-item--upcoming {
+  .pet-vaccine__reminder-name {
+    color: $color-gold-deep;
+  }
 }
 
-.pet-vaccine__section {
-  margin-top: 24rpx;
+.pet-vaccine__reminder-item--overdue {
+  .pet-vaccine__reminder-name {
+    color: $color-danger;
+  }
 }
 
-.pet-vaccine__section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16rpx;
-  padding: 0 8rpx;
-}
-
-.pet-vaccine__section-title {
-  font-size: $font-size-md;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
-}
-
-.pet-vaccine__section-count {
-  font-size: 22rpx;
-  color: $color-text-tertiary;
-}
-
+// ============================================
+// 模块 ⑦：自动生成计划（便签 + 计划行）
+// ============================================
 .pet-vaccine__auto-schedule {
-  @include card-base;
-  padding: 24rpx;
-  margin-bottom: 24rpx;
+  position: relative;
+  margin-top: 22rpx;
+  padding: 22rpx 26rpx 18rpx;
+  border-radius: 36rpx;
+  background: #fffdf8;
+  border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.42);
+  box-shadow: $shadow-xs;
 }
 
 .pet-vaccine__schedule-toggle {
-  padding: 8rpx 20rpx;
-  background: $color-primary-bg;
-  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  min-height: 64rpx;
+  @include press-feedback;
 }
 
 .pet-vaccine__schedule-toggle-text {
-  font-size: 22rpx;
-  color: $color-primary;
+  font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
+  font-size: 30rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+  color: $color-text-primary;
 }
 
 .pet-vaccine__schedule-list {
-  margin-top: 16rpx;
+  display: flex;
+  flex-direction: column;
+  margin-top: 10rpx;
 }
 
 .pet-vaccine__schedule-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 20rpx 0;
-  border-bottom: 1rpx solid $color-divider;
-}
+  gap: 16rpx;
+  padding: 16rpx 0;
+  border-bottom: 2rpx dashed rgba(243, 226, 210, 0.95);
 
-.pet-vaccine__schedule-item:last-child {
-  border-bottom: none;
-}
-
-.pet-vaccine__schedule-item--overdue {
-  background: $color-danger-bg;
-  border-radius: 12rpx;
-  padding: 20rpx;
-  margin-bottom: 8rpx;
-  border-bottom: none;
-}
-
-.pet-vaccine__schedule-item--due {
-  background: rgba($color-primary, 0.06);
-  border-radius: 12rpx;
-  padding: 20rpx;
-  margin-bottom: 8rpx;
-  border-bottom: none;
+  &:last-child {
+    border-bottom: 0;
+    padding-bottom: 4rpx;
+  }
 }
 
 .pet-vaccine__schedule-item-left {
   flex: 1;
+  min-width: 0;
 }
 
 .pet-vaccine__schedule-item-name {
-  font-size: $font-size-sm;
-  color: $color-text-primary;
-  font-weight: $font-weight-medium;
   display: block;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: $color-text-primary;
 }
 
 .pet-vaccine__schedule-item-notes {
-  font-size: 22rpx;
-  color: $color-text-tertiary;
-  margin-top: 4rpx;
   display: block;
+  margin-top: 4rpx;
+  font-size: 20rpx;
+  color: $color-text-secondary;
 }
 
 .pet-vaccine__schedule-item-right {
-  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6rpx;
+  flex-shrink: 0;
 }
 
 .pet-vaccine__schedule-item-date {
   font-size: 22rpx;
+  font-weight: 700;
   color: $color-text-secondary;
-  display: block;
+  font-variant-numeric: tabular-nums;
 }
 
 .pet-vaccine__schedule-item-status {
-  font-size: 22rpx;
-  font-weight: $font-weight-medium;
-  display: block;
-  margin-top: 4rpx;
-}
-
-.pet-vaccine__schedule-item-status--overdue {
-  color: $color-danger;
-}
-
-.pet-vaccine__schedule-item-status--due {
-  color: $color-primary;
+  display: flex;
+  align-items: center;
+  height: 40rpx;
+  padding: 0 14rpx;
+  border-radius: $radius-round;
+  border: 2rpx dashed $color-border;
+  background: #fffaf3;
+  font-size: 19rpx;
+  font-weight: 700;
+  color: $color-text-secondary;
 }
 
 .pet-vaccine__schedule-item-status--upcoming {
-  color: $color-success;
+  border-style: solid;
+  border-color: rgba(var(--gold-rgb, 255, 176, 32), 0.6);
+  background: rgba(var(--gold-rgb, 255, 176, 32), 0.14);
+  color: $color-gold-deep;
 }
 
+.pet-vaccine__schedule-item-status--due {
+  border-style: solid;
+  border-color: rgba(var(--gold-deep-rgb, 232, 146, 10), 0.65);
+  background: rgba(var(--gold-deep-rgb, 232, 146, 10), 0.14);
+  color: $color-gold-deep;
+}
+
+.pet-vaccine__schedule-item-status--overdue {
+  border-style: solid;
+  border-color: rgba(var(--danger-rgb, 255, 90, 95), 0.65);
+  background: rgba(var(--danger-rgb, 255, 90, 95), 0.12);
+  color: $color-danger;
+}
+
+.pet-vaccine__schedule-item--due .pet-vaccine__schedule-item-name {
+  color: $color-gold-deep;
+}
+
+.pet-vaccine__schedule-item--overdue .pet-vaccine__schedule-item-name {
+  color: $color-danger;
+}
+
+// ============================================
+// 模块 ⑧：驱虫计划（便签）
+// ============================================
 .pet-vaccine__deworming {
-  @include card-base;
-  padding: 24rpx;
-  margin-bottom: 24rpx;
+  position: relative;
+  margin-top: 22rpx;
+  padding: 22rpx 26rpx 18rpx;
+  border-radius: 36rpx;
+  background: #fffdf8;
+  border: 3rpx dashed rgba(var(--teal-rgb, 79, 163, 227), 0.45);
+  box-shadow: $shadow-xs;
 }
 
 .pet-vaccine__deworming-list {
-  margin-top: 16rpx;
+  display: flex;
+  flex-direction: column;
+  margin-top: 6rpx;
 }
 
 .pet-vaccine__deworming-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 20rpx 0;
-  border-bottom: 1rpx solid $color-divider;
-}
+  gap: 16rpx;
+  padding: 18rpx 0;
+  border-bottom: 2rpx dashed rgba(243, 226, 210, 0.95);
 
-.pet-vaccine__deworming-item:last-child {
-  border-bottom: none;
-}
-
-.pet-vaccine__deworming-item--overdue {
-  background: $color-danger-bg;
-  border-radius: 12rpx;
-  padding: 20rpx;
-  margin-bottom: 8rpx;
-  border-bottom: none;
-}
-
-.pet-vaccine__deworming-item--due {
-  background: rgba($color-primary, 0.06);
-  border-radius: 12rpx;
-  padding: 20rpx;
-  margin-bottom: 8rpx;
-  border-bottom: none;
+  &:last-child {
+    border-bottom: 0;
+    padding-bottom: 4rpx;
+  }
 }
 
 .pet-vaccine__deworming-item-left {
   flex: 1;
+  min-width: 0;
 }
 
 .pet-vaccine__deworming-item-type {
-  font-size: $font-size-sm;
+  display: block;
+  font-size: 26rpx;
+  font-weight: 700;
   color: $color-text-primary;
-  font-weight: $font-weight-medium;
 }
 
 .pet-vaccine__deworming-item-right {
-  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6rpx;
+  flex-shrink: 0;
 }
 
 .pet-vaccine__deworming-item-date {
   font-size: 22rpx;
+  font-weight: 700;
   color: $color-text-secondary;
-  display: block;
+  font-variant-numeric: tabular-nums;
 }
 
 .pet-vaccine__deworming-item-status {
-  font-size: 22rpx;
-  font-weight: $font-weight-medium;
-  display: block;
-  margin-top: 4rpx;
-}
-
-.pet-vaccine__deworming-item-status--overdue {
-  color: $color-danger;
-}
-
-.pet-vaccine__deworming-item-status--due {
-  color: $color-primary;
+  display: flex;
+  align-items: center;
+  height: 40rpx;
+  padding: 0 14rpx;
+  border-radius: $radius-round;
+  border: 2rpx dashed $color-border;
+  background: #fffaf3;
+  font-size: 19rpx;
+  font-weight: 700;
+  color: $color-text-secondary;
 }
 
 .pet-vaccine__deworming-item-status--upcoming {
-  color: $color-success;
+  border-style: solid;
+  border-color: rgba(var(--teal-rgb, 79, 163, 227), 0.6);
+  background: rgba(var(--teal-rgb, 79, 163, 227), 0.14);
+  color: $color-teal;
 }
 
-.pet-vaccine__list-empty {
+.pet-vaccine__deworming-item-status--due {
+  border-style: solid;
+  border-color: rgba(var(--gold-deep-rgb, 232, 146, 10), 0.65);
+  background: rgba(var(--gold-deep-rgb, 232, 146, 10), 0.14);
+  color: $color-gold-deep;
+}
+
+.pet-vaccine__deworming-item-status--overdue {
+  border-style: solid;
+  border-color: rgba(var(--danger-rgb, 255, 90, 95), 0.65);
+  background: rgba(var(--danger-rgb, 255, 90, 95), 0.12);
+  color: $color-danger;
+}
+
+.pet-vaccine__deworming-item--due .pet-vaccine__deworming-item-type,
+.pet-vaccine__deworming-item--overdue .pet-vaccine__deworming-item-type {
+  color: $color-gold-deep;
+}
+
+// ============================================
+// 模块 ⑨：接种记录（便签 + 列表 + 空态 + 加载更多）
+// ============================================
+.pet-vaccine__section {
+  position: relative;
+  margin-top: 22rpx;
+  padding: 22rpx 26rpx 18rpx;
+  border-radius: 36rpx;
+  background: #fffdf8;
+  border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.42);
+  box-shadow: $shadow-xs;
+}
+
+.pet-vaccine__section-header {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80rpx 48rpx;
-  @include card-base;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 12rpx;
 }
 
-.pet-vaccine__list-empty-icon {
-  font-size: 64rpx;
-  margin-bottom: 16rpx;
+.pet-vaccine__section-title {
+  font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
+  font-size: 30rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+  color: $color-text-primary;
 }
 
-.pet-vaccine__list-empty-text {
-  font-size: $font-size-sm;
+.pet-vaccine__section-count {
+  font-size: 20rpx;
+  font-weight: 600;
   color: $color-text-tertiary;
-  text-align: center;
 }
 
 .pet-vaccine__list {
@@ -741,152 +827,270 @@
   gap: 16rpx;
 }
 
-.pet-vaccine__share-item {
-  @include flex-center;
-  padding: 12rpx 0;
-  margin-top: -8rpx;
+.pet-vaccine__list-empty {
+  padding: 8rpx 0 4rpx;
 }
 
-.pet-vaccine__share-item-text {
-  font-size: $font-size-xs;
-  color: $color-success;
-  font-weight: $font-weight-medium;
-}
-
+/* 「加载更多」做成虚线胶囊，并保证可点区域够大 */
 .pet-vaccine__load-more {
-  @include flex-center;
-  padding: 24rpx 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80rpx;
+  margin-top: 18rpx;
+  border-radius: 24rpx;
+  background: $glass-bg;
+  border: 2rpx dashed $color-border;
+  @include press-feedback;
 }
 
 .pet-vaccine__load-more-text {
-  font-size: $font-size-sm;
-  color: $color-text-tertiary;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: $color-text-secondary;
 }
 
-.pet-vaccine__disclaimer {
-  padding: 16rpx 24rpx;
-  margin-top: 16rpx;
+.pet-vaccine__share-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  min-height: 80rpx;
+  margin-top: 14rpx;
+  border-radius: 24rpx;
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+  border: 2rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.45);
+  @include press-feedback;
 }
 
-.pet-vaccine__disclaimer-text {
-  font-size: 22rpx;
-  color: $color-text-tertiary;
-  line-height: 1.5;
+.pet-vaccine__share-item-text {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: $color-primary-dark;
+}
+
+// ============================================
+// 模块 ⑩：疫苗小知识（便签 + 灯泡）
+// ============================================
+.pet-vaccine__tips {
+  position: relative;
+  margin-top: 22rpx;
+  padding: 22rpx 26rpx 20rpx;
+  border-radius: 36rpx;
+  background: #fff6ea;
+  border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.55);
+  box-shadow: $shadow-xs;
+}
+
+.pet-vaccine__tips-icon {
+  flex-shrink: 0;
+}
+
+.pet-vaccine__tips-title {
+  display: block;
+  font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
+  font-size: 28rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+  color: $color-text-primary;
+}
+
+.pet-vaccine__tips-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  margin-top: 10rpx;
+}
+
+.pet-vaccine__tips-text {
+  flex: 1;
+  font-size: 23rpx;
+  line-height: 1.7;
+  color: $color-text-secondary;
+}
+
+// ============================================
+// 模块 ⑪：添加按钮 + 悬浮 FAB
+// ============================================
+.pet-vaccine__add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  height: 96rpx;
+  margin-top: 26rpx;
+  border-radius: $radius-round;
+  background: linear-gradient(135deg, #ff8a4d 0%, $color-primary 55%, $color-primary-dark 100%);
+  box-shadow: 0 14rpx 30rpx -12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.8);
+  @include press-feedback;
+}
+
+.pet-vaccine__add-btn-icon {
+  flex-shrink: 0;
+}
+
+.pet-vaccine__add-btn-text {
+  font-size: 30rpx;
+  font-weight: 800;
+  letter-spacing: 2rpx;
+  color: #ffffff;
 }
 
 .pet-vaccine__fab {
   position: fixed;
-  right: 32rpx;
-  bottom: 160rpx;
-  width: 96rpx;
-  height: 96rpx;
-  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  right: 40rpx;
+  bottom: 140rpx;
+  width: 108rpx;
+  height: 108rpx;
   border-radius: 50%;
-  @include flex-center;
-  box-shadow: 0 8rpx 32rpx rgba($color-primary, 0.3);
-  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ff8a4d 0%, $color-primary 60%, $color-primary-dark 100%);
+  box-shadow:
+    0 0 0 8rpx rgba(var(--primary-rgb, 255, 107, 61), 0.14),
+    0 16rpx 30rpx -14rpx rgba(var(--primary-rgb, 255, 107, 61), 0.9);
+  z-index: 20;
   @include press-feedback;
 }
 
 .pet-vaccine__fab-icon {
-  font-size: 48rpx;
-  color: #FFFFFF;
-  font-weight: 300;
-  line-height: 1;
+  flex-shrink: 0;
 }
 
-/* VaccineCalendar */
+// ============================================
+// 模块 ⑫：免责声明（虚线便签）
+// ============================================
+.pet-vaccine__disclaimer {
+  margin-top: 22rpx;
+  padding: 18rpx 22rpx;
+  border-radius: 24rpx;
+  background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+  border: 2rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+}
+
+.pet-vaccine__disclaimer-text {
+  font-size: 20rpx;
+  line-height: 1.6;
+  color: $color-text-secondary;
+}
+
+// ============================================
+// 模块 ⑬：日历（纸卡；今天实线、标记用圆点）
+// ============================================
 .vaccine-calendar {
-  @include card-base;
-  padding: 32rpx;
+  position: relative;
+  margin-top: 22rpx;
+  padding: 22rpx 22rpx 18rpx;
+  border-radius: 36rpx;
+  background: #fffdf8;
+  border: 2rpx solid $color-border;
+  box-shadow: $shadow-xs;
 }
 
 .vaccine-calendar__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24rpx;
+  margin-bottom: 16rpx;
 }
 
+/* 翻月按钮：虚线圆角方块，可点区域 64rpx */
 .vaccine-calendar__nav-btn {
-  width: 56rpx;
-  height: 56rpx;
-  @include flex-center;
-  background: $color-primary-bg;
-  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 20rpx;
+  background: $glass-bg;
+  border: 2rpx dashed $color-border;
   @include press-feedback;
 }
 
 .vaccine-calendar__nav-icon {
-  font-size: 32rpx;
-  color: $color-primary;
-  font-weight: $font-weight-semibold;
+  flex-shrink: 0;
 }
 
 .vaccine-calendar__title {
-  font-size: $font-size-lg;
-  font-weight: $font-weight-bold;
+  font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
+  font-size: 32rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
   color: $color-text-primary;
+  font-variant-numeric: tabular-nums;
 }
 
 .vaccine-calendar__weekdays {
   display: flex;
-  margin-bottom: 16rpx;
+  align-items: center;
+  padding-bottom: 8rpx;
+  border-bottom: 2rpx dashed rgba(243, 226, 210, 0.95);
 }
 
 .vaccine-calendar__weekday {
   flex: 1;
   text-align: center;
-  font-size: $font-size-xs;
+  font-size: 20rpx;
+  font-weight: 700;
+  letter-spacing: 1rpx;
   color: $color-text-tertiary;
-  font-weight: $font-weight-medium;
 }
 
 .vaccine-calendar__days {
   display: flex;
   flex-wrap: wrap;
+  padding-top: 8rpx;
 }
 
 .vaccine-calendar__day {
-  width: 14.28%;
-  height: 80rpx;
+  position: relative;
+  width: 14.285%;
+  height: 84rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  position: relative;
-  border-radius: 16rpx;
-  transition: background $transition-fast;
+  gap: 4rpx;
+  border-radius: 18rpx;
 }
 
+/* 空格子不显示（下面的类名是唯一正确拼写；曾误写成 pet-vaccine-calendar__… 造成死选择器） */
 .vaccine-calendar__day--empty {
-  pointer-events: none;
-}
-
-.vaccine-calendar__day--today {
-  background: $color-primary-bg;
-}
-
-.vaccine-calendar__day--today .vaccine-calendar__day-num {
-  color: $color-primary;
-  font-weight: $font-weight-bold;
-}
-
-.vaccine-calendar__day--overdue {
-  background: $color-danger-bg;
+  visibility: hidden;
 }
 
 .vaccine-calendar__day-num {
-  font-size: $font-size-sm;
+  font-size: 24rpx;
+  font-weight: 600;
   color: $color-text-primary;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 今天：实线描边 + 主色淡底（与"未选＝虚线"的手账语言一致） */
+.vaccine-calendar__day--today {
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+}
+
+.vaccine-calendar__day--today .vaccine-calendar__day-num {
+  font-weight: 800;
+  color: $color-primary-dark;
+}
+
+/* 逾期日：淡红底，提醒"这一针漏了" */
+.vaccine-calendar__day--overdue {
+  background: rgba(var(--danger-rgb, 255, 90, 95), 0.1);
 }
 
 .vaccine-calendar__day-marks {
   display: flex;
+  align-items: center;
   gap: 4rpx;
-  margin-top: 4rpx;
+  height: 10rpx;
 }
 
+/* 标记做成小圆点（手账里在日历上点一下做记号） */
 .vaccine-calendar__mark {
   width: 8rpx;
   height: 8rpx;
@@ -898,16 +1102,17 @@
 }
 
 .vaccine-calendar__mark--deworm {
-  background: $color-success;
+  background: $color-teal;
 }
 
 .vaccine-calendar__legend {
   display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 32rpx;
-  margin-top: 24rpx;
-  padding-top: 24rpx;
-  border-top: 2rpx solid $color-divider;
+  gap: 24rpx;
+  margin-top: 14rpx;
+  padding-top: 14rpx;
+  border-top: 2rpx dashed rgba(243, 226, 210, 0.95);
 }
 
 .vaccine-calendar__legend-item {
@@ -927,7 +1132,7 @@
 }
 
 .vaccine-calendar__legend-dot--deworm {
-  background: $color-success;
+  background: $color-teal;
 }
 
 .vaccine-calendar__legend-dot--overdue {
@@ -935,9 +1140,32 @@
 }
 
 .vaccine-calendar__legend-text {
-  font-size: 22rpx;
-  color: $color-text-tertiary;
+  font-size: 20rpx;
+  color: $color-text-secondary;
 }
+
+// ==================== 区块入场动效（逐张贴上去的错落感） ====================
+// 注意：写 animation-delay 的选择器必须同时在这份 animation 分组里，
+// 否则只有 delay 没有 animation-name，声明空转（审查实测：next-due / vaccine-calendar 曾漏在分组外）
+.pet-vaccine__stats,
+.pet-vaccine__next-due,
+.pet-vaccine__reminders,
+.pet-vaccine__auto-schedule,
+.pet-vaccine__deworming,
+.vaccine-calendar,
+.pet-vaccine__section,
+.pet-vaccine__tips {
+  animation: fadeInUp 0.4s ease-out both;
+}
+
+.pet-vaccine__stats { animation-delay: 0.04s; }
+.pet-vaccine__next-due { animation-delay: 0.06s; }
+.pet-vaccine__reminders { animation-delay: 0.08s; }
+.pet-vaccine__auto-schedule { animation-delay: 0.1s; }
+.pet-vaccine__deworming { animation-delay: 0.12s; }
+.vaccine-calendar { animation-delay: 0.14s; }
+.pet-vaccine__section { animation-delay: 0.16s; }
+.pet-vaccine__tips { animation-delay: 0.18s; }
 
 /* VaccineRecordCard */
 .vaccine-record-card {
@@ -1246,7 +1474,7 @@
   background: linear-gradient(135deg, $color-primary, $color-primary-dark);
   border-radius: 48rpx;
   @include flex-center;
-  box-shadow: 0 8rpx 32rpx rgba($color-primary, 0.3);
+  box-shadow: 0 8rpx 32rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
   @include press-feedback;
 }
 
