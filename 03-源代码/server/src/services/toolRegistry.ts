@@ -151,11 +151,11 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   {
     name: 'search_breed_info',
-    description: '查询宠物品种百科信息，包括品种特征、常见遗传病、饲养注意事项等。当用户询问品种相关问题时使用。',
+    description: '查询宠物品种百科信息。当用户询问某个具体品种（如"英短是什么猫""金毛好养吗"）或上传宠物照片后问"这是什么品种/什么猫"时使用；会返回品种资料并引导打开品种详情页。',
     parameters: {
       type: 'object',
       properties: {
-        breed: { type: 'string', description: '品种名称，如"金毛寻回犬""英短"等。如果不传则查询当前宠物品种。' },
+        breed: { type: 'string', description: '品种名称或别名，如"英短""英国短毛猫""金毛"。若不传则查询当前宠物品种。' },
       },
       required: [],
     },

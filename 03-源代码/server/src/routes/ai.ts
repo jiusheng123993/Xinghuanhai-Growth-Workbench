@@ -9,6 +9,7 @@ import { validate } from '../middleware/validate.js';
 import { uploadLimiter, aiRecognizeLimiter, chatLimiter, namingLimiter } from '../middleware/rateLimit.js';
 import { chatMessageSchema } from '../schemas/index.js';
 import { chat, guardCheck, guardCheckOutput, bailianChat, bailianASR } from '../services/aiService.js';
+import { saveConversation } from '../services/memoryService.js';
 import { recognizeHealthReport } from '../services/healthReportService.js';
 import { analyzeImage } from '../services/visionService.js';
 import { PetFactRepository } from '../repositories/petFactRepository.js';
@@ -39,10 +40,41 @@ const upload = multer({
 // 限流：chatLimiter 30次/分钟（2026-09 审查修复：此前未挂载，付费 LLM 入口仅剩全局兜底）
 router.post('/chat', authMiddleware, chatLimiter, validate({ body: chatMessageSchema }), async (req: Request, res: Response) => {
   try {
-    const { messages, temperature, max_tokens, petId } = req.body;
+    const { messages, temperature, max_tokens, petId, persistUserContent } = req.body;
 
     const result = await chat(messages, { temperature, max_tokens });
     res.json({ success: true, data: { content: result } });
+
+    // 异步写入 Agent 持久化历史（2026-09-10）：旧版链路此前不落库，发图轮/降级轮的对话
+    // 退出页面即失忆——用户发图后追问"这是什么猫"跨会话无上下文。写入后 agentLoop 的
+    // loadConversationHistory 能召回。归属校验防止把对话记到他人宠物名下（横向越权防线）；
+    // saveConversation 内部截断 2000 字且静默失败，绝不阻塞主回复。
+    if (typeof petId === 'string' && petId) {
+      try {
+        const canAccess = await petRepository.canAccess(petId, req.userId as string);
+        if (canAccess) {
+          const userMessagesToSave = messages.filter((m: { role: string }) => m.role === 'user');
+          const lastUser = userMessagesToSave[userMessagesToSave.length - 1];
+          // 发图轮前端会传 persistUserContent（"[图片] 文字｜视觉观察：…"合并文本），
+          // 与前端 chatHistory 逐字一致：Agent 链路按精确匹配去重才能命中，跨会话也能
+          // 召回观察文本；普通文字轮无该字段，存消息原文
+          const userContentToSave =
+            typeof persistUserContent === 'string' && persistUserContent
+              ? persistUserContent
+              : lastUser?.content;
+          if (userContentToSave) {
+            void saveConversation(req.userId as string, petId, 'user', userContentToSave);
+          }
+          // 空串回复不落库（审查 P3：避免孤儿空条目）
+          if (result) {
+            void saveConversation(req.userId as string, petId, 'assistant', result);
+          }
+        }
+      } catch (err) {
+        // 归属校验异常：跳过持久化（fail-safe 宁漏记不越权写），记一行脱敏摘要供观测
+        console.warn('[AIChat] 对话持久化跳过（归属校验异常）:', (err as Error).message?.split('\n')[0]?.slice(0, 200));
+      }
+    }
 
     // 异步提取宠物特征，不阻塞主回复
     if (petId && typeof petId === 'string' && messages.length > 0) {
@@ -432,9 +464,10 @@ router.post('/photo-analyze', authMiddleware, uploadLimiter, upload.single('phot
     const systemPrompt = `你是"星河宠记"的宠物照片分析助手。用户上传了一张宠物照片，请用简洁、自然的中文输出一段对照片的观察描述，供后续 AI 管家基于照片回答用户问题。
 要求：
 1. 只描述照片中**能看到**的内容：体型、毛色、花纹、神态、动作、环境、可能的状态特征（如是否精神、被毛状况）。可酌情指出肉眼可见的异常信号（如流泪、红肿、皮屑），但不要下诊断结论。
-2. 不要编造照片里看不到的信息（如病史、年龄、性格、喜好）。
-3. 语气客观中肯，像一位有经验的宠物观察者。
-4. 直接输出描述文字，不要用"AI""生成"等字眼，不要加标题、引号或列表，150 字以内。`;
+2. 如能根据外貌特征判断出品种或疑似品种，用"看起来像/疑似 XX 品种"的措辞顺带说明（如"看起来像英国短毛猫"）；判断不了就不提，不要编造。
+3. 不要编造照片里看不到的信息（如病史、年龄、性格、喜好）。
+4. 语气客观中肯，像一位有经验的宠物观察者。
+5. 直接输出描述文字，不要用"AI""生成"等字眼，不要加标题、引号或列表，150 字以内。`;
 
     const result = await analyzeImage({
       imageUrl: imageDataUrl,

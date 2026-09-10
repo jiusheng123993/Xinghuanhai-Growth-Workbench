@@ -1,4 +1,4 @@
-﻿import { beijingDateString } from '../utils/beijingTime.js';
+import { beijingDateString } from '../utils/beijingTime.js';
 /**
  * Agent 工具实现
  * 每个工具封装对现有后端逻辑的调用，供 Agent 循环使用
@@ -14,8 +14,14 @@ import { registerTool, type ToolResult } from './toolRegistry.js';
 import { listHealthReports } from './healthReportService.js';
 // 图谱评估器（Phase 3 收尾：聊天路径 check_symptom 消费权威图谱，与症状初筛页判断一致）
 import { loadActiveGraph, mapSymptomTextToIds, evaluateSymptomLevel } from './graphEvaluator.js';
+// 品种库权威数据（search_breed_info 接 breed_knowledge 热更新表）+ 纯函数名称匹配
+import { BreedKnowledgeRepository } from '../repositories/breedRepository.js';
+import { findBreedMatch } from './breedMatch.js';
 
 type Context = { userId: string; petId?: string };
+
+// 品种库仓库单例（与 routes/breeds.ts 同表，getLatestBreeds 空表会惰性播种种子）
+const breedRepository = new BreedKnowledgeRepository();
 
 // ========== 辅助函数 ==========
 
@@ -586,7 +592,8 @@ registerTool('get_health_trends', async (args, context): Promise<ToolResult> => 
 // ========== 9. search_breed_info ==========
 
 registerTool('search_breed_info', async (args, context): Promise<ToolResult> => {
-  let breedName = (args.breed as string) || '';
+  // String() 归一：LLM 偶发传数字/对象时 normalize 调 .replace 会抛 TypeError，这里兜底成字符串
+  let breedName = String(args.breed ?? '').trim();
 
   // 如果没有指定品种，查询当前宠物品种
   if (!breedName && context.petId) {
@@ -601,35 +608,31 @@ registerTool('search_breed_info', async (args, context): Promise<ToolResult> => 
     return { success: false, message: '请提供品种名称' };
   }
 
-  // 品种百科数据在前端静态资源（BREED_DATA），后端无 pet_breeds 表（早期迁移建表失败）。
-  // 这里返回用户宠物档案中的品种信息 + 引导，避免查询不存在的表导致 500。
-  const { rows } = await pool.query(
-    `SELECT id, name, species, breed FROM pet_profiles
-     WHERE user_id = $1 AND breed ILIKE $2
-     ORDER BY created_at LIMIT 1`,
-    [context.userId, `%${breedName}%`]
-  );
-
-  if (rows.length === 0) {
+  // 接服务端权威品种库（breed_knowledge 热更新表，空表惰性播种），按 name/aliases 归一匹配。
+  // 命中 → 返回 breedId 并下发 breed_flow 动作，前端跳品种详情页（可再一键设为我的宠物品种）。
+  // Array.isArray 守卫：管理端种子/历史行不经 isValidBreedData 校验，非数组时 for..of 会抛错，
+  // 退化为「未命中引导」而非「工具执行失败」的通用报错。
+  const latest = await breedRepository.getLatestBreeds();
+  const rawBreeds = latest?.data?.breeds;
+  const breeds = (Array.isArray(rawBreeds) ? rawBreeds : []) as Array<{ id: string; name: string; species: string; aliases?: string[] }>;
+  const match = findBreedMatch(breeds, breedName);
+  if (match) {
+    const emoji = match.species === 'cat' ? '🐱' : '🐶';
     return {
       success: true,
-      data: {
-        found: false,
-        breed: breedName,
-        message: `暂时无法提供"${breedName}"的详细百科（品种知识库建设中），但你可以问它的喂养、健康、性格相关问题，我会尽力解答。`,
-      },
+      data: { action: 'breed_flow', breedId: match.id, breedName: match.name, species: match.species },
+      message: `${emoji} 这是「${match.name}」的品种百科。已为你打开详情页，可查看体型/性格/常见病/喂养建议，也能一键把它设为你的宠物品种～`,
     };
   }
 
-  const b = rows[0];
+  // 未命中品种库：给出引导，避免把「查不到」误报成具体品种信息
   return {
     success: true,
     data: {
-      found: true,
-      breed: b.breed,
-      species: b.species,
-      message: `${b.name}的品种是${b.breed}。关于该品种的详细百科（体型/性格/寿命/常见病/喂养建议），可继续追问具体问题（如"${b.breed}容易得什么病"），我会结合常见品种知识解答。`,
+      found: false,
+      breed: breedName,
     },
+    message: `暂时没在品种百科里找到「${breedName}」的详细资料（可能是不常见品种或叫法不同），你可以换个常见叫法试试（如「英短」「金毛」），或去「品种百科」页面浏览完整列表。`,
   };
 });
 

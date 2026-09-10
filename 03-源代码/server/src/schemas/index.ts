@@ -202,7 +202,15 @@ export const chatMessageSchema = z.object({
     .max(20, '对话轮数超限（最多 20 条）'),
   temperature: z.number().min(0).max(2).optional(),
   max_tokens: z.number().int().min(1).max(4096).optional(),
-  petId: z.string().optional(),
+  // .min(1) 对齐 agentChatSchema（2026-09-10 审查 P3：空串 petId 此前在路由内被静默跳过，
+  // 提前到 schema 层拒绝，防御纵深）
+  petId: z.string().min(1).optional(),
+  // 发图轮持久化用户消息的合并文本（可选，2026-09-10 发图带文字配套）：前端把
+  // "[图片] 文字｜视觉观察：…"整体传上来落库，与前端 chatHistory 逐字一致——
+  // Agent 链路按"role+content 精确匹配"去重，双侧一致才能命中去重，跨会话重进
+  // 页面也能召回视觉观察文本。仅作存储用途、不进当轮 prompt；长度上限与
+  // saveConversation 内部 2000 截断口径一致
+  persistUserContent: z.string().max(2000).optional(),
 });
 
 // ===== 取名模块 =====
