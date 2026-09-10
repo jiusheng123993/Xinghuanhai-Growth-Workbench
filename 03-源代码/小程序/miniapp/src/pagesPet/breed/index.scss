@@ -1,9 +1,11 @@
 @import '../../styles/_theme';
 @import '../../styles/_animations';
+@import '../../styles/_journal';
 
 .breed-page {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
   padding-bottom: 120px;
   animation: pageEnter 0.4s ease-out;
 
@@ -182,7 +184,7 @@
 
   &__card-tag {
     padding: 2px 10px;
-    background: rgba($color-primary, 0.12);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
     border-radius: 12px;
     font-size: 20px;
     color: $color-primary-light;
@@ -228,7 +230,7 @@
     left: 0;
     right: 0;
     padding: $spacing-sm $spacing-lg;
-    background: rgba($color-bg-card, 0.95);
+    background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.95);
     backdrop-filter: blur(8px);
     border-top: 1px solid $color-border;
   }
@@ -249,14 +251,14 @@
     border-radius: 50%;
     background: $color-primary;
     @include flex-center;
-    box-shadow: 0 8px 24px rgba($color-primary, 0.4);
+    box-shadow: 0 8px 24px rgba(var(--primary-rgb, 255, 107, 61), 0.4);
     z-index: 100;
     transition: all $transition-fast;
     animation: floatPulse 2s ease-in-out infinite;
 
     &:active {
       transform: scale(0.9);
-      box-shadow: 0 4px 12px rgba($color-primary, 0.3);
+      box-shadow: 0 4px 12px rgba(var(--primary-rgb, 255, 107, 61), 0.3);
     }
 
     &--loading {
@@ -476,5 +478,215 @@
       border-color: $color-primary;
       color: $color-text-inverse;
     }
+  }
+}
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖）
+// ============================================
+// 【为什么用追加而不是整体重写】本页原有 481 行按 BEM 嵌套组织，其中「拍照识别」弹窗、
+// 识别遮罩、置信度条等状态在 H5 预览里无法复现（要真机点相机才会出现）。整体重写会有
+// 误删这些不可见状态样式的风险，因此本轮只对**列表页可见模块**做追加覆盖：
+// 靠"同特异性 + 顺序在后"取胜。等该页做完整重写时，把这些规则并回上面的对应段落、
+// 删掉旧定义即可（已在交付说明里记为待清理项）。
+//
+// 纸面 token 兜底必须给到每个浅色面：深色主题（.theme-starry）会把 --text-* / --glass-bg
+// 转成浅色，纸面恒为浅底，不钉就是白字压白纸。
+.breed-page {
+  &__header,
+  &__search-wrapper,
+  &__search-clear,
+  &__filter-chip,
+  &__card,
+  &__load-more,
+  &__disclaimer {
+    @include journal-paper-tokens;
+  }
+
+  // —— 页头：衬线标题 + 标题下虚线短横 ——
+  &__header {
+    margin: 20rpx 0 24rpx;
+  }
+
+  &__title {
+    @include journal-serif(46rpx);
+    display: inline-block;
+    position: relative;
+    padding-bottom: 12rpx;
+    letter-spacing: 4rpx;
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 120rpx;
+      height: 4rpx;
+      border-bottom: 4rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.45);
+    }
+  }
+
+  &__subtitle {
+    display: block;
+    margin-top: 10rpx;
+    font-size: 22rpx;
+    color: $color-text-secondary;
+  }
+
+  // —— 搜索：纸面 + 虚线边（像手账上的搜索便签） ——
+  &__search-wrapper {
+    background: #fffdf8;
+    border-radius: 28rpx;
+    border: 2rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.4);
+    box-shadow: $shadow-xs;
+  }
+
+  &__search-input {
+    font-size: 26rpx;
+    color: $color-text-primary;
+  }
+
+  // —— 筛选：贴纸式胶囊（未选虚线 / 选中实线 + 主色淡底） ——
+  // 注意：原实现靠父级 `white-space: nowrap` + 子级 `display: inline-block` 横向排列，
+  // 覆盖时必须用 **inline-flex**；用 display:flex 会让每个 chip 变成整行宽的块、
+  // 竖着堆起来（本次实测踩过）
+  &__filter-row {
+    white-space: nowrap;
+  }
+
+  &__filter-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8rpx;
+    height: 64rpx;
+    padding: 0 24rpx;
+    margin-right: 14rpx;
+    border-radius: $radius-round;
+    background: #fffdf8;
+    border: 2rpx dashed $color-border;
+    font-size: 24rpx;
+    font-weight: 700;
+    color: $color-text-secondary;
+    @include press-feedback;
+  }
+
+  &__filter-chip--active {
+    border-style: solid;
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+    color: $color-primary-dark;
+  }
+
+  // —— 数量行 ——
+  &__count-text {
+    font-size: 22rpx;
+    font-weight: 600;
+    letter-spacing: 1rpx;
+    color: $color-text-secondary;
+  }
+
+  // —— 品种卡：虚线便签 ——
+  &__card {
+    @include journal-note(primary, 0.38);
+    padding: 22rpx 24rpx;
+    display: flex;
+    align-items: center;
+    gap: 20rpx;
+    animation: fadeInUp 0.3s ease-out both;
+  }
+
+  // 卡片头像：白环 + 暖色外环，与宠物档案/打卡页的贴纸头像同一语言
+  &__card-emoji {
+    width: 104rpx;
+    height: 104rpx;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: #fff;
+    box-shadow:
+      0 0 0 6rpx rgba(var(--gold-rgb, 255, 176, 32), 0.3),
+      0 8rpx 18rpx -12rpx rgba(61, 33, 18, 0.5);
+  }
+
+  // 品种名用衬线，与板块内其它标题一致
+  &__card-name {
+    @include journal-serif(32rpx);
+    display: block;
+    letter-spacing: 1rpx;
+  }
+
+  &__card-meta {
+    display: flex;
+    align-items: center;
+    gap: 18rpx;
+    margin-top: 10rpx;
+  }
+
+  &__card-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6rpx;
+    font-size: 22rpx;
+    color: $color-text-secondary;
+    font-variant-numeric: tabular-nums;
+  }
+
+  // 性格标签：小贴纸
+  &__card-tag {
+    height: 40rpx;
+    padding: 0 16rpx;
+    display: flex;
+    align-items: center;
+    border-radius: $radius-round;
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.09);
+    border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.28);
+    font-size: 20rpx;
+    font-weight: 700;
+    color: $color-primary-dark;
+  }
+
+  // —— 加载更多：玻璃底虚线胶囊（坐在页面背景上，用 ghost 而不是纸面） ——
+  &__load-more {
+    @include journal-ghost;
+    margin-top: 20rpx;
+  }
+
+  &__load-more-text {
+    font-size: 24rpx;
+    font-weight: 700;
+    color: $color-text-secondary;
+  }
+
+  // —— 免责声明：虚线便签 ——
+  &__disclaimer {
+    margin-top: 22rpx;
+    padding: 18rpx 22rpx;
+    border-radius: 24rpx;
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+    border: 2rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+  }
+
+  &__disclaimer-text {
+    font-size: 20rpx;
+    line-height: 1.6;
+    color: $color-text-secondary;
+  }
+
+  // —— 拍照识别悬浮按钮：渐变圆钮 + 暖色光晕（与疫苗页 FAB 同一语言） ——
+  &__camera-btn {
+    background: linear-gradient(135deg, #ff8a4d 0%, $color-primary 60%, $color-primary-dark 100%);
+    box-shadow:
+      0 0 0 8rpx rgba(var(--primary-rgb, 255, 107, 61), 0.14),
+      0 16rpx 30rpx -14rpx rgba(var(--primary-rgb, 255, 107, 61), 0.9);
+  }
+
+  &__camera-btn-loading {
+    font-size: 26rpx;
+  }
+
+  // —— 空态 ——
+  &__empty-text {
+    font-size: 24rpx;
+    line-height: 1.7;
+    color: $color-text-secondary;
   }
 }

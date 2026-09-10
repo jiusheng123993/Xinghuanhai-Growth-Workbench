@@ -12,6 +12,7 @@ import { useAnalytics, usePageView } from '../../hooks/useAnalytics'
 import { chooseImageWithPrivacy } from '../../utils/privacy'
 import { recognizeBreed, matchBreedInData, syncBreedKnowledge, type BreedRecognizeResult } from '../../services/breedService'
 import './index.scss'
+import { PageBackground, Icon  } from '../../components'
 
 const disclaimerText = new MedicalDisclaimer().getDisclaimer('green', 'breed')
 
@@ -129,16 +130,17 @@ export default function PetBreed() {
       setIsRecognizing(true)
       trackEvent('breed_recognize_start', {})
 
-      const recognizeResult = await recognizeBreed(result.tempFilePaths[0])
+      // 改名 recognized：避免遮蔽组件状态 recognizeResult（no-shadow）
+      const recognized = await recognizeBreed(result.tempFilePaths[0])
 
-      if (recognizeResult) {
-        setRecognizeResult(recognizeResult)
+      if (recognized) {
+        setRecognizeResult(recognized)
         // 在品种库中匹配
-        const matchedId = matchBreedInData(recognizeResult.breedName, recognizeResult.species, getActiveBreeds())
+        const matchedId = matchBreedInData(recognized.breedName, recognized.species, getActiveBreeds())
         setMatchedBreedId(matchedId)
         trackEvent('breed_recognize_success', {
-          breedName: recognizeResult.breedName,
-          confidence: recognizeResult.confidence,
+          breedName: recognized.breedName,
+          confidence: recognized.confidence,
           matched: !!matchedId,
         })
       }
@@ -167,6 +169,7 @@ export default function PetBreed() {
 
   return (
     <View className={`breed-page ${themeClass}`}>
+      <PageBackground />
       <View className='breed-page__header'>
         <Text className='breed-page__title'>品种百科</Text>
         <Text className='breed-page__subtitle'>
@@ -176,7 +179,7 @@ export default function PetBreed() {
 
       <View className='breed-page__search'>
         <View className='breed-page__search-wrapper'>
-          <Text className='breed-page__search-icon'>🔍</Text>
+          <Icon name='magnifying-glass' size={18} tone='ink' className='breed-page__search-icon' />
           <Input
             className='breed-page__search-input'
             placeholder='搜索品种名称...'
@@ -204,13 +207,16 @@ export default function PetBreed() {
             className={`breed-page__filter-chip ${speciesFilter === 'dog' ? 'breed-page__filter-chip--active' : ''}`}
             onClick={() => handleSpeciesFilterChange('dog')}
           >
-            <Text>🐶 犬类</Text>
+            {/* 功能性 emoji 换成面性图标（与全站图标体系一致，且能随主题换色） */}
+            <Icon name='dog' size={14} tone={speciesFilter === 'dog' ? 'primary' : 'muted'} />
+            <Text>犬类</Text>
           </View>
           <View
             className={`breed-page__filter-chip ${speciesFilter === 'cat' ? 'breed-page__filter-chip--active' : ''}`}
             onClick={() => handleSpeciesFilterChange('cat')}
           >
-            <Text>🐱 猫类</Text>
+            <Icon name='cat' size={14} tone={speciesFilter === 'cat' ? 'primary' : 'muted'} />
+            <Text>猫类</Text>
           </View>
         </ScrollView>
 
@@ -247,8 +253,15 @@ export default function PetBreed() {
               <View className='breed-page__card-body'>
                 <Text className='breed-page__card-name'>{breed.name}</Text>
                 <View className='breed-page__card-meta'>
-                  <Text className='breed-page__card-meta-item'>⏱ {breed.lifespan}</Text>
-                  <Text className='breed-page__card-meta-item'>⚖ {breed.weightRangeStr}</Text>
+                  {/* ⏱/⚖ 属功能性符号，换面性图标，与卡片名左侧的图标体系一致 */}
+                  <View className='breed-page__card-meta-item'>
+                    <Icon name='clock' size={12} tone='muted' />
+                    <Text>{breed.lifespan}</Text>
+                  </View>
+                  <View className='breed-page__card-meta-item'>
+                    <Icon name='scales' size={12} tone='muted' />
+                    <Text>{breed.weightRangeStr}</Text>
+                  </View>
                 </View>
                 <View className='breed-page__card-tags'>
                   {breed.temperament.slice(0, 3).map((t) => (
@@ -278,7 +291,7 @@ export default function PetBreed() {
 
         {filteredBreeds.length === 0 && (
           <View className='breed-page__empty'>
-            <Text className='breed-page__empty-icon'>🔍</Text>
+            <Icon name='magnifying-glass' size={18} tone='muted' className='breed-page__empty-icon' />
             <Text className='breed-page__empty-text'>未找到匹配的品种</Text>
           </View>
         )}
@@ -293,7 +306,10 @@ export default function PetBreed() {
         className={`breed-page__camera-btn ${isRecognizing ? 'breed-page__camera-btn--loading' : ''}`}
         onClick={handleCameraRecognize}
       >
-        <Text className='breed-page__camera-btn-icon'>{isRecognizing ? '⏳' : '📷'}</Text>
+        {/* 识别中保留 ⏳ 文案（进度感），空闲态用面性相机图标 */}
+        <View className='breed-page__camera-btn-icon'>
+          {isRecognizing ? <Text className='breed-page__camera-btn-loading'>⏳</Text> : <Icon name='camera' size={24} tone='white' />}
+        </View>
       </View>
 
       {/* 识别中遮罩 */}
@@ -348,12 +364,12 @@ export default function PetBreed() {
 
               {matchedBreedId ? (
                 <View className='breed-page__recognize-match'>
-                  <Text className='breed-page__recognize-match-icon'>✅</Text>
+                  <Icon name='check-circle' size={18} tone='muted' className='breed-page__recognize-match-icon' />
                   <Text className='breed-page__recognize-match-text'>已在品种百科中找到匹配品种</Text>
                 </View>
               ) : (
                 <View className='breed-page__recognize-match breed-page__recognize-match--no'>
-                  <Text className='breed-page__recognize-match-icon'>🔍</Text>
+                  <Icon name='magnifying-glass' size={18} tone='muted' className='breed-page__recognize-match-icon' />
                   <Text className='breed-page__recognize-match-text'>
                     品种百科中暂无该品种，可手动搜索查看
                   </Text>
