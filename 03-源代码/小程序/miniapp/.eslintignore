@@ -1,0 +1,15 @@
+# ESLint 忽略清单（2026-09-11 新增）
+#
+# 为什么需要它：`eslint .` 会把构建产物一起纳入扫描。Taro 的 `dist/`（weapp 产物）
+# 与 `dist-h5/` 在构建过程中会被清空重建，若 ESLint 正好在此时读取其中文件，
+# 会直接抛 ENOENT 崩溃（实测报错：ENOENT ... miniapp\dist\vendors.js），
+# 导致 `npm run lint` 整个闸门跑不起来。
+#
+# 原则：只忽略"非手写产物/依赖/报告"，绝不忽略任何人工维护的源码目录。
+dist/
+dist-h5/
+node_modules/
+coverage/
+.temp/
+.rn_temp/
+.cache/
