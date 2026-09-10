@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { checkInput, sanitizeOutput } from '../ruleGuard'
+import { checkInput, sanitizeOutput, detectOffTopic } from '../ruleGuard'
 
 describe('checkInput', () => {
   it('should detect self-harm keywords', () => {
@@ -33,6 +33,38 @@ describe('checkInput', () => {
   it('should pass empty text', () => {
     const result = checkInput('')
     expect(result.blocked).toBe(false)
+  })
+})
+
+describe('detectOffTopic', () => {
+  it('should detect human romance/relationship topics', () => {
+    expect(detectOffTopic('我想谈恋爱了')).toBe(true)
+    expect(detectOffTopic('我失恋了')).toBe(true)
+    expect(detectOffTopic('被家里催婚')).toBe(true)
+    expect(detectOffTopic('和男朋友分手了')).toBe(true)
+  })
+
+  it('should detect homework/coding/translation/finance/weather/fortune/job topics', () => {
+    expect(detectOffTopic('帮我写作业')).toBe(true)
+    expect(detectOffTopic('帮我写代码')).toBe(true)
+    expect(detectOffTopic('帮我翻译这段话')).toBe(true)
+    expect(detectOffTopic('今天股票怎么样')).toBe(true)
+    expect(detectOffTopic('今天天气怎么样')).toBe(true)
+    expect(detectOffTopic('帮我算算运势')).toBe(true)
+    expect(detectOffTopic('最近在找工作')).toBe(true)
+  })
+
+  it('should pass pet-related text', () => {
+    expect(detectOffTopic('豆豆今天食欲不好')).toBe(false)
+    expect(detectOffTopic('它把花瓶打碎了')).toBe(false)
+    expect(detectOffTopic('我家猫感冒了怎么办')).toBe(false)
+    expect(detectOffTopic('')).toBe(false)
+  })
+
+  it('should NOT match pet breeding/mating/weight requests（歧义词刻意未收录）', () => {
+    expect(detectOffTopic('想给我家猫找个对象配种')).toBe(false)
+    expect(detectOffTopic('我家狗发情了怎么办')).toBe(false)
+    expect(detectOffTopic('我家猫太胖了想减肥')).toBe(false)
   })
 })
 

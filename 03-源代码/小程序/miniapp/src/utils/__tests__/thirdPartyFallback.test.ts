@@ -26,9 +26,10 @@ const { mockChat, mockGuardCheck, mockGuardCheckOutput } = vi.hoisted(() => ({
   mockGuardCheckOutput: vi.fn(),
 }))
 
-const { mockRuleCheck, mockSanitizeOutput } = vi.hoisted(() => ({
+const { mockRuleCheck, mockSanitizeOutput, mockDetectOffTopic } = vi.hoisted(() => ({
   mockRuleCheck: vi.fn(),
   mockSanitizeOutput: vi.fn((text: string) => text),
+  mockDetectOffTopic: vi.fn(() => false),
 }))
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -89,6 +90,8 @@ vi.mock('../../services/aiProvider', () => ({
 vi.mock('../../utils/ruleGuard', () => ({
   checkInput: mockRuleCheck,
   sanitizeOutput: mockSanitizeOutput,
+  detectOffTopic: mockDetectOffTopic,
+  OFFTOPIC_REPLY: '越界话题固定话术',
 }))
 
 // Mock authGuard
