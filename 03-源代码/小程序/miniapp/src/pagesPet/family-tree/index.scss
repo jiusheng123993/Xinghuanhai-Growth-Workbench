@@ -351,6 +351,10 @@
 .ft-member-avatar-img {
   width: 100%;
   height: 100%;
+  // 补 object-fit: cover —— tsx 里这个 <Image> 用的是 mode='aspectFill'（铺满容器并裁切、保持原比例），
+  // 但容器是 80rpx 的正方形，宠物照片极少是正方形：缺 object-fit 时 H5 等端会把图片直接拉伸到
+  // 100%×100%（真机上脸被压扁/拉长）。cover 与 aspectFill 语义一致，保证图片不变形。
+  object-fit: cover;
 }
 
 .ft-member-avatar-emoji {

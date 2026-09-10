@@ -673,7 +673,7 @@
 
   // —— 拍照识别悬浮按钮：渐变圆钮 + 暖色光晕（与疫苗页 FAB 同一语言） ——
   &__camera-btn {
-    background: linear-gradient(135deg, #ff8a4d 0%, $color-primary 60%, $color-primary-dark 100%);
+    background: linear-gradient(135deg, #F2703A 0%, #E8562A 55%, #C2410C 100%);
     box-shadow:
       0 0 0 8rpx rgba(var(--primary-rgb, 255, 107, 61), 0.14),
       0 16rpx 30rpx -14rpx rgba(var(--primary-rgb, 255, 107, 61), 0.9);

@@ -368,7 +368,7 @@
   // 避免胶带（贴在资料卡顶边、向上溢出 12rpx）压到品种名与徽章上。
   &__hero {
     padding: 44rpx $spacing-lg 64rpx;
-    background: linear-gradient(160deg, #ff8a4d 0%, $color-primary 48%, $color-primary-dark 100%);
+    background: linear-gradient(160deg, #F2703A 0%, #E8562A 48%, #C2410C 100%);
     border-bottom-left-radius: 40rpx;
     border-bottom-right-radius: 40rpx;
     box-shadow: 0 18rpx 40rpx -26rpx rgba(61, 33, 18, 0.6);

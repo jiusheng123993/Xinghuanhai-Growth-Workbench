@@ -547,7 +547,7 @@
   height: 96rpx;
   margin: 10rpx 12rpx 0;
   border-radius: $radius-round;
-  background: linear-gradient(135deg, #ff8a4d 0%, $color-primary 55%, $color-primary-dark 100%);
+  background: linear-gradient(135deg, #F2703A 0%, #E8562A 55%, #C2410C 100%);
   box-shadow: 0 14rpx 30rpx -12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.8);
   @include press-feedback;
 }

@@ -426,7 +426,7 @@
     height: 84rpx;
     padding: 0 28rpx;
     border-radius: $radius-round;
-    background: linear-gradient(135deg, #ff8a4d 0%, $color-primary 55%, $color-primary-dark 100%);
+    background: linear-gradient(135deg, #F2703A 0%, #E8562A 55%, #C2410C 100%);
     box-shadow: 0 12rpx 26rpx -14rpx rgba(var(--primary-rgb, 255, 107, 61), 0.85);
     @include press-feedback;
   }

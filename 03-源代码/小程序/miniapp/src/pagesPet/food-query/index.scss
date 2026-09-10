@@ -743,7 +743,7 @@
 
   // 按钮改实心主色胶囊：底变了，白字才不会丢（见开头"本页最大的坑"）
   &__search-btn {
-    background: linear-gradient(135deg, #ff8a4d 0%, $color-primary 55%, $color-primary-dark 100%);
+    background: linear-gradient(135deg, #F2703A 0%, #E8562A 55%, #C2410C 100%);
     box-shadow: 0 10rpx 24rpx -14rpx rgba(var(--primary-rgb, 255, 107, 61), 0.85);
     font-weight: 700;
     letter-spacing: 2rpx;

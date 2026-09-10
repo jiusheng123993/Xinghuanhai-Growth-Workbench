@@ -465,7 +465,7 @@
     @include journal-button;
     height: 88rpx;
     /* 这是"求助"入口，用沉稳的主色而非高亮金，避免在悲伤语境里显得轻浮 */
-    background: linear-gradient(135deg, #ff8a4d 0%, $color-primary 60%, $color-primary-dark 100%);
+    background: linear-gradient(135deg, #F2703A 0%, #E8562A 55%, #C2410C 100%);
   }
 
   &__hotline-text {

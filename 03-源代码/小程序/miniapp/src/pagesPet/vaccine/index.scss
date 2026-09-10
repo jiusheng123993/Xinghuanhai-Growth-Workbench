@@ -1,6 +1,12 @@
 @import '../../styles/_theme';
 @import '../../styles/_animations';
 
+// 手账皮肤公共 mixin（纸面 token / 虚线便签 / 衬线标题 / 状态贴纸 / 手账按钮）
+// 【为什么必须显式引入】本文件后半段的记录卡与添加弹窗原来没有手账层，本轮要用 journal-* 覆盖它们；
+// 不引就得在本页重抄一套纸面写法，日后全板块统一调配色会漏掉这一页。
+// 【顺序不能反】先 _theme 再 _journal（_journal 不自带主题，免得主题块被打进产物两遍）。
+@import '../../styles/_journal';
+
 // ============================================
 // 疫苗日历 — 视觉方向 C「温暖手账」（第 1~942 行为本页模块；943 行之后是
 // 记录卡与添加弹窗两组子组件样式，本轮未动）
@@ -920,7 +926,7 @@
   height: 96rpx;
   margin-top: 26rpx;
   border-radius: $radius-round;
-  background: linear-gradient(135deg, #ff8a4d 0%, $color-primary 55%, $color-primary-dark 100%);
+  background: linear-gradient(135deg, #F2703A 0%, #E8562A 55%, #C2410C 100%);
   box-shadow: 0 14rpx 30rpx -12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.8);
   @include press-feedback;
 }
@@ -946,7 +952,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #ff8a4d 0%, $color-primary 60%, $color-primary-dark 100%);
+  background: linear-gradient(135deg, #F2703A 0%, #E8562A 60%, #C2410C 100%);
   box-shadow:
     0 0 0 8rpx rgba(var(--primary-rgb, 255, 107, 61), 0.14),
     0 16rpx 30rpx -14rpx rgba(var(--primary-rgb, 255, 107, 61), 0.9);
@@ -1487,4 +1493,224 @@
   font-size: $font-size-lg;
   font-weight: $font-weight-bold;
   color: #FFFFFF;
+}
+
+// ============================================
+// 方向 C「温暖手账」皮肤层：记录卡 + 添加弹窗（追加覆盖，2026-09-11）
+// ============================================
+// 【为什么追加而不是重写】本文件前半段（1~1167 行）上一轮已手账化，但后面两套子组件样式还是旧观感
+// （card-base 实线白卡 + 2rpx 实线分隔）：
+//   ① .vaccine-record-card__*（接种/驱虫记录卡）—— 只有「有接种记录」时才渲染，预览看不到；
+//   ② .vaccine-modal__*（添加/编辑记录弹窗）—— 只有点了右下角「＋」或某条记录的「编辑」才出现，
+//      预览同样看不到。
+// 两段都属于「要真操作才出现」的状态，直接重写会静默丢掉它们的样式，所以本轮只做
+// **同特异性 + 顺序在后**的覆盖，一条原规则都没删、没重排。
+//
+// 【本段只碰观感】颜色 / 边框 / 圆角 / 阴影 / 字号字重；弹窗的 fixed 遮罩、max-height: 85vh、
+// sheetUp 入场动画、body 滚动与各字段布局一律沿用原规则。
+//
+// 【深色主题（.theme-starry）】① .vaccine-modal 已在文件第 44 行被显式钉过纸面 token，本段
+// 不再重复钉，只使用它给出的取值；② .vaccine-record-card 虽然挂在已钉 token 的 .pet-vaccine__section
+// 里，但它是独立的浅纸卡，这里再钉一次 journal-paper-tokens（取值相同、幂等），将来把它挪出卡片区块
+// 也不会变成白字压白纸；③ 页面根 .pet-vaccine 照原样不钉（钉了就是深字压深底）。
+//
+// 【为什么成对写修饰符】追加段落在原规则之后，同特异性时后写的会盖掉前面的修饰符
+// （--primary / --active / --disabled 都会踩到），所以下面每个基础类后面都紧跟一条修饰符规则把状态写回来。
+// ============================================
+
+// —— ① 记录卡外层：白色实线卡 → 手账虚线便签 ——
+.vaccine-record-card {
+  @include journal-paper-tokens;
+  @include journal-note(primary, 0.42);
+  padding: 28rpx 26rpx 22rpx;
+}
+
+.vaccine-record-card__header {
+  margin-bottom: 16rpx;
+}
+
+// 类型符号（💉疫苗 / 🔰驱虫）是内容 emoji，不动它，只把行高压平避免把行撑高
+.vaccine-record-card__type-icon {
+  font-size: 34rpx;
+  line-height: 1;
+}
+
+.vaccine-record-card__type-label {
+  @include journal-serif(28rpx);
+}
+
+// 状态贴纸：底色与字色由组件内联 style 按状态给（已完成绿 / 待接种橙 / 已逾期红），
+// 内联样式优先级高于本文件，CSS 改不动它的颜色 —— 所以这里只做形状：44rpx 高的虚线胶囊，
+// 边框色用 currentColor 跟随内联字色，避免再在本页写死三套状态色。
+.vaccine-record-card__status {
+  display: flex;
+  align-items: center;
+  height: 44rpx;
+  padding: 0 18rpx;
+  border-radius: $radius-round;
+  border: 3rpx dashed currentColor;
+}
+
+.vaccine-record-card__status-text {
+  font-size: 22rpx;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+}
+
+// 种类标题＝便签里的小标题（衬线）
+.vaccine-record-card__category {
+  @include journal-serif(26rpx);
+  margin-bottom: 12rpx;
+}
+
+// 信息行：行与行之间用虚线分隔（手账里的表格线是虚的），最后一行由 mixin 自动去线
+.vaccine-record-card__info-row {
+  @include journal-row;
+}
+
+.vaccine-record-card__info-label {
+  min-width: 120rpx;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.vaccine-record-card__info-value {
+  font-size: 22rpx;
+}
+
+// —— ② 记录卡底部按钮：实线分隔 → 虚线撕口，三个按钮统一成手账语言 ——
+.vaccine-record-card__actions {
+  padding-top: 22rpx;
+  border-top: 3rpx dashed rgba(243, 226, 210, 0.95);
+  gap: 18rpx;
+}
+
+.vaccine-record-card__btn {
+  height: 80rpx;
+  border-radius: $radius-round;
+  // 透明虚线边框只作占位：让「有边框的次/危险按钮」与「无边框的主按钮」同高，一行里不会高低不齐
+  border: 3rpx dashed transparent;
+}
+
+// 「标记完成」＝手账主按钮（渐变 + 投影 + 按压反馈），与页面上其它主按钮同源
+.vaccine-record-card__btn--primary {
+  @include journal-button;
+  height: 80rpx;
+}
+
+// 「编辑 / 删除」坐在纸卡上：用纸白底 + 虚线边
+// （不能用 journal-ghost：那个玻璃底是给「坐在页面背景上」的入口用的）
+.vaccine-record-card__btn--secondary,
+.vaccine-record-card__btn--danger {
+  background: #fffdf8;
+  border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.45);
+  box-shadow: none;
+}
+
+.vaccine-record-card__btn--danger {
+  // 危险动作与「已逾期」共用一套红：极淡红底 + 红虚线
+  background: rgba(var(--danger-rgb, 255, 90, 95), 0.06);
+  border-color: rgba(var(--danger-rgb, 255, 90, 95), 0.5);
+}
+
+// —— ③ 添加/编辑弹窗：从桌面下抽出来的另一张纸 ——
+.vaccine-modal {
+  // 顶部一条虚线＝这张纸的撕口；只写上边，避免左右加边框把 100% 宽撑出横向滚动
+  border-top: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.35);
+  box-shadow: 0 -12rpx 40rpx -20rpx rgba(61, 33, 18, 0.45);
+  // 纸白底：与全站纸面（#fffdf8）统一，原来用的是纯白 --bg-card
+  background: #fffdf8;
+}
+
+.vaccine-modal__header {
+  padding: 28rpx 30rpx 22rpx;
+  border-bottom: 3rpx dashed rgba(243, 226, 210, 0.95);
+}
+
+.vaccine-modal__body {
+  padding: 26rpx 30rpx 32rpx;
+}
+
+.vaccine-modal__title {
+  @include journal-serif(34rpx);
+}
+
+// 关闭钮＝右上角虚线小方块（与日历翻页钮同一套语言），64rpx 保证手指点得中
+.vaccine-modal__close {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 20rpx;
+  border: 3rpx dashed $color-border;
+}
+
+.vaccine-modal__close-icon {
+  font-size: 28rpx;
+  color: $color-text-secondary;
+}
+
+.vaccine-modal__label {
+  font-size: 24rpx;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+  color: $color-text-secondary;
+}
+
+// 「疫苗 / 驱虫」＝一排贴纸胶囊：未选＝纸白虚线，选中＝主色实线 + 主色淡底
+.vaccine-modal__type-btn {
+  height: 80rpx;
+  border-radius: $radius-round;
+  border: 3rpx dashed $color-border;
+  background: #fffdf8;
+}
+
+.vaccine-modal__type-btn--active {
+  // --active 与基础类同特异性，必须写在基础类之后才生效
+  border-style: solid;
+  border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+  box-shadow: 0 8rpx 18rpx -12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.9);
+}
+
+.vaccine-modal__type-text {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+}
+
+// 选择器 / 输入框 / 文本域＝手账里「待填的栏位」：虚线框 + 纸白底
+// （原来是 1px 实线边 + 主色淡底）
+.vaccine-modal__picker,
+.vaccine-modal__input,
+.vaccine-modal__textarea {
+  background: #fffdf8;
+  border: 3rpx dashed $color-border;
+  border-radius: 24rpx;
+}
+
+.vaccine-modal__picker-value {
+  color: $color-text-primary;
+}
+
+.vaccine-modal__picker-arrow {
+  color: $color-text-tertiary;
+}
+
+.vaccine-modal__count {
+  letter-spacing: 1rpx;
+}
+
+.vaccine-modal__footer {
+  padding: 22rpx 30rpx 44rpx;
+  border-top: 3rpx dashed rgba(243, 226, 210, 0.95);
+}
+
+// 底部主按钮＝手账按钮，与页面上其它主按钮同源
+.vaccine-modal__submit {
+  @include journal-button;
+  width: 100%;
+}
+
+.vaccine-modal__submit--disabled {
+  // 追加段落在原规则之后，会把原 --disabled 的 box-shadow: none 盖掉，这里必须把禁用态写回来
+  opacity: 0.4;
+  box-shadow: none;
 }
