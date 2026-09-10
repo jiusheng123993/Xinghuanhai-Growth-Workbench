@@ -750,13 +750,52 @@ registerTool('start_checkin', async (args, context): Promise<ToolResult> => {
 
 // ========== 15. record_memory ==========
 
+/**
+ * 从回忆正文里认宠物（2026-09-11 新增，与小程序 utils/petMatching 同一套规则）
+ *
+ * 【为什么必须放在服务端】用户把指令和正文一起说时（"记录回忆：烧鸭今天拆家"）走的是
+ *   Agent → 本工具这条路径，前端 useMemoryFlow 根本不参与；而原来宠物取的是
+ *   `getPetId()`（= 当前活跃宠物）→ "说烧鸭记到烧鸡"的归属错就出在这里。
+ * 【规则】拿该用户**自己的**宠物名做包含匹配：
+ *   命中若干只 → 第一只当主宠物、全部写进 content.pets；
+ *   一只都没提到 → 返回 null，调用方回退原有 getPetId 逻辑（保持旧行为不变）。
+ * 【安全】宠物列表按 user_id 查，天然只可能命中自己的宠物；
+ *   名字/物种都取库里的权威值，不信任模型传参。
+ *
+ * @param content - 回忆正文
+ * @param userId - 当前登录用户
+ * @returns 命中的宠物（按名字长度降序，第一只为主宠物）；未命中返回 null
+ */
+async function matchPetsInContent(
+  content: string,
+  userId: string,
+): Promise<Array<{ id: string; name: string; species: string | null }> | null> {
+  const body = (content || '').trim();
+  if (!body) return null;
+  const { rows } = await pool.query<{ id: string; name: string; species: string | null }>(
+    'SELECT id, name, species FROM pet_profiles WHERE user_id = $1',
+    [userId],
+  );
+  // 名字长的优先：宠物名互为前缀时（"烧鸡" / "烧鸡腿"）先认更具体的那只
+  const matched = rows
+    .filter((p) => !!p.name && !!p.name.trim() && body.includes(p.name))
+    .sort((a, b) => b.name.length - a.name.length);
+  return matched.length ? matched : null;
+}
+
 registerTool('record_memory', async (args, context): Promise<ToolResult> => {
-  const petId = await getPetId(context, args.pet_id as string | undefined);
+  const content = (args.content as string)?.trim();
+
+  /**
+   * 归属宠物：**先按正文认**（多宠共同回忆），认不出来再走原有的 getPetId 兜底链
+   * （工具显式 pet_id → 当前活跃宠物 → 用户第一只）。
+   */
+  const matchedPets = content ? await matchPetsInContent(content, context.userId) : null;
+  const petId = matchedPets?.[0]?.id
+    ?? await getPetId(context, args.pet_id as string | undefined);
   if (!petId) {
     return { success: false, message: '还没有添加宠物，无法记录回忆' };
   }
-
-  const content = (args.content as string)?.trim();
 
   // 分支 A：LLM 已从用户消息中提取回忆内容 → 直接写入数据库
   if (content) {
@@ -765,7 +804,21 @@ registerTool('record_memory', async (args, context): Promise<ToolResult> => {
       [petId, context.userId]
     );
     const petName = petRows[0]?.name || '宠物';
-    const petEmoji = petRows[0]?.species === 'cat' ? '🐱' : '🐶';
+    const petEmoji = petRows[0]?.species === 'cat' ? '🐱' : petRows[0]?.species === 'dog' ? '🐕' : '🐾';
+
+    /**
+     * content 结构与小程序完全对齐（这样时光页的卡片能显示多枚宠物标签）：
+     *   · petName/petEmoji：主宠物的名字/emoji（老读取路径只认这两个字段）
+     *   · pets：本次命中的**全部**宠物（服务端权威取值；单只时也写，保持口径统一）
+     */
+    const momentContent: Record<string, unknown> = { petName, petEmoji, description: content };
+    if (matchedPets?.length) {
+      momentContent.pets = matchedPets.map((p) => ({
+        id: p.id,
+        name: p.name,
+        emoji: p.species === 'cat' ? '🐱' : p.species === 'dog' ? '🐕' : '🐾',
+      }));
+    }
 
     const momentId = uuidv4();
     await pool.query(
@@ -776,15 +829,20 @@ registerTool('record_memory', async (args, context): Promise<ToolResult> => {
         context.userId,
         petId,
         'memory',
-        JSON.stringify({ petName, petEmoji, description: content }),
+        JSON.stringify(momentContent),
         [],
       ]
     );
 
+    // 命中多只时说清归属，避免用户以为记错了
+    const petLabel = matchedPets && matchedPets.length > 1
+      ? `${matchedPets.map((p) => p.name).join('、')}（共同回忆）`
+      : petName;
+
     return {
       success: true,
-      data: { saved: true, momentId },
-      message: `回忆已记录 ✦\n\n"${content}"\n\n已保存到「时光」页面，你可以去查看哦～`,
+      data: { saved: true, momentId, petId, petIds: matchedPets?.map((p) => p.id) ?? [petId] },
+      message: `回忆已记录 ✦\n\n"${content}"\n\n已记到【${petLabel}】名下，你可以在「时光」页面查看哦～`,
     };
   }
 

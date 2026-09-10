@@ -163,6 +163,139 @@ describe('POST /api/timeline/moments - 创建回忆', () => {
     expect(res.body.success).toBe(false);
   });
 
+  /**
+   * 多宠共同回忆（2026-09-11 新增）
+   *
+   * 设计要点（改动即回归）：归属写进 content.pets（JSONB），**不动表结构**；
+   * 名字/物种由**服务端**从库里取，不信任客户端；任何一只无权限整体 403。
+   */
+  it('多宠共同回忆：content.pets 由服务端写入，名字取库里权威值', async () => {
+    mockPool.query.mockResolvedValueOnce({ rows: [{ ok: true }], rowCount: 1 }); // canAccess
+    mockPool.query.mockResolvedValueOnce({
+      rows: [
+        { id: 'pet-001', name: '烧鸡', species: 'cat' },
+        { id: 'pet-002', name: '烧鸭', species: 'dog' },
+      ],
+      rowCount: 2,
+    }); // findAccessibleByIds
+    mockPool.query.mockResolvedValueOnce({ rows: [mockMomentRow], rowCount: 1 }); // INSERT
+
+    const res = await request(createApp())
+      .post('/api/timeline/moments')
+      .send({
+        petId: 'pet-001',
+        petIds: ['pet-001', 'pet-002'],
+        type: 'memory',
+        content: { description: '两只一起晒太阳', petName: '客户端伪造的名字' },
+      });
+
+    expect(res.status).toBe(200);
+    const insertCall = mockPool.query.mock.calls.find((c) => String(c[0]).includes('INSERT INTO pet_moments'));
+    expect(insertCall).toBeDefined();
+    const content = JSON.parse(String(insertCall![1][4]));
+    expect(content.pets).toEqual([
+      { id: 'pet-001', name: '烧鸡', emoji: '🐱' },
+      { id: 'pet-002', name: '烧鸭', emoji: '🐕' },
+    ]);
+    // 主宠物的名字/emoji 被服务端权威值覆盖（老读取路径只认这两个字段）
+    expect(content.petName).toBe('烧鸡');
+    expect(content.petEmoji).toBe('🐱');
+    /**
+     * 落库的 pet_id 必须是主宠物（petIds[0]）—— 这条断言是"改坏了会不会变红"的兜底：
+     * INSERT 参数是 [id, user_id, pet_id, type, content, photos, happened_at]，
+     * 若有人改成 petIds[1] 而只断言 content，测试照样全绿（审查 Q5 指出）。
+     */
+    expect(insertCall![1][2]).toBe('pet-001');
+  });
+
+  it('客户端伪造的 content.pets 一律丢弃（该字段是服务端专属）', async () => {
+    mockPool.query.mockResolvedValueOnce({ rows: [{ ok: true }], rowCount: 1 }); // canAccess
+    mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'pet-001', name: '烧鸡', species: 'cat' }], rowCount: 1 });
+    mockPool.query.mockResolvedValueOnce({ rows: [mockMomentRow], rowCount: 1 }); // INSERT
+
+    await request(createApp())
+      .post('/api/timeline/moments')
+      .send({
+        petId: 'pet-001',
+        petIds: ['pet-001'],
+        type: 'memory',
+        // 伪造一只根本不在自己名下的宠物标签
+        content: { description: 'x', pets: [{ id: '别人的宠物', name: '伪造的名字', emoji: '🐶' }] },
+      });
+
+    const insertCall = mockPool.query.mock.calls.find((c) => String(c[0]).includes('INSERT INTO pet_moments'));
+    const content = JSON.parse(String(insertCall![1][4]));
+    // 只剩服务端权威生成的那一条，伪造项被丢弃
+    expect(content.pets).toEqual([{ id: 'pet-001', name: '烧鸡', emoji: '🐱' }]);
+  });
+
+  it('多宠共同回忆：混入别人的宠物 → 403 且不落库', async () => {
+    mockPool.query.mockResolvedValueOnce({ rows: [{ ok: true }], rowCount: 1 }); // canAccess 通过
+    mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'pet-001', name: '烧鸡', species: 'cat' }], rowCount: 1 }); // 只查到一只
+
+    const res = await request(createApp())
+      .post('/api/timeline/moments')
+      .send({
+        petId: 'pet-001',
+        petIds: ['pet-001', 'pet-别人家的'],
+        type: 'memory',
+        content: { description: 'x' },
+      });
+
+    expect(res.status).toBe(403);
+    expect(mockPool.query.mock.calls.some((c) => String(c[0]).includes('INSERT INTO pet_moments'))).toBe(false);
+  });
+
+  it('多宠去重：重复传同一只宠物只写一条标签', async () => {
+    mockPool.query.mockResolvedValueOnce({ rows: [{ ok: true }], rowCount: 1 });
+    mockPool.query.mockResolvedValueOnce({ rows: [{ id: 'pet-001', name: '烧鸡', species: 'cat' }], rowCount: 1 });
+    mockPool.query.mockResolvedValueOnce({ rows: [mockMomentRow], rowCount: 1 });
+
+    const res = await request(createApp())
+      .post('/api/timeline/moments')
+      .send({ petId: 'pet-001', petIds: ['pet-001', 'pet-001'], type: 'memory', content: { description: 'x' } });
+
+    expect(res.status).toBe(200);
+    const insertCall = mockPool.query.mock.calls.find((c) => String(c[0]).includes('INSERT INTO pet_moments'));
+    const content = JSON.parse(String(insertCall![1][4]));
+    expect(content.pets).toHaveLength(1);
+  });
+
+  it('petIds 里缺少主宠物时，服务端把主宠物补到第一位（content.pets 与 pet_id 必须自洽）', async () => {
+    mockPool.query.mockResolvedValueOnce({ rows: [{ ok: true }], rowCount: 1 }); // canAccess
+    mockPool.query.mockResolvedValueOnce({
+      rows: [
+        { id: 'pet-001', name: '烧鸡', species: 'cat' },
+        { id: 'pet-002', name: '烧鸭', species: 'dog' },
+      ],
+      rowCount: 2,
+    });
+    mockPool.query.mockResolvedValueOnce({ rows: [mockMomentRow], rowCount: 1 });
+
+    await request(createApp())
+      .post('/api/timeline/moments')
+      .send({ petId: 'pet-002', petIds: ['pet-001'], type: 'memory', content: { description: 'x' } });
+
+    const insertCall = mockPool.query.mock.calls.find((c) => String(c[0]).includes('INSERT INTO pet_moments'));
+    const content = JSON.parse(String(insertCall![1][4]));
+    expect(content.pets.map((p: { id: string }) => p.id)).toEqual(['pet-002', 'pet-001']);
+    expect(content.petName).toBe('烧鸭');
+  });
+
+  it('不传 petIds 时行为不变（content 原样落库，不注入 pets）', async () => {
+    mockPool.query.mockResolvedValueOnce({ rows: [{ ok: true }], rowCount: 1 });
+    mockPool.query.mockResolvedValueOnce({ rows: [mockMomentRow], rowCount: 1 });
+
+    await request(createApp())
+      .post('/api/timeline/moments')
+      .send({ petId: 'pet-001', type: 'memory', content: { description: '只有一只' } });
+
+    const insertCall = mockPool.query.mock.calls.find((c) => String(c[0]).includes('INSERT INTO pet_moments'));
+    const content = JSON.parse(String(insertCall![1][4]));
+    expect(content.pets).toBeUndefined();
+    expect(content.description).toBe('只有一只');
+  });
+
   it('缺少 petId 参数校验失败返回 400', async () => {
     const res = await request(createApp())
       .post('/api/timeline/moments')

@@ -123,6 +123,34 @@ export class PetRepository extends BaseRepository<PetRow> {
   }
 
   /**
+   * 批量查询"该用户可访问的宠物"（多宠共同回忆用，2026-09-11 新增）
+   *
+   * 【为什么要有它】创建回忆时最多允许关联 10 只宠物，
+   * 逐个 canAccess 要打 10 次库；这里一次查回来，既能判归属（少了的即无权限），
+   * 又能顺便取到**服务端权威的名字/物种**（避免信任客户端传来的名字）。
+   * 口径与 canAccess/findAccessiblePetIds 一致：本人创建 + 家庭成员共享的宠物都算可访问。
+   *
+   * @param petIds - 待校验的宠物 ID（调用方已去重）
+   * @param userId - 当前登录用户
+   * @returns 命中的宠物行（含 name/species），未命中的即无权限
+   */
+  async findAccessibleByIds(
+    petIds: string[],
+    userId: string,
+  ): Promise<Array<{ id: string; name: string; species: string | null }>> {
+    if (!petIds.length) return [];
+    const result = await this.rawQuery<{ id: string; name: string; species: string | null }>(
+      `SELECT DISTINCT p.id, p.name, p.species
+       FROM pet_profiles p
+       LEFT JOIN pet_family_members m ON m.pet_id = p.id
+       LEFT JOIN pet_family_users u ON u.family_id = m.family_id AND u.user_id = $2
+       WHERE p.id = ANY($1::text[]) AND (p.user_id = $2 OR u.user_id = $2)`,
+      [petIds, userId],
+    );
+    return result.rows;
+  }
+
+  /**
    * 查询用户所有宠物（按创建时间倒序）
    */
   async findAllByUser(userId: string): Promise<PetRow[]> {

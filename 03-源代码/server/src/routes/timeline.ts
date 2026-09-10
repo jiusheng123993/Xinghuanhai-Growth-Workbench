@@ -48,7 +48,7 @@ const upload = multer({
 router.post('/moments', authMiddleware, validate({ body: createTimelineEventSchema }), async (req: Request, res: Response) => {
   try {
     const userId = req.userId!;
-    const { petId, type, content, photos, happenedAt } = req.body;
+    const { petId, petIds, type, content, photos, happenedAt } = req.body;
 
     // 校验宠物归属
     const isOwner = await petRepository.canAccess(petId, userId);
@@ -59,8 +59,52 @@ router.post('/moments', authMiddleware, validate({ body: createTimelineEventSche
 
     const momentId = crypto.randomUUID();
     const momentType = type || 'memory';
-    const momentContent = content || {};
+    const momentContent: Record<string, unknown> = { ...(content || {}) };
+    /**
+     * `content.pets` 是**服务端专属字段**（客户端伪造多宠标签没用，一律丢弃后由服务端重写）。
+     * 注意：`petName/petEmoji` 保留客户端传值以兼容旧版本小程序（它们只影响自己看到的显示，
+     * 且下面在能查到权威值时会被覆盖）。
+     */
+    delete momentContent.pets;
     const momentPhotos = Array.isArray(photos) ? photos : [];
+
+    /**
+     * 多宠共同回忆（2026-09-11 新增）
+     *
+     * 归属写成 content.pets = [{id,name,emoji}]，**不改表结构**（pet_id 仍是主宠物，兼容所有旧路径）。
+     * 两道安全处理：
+     *   ① 逐个宠物校验归属 —— 不允许客户端把别人的宠物 id 贴到自己的回忆上；
+     *   ② 名字/物种从数据库取 —— 不信任客户端传来的名字（防伪造标签）。
+     * 任何一只无权限就整体 403（不静默丢弃，避免"一半标签生效"的歧义数据）。
+     */
+    if (Array.isArray(petIds) && petIds.length) {
+      /**
+       * 去重，并**把主宠物放在第一位**：
+       * petId 是本次请求的"主宠物"（落库到 pet_moments.pet_id，所有旧读取路径都认它），
+       * 若客户端传的 petIds 里恰好没有它，就会出现"卡片标签里没有主宠物"的不一致 ——
+       * 所以这里强制 `pets[0].id === petId`，保证 content.pets 与 pet_id 永远自洽。
+       */
+      const uniquePetIds = Array.from(new Set([petId, ...(petIds as string[]).filter(Boolean)])) as string[]
+      // 一次查回"可访问的宠物"（含服务端权威的 name/species），少了的即无权限
+      const accessible = await petRepository.findAccessibleByIds(uniquePetIds, userId)
+      const ownedMap = new Map(accessible.map((r) => [r.id, r]))
+      const notOwned = uniquePetIds.filter((id) => !ownedMap.has(id))
+      if (notOwned.length > 0) {
+        res.status(403).json({ success: false, message: '无权操作此宠物' })
+        return
+      }
+      const emojiOf = (species: string | null) => (species === 'cat' ? '🐱' : species === 'dog' ? '🐕' : '🐾');
+      momentContent.pets = uniquePetIds.map((id) => {
+        const pet = ownedMap.get(id)!;
+        return { id: pet.id, name: pet.name, emoji: emojiOf(pet.species) };
+      });
+      // 主宠物的名字/emoji 同步成服务端权威值（老读取路径只认这两个字段）
+      const primary = ownedMap.get(petId);
+      if (primary) {
+        momentContent.petName = primary.name;
+        momentContent.petEmoji = emojiOf(primary.species);
+      }
+    }
 
     const row = await timelineRepository.createMoment(
       momentId,

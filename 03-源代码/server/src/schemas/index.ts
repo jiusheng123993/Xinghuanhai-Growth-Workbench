@@ -417,6 +417,20 @@ export const timelineMomentTypeSchema = z.enum(
 /** 创建时间线事件 */
 export const createTimelineEventSchema = z.object({
   petId: z.string({ error: '请提供宠物ID' }).min(1, '请提供宠物ID').max(100, '宠物ID过长'),
+  /**
+   * 这条回忆还属于哪些宠物（多宠共同回忆，2026-09-11 新增）
+   *
+   * 【为什么不用新列】归属信息写进 pet_moments.content（JSONB）即可 —— 表结构零变更、不需要数据库迁移；
+   *   petId 仍表示**主宠物**（= petIds[0]，服务端会强制把 petId 放进 pets 的第一位），
+   *   按宠物维度读取的路径（回忆录素材盘点、按宠物查询回忆）行为不变。
+   *   ⚠️ 不含"家庭动态"：那张表读的是 pet_health_entries / pet_family_feeds，从不读 pet_moments。
+   * 【服务端会做什么】逐个校验归属（不允许拿别人的宠物 id 来贴标签），
+   *   并用数据库里的**真实名字/物种**生成 content.pets，不信任客户端传来的名字。
+   */
+  petIds: z
+    .array(z.string({ error: '宠物ID不能为空' }).min(1, '宠物ID不能为空').max(100, '宠物ID过长'))
+    .max(10, '一条回忆最多关联 10 只宠物')
+    .optional(),
   type: timelineMomentTypeSchema.optional(),
   content: z.record(z.string(), z.unknown()).optional(),
   /**
