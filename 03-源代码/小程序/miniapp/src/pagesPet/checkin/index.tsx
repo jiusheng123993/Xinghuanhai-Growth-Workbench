@@ -11,7 +11,8 @@ import { useShareStore } from '../../stores/shareStore'
 import { usePet } from '../../hooks/usePet'
 import { useCheckin } from '../../hooks/useCheckin'
 import PetSwitcher from '../../components/PetSwitcher'
-import { PageLoading, PageError, PetAvatar, AchievementCard, AchievementShareCard, EmergencyAlert, CarePlanCard } from '../../components'
+import { PageLoading, PageError, PetAvatar, AchievementCard, AchievementShareCard, EmergencyAlert, CarePlanCard, Icon, emojiToIcon } from '../../components'
+import type { FillIconName } from '../../components/Icon'
 import CrisisReferralCard from '../../components/CrisisReferralCard'
 import { useSubscribeStore } from '../../stores/subscribeStore'
 import { useCheckinStore } from '../../stores/checkinStore'
@@ -32,6 +33,7 @@ import { EVENT } from '../../constants/analyticsEvents'
 import { getActiveBreeds } from '../../data/petKnowledge/breeds'
 import type { Checkin } from '../../types'
 import './index.scss'
+import PageBackground from '../../components/PageBackground'
 
 export const APPETITE_OPTIONS = [
   { value: 3 as const, emoji: '😋', label: '正常' },
@@ -86,11 +88,17 @@ const RESULT_LABELS: Record<string, string> = {
   emergency: '立即就医',
 }
 
-const RESULT_ICONS: Record<string, string> = {
-  low: '✅',
-  medium: '💡',
-  high: '🔔',
-  emergency: '⚠️',
+/**
+ * 打卡结果的状态图标（面性图标名）
+ *
+ * 原来这里是 emoji（✅/💡/🔔/⚠️）。按 emojiIconMap 的取舍原则，状态提示属"功能性"位置
+ * （要能随主题换色、字形统一），改成 Icon；情绪类 emoji（日记里的表情等）保持不动。
+ */
+const RESULT_ICON_NAMES: Record<string, FillIconName> = {
+  low: 'check-circle',
+  medium: 'lightbulb',
+  high: 'bell',
+  emergency: 'warning',
 }
 
 const MOOD_DISPLAY: Record<string, { emoji: string; label: string }> = {
@@ -146,6 +154,30 @@ export function computeAnomalyItems(mood: Checkin['mood'], appetite: Checkin['ap
 
 export function computeHasAnomaly(mood: Checkin['mood'], appetite: Checkin['appetite'], stool: Checkin['stool']): boolean {
   return mood === 'sad' || appetite === 'poor' || stool !== 'normal'
+}
+
+/**
+ * 已打卡结果里的一个标签（食欲 / 精力 / 便便 / 体重）
+ *
+ * 图标口径与全站一致：emojiIconMap 里收录的"功能性" emoji（🍽️→bowl-food、⚡→lightning、
+ * 💧→drop）换成面性 Icon；未收录的情绪类（😊/😋/😷/💩…）保留 emoji ——
+ * 同一屏内便签头部已经用 Icon，标签再混一套 emoji 会显得是两套体系（审查 P2-6）。
+ *
+ * @param emoji 原始 emoji（可选：体重标签没有）
+ * @param text  标签文本（形如「食欲：正常」）
+ */
+function ResultTag({ emoji, text }: { emoji?: string; text: string }) {
+  const iconName = emoji ? emojiToIcon(emoji) : null
+  return (
+    <View className='pet-checkin__result-tag'>
+      {iconName ? (
+        <Icon name={iconName} size={13} tone='primary' />
+      ) : emoji ? (
+        <Text className='pet-checkin__result-tag-emoji'>{emoji}</Text>
+      ) : null}
+      <Text className='pet-checkin__result-tag-text'>{text}</Text>
+    </View>
+  )
 }
 
 export default function PetCheckin() {
@@ -313,8 +345,9 @@ export default function PetCheckin() {
       if (userId && currentPet?.id) {
         try {
           const milestoneAdapter = new MilestoneAdapter(userId)
-          const streakDays = useCheckinStore.getState().streakDays
-          milestoneAdapter.syncFromCheckins(currentPet.id, streakDays)
+          // 局部改名 currentStreakDays：原名 streakDays 会遮蔽外层同名变量（no-shadow）
+          const currentStreakDays = useCheckinStore.getState().streakDays
+          milestoneAdapter.syncFromCheckins(currentPet.id, currentStreakDays)
         } catch (e) {
           // 里程碑同步失败不影响主流程
         }
@@ -408,7 +441,7 @@ export default function PetCheckin() {
   const handleWeightChange = (value: string) => {
     setWeightText(value)
     const num = parseFloat(value)
-    if (!isNaN(num) && num >= 0) {
+    if (!Number.isNaN(num) && num >= 0) {
       setFormData((prev) => ({ ...prev, weight: num }))
     } else if (value === '') {
       setFormData((prev) => ({ ...prev, weight: undefined }))
@@ -437,7 +470,7 @@ export default function PetCheckin() {
   const handleWeightPreset = (value: string) => {
     setWeightText(value)
     const num = parseFloat(value)
-    if (!isNaN(num)) {
+    if (!Number.isNaN(num)) {
       setFormData((prev) => ({ ...prev, weight: num }))
     }
   }
@@ -502,12 +535,7 @@ export default function PetCheckin() {
   return (
     <View className={`pet-checkin ${themeClass}`}>
       {/* 全屏动态背景光斑层 */}
-      <View className='xhh-bg-layer'>
-        <View className='xhh-blob xhh-blob-a' />
-        <View className='xhh-blob xhh-blob-b' />
-        <View className='xhh-blob xhh-blob-c' />
-        <View className='xhh-blob xhh-blob-d' />
-      </View>
+      <PageBackground />
 
       <PetSwitcher
         pets={pets}
@@ -519,7 +547,10 @@ export default function PetCheckin() {
       {pets.length > 1 && uncheckedPets.length > 0 && (
         <View className='pet-checkin__batch'>
           <View className='pet-checkin__batch-header'>
-            <Text className='pet-checkin__batch-title'>🐾 多宠快捷打卡</Text>
+            <View className='pet-checkin__batch-title'>
+              <Icon name='paw-print' size={14} tone='primary' />
+              <Text className='pet-checkin__batch-title-text'>多宠快捷打卡</Text>
+            </View>
             <Text className='pet-checkin__batch-sub'>还有 {uncheckedPets.length} 只毛孩子今天没打卡</Text>
           </View>
           <View className='pet-checkin__batch-list'>
@@ -529,9 +560,13 @@ export default function PetCheckin() {
                 className='pet-checkin__batch-item'
                 onClick={() => switchPet(p.id)}
               >
-                <Text className='pet-checkin__batch-item-emoji'>
-                  {p.species === 'cat' ? '🐱' : p.species === 'dog' ? '🐶' : '🐾'}
-                </Text>
+                <View className='pet-checkin__batch-item-emoji'>
+                  <Icon
+                    name={p.species === 'cat' ? 'cat' : p.species === 'dog' ? 'dog' : 'paw-print'}
+                    size={16}
+                    tone='primary'
+                  />
+                </View>
                 <Text className='pet-checkin__batch-item-name'>{p.name}</Text>
                 <Text className='pet-checkin__batch-item-arrow'>›</Text>
               </View>
@@ -564,15 +599,16 @@ export default function PetCheckin() {
 
       {!currentPet ? (
         <View className='pet-checkin__empty'>
-          <Text className='pet-checkin__empty-icon'>🐾</Text>
+          <Icon name='paw-print' size={48} tone='primary' className='pet-checkin__empty-icon' />
           <Text className='pet-checkin__empty-text'>请先添加宠物</Text>
         </View>
       ) : todayCheckin ? (
         <View className='pet-checkin__result-wrapper'>
           <View className={`pet-checkin__result pet-checkin__result--${todayRiskLevel}`}>
-            <Text className='pet-checkin__result-title'>
-              {RESULT_ICONS[todayRiskLevel] || '✅'} 今日已打卡
-            </Text>
+            <View className='pet-checkin__result-title-row'>
+              <Icon name={RESULT_ICON_NAMES[todayRiskLevel] || 'check-circle'} size={18} tone='primary' />
+              <Text className='pet-checkin__result-title'>今日已打卡</Text>
+            </View>
             <Text className='pet-checkin__result-feedback'>
               {todayRiskLevel === 'emergency' ? '检测到紧急健康信号，建议立即联系宠物医院' :
                todayRiskLevel === 'high' ? '检测到异常指标，建议持续观察' :
@@ -580,17 +616,20 @@ export default function PetCheckin() {
                '今日状态良好'}
             </Text>
             <View className='pet-checkin__result-detail'>
-              <Text className='pet-checkin__result-tag'>
-                食欲：{APPETITE_DISPLAY[todayCheckin.appetite].emoji} {APPETITE_DISPLAY[todayCheckin.appetite].label}
-              </Text>
-              <Text className='pet-checkin__result-tag'>
-                精力：{MOOD_DISPLAY[todayCheckin.mood].emoji} {MOOD_DISPLAY[todayCheckin.mood].label}
-              </Text>
-              <Text className='pet-checkin__result-tag'>
-                便便：{STOOL_DISPLAY[todayCheckin.stool].emoji} {STOOL_DISPLAY[todayCheckin.stool].label}
-              </Text>
+              <ResultTag
+                emoji={APPETITE_DISPLAY[todayCheckin.appetite].emoji}
+                text={`食欲：${APPETITE_DISPLAY[todayCheckin.appetite].label}`}
+              />
+              <ResultTag
+                emoji={MOOD_DISPLAY[todayCheckin.mood].emoji}
+                text={`精力：${MOOD_DISPLAY[todayCheckin.mood].label}`}
+              />
+              <ResultTag
+                emoji={STOOL_DISPLAY[todayCheckin.stool].emoji}
+                text={`便便：${STOOL_DISPLAY[todayCheckin.stool].label}`}
+              />
               {todayCheckin.weight && (
-                <Text className='pet-checkin__result-tag'>体重：{todayCheckin.weight}kg</Text>
+                <ResultTag text={`体重：${todayCheckin.weight}kg`} />
               )}
             </View>
           </View>
@@ -610,7 +649,7 @@ export default function PetCheckin() {
               </View>
               <View className='pet-checkin__diary-body'>
                 <Text className='pet-checkin__diary-emoji'>{diaryEntry.emoji}</Text>
-                <Text className='pet-checkin__diary-text'>"{diaryEntry.text}"</Text>
+                <Text className='pet-checkin__diary-text'>&quot;{diaryEntry.text}&quot;</Text>
                 <Text className='pet-checkin__diary-author'>—— {currentPet.name}</Text>
               </View>
               <View
@@ -620,7 +659,8 @@ export default function PetCheckin() {
                   Taro.showShareMenu({ withShareTicket: true })
                 }}
               >
-                <Text className='pet-checkin__diary-share-text'>📤 分享日记</Text>
+                <Icon name='share-network' size={14} tone='primary' />
+                <Text className='pet-checkin__diary-share-text'>分享日记</Text>
               </View>
             </View>
           )}
@@ -630,7 +670,8 @@ export default function PetCheckin() {
               className='pet-checkin__care-plan-btn'
               onClick={() => setShowCarePlan(true)}
             >
-              <Text className='pet-checkin__care-plan-btn-text'>📋 查看3天护理计划</Text>
+              <Icon name='clipboard-text' size={14} tone='primary' />
+              <Text className='pet-checkin__care-plan-btn-text'>查看 3 天护理计划</Text>
             </View>
           )}
         </View>
@@ -654,15 +695,19 @@ export default function PetCheckin() {
           <View className='pet-checkin__section'>
             <View className='pet-checkin__section-head'>
               <View className='pet-checkin__section-icon pet-checkin__section-icon--coral'>
-                <Text>💧</Text>
+                {/* 原来用 💧 表示「便便评分」，语义不搭，换成 stool */}
+                <Icon name='stool' size={18} tone='primary' />
               </View>
               <View className='pet-checkin__section-titles'>
                 <Text className='pet-checkin__section-title'>便便评分</Text>
                 <Text className='pet-checkin__section-desc'>观察今日便便形态与软硬程度</Text>
               </View>
-              {formData.poopLevel !== 3 && (
-                <View className='pet-checkin__section-title-badge'>已选</View>
-              )}
+              {/* 回显已选答案：原来只显示「已选」两个字，用户还得自己回选项行里数选了哪个 */}
+              <View className='pet-checkin__section-answer'>
+                <Text className='pet-checkin__section-answer-text'>
+                  {POOP_OPTIONS.find(o => o.value === formData.poopLevel)?.label ?? '未选'}
+                </Text>
+              </View>
             </View>
             <View className='pet-checkin__options'>
               {POOP_OPTIONS.map((option) => (
@@ -681,15 +726,17 @@ export default function PetCheckin() {
           <View className='pet-checkin__section'>
             <View className='pet-checkin__section-head'>
               <View className='pet-checkin__section-icon pet-checkin__section-icon--gold'>
-                <Text>🍽️</Text>
+                <Icon name='bowl-food' size={18} tone='gold-deep' />
               </View>
               <View className='pet-checkin__section-titles'>
                 <Text className='pet-checkin__section-title'>食欲状况</Text>
                 <Text className='pet-checkin__section-desc'>记录今日进食情况</Text>
               </View>
-              {formData.appetiteLevel !== 3 && (
-                <View className='pet-checkin__section-title-badge'>已选</View>
-              )}
+              <View className='pet-checkin__section-answer'>
+                <Text className='pet-checkin__section-answer-text'>
+                  {APPETITE_OPTIONS.find(o => o.value === formData.appetiteLevel)?.label ?? '未选'}
+                </Text>
+              </View>
             </View>
             <View className='pet-checkin__options'>
               {APPETITE_OPTIONS.map((option) => (
@@ -708,15 +755,17 @@ export default function PetCheckin() {
           <View className='pet-checkin__section'>
             <View className='pet-checkin__section-head'>
               <View className='pet-checkin__section-icon pet-checkin__section-icon--info'>
-                <Text>😊</Text>
+                <Icon name='smiley' size={18} tone='teal' />
               </View>
               <View className='pet-checkin__section-titles'>
                 <Text className='pet-checkin__section-title'>精神状态</Text>
                 <Text className='pet-checkin__section-desc'>记录当前精神状态</Text>
               </View>
-              {formData.spiritLevel !== 3 && (
-                <View className='pet-checkin__section-title-badge'>已选</View>
-              )}
+              <View className='pet-checkin__section-answer'>
+                <Text className='pet-checkin__section-answer-text'>
+                  {SPIRIT_OPTIONS.find(o => o.value === formData.spiritLevel)?.label ?? '未选'}
+                </Text>
+              </View>
             </View>
             <View className='pet-checkin__options'>
               {SPIRIT_OPTIONS.map((option) => (
@@ -735,15 +784,17 @@ export default function PetCheckin() {
           <View className='pet-checkin__section'>
             <View className='pet-checkin__section-head'>
               <View className='pet-checkin__section-icon pet-checkin__section-icon--success'>
-                <Text>👣</Text>
+                <Icon name='footprints' size={18} tone='success' />
               </View>
               <View className='pet-checkin__section-titles'>
                 <Text className='pet-checkin__section-title'>运动量</Text>
                 <Text className='pet-checkin__section-desc'>记录今日运动量情况</Text>
               </View>
-              {formData.exerciseLevel !== 2 && (
-                <View className='pet-checkin__section-title-badge'>已选</View>
-              )}
+              <View className='pet-checkin__section-answer'>
+                <Text className='pet-checkin__section-answer-text'>
+                  {EXERCISE_OPTIONS.find(o => o.value === formData.exerciseLevel)?.label ?? '未选'}
+                </Text>
+              </View>
             </View>
             <View className='pet-checkin__options'>
               {EXERCISE_OPTIONS.map((option) => (
@@ -762,14 +813,16 @@ export default function PetCheckin() {
           <View className='pet-checkin__section'>
             <View className='pet-checkin__section-head'>
               <View className='pet-checkin__section-icon pet-checkin__section-icon--coral'>
-                <Text>⚖️</Text>
+                <Icon name='scales' size={18} tone='primary' />
               </View>
               <View className='pet-checkin__section-titles'>
                 <Text className='pet-checkin__section-title'>体重 <Text className='pet-checkin__section-optional'>（可选）</Text></Text>
                 <Text className='pet-checkin__section-desc'>今日体重，帮助跟踪健康趋势</Text>
               </View>
               {formData.weight !== undefined && (
-                <View className='pet-checkin__section-title-badge'>已填</View>
+                <View className='pet-checkin__section-answer'>
+                  <Text className='pet-checkin__section-answer-text'>已填</Text>
+                </View>
               )}
             </View>
             <View className='pet-checkin__weight-row'>
@@ -818,7 +871,7 @@ export default function PetCheckin() {
           <View className='pet-checkin__section'>
             <View className='pet-checkin__section-head'>
               <View className='pet-checkin__section-icon pet-checkin__section-icon--coral'>
-                <Text>📝</Text>
+                <Icon name='note-pencil' size={18} tone='primary' />
               </View>
               <View className='pet-checkin__section-titles'>
                 <Text className='pet-checkin__section-title'>备注 <Text className='pet-checkin__section-optional'>（选填）</Text></Text>
@@ -839,7 +892,8 @@ export default function PetCheckin() {
             className={`pet-checkin__submit${submitting ? ' pet-checkin__submit--disabled' : ''}`}
             onClick={submitting ? undefined : handleSubmit}
           >
-            <Text>{submitting ? '提交中...' : '✅ 完成打卡'}</Text>
+            <Icon name='check-circle' size={20} tone='white' />
+            <Text className='pet-checkin__submit-text'>{submitting ? '提交中...' : '完成打卡'}</Text>
           </View>
         </View>
       )}
@@ -865,7 +919,10 @@ export default function PetCheckin() {
         <View className='pet-checkin__feedback-overlay' onClick={(e) => { e.stopPropagation() }}>
           <View className='pet-checkin__feedback-popup'>
             <View className='pet-checkin__feedback-header'>
-              <Text className='pet-checkin__feedback-icon'>⚠️</Text>
+            {/* 异常提醒弹窗：用警示金而不是品牌主色，语义更明确。
+                tone 取 gold-deep 而非 gold：浅金在纸面底色上只有 1.8:1（深色主题 1.43:1），
+                低于 WCAG 非文本 3:1；深金 2.4:1 且仍是"警示金"语义（审查 P2-4）。 */}
+            <Icon name='warning' size={36} tone='gold-deep' className='pet-checkin__feedback-icon' />
               <Text className='pet-checkin__feedback-title'>异常指标提醒</Text>
             </View>
             <Text className='pet-checkin__feedback-text'>{feedbackResult.feedback}</Text>

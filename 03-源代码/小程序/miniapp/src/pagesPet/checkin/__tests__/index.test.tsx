@@ -1,14 +1,35 @@
 /** 健康打卡页面单元测试 */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { readFileSync } from 'node:fs'
+
+import {
+  APPETITE_OPTIONS,
+  SPIRIT_OPTIONS,
+  POOP_OPTIONS,
+  EXERCISE_OPTIONS,
+  mapAppetiteLevel,
+  mapSpiritLevel,
+  mapPoopLevel,
+  computeRiskLevel,
+  computeAnomalyItems,
+  computeHasAnomaly,
+} from '../index'
 
 // Mock all dependencies required by the source module before importing
-vi.mock('../../../hooks/useThemeClass', () => ({ useThemeClass: vi.fn(() => '') }))
+vi.mock('../../../hooks/useThemeClass', () => ({
+  useThemeClass: vi.fn(() => ''),
+  useThemeKey: vi.fn(() => 'autumn'),
+  usePetWallpaper: vi.fn(() => null),
+}))
 vi.mock('../../../stores/authStore', () => ({ useAuthStore: vi.fn(() => ({})) }))
 vi.mock('../../../stores/shareStore', () => ({ useShareStore: vi.fn(() => ({})) }))
 vi.mock('../../../hooks/usePet', () => ({ usePet: vi.fn(() => ({ pets: [], currentPet: null, switchPet: vi.fn(), isLoading: false })) }))
 vi.mock('../../../hooks/useCheckin', () => ({ useCheckin: vi.fn(() => ({ checkins: [], todayCheckin: null, streakDays: 0, isLoading: false, initUser: vi.fn(), doCheckin: vi.fn(), fetchCheckins: vi.fn() })) }))
 vi.mock('../../../components/PetSwitcher', () => ({ default: vi.fn(() => null) }))
 vi.mock('../../../components', () => ({
+  Icon: ({ name, className }: any) => <span className={className} data-icon={name} />,
+  // 页面用 emojiToIcon 决定结果标签是画图标还是保留 emoji，mock 里给一个最小可用实现
+  emojiToIcon: (emoji: string) => (emoji === '🍽️' ? 'bowl-food' : null),
   PageLoading: () => null,
   PageError: () => null,
   PetAvatar: () => null,
@@ -29,19 +50,6 @@ vi.mock('../../../services/churnDetectionService', () => ({ updateLastCheckinDat
 vi.mock('../../../hooks/useAnalytics', () => ({ useAnalytics: vi.fn(() => ({})), usePageView: vi.fn() }))
 vi.mock('../../../constants/analyticsEvents', () => ({ EVENT: {} }))
 vi.mock('../../index.scss', () => ({}))
-
-import {
-  APPETITE_OPTIONS,
-  SPIRIT_OPTIONS,
-  POOP_OPTIONS,
-  EXERCISE_OPTIONS,
-  mapAppetiteLevel,
-  mapSpiritLevel,
-  mapPoopLevel,
-  computeRiskLevel,
-  computeAnomalyItems,
-  computeHasAnomaly,
-} from '../index'
 
 // ---------------------------------------------------------------------------
 // 1. mapAppetiteLevel
@@ -302,5 +310,33 @@ describe('EXERCISE_OPTIONS', () => {
   it('should have unique values', () => {
     const values = EXERCISE_OPTIONS.map((o) => o.value)
     expect(new Set(values).size).toBe(values.length)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 样式契约锁：把"改了视觉但类名/变量没对齐"这类静默故障钉死
+// ---------------------------------------------------------------------------
+describe('checkin 样式契约', () => {
+  // 读源码做约定锁（与 components/__tests__/PageBackground.test.tsx 同一手法）
+  const scss = readFileSync('src/pagesPet/checkin/index.scss', 'utf-8')
+
+  it('should define every result risk-level variant the page actually renders', () => {
+    // tsx 生成的是 `pet-checkin__result--${todayRiskLevel}`，取值只有 low/medium/high/emergency。
+    // 旧版 scss 写的是 --normal/--caution/--warning：那两个变体永远是死样式，
+    // medium/high 只能落到基类的绿色边、看起来"一切正常"（审查 P2-5）。
+    for (const level of ['low', 'medium', 'high', 'emergency']) {
+      expect(scss).toContain(`.pet-checkin__result--${level}`)
+    }
+    for (const dead of ['--normal', '--caution', '--warning']) {
+      expect(scss.includes(`.pet-checkin__result${dead}`)).toBe(false)
+    }
+  })
+
+  it('should keep the dark-theme paper fallback covering every token used on paper surfaces', () => {
+    // 深色主题（.theme-starry）把 --text-* 与 --glass-bg 都转成浅色，而本页纸面恒为浅底：
+    // 兜底块少钉一个 token，就会出现"纸面上看不见的按钮/文字"（审查 P2-3）。
+    for (const token of ['--text-primary', '--text-secondary', '--text-tertiary', '--glass-bg', '--border']) {
+      expect(scss).toContain(`${token}:`)
+    }
   })
 })
