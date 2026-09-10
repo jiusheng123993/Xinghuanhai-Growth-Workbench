@@ -2,296 +2,406 @@
 @import '../../styles/_animations';
 
 // ============================================
-// 我的页面 — 沉浸式暖色头部 + 丰富动效
+// 我的页面 — 插画横幅名片卡 + 家庭卡（星澜小筑）+ 分组菜单
+//
+// 【2026-09-11 第一轮改版说明（历史，结构见下方各段注释）】
+//   改版前的实际结构（工作区状态）是「页头插画条 + 无卡头部 + 数据概览白卡 + 家庭卡 +
+//   宠物 chips + 三组白卡菜单」，整页从上到下几乎没有非白色块，和首页（主视觉卡、
+//   渐变 CTA、彩色胶囊）比明显发素；顶部还叠了三重标题（原生导航栏"我的"、
+//   页头插画条"我的"、头像昵称）。
+//   本轮：
+//     1. 页头插画条与无卡头部、数据概览白卡合并为**一张名片卡**（页面只剩一个视觉主体）。
+//        注意最终落地的是"插画横幅 + 白底信息区"的上下分层版，不是早期试过的实色渐变版
+//        （实色版被用户否掉、遮罩版把猫抹掉了，过程见 .mine-card 段注释）；
+//     2. 宠物切换器曾重做为 flex 行 + 96rpx 头像（**该整块已在第二轮删除**，见下）；
+//     3. 菜单三组各给一个色系，打破 8 行图标同色的整块感。
+//
+// 【2026-09-11 第二轮改版说明（用户真机反馈）】
+//   1. **删除「我的毛孩子」切换器整块**：用户原话"这一块删掉吧，和下面的星澜小筑冲突了"。
+//      两者都是"一排头像/图标 + 一个入口"的卡片且紧挨着，视觉抢注意力；语义上也重复
+//      （宠物本就归属家庭，家庭页里宠物就是"成员"）。tsx 与样式一并清理，不留死样式。
+//   2. **重做家庭卡（星澜小筑）**：暖渐变底 + 渐变徽章 + 角色胶囊 + 信息胶囊 + 渐变按钮，
+//      与下方纯白菜单卡拉开层次（详见该段注释）。
+//   配色基本走主题变量（$color-* 即 var(--x, 回退值)）；仅两类例外且都有注释说明：
+//   ① 插画横幅的兜底渐变（固定浅奶油色，与主题无关）；② 深色主题兜底段里钉回的浅底取值。
 // ============================================
 
 .mine-page {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
   animation: pageEnter 0.4s ease-out;
 }
 
-// ===== 沉浸式头部（替代旧"渐变横幅+白卡"双色模块） =====
-// 设计意图：无卡片无横幅，头像/昵称直接坐在页面米色渐变上，
-// 整个顶部只有一种底色，视觉干净不割裂；头像用白描边+双层柔光环从背景上"托"起来
-.mine-hero {
-  display: flex;
-  align-items: center;
-  gap: 28rpx;
-  margin: 40rpx $spacing-xl 0;
-  padding: 8rpx;
+// ===== 个人名片卡（页面唯一视觉主体，插画横幅版） =====
+// 【为什么是这个版式】
+//   第一版用实色主色渐变，用户反馈「颜色我不喜欢，看起来很奇怪」（高饱和橙红压奶油米底，
+//   视觉权重过载）。第二版把插画当整卡底图 + 左侧遮罩，结果卡片比例（1.74）与插画（1.78）
+//   虽接近，但**遮罩把插画左半边的猫整个抹掉了**，只剩右侧一只狗。
+//   本版改为**上下分层**：上半是插画横幅（容器按 16:9 取，与插画同比例 → aspectFill
+//   既铺满又不裁主体），下半是白底信息区（文字在浅底上，不需要任何遮罩）。
+//   猫狗完整可见、文字可读性最好，也不再依赖遮罩这种"两头不讨好"的手段。
+.mine-card {
+  position: relative;
+  overflow: hidden;
+  margin: 24rpx $spacing-xl 0;
+  border-radius: $radius-md;
+  // 信息区底色（白）：与全站卡片同源
+  background: $color-bg-card;
+  border: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+  box-shadow: $shadow-card;
   animation: fadeInUp 0.45s ease-out;
 }
 
-.mine-hero-avatar {
-  @include flex-center;
-  width: 136rpx;
-  height: 136rpx;
-  border-radius: $radius-full;
-  background: $gradient-warm;
-  // 白描边 + 外圈半透明白环 + 暖色投影：让头像在浅色背景上有层次但不突兀
-  border: 6rpx solid $color-bg-card;
-  box-shadow:
-    0 10rpx 28rpx rgba($color-primary, 0.16),
-    0 0 0 12rpx rgba($color-bg-card, 0.5);
-  flex-shrink: 0;
+// 插画横幅：高度按容器宽度 / 16:9 推出来（内容宽 686rpx → 386rpx），
+// 比例与插画一致，aspectFill 才不会裁掉猫狗。
+.mine-card__banner {
+  position: relative;
+  width: 100%;
+  height: 386rpx;
+  // 兜底色：插画未加载/失败时这里是一块浅奶油横幅（取自插画背景的同色系）
+  background: linear-gradient(135deg, #FFFDF9 0%, #FFF1E2 100%);
   overflow: hidden;
 }
 
-/* 头像图片：铺满圆形头像框 */
-.mine-hero-avatar-img {
+// 插画本体：铺满横幅（Illustration 的 fill 模式不写内联尺寸，尺寸全交给这里）
+.mine-card__art {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+// 信息区
+.mine-card__body {
+  position: relative;
+  padding: 28rpx 32rpx 24rpx;
+}
+
+.mine-card__top {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.mine-avatar {
+  @include flex-center;
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: $radius-full;
+  // 白环 + 轻投影，把头像从插画/白底上"托"起来
+  border: 5rpx solid $color-bg-card;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.18), rgba(var(--gold-rgb, 255, 176, 32), 0.24));
+  flex-shrink: 0;
+  box-shadow: 0 8rpx 22rpx -8rpx rgba(var(--primary-rgb, 255, 107, 61), 0.45);
+  transition: transform 0.25s $spring-curve;
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+/* 头像图片：铺满圆框。display:block 消掉 <Image> 默认 inline 带来的基线间隙 */
+.mine-avatar-img {
+  display: block;
   width: 100%;
   height: 100%;
   border-radius: 50%;
 }
 
-.mine-hero-avatar-text {
-  font-size: 56rpx;
-  color: $color-text-inverse;
+.mine-avatar-text {
+  font-size: 46rpx;
+  color: $color-primary;
   font-weight: $font-weight-bold;
 }
 
-.mine-hero-info {
+.mine-card__info {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 14rpx;
+  gap: 12rpx;
 }
 
-.mine-hero-name-row {
+.mine-card__name-row {
   display: flex;
   align-items: center;
-  gap: $spacing-sm;
+  gap: 12rpx;
   flex-wrap: wrap;
 }
 
-.mine-hero-name {
+.mine-card__name {
   font-size: 40rpx;
   font-weight: $font-weight-bold;
   color: $color-text-primary;
 }
 
-.mine-hero-desc {
+.mine-card__desc {
   font-size: $font-size-sm;
-  color: $color-text-tertiary;
+  color: $color-text-secondary;
 }
 
+// 会员徽章：金色 tint 底 + 深金字（配 crown 的 gold-deep tone）
 .mine-vip-badge {
-  padding: 6rpx 16rpx;
-  background: linear-gradient(135deg, $color-gold-soft, $color-gold);
-  border-radius: 999rpx;
-  font-size: 20rpx;
-  color: $color-text-inverse;
-  font-weight: $font-weight-bold;
-  box-shadow: 0 4rpx 16rpx -4rpx rgba($color-gold, 0.45);
-}
-
-.mine-edit-btn {
-  padding: 12rpx 28rpx;
-  background: $color-primary-bg;
-  border: 1px solid $color-border;
-  border-radius: $radius-round;
-  font-size: $font-size-sm;
-  color: $color-primary-light;
-  flex-shrink: 0;
-  @include press-feedback;
-}
-
-// ===== 数据概览行 3 列（原型对齐） =====
-.mine-stats {
   display: flex;
-  margin: 24rpx $spacing-xl 0;
-  background: $color-bg-card;
-  border-radius: $radius-md;
-  box-shadow: $shadow-card;
-  padding: 40rpx 16rpx;
-  animation: fadeInUp 0.45s ease-out 0.06s both;
+  align-items: center;
+  gap: 6rpx;
+  padding: 6rpx 16rpx;
+  background: linear-gradient(135deg, rgba(var(--gold-rgb, 255, 176, 32), 0.28), rgba(var(--primary-rgb, 255, 107, 61), 0.16));
+  border: 1rpx solid rgba(var(--gold-rgb, 255, 176, 32), 0.55);
+  border-radius: $radius-round;
 }
 
-.mine-stat-item {
+.mine-vip-badge__text {
+  font-size: 20rpx;
+  color: $color-gold-deep;
+  font-weight: $font-weight-bold;
+}
+
+// 编辑按钮：白底胶囊 + 主色描边 + 铅笔图标（对齐全站"按钮必须带图标"的约定）
+.mine-edit-btn {
+  @include flex-center;
+  gap: 6rpx;
+  padding: 12rpx 22rpx;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.32);
+  border-radius: $radius-round;
+  flex-shrink: 0;
+  box-shadow: 0 4rpx 12rpx -6rpx rgba(var(--primary-rgb, 255, 107, 61), 0.5);
+  transition: transform 0.25s $spring-curve, background 0.2s ease;
+
+  &:active {
+    transform: scale(0.92);
+    background: rgba(255, 255, 255, 1);
+  }
+}
+
+.mine-edit-btn__text {
+  font-size: 22rpx;
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+}
+
+// 数据条：极淡 tint 底 + 细边框，在白卡信息区里分层（不再需要压插画，故不用白玻璃）
+.mine-card__stats {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-top: 26rpx;
+  padding: 22rpx 0;
+  border-radius: 28rpx;
+  background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.07), rgba(var(--gold-rgb, 255, 176, 32), 0.12));
+  border: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+}
+
+.mine-stat {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12rpx;
-
-  & + .mine-stat-item {
-    border-left: 1px solid $color-border;
-  }
+  gap: 8rpx;
 }
 
-.mine-stat-icon {
-  @include flex-center;
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: $radius-full;
-  font-size: 32rpx;
-
-  &--coral { background: rgba($color-primary, 0.14); color: $color-primary; }
-  &--gold { background: rgba($color-gold, 0.2); color: $color-gold-deep; }
-  &--info { background: rgba($color-teal, 0.16); color: $color-teal; }
-}
-
-.mine-stat-num {
-  font-size: 36rpx;
+.mine-stat__num {
+  font-size: 38rpx;
   font-weight: $font-weight-bold;
   color: $color-text-primary;
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
-  line-height: 1;
-  // 沉浸光感：统计数字暖色辉光
-  text-shadow: 0 0 12rpx rgba($color-primary, 0.28), 0 0 36rpx rgba($color-gold, 0.14);
 }
 
-.mine-stat-label {
-  font-size: 22rpx;
+// 标签小字：深色字压在白玻璃底上，对比度充裕（不再有白字压主色的可读性问题）
+.mine-stat__label {
+  font-size: 21rpx;
   color: $color-text-tertiary;
   line-height: 1;
 }
 
-// ===== 家庭信息卡（多成员共同养宠，2026-08-24） =====
+.mine-stat__divider {
+  width: 1rpx;
+  height: 56rpx;
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.16);
+}
+
+// ===== 家庭信息卡（星澜小筑） =====
+// 【2026-09-11 第二轮重做】原来它是"白底 + 淡金圆 + 灰字 + › 箭头"，与下面的菜单白卡
+// 同款同色，整段从上到下全是白的。本版做成"暖渐变 + 渐变徽章 + 双胶囊 + 渐变按钮"，
+// 让它在名片卡之下成为第二个明确的主体（信息层级：名片卡 > 家庭卡 > 菜单）。
+// 另：它上面原本还有一条「我的毛孩子」切换器，与该卡语义重复（宠物本就归属家庭，
+// 家庭页里宠物就是"成员"），已整块删除，相关样式一并清理，不留死样式。
 .mine-family-card {
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
-  margin: 24rpx $spacing-xl 0;
-  background: $color-bg-card;
+  margin: 32rpx $spacing-xl 0;
+  padding: 32rpx 30rpx;
+  gap: 22rpx;
   border-radius: $radius-md;
+  // 三层叠加（后者在下）：
+  //   ① 右上角金色柔光 —— 给平铺的卡片加一点光感方向；
+  //   ② 主色→金色的极淡斜向 tint —— 暖底，与页面奶油底同调；
+  //   ③ 白卡兜底 —— 前两层都是半透明的，弱机型/极端主题下也是一张干净的浅色卡。
+  background:
+    radial-gradient(120% 130% at 100% 0%, rgba(var(--gold-rgb, 255, 176, 32), 0.26) 0%, rgba(var(--gold-rgb, 255, 176, 32), 0) 62%),
+    linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.10) 0%, rgba(var(--gold-rgb, 255, 176, 32), 0.12) 100%),
+    $color-bg-card;
+  border: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.16);
   box-shadow: $shadow-card;
-  padding: 28rpx 32rpx;
-  gap: 24rpx;
   animation: fadeInUp 0.45s ease-out 0.1s both;
   @include press-feedback;
 }
 
-.mine-family-icon {
-  @include flex-center;
-  width: 88rpx;
-  height: 88rpx;
+// 右上角柔光层（装饰）：纯视觉，不接收点击（父级整卡可点，事件统一冒到父级）
+.mine-family-card__glow {
+  position: absolute;
+  top: -60rpx;
+  right: -40rpx;
+  width: 220rpx;
+  height: 220rpx;
   border-radius: $radius-full;
-  background: linear-gradient(135deg, rgba($color-gold, 0.22), rgba($color-primary, 0.16));
-  font-size: 40rpx;
+  background: radial-gradient(circle, rgba(var(--primary-rgb, 255, 107, 61), 0.18) 0%, rgba(var(--primary-rgb, 255, 107, 61), 0) 70%);
+  pointer-events: none;
+}
+
+// 左侧徽章：金→主色渐变圆 + 白描边环（house 图标 = 小筑/家）
+// 渐变在 60% 处就落回主色：白色图标压在正中，若整颗偏金（#FFB020）对比度会不足。
+// 环用白色而非同色金：卡片底本身就是暖金色调，金色环会"融进底色"完全看不见（实测）。
+/* 家庭头像（2026-09-11 用户要求「星澜小筑也要放个头像」）
+   改版前是 88rpx 圆形渐变徽章 + house 图标；现改为**方卡**，与宠物档案的头像同一套语言：
+     · 112rpx（从 88 提到 112：猫狗同框的细节在 44px 里看不清，56px 才站得住）
+     · 20rpx 圆角方卡（与 .pf-polaroid-frame 同款圆角，全站"方照片"统一）
+     · 保留原来那圈 8rpx 白描边 + 暖色落影（这是该卡原有的"贴纸浮起"观感，不动）
+     · 渐变底去掉：现在由图片自己铺满，渐变只作为图片加载前的兜底色 */
+.mine-family-badge {
+  @include flex-center;
+  position: relative;
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 20rpx;
   flex-shrink: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, $color-gold 0%, $color-primary 60%, $color-primary-dark 100%);
+  box-shadow:
+    0 0 0 8rpx rgba(255, 255, 255, 0.85),
+    0 10rpx 22rpx -10rpx rgba(var(--primary-rgb, 255, 107, 61), 0.9);
+}
+
+/* 头像图：铺满整张方卡（tsx 里是 mode='aspectFill'，等价于 object-fit: cover） */
+.mine-family-badge__img {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .mine-family-info {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
+  gap: 16rpx;
+  min-width: 0;
+}
+
+.mine-family-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
   min-width: 0;
 }
 
 .mine-family-name {
-  font-size: $font-size-md;
+  font-size: 34rpx;
   font-weight: $font-weight-bold;
   color: $color-text-primary;
-  // 沉浸光感：家庭名暖色柔光
-  text-shadow: 0 0 12rpx rgba($color-gold, 0.22);
+  max-width: 320rpx;
+  @include text-ellipsis;
 }
 
-.mine-family-desc {
-  font-size: $font-size-sm;
-  color: $color-text-tertiary;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mine-family-arrow {
-  font-size: 36rpx;
-  color: $color-text-tertiary;
+// 角色胶囊：金 tint 底 + 深金字（与 crown/user 图标的 gold-deep 同源，避免"底变色、图标不变"）
+.mine-family-role {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 5rpx 14rpx;
+  border-radius: $radius-round;
+  background: rgba(var(--gold-rgb, 255, 176, 32), 0.22);
+  border: 1rpx solid rgba(var(--gold-rgb, 255, 176, 32), 0.5);
   flex-shrink: 0;
 }
 
-// ===== 宠物切换条 =====
-.mine-pet-chips {
-  padding: 0 $spacing-xl $spacing-md;
+.mine-family-role__text {
+  font-size: 20rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-gold-deep;
 }
 
-.mine-pet-chips-scroll {
-  white-space: nowrap;
+// 信息胶囊行：成员数（金 tint）/ 毛孩子数（主色 tint）
+.mine-family-chips {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-wrap: wrap;
 }
 
-.mine-pet-chip {
-  display: inline-flex;
-  flex-direction: column;
+.mine-family-chip {
+  display: flex;
   align-items: center;
   gap: 8rpx;
-  padding: 16rpx 24rpx;
+  padding: 8rpx 16rpx;
   border-radius: $radius-round;
-  background: $color-bg-card;
-  border: 1px solid $color-border-light;
-  margin-right: 16rpx;
-  white-space: normal;
+
+  &--members { background: rgba(var(--gold-rgb, 255, 176, 32), 0.18); }
+  &--pets { background: rgba(var(--primary-rgb, 255, 107, 61), 0.12); }
+}
+
+.mine-family-chip__text {
+  font-size: 22rpx;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+}
+
+// 空态说明文字（没有家庭时才出现）：允许折行，窄屏不裁字
+.mine-family-desc {
+  font-size: $font-size-sm;
+  line-height: 1.4;
+  color: $color-text-tertiary;
+}
+
+// 右侧行动按钮：主色渐变胶囊 + 投影 + 图标（原版只有一个灰 ›，行动感几乎为零）
+// 内侧再描一道极淡白边，让按钮在暖底上"立"起来（纯投影在同类暖色底上会发闷）
+.mine-family-enter {
+  @include flex-center;
   position: relative;
-  transition: all 0.2s cubic-bezier(0.22, 0.61, 0.36, 1);
-
-  &--active {
-    background: $color-primary-bg;
-    border-color: $color-primary;
-    box-shadow: 0 0 20rpx rgba($color-primary, 0.15);
-    @include breathe-glow;
-  }
-
-  &--add {
-    border-style: dashed;
-    border-color: $color-text-tertiary;
-    opacity: 0.6;
-  }
+  gap: 6rpx;
+  height: 68rpx;
+  padding: 0 24rpx;
+  border-radius: $radius-round;
+  flex-shrink: 0;
+  // border-box：按钮带 1rpx 描边，不写的话实际高度会比 68rpx 多 2rpx、与左侧徽章错开半个像素
+  box-sizing: border-box;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  border: 1rpx solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 10rpx 22rpx -12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.9);
+  transition: transform 0.25s $spring-curve;
 
   &:active {
     transform: scale(0.94);
-    opacity: 0.8;
   }
 }
 
-.mine-pet-chip-avatar {
-  @include flex-center;
-  width: 60rpx;
-  height: 60rpx;
-  border-radius: $radius-full;
-  background: $gradient-card;
-  font-size: 30rpx;
-  overflow: hidden;
-}
-
-/* 宠物真实头像（照片/AI 形象）：铺满圆形框，加载失败退回物种 emoji */
-.mine-pet-chip-avatar-img {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-}
-
-.mine-pet-chip-name {
-  font-size: $font-size-xs;
-  color: $color-text-secondary;
-  font-weight: $font-weight-medium;
-}
-
-.mine-pet-chip-check {
-  position: absolute;
-  top: -4rpx;
-  right: -4rpx;
-  width: 32rpx;
-  height: 32rpx;
-  border-radius: $radius-full;
-  background: $gradient-gold;
-  @include flex-center;
-  font-size: 18rpx;
-  color: $color-text-inverse;
-  font-weight: $font-weight-bold;
-  box-shadow: 0 2rpx 8rpx rgba($color-primary, 0.4);
-}
-
-.mine-pet-chip-add-icon {
-  @include flex-center;
-  width: 60rpx;
-  height: 60rpx;
-  border-radius: $radius-full;
-  background: $color-primary-bg;
-  border: 2rpx dashed $color-text-tertiary;
-  font-size: 32rpx;
-  color: $color-text-tertiary;
+.mine-family-enter__text {
+  font-size: 24rpx;
+  font-weight: $font-weight-semibold;
+  // 这里**故意写死白色**，不用 $color-text-inverse：
+  //   按钮里的图标是 Icon 组件把颜色烧进 SVG data URI 的（tone='white' 恒为 #FFFFFF），
+  //   而 --text-inverse 在星空银河主题下被翻成深蓝 #1B2450（_theme.scss 的 .theme-starry）
+  //   —— 用 inverse 会出现"深蓝文字 + 白图标"的错配（实测计算样式 rgb(27,36,80)）。
+  // 主色渐变按钮上白字是本仓既有做法（全仓 color:#fff 155 处）。
+  color: #FFFFFF;
 }
 
 // ===== 分组菜单（原型对齐：组标题 + 卡片 + 图标圆） =====
@@ -300,13 +410,30 @@
   animation: fadeInUp 0.45s ease-out 0.12s both;
 }
 
-.mine-menu-group-title {
-  display: block;
-  font-size: 24rpx;
-  font-weight: $font-weight-medium;
-  color: $color-text-tertiary;
+.mine-menu-group-head {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
   padding: 0 8rpx;
-  margin-bottom: 12rpx;
+  margin-bottom: 14rpx;
+}
+
+// 分组色点：三组各一色，扫一眼就能分开（原来三组标题都是同一种灰字，没有边界感）
+.mine-menu-group-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &--primary { background: $color-primary; }
+  &--gold { background: $color-gold; }
+  &--teal { background: $color-teal; }
+}
+
+.mine-menu-group-title {
+  font-size: 24rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-tertiary;
 }
 
 .mine-menu-card {
@@ -321,7 +448,7 @@
   align-items: center;
   gap: 20rpx;
   padding: 28rpx 32rpx;
-  border-bottom: 1px solid $color-border;
+  border-bottom: 1rpx solid $color-border;
   transition: all 0.15s ease;
 
   &--last {
@@ -339,16 +466,15 @@
   height: 72rpx;
   border-radius: $radius-full;
   flex-shrink: 0;
-  background: rgba($color-primary, 0.14);
+  // 底色与图标 tone 同源：组内一致、组间区分（原来 8 行全是同一个淡橙）
+  &--primary { background: rgba(var(--primary-rgb, 255, 107, 61), 0.12); }
+  &--gold { background: rgba(var(--gold-rgb, 255, 176, 32), 0.16); }
+  &--teal { background: rgba(var(--teal-rgb, 79, 163, 227), 0.14); }
 
   &--gradient {
     background: linear-gradient(135deg, $color-primary-light, $color-primary);
     box-shadow: $glow-sm;
   }
-}
-
-.mine-menu-icon {
-  font-size: 32rpx;
 }
 
 .mine-menu-label-wrap {
@@ -454,23 +580,64 @@
 }
 
 // ===== 退出登录 =====
+// 保持克制：白底描边 + 图标 + 危险色文字，不与上面的菜单抢注意力
 .mine-section {
   margin: $spacing-lg $spacing-xl;
 }
 
 .mine-logout-btn {
+  @include flex-center;
+  gap: 10rpx;
   height: 88rpx;
-  line-height: 88rpx;
-  text-align: center;
   background: $color-bg-card;
-  border: 1px solid $color-border;
+  border: 1rpx solid $color-border;
   border-radius: $radius-lg;
-  font-size: $font-size-md;
-  color: $color-coral;
-  opacity: 0.7;
   @include press-feedback;
+}
+
+.mine-logout-btn__text {
+  font-size: $font-size-md;
+  color: $color-danger;
+  font-weight: $font-weight-medium;
 }
 
 .mine-bottom-safe {
   height: 60rpx;
+}
+
+// ===== 星空银河（唯一的深色主题）页面级兜底 =====
+//
+// 【问题】`.theme-starry` 把 `--text-*` 整体转成白色，但 `--bg-card` 仍是 `#FFFFFF`
+//   —— 于是"白卡 + 主题文字色"的组合全部变成白底白字。实测该主题下本页的
+//   菜单卡只剩图标、家庭卡只剩"去创建"按钮，文字（含菜单项名称）完全不可见。
+//   名片卡同理：它现在是"浅奶油底 + 插画"，文字若跟随主题变白同样不可读。
+// 【这是既有全站缺陷】不是本页引入：全局修复要动 100+ 个页面、需整体回归，属另案。
+// 【做法】沿用宠物档案页已验证的**页面级兜底**：在"浅底卡片作用域"内把卡内 token
+//   钉回浅色取值（底色是浅的，因此必须配深色文字）。只影响本页这几类卡。
+.mine-page.theme-starry {
+  .mine-card,
+  .mine-menu-card,
+  .mine-family-card,
+  .mine-logout-btn,
+  .mine-theme-panel {
+    --text-primary: #40281C;
+    --text-secondary: #8B6E58;
+    --text-tertiary: #B69B83;
+    --border: #F3E2D2;
+    --border-light: rgba(243, 226, 210, 0.5);
+  }
+
+  // 名片卡信息区是白底 → 文字必须钉回深色（横幅里的插画不受影响）
+  // （横幅自身的兜底渐变是固定浅奶油色，与主题无关，无需处理）
+  .mine-card__body {
+    --text-primary: #40281C;
+    --text-secondary: #8B6E58;
+    --text-tertiary: #B69B83;
+  }
+
+  // 主题面板用 --bg-secondary 打底，而该主题的 --bg-secondary 是深蓝
+  // → 只钉文字色会变成"深蓝底 + 深棕字"，故把面板底一并钉回浅色
+  .mine-theme-panel {
+    background: #FFFDF9;
+  }
 }

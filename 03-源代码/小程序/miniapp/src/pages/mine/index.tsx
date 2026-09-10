@@ -1,8 +1,17 @@
 /**
  * 我的页面
  * 沉浸式头部（头像 + 昵称 + 会员徽章，融入页面暖色渐变背景，无双色横幅）
- * 数据概览 3 列 + 分组菜单（数据服务/管理/设置-主题皮肤）+ 退出登录
- * 保留原有业务逻辑：登录校验、打卡/回忆统计、宠物切换、会员状态、退出登录
+ * 数据概览 3 列 + 家庭卡（星澜小筑）+ 分组菜单（数据服务/管理/设置-主题皮肤）+ 退出登录
+ * 保留原有业务逻辑：登录校验、打卡/回忆统计、会员状态、退出登录
+ *
+ * 【2026-09-11 第二轮：删掉「我的毛孩子」切换器】
+ * 用户在真机上反馈该区块与紧跟其后的「星澜小筑」家庭卡**语义与视觉双重打架**：
+ * 两块都是"一横排头像/图标 + 一个入口"的卡片，挨在一起抢注意力；
+ * 而毛孩子本来就归属家庭（家庭页里宠物就是"成员"），这里再单开一块是重复表达。
+ * 因此整块移除（tsx + 样式一并清理，不留死样式）。
+ * 影响：本页不再提供"切换当前宠物"。其余页面均有切换入口（打卡/日记/趋势/疫苗/
+ * 食物查询/创作页的 PetSwitcher），故不损失能力。
+ * 毛孩子的数量信息没有丢：并入家庭卡的信息胶囊（N 只毛孩子）。
  */
 import { View, Text, ScrollView, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
@@ -14,11 +23,15 @@ import { useFamilyStore } from '../../stores/familyStore'
 import { useThemeStore, type ThemeKey } from '../../stores/themeStore'
 import { getCheckinStats } from '../../services/checkinService'
 import { redirectToLoginIfNeeded } from '../../utils/authGuard'
-import { resolvePetAvatarUrl } from '../../data/homeStyleAvatars'
 import { timelineService } from '../../services/timelineService'
 import PageLoading from '../../components/PageLoading'
 import { useThemeClass } from '../../hooks/useThemeClass'
 import './index.scss'
+// 家庭卡（星澜小筑）的头像：品牌静态图（猫狗同框）——家庭数据里没有头像字段，
+// 所以用这张统一的品牌形象；与宠物形象同一套画风（3D 黏土）与同一套"方形满幅"语言。
+// 128×128 / 256 色压缩版（14KB），放在页面级 assets 里，不占分包、不动共用目录。
+import familyAvatar from './assets/family-avatar.png'
+import { Icon, Illustration, PageBackground, type FillIconName } from '../../components'
 
 /** 主题配置（对齐原型四季色） */
 const THEME_OPTIONS: { key: ThemeKey; label: string; colors: [string, string] }[] = [
@@ -41,29 +54,47 @@ function calcPetDuration(createdAt?: string): string {
   return `养宠 ${Math.floor(months / 12)} 年`
 }
 
-/** 菜单分组（对齐原型：数据服务 / 管理 / 设置） */
-const MENU_GROUPS: { title: string; items: { icon: string; label: string; url: string }[] }[] = [
+/**
+ * 菜单分组（对齐原型：数据服务 / 管理 / 设置）
+ *
+ * 2026-09-11：图标由 emoji 改为面性图标。
+ * 原来 8 行菜单直接渲染 emoji（📄💉👑🏆📈🎁💬⚙️），与全站图标体系不一致，
+ * 且 emoji 在不同机型上字形差异大、颜色无法跟随主题。
+ *
+ * 2026-09-11（本轮）：再补一层「分组色系」——原来 8 行的图标底**全是同一个淡橙**，
+ * 三组之间没有识别度、整块像一张糊住的表。现在每组一个 tone（组内图标与底色同源，
+ * 组间不同色），分组标题左侧再点一个同色小圆点，扫一眼就能分清三块。
+ */
+const MENU_GROUPS: {
+  title: string
+  /** 分组色系（须是 Icon 支持的 tone；组内图标与底色同源，避免"底变色、图标不变"） */
+  tone: 'primary' | 'gold' | 'teal'
+  items: { icon: FillIconName; label: string; url: string }[]
+}[] = [
   {
     title: '数据服务',
+    tone: 'primary',
     items: [
-      { icon: '📄', label: '健康报告', url: '/pagesPet/trends/index' },
-      { icon: '💉', label: '疫苗日历', url: '/pagesPet/vaccine/index' },
-      { icon: '👑', label: '会员中心', url: '/pagesUser/member/index' },
-      { icon: '🏆', label: '成就墙', url: '/pagesPet/achievement/index' },
+      { icon: 'clipboard-text', label: '健康报告', url: '/pagesPet/trends/index' },
+      { icon: 'syringe', label: '疫苗日历', url: '/pagesPet/vaccine/index' },
+      { icon: 'crown', label: '会员中心', url: '/pagesUser/member/index' },
+      { icon: 'trophy', label: '成就墙', url: '/pagesPet/achievement/index' },
     ],
   },
   {
     title: '管理',
+    tone: 'gold',
     items: [
-      { icon: '📈', label: '效果追踪', url: '/pagesUser/effect-tracking/index' },
-      { icon: '🎁', label: '邀请好友', url: '/pagesUser/invite/index' },
-      { icon: '💬', label: '意见反馈', url: '/pagesUser/feedback/index' },
+      { icon: 'chart-line', label: '效果追踪', url: '/pagesUser/effect-tracking/index' },
+      { icon: 'handshake', label: '邀请好友', url: '/pagesUser/invite/index' },
+      { icon: 'chat-circle', label: '意见反馈', url: '/pagesUser/feedback/index' },
     ],
   },
   {
     title: '设置',
+    tone: 'teal',
     items: [
-      { icon: '⚙️', label: '设置', url: '/pagesUser/settings/index' },
+      { icon: 'gear', label: '设置', url: '/pagesUser/settings/index' },
     ],
   },
 ]
@@ -73,7 +104,8 @@ export default function Mine() {
   const isAuthenticated = useAuthStore(state => state.isAuthenticated)
   const isInitialized = useAuthStore(state => state.isInitialized)
   const logout = useAuthStore(state => state.logout)
-  const { pets, currentPet, fetchPets, switchPet } = usePetStore()
+  // 只取列表与拉取方法：本轮删掉宠物切换器后，本页不再需要 currentPet / switchPet
+  const { pets, fetchPets } = usePetStore()
   const membership = useMembershipStore(state => state.membership)
   // 多成员共同养宠：当前家庭与家庭成员（人）列表（2026-08-24）
   const currentFamily = useFamilyStore(state => state.currentFamily)
@@ -84,10 +116,6 @@ export default function Mine() {
   const [themePanelOpen, setThemePanelOpen] = useState(false)
   // 头像加载失败标记：Image 触发 onError 时置 true 退回昵称占位，避免显示裂图
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false)
-  // 宠物 chips 头像加载失败记录：key=宠物 id，value=加载失败时的头像 URL。
-  // 渲染时"当前 URL === 记录的失败 URL"才退回 emoji：同一坏地址不反复重试，
-  // 档案换了新头像地址则自动重试新图（防止一次瞬断让头像永远卡在 emoji）
-  const [petAvatarFailed, setPetAvatarFailed] = useState<Record<string, string>>({})
   const themeClass = useThemeClass()
 
   // tab 页常驻：每次从其他页切回「我的」时刷新数据
@@ -115,6 +143,21 @@ export default function Mine() {
     setAvatarLoadFailed(false)
   }, [user?.avatar])
 
+  /**
+   * 顶部导航栏标题：固定为「{用户昵称}的家庭」—— 跟"人"走，不跟"当前宠物"走。
+   *
+   * 【为什么钉在这一页】用户真机反馈：最顶上会显示「烧鸡的家庭 / 烧鸭的家庭」，切宠物时还跟着变。
+   *   要求改成按用户昵称固定（昵称"不忘" → 「不忘的家庭」）。
+   *   「我的」是切宠物之后停留的主页面，标题必须由它自己钉住：否则在
+   *   **导航栏全局只有一个**的宿主里（Taro H5 / 安卓壳），会残留上一个页面（创作页按宠物名设过）的标题。
+   * 【不动什么】家庭卡里的「星澜小筑」是家庭记录名，用户明确要求保持不变；这里只改顶栏标题。
+   * 【回退】昵称尚未加载（首帧/未登录）时用页面配置里的「我的」，不留空白标题。
+   */
+  useEffect(() => {
+    const nickname = user?.nickname?.trim()
+    Taro.setNavigationBarTitle({ title: nickname ? `${nickname}的家庭` : '我的' })
+  }, [user?.nickname])
+
   useEffect(() => {
     if (!isInitialized) return
     if (!isAuthenticated || !user) {
@@ -133,12 +176,15 @@ export default function Mine() {
           // 家庭接口失败不阻塞主流程
         }
         const fetchedPets = usePetStore.getState().pets
+        // 统计口径（2026-09-11 审查 P1-3 修复）：这一格标签是「打卡天数」，必须累加
+        // 按日期去重后的 `totalDays`。原来累加的是 `totalCheckins`（打卡**条数**）——
+        // 3 只宠物各打卡 100 天会显示「300 打卡天数」，多宠场景把错误直接放大。
         let totalC = 0
         if (fetchedPets.length > 0 && user?.id) {
           for (const pet of fetchedPets) {
             try {
               const stats = await getCheckinStats(pet.id, user.id)
-              totalC += stats.totalCheckins
+              totalC += stats.totalDays
             } catch {
               // 单个宠物统计失败不影响整体
             }
@@ -202,173 +248,181 @@ export default function Mine() {
   return (
     <ScrollView className={`mine-page ${themeClass}`} scrollY>
       {/* 全屏动态背景光斑层 */}
-      <View className='xhh-bg-layer'>
-        <View className='xhh-blob xhh-blob-a' />
-        <View className='xhh-blob xhh-blob-b' />
-        <View className='xhh-blob xhh-blob-c' />
-        <View className='xhh-blob xhh-blob-d' />
+      <PageBackground />
+
+      {/* ===== 个人名片卡（2026-09-11 重构，第二版：上下分层） =====
+          改版前这里是「页头插画条 + 无卡头部」两块：页头插画条在 156rpx 的扁容器里被压得
+          看不清，且与下面的头像信息构成**两个页头**；数据概览另占一张白卡，首屏被切得七零八落。
+          第一版合并后用了主色实色渐变（primary→primary-dark），用户反馈「颜色我不喜欢，
+          看起来很奇怪」—— 整页是奶油米底 + 白卡，顶上一块高饱和橙红属视觉权重过载，
+          与页面气质割裂。
+          第二版曾把插画当**整卡底图 + 左侧白色渐变遮罩**，结果遮罩把插画左半边的猫整个抹掉了，
+          只剩右侧一只狗（见 index.scss 该段注释）。
+          本版改为**上下分层**：上半是插画横幅（容器按 16:9 取，与插画同比例 → aspectFill 铺满
+          又不裁主体），下半是白底信息区（文字在浅底上，**完全不需要遮罩**）。
+          猫狗完整可见、文字可读性最好，也不再依赖遮罩这种"两头不讨好"的手段。 */}
+      <View className='mine-card'>
+        {/* 卡片上半：品牌插画横幅（page-mine：羊毛毡猫狗，与首页主视觉同一套 IP）。
+            容器宽高比照 16:9 取（686rpx 宽 → 386rpx 高），与插画原始比例一致，
+            所以 aspectFill 既铺满又**不裁切主体**（前两版把插画当整卡底图，比例差得远，
+            结果只露出狗、猫被遮罩抹掉了）。
+            ⚠️ 插画走服务器且 Illustration 在 onError 时整块不渲染，
+            所以横幅自身必须带浅奶油兜底色 —— 弱网/失败时是"浅奶油纯色横幅"而不是空框。 */}
+        <View className='mine-card__banner'>
+          <Illustration name='page-mine' fill mode='aspectFill' className='mine-card__art' />
+        </View>
+
+        {/* 卡片下半：白色信息区（文字直接在浅底上，可读性最好，不需要任何遮罩） */}
+        <View className='mine-card__body'>
+          <View className='mine-card__top'>
+            <View className='mine-avatar' onClick={() => navigateTo('/pagesUser/profile/index')}>
+              {/* 有头像且未加载失败就显示图片；头像为空或加载失败（onError）才退回昵称首字占位 */}
+              {user?.avatar && !avatarLoadFailed ? (
+                <Image
+                  className='mine-avatar-img'
+                  src={user.avatar}
+                  mode='aspectFill'
+                  onError={() => setAvatarLoadFailed(true)}
+                />
+              ) : (
+                <Text className='mine-avatar-text'>
+                  {/* Array.from 按 Unicode 码点取首字符，避免 emoji 代理对被 charAt 截成半个乱码 */}
+                  {user?.nickname ? Array.from(user.nickname)[0] : '👤'}
+                </Text>
+              )}
+            </View>
+
+            <View className='mine-card__info'>
+              <View className='mine-card__name-row'>
+                <Text className='mine-card__name'>{user?.nickname || '用户'}</Text>
+                {isVip && (
+                  <View className='mine-vip-badge'>
+                    <Icon name='crown' size={11} tone='gold-deep' />
+                    <Text className='mine-vip-badge__text'>星钻会员</Text>
+                  </View>
+                )}
+              </View>
+              <Text className='mine-card__desc'>
+                {pets.length > 0 ? `铲屎官 · ${petDuration}` : '还没有添加宠物'}
+              </Text>
+            </View>
+
+            {/* 编辑按钮：白底胶囊 + 铅笔图标（对齐全站"按钮必须带图标"的约定） */}
+            <View className='mine-edit-btn' onClick={() => navigateTo('/pagesUser/profile/index')}>
+              <Icon name='pencil-simple' size={13} tone='primary' />
+              <Text className='mine-edit-btn__text'>编辑</Text>
+            </View>
+          </View>
+
+          {/* 数据条 */}
+          <View className='mine-card__stats'>
+            <View className='mine-stat'>
+              <Icon name='paw-print' size={17} tone='primary' />
+              <Text className='mine-stat__num'>{pets.length}</Text>
+              <Text className='mine-stat__label'>宠物</Text>
+            </View>
+            <View className='mine-stat__divider' />
+            <View className='mine-stat'>
+              <Icon name='calendar-check' size={17} tone='gold' />
+              <Text className='mine-stat__num'>{totalCheckins}</Text>
+              <Text className='mine-stat__label'>打卡天数</Text>
+            </View>
+            <View className='mine-stat__divider' />
+            <View className='mine-stat'>
+              <Icon name='camera' size={17} tone='teal' />
+              <Text className='mine-stat__num'>{totalMemories}</Text>
+              <Text className='mine-stat__label'>回忆</Text>
+            </View>
+          </View>
+        </View>
       </View>
 
-      {/* ===== 沉浸式头部：头像 + 昵称 + 会员徽章 + 编辑 ===== */}
-      {/* 无卡片无横幅，直接坐在页面暖色渐变上，消除原"渐变横幅+白卡"的双色拼接感 */}
-      <View className='mine-hero'>
-        <View className='mine-hero-avatar' onClick={() => navigateTo('/pagesUser/profile/index')}>
-          {/* 有头像且未加载失败就显示图片；头像为空或加载失败（onError）才退回昵称首字占位 */}
-          {/* 点击头像进入资料页：支持选择微信头像或相册上传更换 */}
-          {user?.avatar && !avatarLoadFailed ? (
-            <Image
-              className='mine-hero-avatar-img'
-              src={user.avatar}
-              mode='aspectFill'
-              onError={() => setAvatarLoadFailed(true)}
-            />
-          ) : (
-            <Text className='mine-hero-avatar-text'>
-              {/* Array.from 按 Unicode 码点取首字符，避免 emoji 代理对被 charAt 截成半个乱码 */}
-              {user?.nickname ? Array.from(user.nickname)[0] : '👤'}
-            </Text>
-          )}
+      {/* ===== 家庭信息卡（星澜小筑，2026-09-11 第二轮重做） =====
+          改版前它是一张与菜单卡同款的白卡：淡金圆底 + 家庭名 + 一行灰字 + 一个 › 箭头。
+          夹在「我的毛孩子」切换器与三组白卡菜单之间，整段从上到下全是白底，
+          和菜单糊成一片，行动指向也弱（只有一个灰箭头）。
+          本版（切换器已删除，它成为名片卡之下的第一个视觉主体）：
+            ① 底色「奶油白 + 主色/金色淡 tint」的暖渐变，右上角再叠一层金色柔光 →
+               与下方纯白菜单卡拉开层次，一眼能分辨；
+            ② 左侧徽章改 house 图标（小筑 = 家）压金→主色渐变圆（88rpx）+ 白描边环 ——
+               环用白色而不是金色：卡底本身就是暖金调，金色环会融进底色看不见；
+            ③ 家庭名放大加粗，右侧跟一枚角色胶囊（创建者 crown / 成员 user）；
+            ④ 信息行改两枚胶囊：N 位成员（users，金 tint）+ N 只毛孩子（paw-print，主色 tint），
+               把被删掉的「我的毛孩子」里唯一有用的事实（有几只）保留下来；
+            ⑤ 右侧「进入」从裸文字换成主色渐变真按钮（文字 + 图标 + 投影 + 按压回弹），
+               对齐全站"按钮五要素"（渐变/投影/胶囊/按压/图标）约定。
+          空态（还没建家庭）沿用同一套外壳，只换文案与图标口径。
+          配色一律走主题变量或 rgba(var(--x-rgb), α)：四季与星空主题下整体跟随，
+          卡片在星空主题里仍是浅底，所以文字色继续由下方 .theme-starry 兜底钉回深色。 */}
+      <View className='mine-family-card' onClick={() => Taro.navigateTo({ url: '/pages/family/index' })}>
+        {/* 右上角柔光：纯装饰层，不参与交互（pointer-events 由父级点击冒泡统一处理） */}
+        <View className='mine-family-card__glow' />
+
+        {/* 家庭头像位：2026-09-11 用户要求「星澜小筑也要放个头像」。
+            原来是"圆形渐变徽章 + house 图标"；现改为与宠物头像同一套语言的**方卡**：
+            品牌家庭形象（猫狗同框）铺满 + 白环描边（见 scss）。
+            mode='aspectFill' 与宠物头像一致：铺满方框、不留白。 */}
+        <View className='mine-family-badge'>
+          <Image className='mine-family-badge__img' src={familyAvatar} mode='aspectFill' />
         </View>
-        <View className='mine-hero-info'>
-          <View className='mine-hero-name-row'>
-            <Text className='mine-hero-name'>{user?.nickname || '用户'}</Text>
-            {isVip && (
-              <View className='mine-vip-badge'>
-                <Text>👑 星钻会员</Text>
+
+        <View className='mine-family-info'>
+          <View className='mine-family-name-row'>
+            <Text className='mine-family-name'>
+              {currentFamily ? (currentFamily.name || '我的家庭') : '创建或加入家庭'}
+            </Text>
+            {currentFamily && myFamilyRole && (
+              <View className='mine-family-role'>
+                <Icon name={myFamilyRole === 'owner' ? 'crown' : 'user'} size={12} tone='gold-deep' />
+                <Text className='mine-family-role__text'>
+                  {myFamilyRole === 'owner' ? '创建者' : '成员'}
+                </Text>
               </View>
             )}
           </View>
-          <Text className='mine-hero-desc'>
-            {pets.length > 0 ? `铲屎官 · ${petDuration}` : '还没有添加宠物'}
-          </Text>
-        </View>
-        <View className='mine-edit-btn' onClick={() => navigateTo('/pagesUser/profile/index')}>
-          <Text>编辑</Text>
-        </View>
-      </View>
 
-      {/* ===== 数据概览行 3 列（原型对齐） ===== */}
-      <View className='mine-stats'>
-        <View className='mine-stat-item'>
-          <View className='mine-stat-icon mine-stat-icon--coral'>
-            <Text>🐾</Text>
-          </View>
-          <Text className='mine-stat-num'>{pets.length}只</Text>
-          <Text className='mine-stat-label'>宠物</Text>
-        </View>
-        <View className='mine-stat-item'>
-          <View className='mine-stat-icon mine-stat-icon--gold'>
-            <Text>📅</Text>
-          </View>
-          <Text className='mine-stat-num'>{totalCheckins}天</Text>
-          <Text className='mine-stat-label'>打卡</Text>
-        </View>
-        <View className='mine-stat-item'>
-          <View className='mine-stat-icon mine-stat-icon--info'>
-            <Text>📷</Text>
-          </View>
-          <Text className='mine-stat-num'>{totalMemories}条</Text>
-          <Text className='mine-stat-label'>回忆</Text>
-        </View>
-      </View>
-
-      {/* ===== 家庭信息卡（多成员共同养宠，2026-08-24） ===== */}
-      <View className='mine-family-card' onClick={() => Taro.navigateTo({ url: '/pages/family/index' })}>
-        {currentFamily ? (
-          <>
-            <View className='mine-family-icon'>
-              <Text>👥</Text>
-            </View>
-            <View className='mine-family-info'>
-              <Text className='mine-family-name'>{currentFamily.name || '我的家庭'}</Text>
-              <Text className='mine-family-desc'>
-                {familyMemberCount} 位成员{myFamilyRole ? ` · ${myFamilyRole === 'owner' ? '创建者' : '成员'}` : ''}
-              </Text>
-            </View>
-            <Text className='mine-family-arrow'>›</Text>
-          </>
-        ) : (
-          <>
-            <View className='mine-family-icon'>
-              <Text>👥</Text>
-            </View>
-            <View className='mine-family-info'>
-              <Text className='mine-family-name'>创建或加入家庭</Text>
-              <Text className='mine-family-desc'>和家人一起养宠，共同记录毛孩子的每一天</Text>
-            </View>
-            <Text className='mine-family-arrow'>›</Text>
-          </>
-        )}
-      </View>
-
-      {/* ===== 宠物切换 chips ===== */}
-      {/* 头像走全站统一口径：真实照片 avatarPhotoUrl > AI 形象 avatarCartoonUrl > 品种品牌头像；
-          仅当品牌头像也加载失败时才退回物种 emoji */}
-      {pets.length > 0 && (
-        <View className='mine-pet-chips'>
-          <ScrollView className='mine-pet-chips-scroll' scrollX showScrollbar={false}>
-            {pets.map(pet => {
-              const isActive = currentPet?.id === pet.id
-              const emoji = pet.species === 'cat' ? '🐱' : '🐶'
-              // 全站统一优先级解析头像地址（永远非空：没设过头像会给品牌小动物头像）；
-              // 仅当"该地址已加载失败"时退回 emoji
-              // （记录失败时的 URL：同一 URL 不反复重试；档案换了新头像地址会自动重试新图）
-              const avatarUrl = resolvePetAvatarUrl(pet)
-              const showAvatarImg = !!avatarUrl && petAvatarFailed[pet.id] !== avatarUrl
-              return (
-                <View
-                  key={pet.id}
-                  className={`mine-pet-chip ${isActive ? 'mine-pet-chip--active' : ''}`}
-                  onClick={() => switchPet(pet.id)}
-                >
-                  <View className='mine-pet-chip-avatar'>
-                    {showAvatarImg ? (
-                      <Image
-                        className='mine-pet-chip-avatar-img'
-                        src={avatarUrl}
-                        mode='aspectFill'
-                        lazyLoad
-                        onError={() => setPetAvatarFailed(prev => ({ ...prev, [pet.id]: avatarUrl }))}
-                      />
-                    ) : (
-                      <Text>{emoji}</Text>
-                    )}
-                  </View>
-                  <Text className='mine-pet-chip-name'>{pet.name}</Text>
-                  {isActive && (
-                    <View className='mine-pet-chip-check'>
-                      <Text>✓</Text>
-                    </View>
-                  )}
-                </View>
-              )
-            })}
-            <View
-              className='mine-pet-chip mine-pet-chip--add'
-              onClick={() => navigateTo('/pagesPet/add/index')}
-            >
-              <View className='mine-pet-chip-add-icon'>
-                <Text>+</Text>
+          {currentFamily ? (
+            <View className='mine-family-chips'>
+              <View className='mine-family-chip mine-family-chip--members'>
+                <Icon name='users' size={13} tone='gold-deep' />
+                <Text className='mine-family-chip__text'>{familyMemberCount} 位成员</Text>
               </View>
-              <Text className='mine-pet-chip-name'>添加</Text>
+              <View className='mine-family-chip mine-family-chip--pets'>
+                <Icon name='paw-print' size={13} tone='primary' />
+                <Text className='mine-family-chip__text'>{pets.length} 只毛孩子</Text>
+              </View>
             </View>
-          </ScrollView>
+          ) : (
+            <Text className='mine-family-desc'>和家人一起记录毛孩子的每一天</Text>
+          )}
         </View>
-      )}
+
+        <View className='mine-family-enter'>
+          <Text className='mine-family-enter__text'>{currentFamily ? '进入' : '去创建'}</Text>
+          <Icon name={currentFamily ? 'caret-right' : 'plus'} size={12} tone='white' />
+        </View>
+      </View>
 
       {/* ===== 分组菜单（原型对齐：数据服务 / 管理 / 设置） ===== */}
-      {MENU_GROUPS.map((group, groupIndex) => (
+      {MENU_GROUPS.map(group => (
         <View key={group.title} className='mine-menu-group'>
-          <Text className='mine-menu-group-title'>{group.title}</Text>
+          {/* 组标题：左侧一个同色小圆点，让三组在扫视时能立刻分开 */}
+          <View className='mine-menu-group-head'>
+            <View className={`mine-menu-group-dot mine-menu-group-dot--${group.tone}`} />
+            <Text className='mine-menu-group-title'>{group.title}</Text>
+          </View>
           <View className='mine-menu-card'>
             {group.items.map((item, itemIndex) => (
               <View
                 key={item.label}
-                className={`mine-menu-item ${itemIndex === group.items.length - 1 ? 'mine-menu-item--last' : ''}`}
+                /* 只有"整张卡的最后一个可见行"才去掉底部分隔线。
+                   "设置"组下面还跟着「主题皮肤」行，若它也吃 --last，
+                   两行之间会缺一条分隔线（肉眼可见的断口）—— 故排除该组。 */
+                className={`mine-menu-item ${itemIndex === group.items.length - 1 && group.title !== '设置' ? 'mine-menu-item--last' : ''}`}
                 onClick={() => navigateTo(item.url)}
               >
-                <View className='mine-menu-icon-wrap'>
-                  <Text className='mine-menu-icon'>{item.icon}</Text>
+                <View className={`mine-menu-icon-wrap mine-menu-icon-wrap--${group.tone}`}>
+                  <Icon name={item.icon} size={18} tone={group.tone} />
                 </View>
                 <Text className='mine-menu-label'>{item.label}</Text>
                 <Text className='mine-menu-arrow'>›</Text>
@@ -379,7 +433,8 @@ export default function Mine() {
               <>
                 <View className='mine-menu-item mine-menu-item--last' onClick={() => setThemePanelOpen(!themePanelOpen)}>
                   <View className='mine-menu-icon-wrap mine-menu-icon-wrap--gradient'>
-                    <Text className='mine-menu-icon'>🎨</Text>
+                    {/* 图标尺寸与同组菜单项一致（此前是 16，比同组的 18 小一圈） */}
+                    <Icon name='palette' size={18} tone='white' />
                   </View>
                   <View className='mine-menu-label-wrap'>
                     <Text className='mine-menu-label'>主题皮肤</Text>
@@ -422,10 +477,11 @@ export default function Mine() {
         </View>
       ))}
 
-      {/* ===== 退出登录（原型对齐） ===== */}
+      {/* ===== 退出登录（保持克制：白底描边 + 图标，不与上面的菜单抢注意力） ===== */}
       <View className='mine-section'>
         <View className='mine-logout-btn' onClick={handleLogout}>
-          <Text>退出登录</Text>
+          <Icon name='sign-out' size={16} tone='danger' />
+          <Text className='mine-logout-btn__text'>退出登录</Text>
         </View>
       </View>
 
