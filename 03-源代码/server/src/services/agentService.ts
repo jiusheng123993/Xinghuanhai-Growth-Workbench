@@ -9,6 +9,7 @@ import {
   type ToolCall,
 } from './toolRegistry.js';
 import { pool } from '../db.js';
+import { detectBreedQuestion } from './agentRuleIntent.js';
 import {
   buildMemoryContext,
   ingestMemories,
@@ -732,14 +733,21 @@ export async function* agentLoop(
   };
 
   try {
-    // ========== 第一步：意图分类 ==========
+    // ========== 第一步：意图分类（规则预筛优先） ==========
     yield { type: 'thinking', data: { iteration: 0, label: '理解意图中...' } };
-    intentResult = await classifyIntent(userMessage, history);
-    console.log(`[Agent] 意图分类: ${intentResult.intent} (置信度: ${intentResult.confidence}) - ${intentResult.reason}`);
-    // 算账：意图分类调用的 token 计入本轮
-    if (intentResult.usage) {
-      promptTokens += intentResult.usage.prompt_tokens;
-      completionTokens += intentResult.usage.completion_tokens;
+    // 确定性品种提问预筛：命中则跳过 LLM 意图分类——既省一次付费分类调用，
+    // 又消除「LLM 把"这是什么猫"误判为 chat 导致不调 search_breed_info、不跳品种详情页」的不确定性
+    if (detectBreedQuestion(userMessage)) {
+      intentResult = { intent: 'breed', confidence: 1.0, reason: '规则预筛：品种提问', usage: undefined };
+      console.log('[Agent] 意图预筛命中: breed（规则，跳过 LLM 分类）');
+    } else {
+      intentResult = await classifyIntent(userMessage, history);
+      console.log(`[Agent] 意图分类: ${intentResult.intent} (置信度: ${intentResult.confidence}) - ${intentResult.reason}`);
+      // 算账：意图分类调用的 token 计入本轮
+      if (intentResult.usage) {
+        promptTokens += intentResult.usage.prompt_tokens;
+        completionTokens += intentResult.usage.completion_tokens;
+      }
     }
 
     // 根据意图决定 tool_choice + 意图提示
