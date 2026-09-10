@@ -562,6 +562,89 @@ describe('POST /api/pets/:petId/memoir/preview - 获取预览', () => {
   });
 });
 
+// ===== POST /api/pets/:petId/memoir/prompt-preview - 生成前提示词预览 =====
+// 为什么单独锁这一段：预览是「支付前必经步骤」——它失败 → 前端 promptConfirmed 恒为 false
+// → 支付按钮永远点不了。2026-09-11「标准档无法支付」P0 就死在这个端点：
+// 照片数被按**产品线**校验（memorial 线写死完整档门槛 8-15），标准档 5-7 张必然抛错。
+describe('POST /api/pets/:petId/memoir/prompt-preview - 生成前提示词预览（支付前必经）', () => {
+  /** 最小可用分镜脚本：预览端点只负责把它回给前端，内容不参与断言 */
+  const previewScript = {
+    title: '测试脚本',
+    theme: '陪伴',
+    emotion_curve: ['calm'],
+    narration_voice: 'zh_female_vv_uranus_bigtts',
+    music_mood: 'warm',
+    anchors: [{ id: 'pet1', type: 'pet', desc: '橘色短毛猫' }],
+    segments: [
+      {
+        photo_index: 0,
+        shot_type: 'push_in',
+        camera: 'wide',
+        lighting: 'golden_hour',
+        transition: 'cut',
+        duration_sec: 5,
+        seedance_prompt: 'p',
+        narration: 'n',
+        subtitle: 's',
+      },
+    ],
+  };
+
+  beforeEach(() => {
+    mockPool.query.mockReset();
+    vi.mocked(memoirScriptService.generateMemoirScript).mockReset();
+    vi.mocked(memoirScriptService.generateMemoirScript).mockResolvedValue(previewScript as never);
+    vi.mocked(memoirPhotoAnalysis.analyzeMemoirPhotos).mockResolvedValue([] as never);
+    vi.mocked(memoryService.buildMemoryContext).mockResolvedValue({ memories: '' } as never);
+    vi.mocked(memoryService.getMemoriesByTags).mockResolvedValue('' as never);
+    vi.mocked(memoryService.getMomentSummariesByIds).mockResolvedValue('' as never);
+  });
+
+  it('【P0 回归线】标准档 6 张能拿到预览，且分镜生成收到 tier=standard', async () => {
+    mockPool.query
+      .mockResolvedValueOnce({ rows: [{ ok: true }], rowCount: 1 })  // canAccess
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 });             // findById → 走宠物档案兜底
+
+    const res = await request(createApp())
+      .post('/api/pets/pet-001/memoir/prompt-preview')
+      .send({ memoir_type: 'memorial', tier: 'standard', source_photos: makePhotos(6) });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    // 关键：确实走到了分镜生成（按产品线校验时这里会是 0 次 + 报错）
+    expect(memoirScriptService.generateMemoirScript).toHaveBeenCalledTimes(1);
+    const passedInput = vi.mocked(memoirScriptService.generateMemoirScript).mock.calls[0][0];
+    expect(passedInput.tier).toBe('standard');
+    expect(passedInput.photoCount).toBe(6);
+    expect(passedInput.productLine).toBe('memorial');
+  });
+
+  it('完整档 8 张同样能预览（相邻档位不被误伤）', async () => {
+    mockPool.query
+      .mockResolvedValueOnce({ rows: [{ ok: true }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+    const res = await request(createApp())
+      .post('/api/pets/pet-001/memoir/prompt-preview')
+      .send({ memoir_type: 'memorial', tier: 'full', source_photos: makePhotos(8) });
+
+    expect(res.status).toBe(200);
+    const passedInput = vi.mocked(memoirScriptService.generateMemoirScript).mock.calls[0][0];
+    expect(passedInput.tier).toBe('full');
+  });
+
+  it('标准档照片数越界（8 张）在路由层即返回 400，不进分镜生成', async () => {
+    const res = await request(createApp())
+      .post('/api/pets/pet-001/memoir/prompt-preview')
+      .send({ memoir_type: 'memorial', tier: 'standard', source_photos: makePhotos(8) });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toContain('照片数量需 5-7 张');
+    expect(memoirScriptService.generateMemoirScript).not.toHaveBeenCalled();
+  });
+});
+
 // ===== GET /api/pets/:petId/membership - 查询会员状态（回忆录定价） =====
 describe('GET /api/pets/:petId/membership - 查询会员状态', () => {
   beforeEach(() => {

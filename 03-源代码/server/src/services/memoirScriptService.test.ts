@@ -55,7 +55,7 @@ function validScriptJson(segmentCount = 8): string {
   });
 }
 
-/** 标准输入（纪念 Vlog，8 张照片） */
+/** 标准输入（完整档 + 纪念 Vlog 线，8 张照片） */
 function makeInput(overrides: Partial<MemoirScriptInput> = {}): MemoirScriptInput {
   return {
     petProfile: {
@@ -65,6 +65,8 @@ function makeInput(overrides: Partial<MemoirScriptInput> = {}): MemoirScriptInpu
       gender: 'male',
     },
     photoCount: 8,
+    // 档位必填：照片数边界属档位（standard 5-7 / full 8-15），产品线只决定内容风格
+    tier: 'full',
     productLine: 'memorial',
     targetDuration: 75,
     sourceText: '它总在黄昏蹲在窗台。',
@@ -135,11 +137,75 @@ describe('memoirScriptService 分镜生成器', () => {
       expect(mockedChat).toHaveBeenCalledTimes(3);
     });
 
-    it('照片数量超出产品线范围 → 抛错', async () => {
+    it('照片数量超出档位范围 → 抛错', async () => {
       await expect(
         generateMemoirScript(makeInput({ photoCount: 20 })),
       ).rejects.toThrow('照片数量');
       expect(mockedChat).not.toHaveBeenCalled();
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // 2026-09-11 存量 P0 回归锁：标准档（5-7 张）曾无法生成分镜 → 预览必失败
+    // → promptConfirmed 恒 false → 支付按钮永久不可用（用户付不了款）
+    //
+    // 事故根因：照片数校验曾按「产品线」而非「档位」——memorial 线写死 minPhotos: 8
+    // （完整档门槛），而 standard 与 full 共用 memorial 线，于是标准档 6 张必然抛错。
+    // 下面第一条断言就是"这个 bug 是否复发"的判定线。
+    // ══════════════════════════════════════════════════════════════════════════
+    it('【P0 回归线】标准档 6 张照片必须能生成分镜（不得因完整档门槛被拦）', async () => {
+      mockedChat.mockResolvedValue(validScriptJson(6));
+      const script = await generateMemoirScript(
+        makeInput({ tier: 'standard', photoCount: 6, targetDuration: 45 }),
+      );
+      expect(script.segments.length).toBeGreaterThan(0);
+      expect(mockedChat).toHaveBeenCalledTimes(1);
+    });
+
+    it('标准档仍受自己的档位边界约束（5-7）：8 张要走完整档，不是静默放过', async () => {
+      await expect(
+        generateMemoirScript(makeInput({ tier: 'standard', photoCount: 8, targetDuration: 45 })),
+      ).rejects.toThrow('标准回忆录照片数量需 5-7 张');
+      expect(mockedChat).not.toHaveBeenCalled();
+    });
+
+    // 边界值必须逐个锁（审查 R-3）：只测 6 张不足以证明 5 与 7 也在范围内——
+    // 若有人把边界写成 6-6，只测 6 的用例依然会绿。
+    it('标准档边界值 5 张与 7 张都必须可生成', async () => {
+      mockedChat.mockResolvedValue(validScriptJson(5));
+      await expect(
+        generateMemoirScript(makeInput({ tier: 'standard', photoCount: 5, targetDuration: 45 })),
+      ).resolves.toBeTruthy();
+
+      mockedChat.mockResolvedValue(validScriptJson(7));
+      await expect(
+        generateMemoirScript(makeInput({ tier: 'standard', photoCount: 7, targetDuration: 45 })),
+      ).resolves.toBeTruthy();
+    });
+
+    it('完整档边界值 8 张与 15 张都必须可生成（相邻档位边界不误伤）', async () => {
+      mockedChat.mockResolvedValue(validScriptJson(8));
+      await expect(
+        generateMemoirScript(makeInput({ tier: 'full', photoCount: 8 })),
+      ).resolves.toBeTruthy();
+
+      mockedChat.mockResolvedValue(validScriptJson(15));
+      await expect(
+        generateMemoirScript(makeInput({ tier: 'full', photoCount: 15 })),
+      ).resolves.toBeTruthy();
+    });
+
+    it('轻纪念档走日常线：3 张可生成、4 张抛错（档位边界 1-3）', async () => {
+      mockedChat.mockResolvedValue(validScriptJson(3));
+      const script = await generateMemoirScript(
+        makeInput({ tier: 'light', productLine: 'daily', photoCount: 3, targetDuration: 20 }),
+      );
+      expect(script.segments.length).toBeGreaterThan(0);
+
+      await expect(
+        generateMemoirScript(
+          makeInput({ tier: 'light', productLine: 'daily', photoCount: 4, targetDuration: 20 }),
+        ),
+      ).rejects.toThrow('轻纪念照片数量需 1-3 张');
     });
   });
 

@@ -19,6 +19,9 @@ import {
   type MemoirSegmentScript,
 } from '../schemas/memoirScript.js';
 import { petSubjectText, translatePetNames } from './petPrompt.js';
+// 档位照片数校验复用 videoGenerationService 的既有实现（其边界取自 config.ts 的 MEMOIR_TIER_CONFIG）
+import { validateTierPhotoCount } from './videoGenerationService.js';
+import type { MemoirTier } from '../config.js';
 
 /** 产品线类型（与 videoGenerationService 保持一致） */
 export type MemoirProductLine = 'daily' | 'memorial';
@@ -39,6 +42,14 @@ export interface MemoirScriptInput {
   memorySummary?: string;
   /** 照片数量（决定镜头数） */
   photoCount: number;
+  /**
+   * 回忆录档位（light 1-3 / standard 5-7 / full 8-15）
+   *
+   * 为什么必须传：照片数边界属**档位**（唯一事实源 config.ts 的 MEMOIR_TIER_CONFIG），
+   * 而产品线是多对一的（standard 与 full 共用 memorial 线），按产品线校验必然挡住其中一档。
+   * 2026-09-11 修复的标准档无法支付事故，根因就是这里只按产品线校验。
+   */
+  tier: MemoirTier;
   /** 产品线：纪念Vlog / 日常回忆录 */
   productLine: MemoirProductLine;
   /** 目标时长（秒） */
@@ -61,24 +72,30 @@ const STYLE_PRESET_HINTS: Record<string, string> = {
   warmheal: '温暖治愈风：柔和暖色调、逆光柔光、低对比、给人抚慰与治愈感',
 };
 
-/** 产品线配置（与 videoGenerationService.PRODUCT_LINE_CONFIG 对齐） */
+/**
+ * 产品线元信息（**仅**用于提示词与展示：标签 / 时长文案 / 情感曲线）
+ *
+ * ⚠️ 照片数量边界**不在这里，也不要加回来**：
+ * 边界属于「档位」，唯一事实源是 config.ts 的 MEMOIR_TIER_CONFIG；
+ * 而产品线与档位是多对一（standard 与 full 共用 memorial 线），
+ * 一旦把某一档的边界写到产品线上，另一档必然被挡住。
+ * 2026-09-11 事故正是如此：memorial 曾写死 minPhotos: 8（完整档门槛），
+ * 导致标准档 5-7 张在预览阶段直接抛错 → 剧本确认闸门打不开 → 支付按钮永久不可用。
+ * 校验照片数请用 validateTierPhotoCount(tier, count)。
+ */
 const PRODUCT_LINE_META: Record<
   MemoirProductLine,
-  { label: string; durationText: string; curve: string; minPhotos: number; maxPhotos: number }
+  { label: string; durationText: string; curve: string }
 > = {
   memorial: {
     label: '纪念Vlog',
     durationText: '60-90秒',
     curve: 'CREST六段式：背景→铺垫→冲突→留白→释怀→主题',
-    minPhotos: 8,
-    maxPhotos: 15,
   },
   daily: {
     label: '日常回忆录',
     durationText: '5-30秒',
     curve: '温暖片段：一个完整的小情绪弧线',
-    minPhotos: 1,
-    maxPhotos: 3,
   },
 };
 
@@ -454,13 +471,10 @@ AUDIO：<与参考场景匹配的低音量环境声>；无人物对白，无模�
  * @returns 校验并修正后的分镜脚本
  */
 export async function generateMemoirScript(input: MemoirScriptInput): Promise<MemoirScript> {
-  const meta = PRODUCT_LINE_META[input.productLine];
-
-  // 参数预校验：照片数量必须在产品线范围内
-  if (input.photoCount < meta.minPhotos || input.photoCount > meta.maxPhotos) {
-    throw new Error(
-      `[MemoirScript] ${meta.label}照片数量需 ${meta.minPhotos}-${meta.maxPhotos} 张，当前 ${input.photoCount} 张`,
-    );
+  // 参数预校验：照片数量必须落在**档位**边界内（不是产品线边界，见 PRODUCT_LINE_META 上方说明）
+  const photoError = validateTierPhotoCount(input.tier, input.photoCount);
+  if (photoError) {
+    throw new Error(`[MemoirScript] ${photoError}`);
   }
 
   // 组装消息（系统提示词固定 + 用户上下文动态）

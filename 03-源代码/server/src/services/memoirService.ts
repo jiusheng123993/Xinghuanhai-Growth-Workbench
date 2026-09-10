@@ -569,6 +569,8 @@ export async function generatePromptPreview(
     petProfile,
     memorySummary,
     photoCount: data.source_photos.length,
+    // 传档位：照片数校验按档位（standard 5-7 / full 8-15），不能只看产品线（2026-09-11 修复标准档付不了款）
+    tier,
     productLine,
     targetDuration: resolveMemoirTier(data.tier, data.memoir_type) === tier
       ? (data.duration ?? MEMOIR_TIER_CONFIG[tier].defaultDuration)

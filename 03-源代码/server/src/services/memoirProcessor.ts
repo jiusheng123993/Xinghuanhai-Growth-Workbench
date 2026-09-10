@@ -372,6 +372,7 @@ async function ensureMemoirScript(
     return sanitizeMemoirScriptPrompts(existing as MemoirScript, {
       petProfile,
       photoCount: task.source_photos.length,
+      tier,
       productLine,
       // 缺 duration 时按档位默认时长兜底（2026-09-09 三档：standard=45，不再是 memorial 硬编码 75）
       targetDuration: typeof narrative.duration === 'number' ? narrative.duration : MEMOIR_TIER_CONFIG[tier].defaultDuration,
@@ -391,6 +392,7 @@ async function ensureMemoirScript(
           const script = sanitizeMemoirScriptPrompts(confirmedScript, {
             petProfile,
             photoCount: task.source_photos.length,
+            tier,
             productLine,
             targetDuration: typeof narrative.duration === 'number' ? narrative.duration : MEMOIR_TIER_CONFIG[tier].defaultDuration,
           });
@@ -466,6 +468,8 @@ async function ensureMemoirScript(
       petProfile,
       memorySummary,
       photoCount: task.source_photos.length,
+      // 传档位：照片数校验按档位而非产品线（standard 与 full 共用 memorial 线，2026-09-11 修复）
+      tier,
       productLine,
       targetDuration:
         typeof narrative.duration === 'number'
