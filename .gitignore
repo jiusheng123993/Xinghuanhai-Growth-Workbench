@@ -8,7 +8,6 @@ dist-electron
 npm-debug.log*
 debug.log
 test-result*.txt
-tatus
 screenshot-*.png
 
 # 构建产物
@@ -71,13 +70,13 @@ graphify-out/
 03-源代码/小程序/miniapp/dist-h5/
 网站部署包/
 星寰海官网部署包.zip
-.work-tmp/
-graphify-out/
 
-# 构建/部署产物
-03-源代码/小程序/miniapp/dist-h5/
-网站部署包/
-星寰海官网部署包.zip
+# 官网部署包实际文件名（原规则误写成"星寰海官网部署包.zip"，导致"星河宠记官网部署包.zip"一直被 git 跟踪）
+*官网部署包.zip
+
+# AI 编码看板工具产物（.board/diffs 单个 5–8MB，曾让 git 历史涨到 831MB）
+# 2026-09-11 起不再入库；已入库的历史体积需 filter-repo 重写才能回收，另行处置
+.board/
 
 # 运行时上传目录（含用户上传文件与已部署的头像静态资源，不入 git）
 03-源代码/server/uploads/

@@ -1,6 +1,0 @@
-# 改动说明
-# 问题：修复全项目TypeScript类型错误
-# 原因：修复70+类型错误：avatarUrl→avatarPhotoUrl、PetHealthEntry属性对齐、HealthRiskLevel枚举统一、PetFoodQuery属性对齐、ReminderItem属性修复、函数参数数量修复、首页接口调用修复。tsc零错误，429/431测试通过
-# 改动：
-#   1. 修复全项目TypeScript类型错误
-# 影响：修复70+类型错误：avatarUrl→avatarPhotoUrl、PetHealthEntry属性对齐、HealthRiskLevel枚举统一、PetFoodQuery属性对齐、ReminderItem属性修复、函数参数数量修复、首页接口调用修复。tsc零错误，429/431测试通过

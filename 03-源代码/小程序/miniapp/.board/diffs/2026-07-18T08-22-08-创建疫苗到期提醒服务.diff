@@ -1,6 +1,0 @@
-# 改动说明
-# 问题：创建疫苗到期提醒服务
-# 原因：创建 reminderService/reminderStore/useReminder 及测试，50个测试全部通过
-# 改动：
-#   1. 创建疫苗到期提醒服务
-# 影响：创建 reminderService/reminderStore/useReminder 及测试，50个测试全部通过
