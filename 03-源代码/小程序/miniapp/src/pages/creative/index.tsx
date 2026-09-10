@@ -3,6 +3,7 @@ import Taro from '@tarojs/taro'
 import { View, Text, Image } from '@tarojs/components'
 import { usePetStore } from '../../stores/petStore'
 import { useAuthStore } from '../../stores/authStore'
+import { redirectToLoginIfNeeded } from '../../utils/authGuard'
 import { getTodayCheckin, calcHealthScore } from '../../services/checkinService'
 import type { PetHealthEntry } from '../../services/checkinService'
 import PetSwitcher from '../../components/PetSwitcher'
@@ -35,10 +36,23 @@ const CreativeHub = () => {
   const pets = usePetStore((s) => s.pets)
   const switchPet = usePetStore((s) => s.switchPet)
   const user = useAuthStore((s) => s.user)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const isInitialized = useAuthStore((s) => s.isInitialized)
   const [todayCheckin, setTodayCheckin] = useState<PetHealthEntry | null>(null)
   const [avatarFailed, setAvatarFailed] = useState(false)
   const petId = currentPet?.id || ''
   const petName = currentPet?.name || '毛孩子'
+
+  // 页面级未登录守卫：与其他 tab 页（mine/family/pet-profile）对齐——
+  // 未登录进入创作页时统一走 redirectToLoginIfNeeded 收口跳登录页，
+  // 避免创作页裸渲染出「毛孩子」空占位却不引导登录（2026-09-11 修复）。
+  useEffect(() => {
+    if (!isInitialized) return
+    if (!isAuthenticated || !user) {
+      redirectToLoginIfNeeded()
+      return
+    }
+  }, [isInitialized, isAuthenticated, user])
 
   // 导航栏标题：家庭名优先（原型「可乐的家庭」），无家庭回退宠物名
   useEffect(() => {
