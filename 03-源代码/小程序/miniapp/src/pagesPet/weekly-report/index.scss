@@ -1,5 +1,6 @@
 @import '../../styles/_theme';
 @import '../../styles/_animations';
+@import '../../styles/_journal';
 
 // ============================================
 // 家庭周报页 — 原型 1:1：金色横幅 + 亮点 + 成员小结 + 数据 + 寄语 + 分享
@@ -7,7 +8,8 @@
 
 .report-page {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
   position: relative;
   z-index: 1;
   animation: pageEnter 0.4s ease-out;
@@ -154,7 +156,7 @@
   flex-shrink: 0;
   padding: 8rpx 20rpx;
   border-radius: 999rpx;
-  background: rgba($color-bg-card, 0.8);
+  background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.8);
   box-shadow: $shadow-xs;
 }
 
@@ -274,11 +276,11 @@
   border-radius: 999rpx;
 
   &--good {
-    background: rgba($color-success, 0.14);
+    background: rgba(var(--success-rgb, 47, 201, 142), 0.14);
   }
 
   &--warn {
-    background: rgba($color-warning, 0.16);
+    background: rgba(var(--warning-rgb, 255, 176, 32), 0.16);
   }
 }
 
@@ -336,8 +338,8 @@
 .fr-note {
   border-radius: 24rpx;
   padding: 32rpx;
-  background: rgba($color-teal, 0.12);
-  border: 2rpx solid rgba($color-teal, 0.28);
+  background: rgba(var(--teal-rgb, 79, 163, 227), 0.12);
+  border: 2rpx solid rgba(var(--teal-rgb, 79, 163, 227), 0.28);
   animation: fadeInUp 0.35s ease-out;
 }
 
@@ -436,5 +438,275 @@
 .report-history__tag {
   font-size: 22rpx;
   color: $color-text-tertiary;
+  line-height: 1.5;
+}
+
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖）
+// ============================================
+// 【为什么追加而不是重写】本页有三类状态在 H5 预览里复现不了，删掉原规则会静默坏掉：
+// ①「生成中…」按钮态（要真机走生成接口才会出现）；
+// ②「历史周报」展开态（report-history__body / __summary / __tags / __tag 要点开某一条才渲染）；
+// ③「请先创建家庭」空态（要有家庭但一次都没生成过周报才会出现）。
+// 故本轮只对**可见模块**做追加覆盖（同特异性 + 顺序在后取胜），不删、不重排任何原有规则。
+//
+// 【为什么要分三组写】本页类名不是单一 BEM 前缀：外层 report-page* ＋ 卡片 fr-* ＋ 历史
+// report-history*，用一个根类收不住，所以按三组分别书写皮肤层。
+//
+// 【图标口径】本页图标大多已由 tsx 的 <Icon> 呈现（日历 / AI 星标 / 分享），无需换；仍是
+// emoji 的三处属「内容型 emoji」（fr-highlight-dot-icon ✨、report-history__title 📋、
+// fr-card__title-icon 💙），表达亮点/清单/寄语本身，按 emojiIconMap 的取舍原则保留。
+// 唯一建议队长后续处理：report-generate-btn__text 的「✨ 生成本周周报 / ⏳ 生成中...」，
+// emoji 与文案在同一个字符串里，CSS 换不掉，需改 tsx（本工作包不动 tsx）。
+
+// ===== 页面外壳与空态 =====
+.report-page {
+  // 空态文案做成虚线小贴纸（与其它页面空态同款；只有「有家庭但未生成周报」的用户看得到）
+  &__empty-text {
+    @include journal-paper-tokens;
+    padding: 18rpx 32rpx;
+    border-radius: $radius-round;
+    background: #fffdf8;
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.38);
+    color: $color-text-secondary;
+    font-size: 24rpx;
+  }
+}
+
+// ===== 生成入口：手账渐变胶囊 =====
+.report-generate-btn {
+  // journal-button = 暖金渐变 + 投影 + 胶囊圆角 + 弹性按压（替代原来的纯 opacity 反馈）
+  @include journal-button;
+
+  // 生成中：整颗按钮降透明（保持原语义：让人看出「正在忙」，而不是没反应）
+  &--loading {
+    opacity: 0.6;
+  }
+}
+
+.report-generate-btn__text {
+  font-size: 30rpx;
+  font-weight: 800;
+  letter-spacing: 2rpx;
+  color: #ffffff;
+}
+
+// ===== 金色横幅：手账封面卡（金渐变 + 金色虚线描边 + 白圆章） =====
+.fr-banner {
+  // 纸面恒为浅底：先钉住卡内 token，否则深色主题（.theme-starry）下标题会变白字压金底
+  @include journal-paper-tokens;
+  padding: 34rpx 32rpx;
+  border-radius: 36rpx;
+  background: linear-gradient(135deg, $color-gold-soft, $color-gold-bg);
+  border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.55);
+  box-shadow: 0 14rpx 30rpx -20rpx rgba(61, 33, 18, 0.5);
+}
+
+.fr-banner__icon {
+  width: 88rpx;
+  height: 88rpx;
+  background: #fffdf8;
+  box-shadow: 0 0 0 6rpx rgba(var(--gold-rgb, 255, 176, 32), 0.28);
+}
+
+.fr-banner__title {
+  @include journal-serif(32rpx);
+  letter-spacing: 1rpx;
+}
+
+.fr-banner__badge {
+  background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.85);
+  border: 2rpx solid rgba(var(--gold-rgb, 255, 176, 32), 0.45);
+}
+
+// ===== 通用标题行：衬线标题 + 金色虚线分隔（手账的标题下划线） =====
+.fr-card__title-row {
+  padding-bottom: 12rpx;
+  margin-bottom: 20rpx;
+  border-bottom: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.32);
+}
+
+.fr-card__title {
+  @include journal-serif(30rpx);
+}
+
+.fr-card__title-meta {
+  font-size: 21rpx;
+  font-variant-numeric: tabular-nums;
+}
+
+// ===== 本周亮点：珊瑚虚线便签 + 逐行虚线分隔 =====
+.fr-highlights {
+  @include journal-paper-tokens;
+  @include journal-note(primary, 0.45);
+  padding: 26rpx 26rpx 20rpx;
+}
+
+.fr-highlights__list {
+  // 行本身已带上下内边距与虚线分隔，这里把原 24rpx 的间距收回，
+  // 否则虚线上下各空一大截，行分组的「一条条」感就散了
+  gap: 0;
+}
+
+.fr-highlight-row {
+  @include journal-row;
+  // 亮点文案常折成两行，图标对齐首行比垂直居中更自然（journal-row 默认居中，此处按需覆盖）
+  align-items: flex-start;
+}
+
+.fr-highlight-dot {
+  @include journal-row-icon(primary);
+  margin-top: 2rpx;
+}
+
+.fr-highlight-dot-icon {
+  font-size: 26rpx;
+}
+
+.fr-highlight-text {
+  font-size: 24rpx;
+  line-height: 1.7;
+}
+
+// ===== 成员健康小结：纸卡 + 头像圆章 + 状态贴纸 =====
+.fr-members {
+  @include journal-paper-tokens;
+  @include journal-note(primary, 0.42);
+  padding: 26rpx 26rpx 20rpx;
+}
+
+.fr-member-row {
+  @include journal-row;
+  gap: 20rpx;
+}
+
+.fr-member-avatar {
+  // 原来的 2rpx 实线描边换成金色外圈（同板块 pet-bar 头像同款），像贴了张圆贴纸
+  width: 84rpx;
+  height: 84rpx;
+  background: #fffdf8;
+  border: 0;
+  box-shadow: 0 0 0 6rpx rgba(var(--gold-rgb, 255, 176, 32), 0.28);
+}
+
+.fr-member-name {
+  @include journal-serif(28rpx);
+  letter-spacing: 1rpx;
+}
+
+.fr-member-summary {
+  font-size: 21rpx;
+}
+
+// 状态贴纸（journal-status 口径）：良好＝鼠尾草实心 / 关注与建议调整＝金色实心
+.fr-status--good {
+  @include journal-status(sage, true);
+}
+
+.fr-status--warn {
+  @include journal-status(gold, true);
+}
+
+.fr-status-text {
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+// ===== 本周数据：金色虚线便签 + 2x2 贴纸格 =====
+.fr-stats {
+  @include journal-paper-tokens;
+  @include journal-note(gold, 0.45);
+  padding: 26rpx 26rpx 22rpx;
+}
+
+.fr-stat-tile {
+  @include journal-paper-tokens;
+  padding: 24rpx 16rpx;
+  border-radius: 26rpx;
+  background: #fffaf3;
+  border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.35);
+}
+
+.fr-stat-tile__value {
+  @include journal-serif(44rpx);
+  color: $color-gold-deep;
+  font-variant-numeric: tabular-nums;
+}
+
+.fr-stat-tile__label {
+  font-size: 21rpx;
+  line-height: 1.5;
+}
+
+// ===== AI 寄语：青蓝虚线便签（保留信息蓝语义） =====
+.fr-note {
+  @include journal-paper-tokens;
+  @include journal-note(teal, 0.45);
+  padding: 26rpx 26rpx 22rpx;
+  // journal-note 的纸面是纯纸白，这里改成青蓝到纸白的过渡底：既守住便签的纸感，
+  // 又不让 AI 寄语和上面的数据卡长得一模一样（蓝是这条卡的身份色）
+  background: linear-gradient(180deg, rgba(var(--teal-rgb, 79, 163, 227), 0.14), #fffdf8 70%);
+}
+
+.fr-note__text {
+  font-size: 24rpx;
+  line-height: 1.9;
+}
+
+// ===== 分享周报：手账主按钮 =====
+.fr-share-btn {
+  @include journal-button;
+}
+
+.fr-share-btn__text {
+  font-size: 30rpx;
+  font-weight: 800;
+  letter-spacing: 2rpx;
+  color: #ffffff;
+}
+
+// ===== 历史周报：纸卡 + 逐条虚线分隔 =====
+// 【看不见的状态】展开后的 report-history__body / __summary / __tags / __tag 只有点开某一条
+// 才渲染，预览里看不到；下面按类名推断为摘要段落 + 一组带 ✨ 的亮点碎片，统一成手账样式。
+.report-history {
+  @include journal-paper-tokens;
+  @include journal-note(primary, 0.36);
+  padding: 26rpx 26rpx 20rpx;
+}
+
+.report-history__title {
+  @include journal-serif(30rpx);
+  margin-bottom: 16rpx;
+}
+
+.report-history__item {
+  border-bottom: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.3);
+}
+
+.report-history__date {
+  font-size: 26rpx;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-history__arrow {
+  font-size: 20rpx;
+  color: $color-primary;
+}
+
+.report-history__summary {
+  line-height: 1.8;
+}
+
+.report-history__tags {
+  gap: 12rpx;
+}
+
+.report-history__tag {
+  padding: 10rpx 16rpx;
+  border-radius: 18rpx;
+  background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+  border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.3);
+  font-size: 21rpx;
+  color: $color-text-secondary;
   line-height: 1.5;
 }

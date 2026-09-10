@@ -1,5 +1,9 @@
 @import '../../../styles/_theme';
 @import '../../../styles/_animations';
+// 手账皮肤公共 mixin（纸面 token / 虚线便签 / 衬线标题 / 手账按钮 …）
+// 【为什么必须显式引入】本页原先只有 theme + animations，会话历史卡、便签卡都要用它，
+// 不引入就得在本页重抄一套纸面写法，日后全板块改配色会漏掉这一页。
+@import '../../../styles/_journal';
 
 .calendar-page {
   min-height: 100vh;
@@ -74,7 +78,7 @@
     }
 
     &--selected {
-      background: rgba($color-primary, 0.15);
+      background: rgba(var(--primary-rgb, 255, 107, 61), 0.15);
     }
   }
 
@@ -241,5 +245,275 @@
     color: $color-text-inverse;
     font-size: 28rpx;
     font-weight: 600;
+  }
+}
+
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖）
+// ============================================
+// 【为什么追加而不是重写】本页（改前 245 行 / 12 个选择器）里有几类状态在 H5 预览里复现不了：
+//   ① 加载态（calendar-loading / calendar-events__loading）—— 要等接口返回，一闪而过；
+//   ② 错误态（calendar-error）—— 只在 getFamilyCalendarEvents 抛错时整页替换渲染；
+//   ③ 选中有事件的日期后的日程卡（calendar-events__item）—— 需要家庭数据（members）里有
+//      疫苗/驱虫/打卡事件才会出现；本次预览环境没有家庭数据，看不到真实卡片；
+//   ④ 「暂无事件」「点击日期查看事件」两个空态文案、以及"暂无家庭成员，请先添加宠物"分支。
+// 直接重写会把上面这些不可见状态的样式一起丢掉，所以本轮只做**同特异性 + 顺序在后**的追加覆盖；
+// 待哪天真机把状态跑全了，再把这段并回上面的模块段落。
+//
+// 【本页没有的东西（照类名核对过 tsx，别按"别的页面有"来加）】
+//   本页**没有成员筛选栏、没有新建日程弹窗/悬浮按钮**，所以下面不会出现筛选胶囊、弹窗遮罩一类选择器。
+//
+// 【日程卡的左边色条为什么要在自述里点名】tsx 用内联 style={{ borderLeftColor: config.color }}
+// 按事件类型上色（疫苗金/驱虫绿/打卡青，见 EVENT_TYPE_CONFIG），内联样式优先级高于本文件，
+// 因此这里**只做加法**（宽度/形状/填充感），不去改它的颜色，避免写了却看不见效果的白费声明。
+// ============================================
+.calendar-page {
+  // 纸面 token 钉在页面根：日历格、日程卡、按钮都坐在这一层纸上，
+  // 深色主题（.theme-starry）会把 --text-* / --glass-bg 转成浅色，不钉回就是白字压白纸。
+  // 放在根上（而不是逐个容器）还有一个好处：只写一处，后续新增子块自动继承。
+  @include journal-paper-tokens;
+
+  // 背景换成手账纸面：原来的 $gradient-page 在深色主题下是深蓝紫渐变，
+  // 纸卡浮在深色渐变上会像"贴纸掉进夜里"，与「温暖手账」方向不符。
+  // 用纯变量而非覆盖整个 $gradient-page，是为了深色主题下同样落到浅纸底。
+  background: var(--bg-page, #fff6ee);
+}
+
+// —— 模块 ① 月份切换头：衬线大标题 + 两侧虚线翻页方块 ——
+.calendar-header {
+  margin-bottom: 14rpx;
+
+  &__title {
+    @include journal-serif(38rpx);
+    // 月份数字宽度会随"1月/12月"变化，用等宽数字避免整行左右抖动
+    font-variant-numeric: tabular-nums;
+  }
+
+  // 翻页箭头：手账里"贴在页角的虚线小方块"，64rpx 保证可点区域
+  &__nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64rpx;
+    height: 64rpx;
+    border-radius: 20rpx;
+    background: #fffdf8;
+    border: 3rpx dashed $color-border;
+    font-size: 26rpx;
+    @include press-feedback;
+  }
+}
+
+// —— 模块 ② 星期头：一行细虚线下划线，把手写表头与格子分开 ——
+.calendar-weekdays {
+  padding-bottom: 6rpx;
+  border-bottom: 2rpx dashed rgba(243, 226, 210, 0.95);
+
+  &__item {
+    font-size: 22rpx;
+    font-weight: 700;
+    letter-spacing: 1rpx;
+    color: $color-text-tertiary;
+  }
+}
+
+// —— 模块 ③ 日历格：整块做成"纸卡"，今天是实线圈、选中是主色淡底、有事件点一个小圆点 ——
+.calendar-grid {
+  position: relative;
+  padding: 14rpx 12rpx 18rpx;
+  border-radius: 36rpx;
+  background: #fffdf8;
+  border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.42);
+  box-shadow: $shadow-xs;
+  gap: 6rpx;
+
+  // 空格子保持占位（tsx 用 null 补齐月初空位），只隐藏视觉，不影响 7 列对齐
+  &__cell {
+    border-radius: 18rpx;
+
+    // 未选中＝虚线（手账里"待填的格子"），与下方今天/选中的实线形成"已标注/未标注"对比
+    &--empty {
+      border-color: transparent;
+    }
+
+    // 今天：主色实线圈 + 淡淡的主色底（"本子上的今天被圈出来了"）
+    &--today {
+      border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+      background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+    }
+
+    // 选中：比今天更重一档（更深的底 + 一圈柔光），两者同日时以选中为主
+    &--selected {
+      background: rgba(var(--primary-rgb, 255, 107, 61), 0.16);
+      box-shadow: 0 6rpx 16rpx -10rpx rgba(var(--primary-rgb, 255, 107, 61), 0.9);
+    }
+
+    // 今天 + 选中同时成立时，靠实线描边保留"这是今天"的信息
+    &--today#{&}--selected {
+      border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.8);
+    }
+  }
+
+  &__day {
+    font-size: 26rpx;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__cell--today &__day {
+    font-weight: 800;
+    color: $color-primary-dark;
+  }
+
+  // 有事件＝在日期下点一个小圆点（手账里在日历上点一下做记号），
+  // 再套一圈同色淡光，让 10rpx 的小点在小屏上也看得见
+  &__dot {
+    width: 12rpx;
+    height: 12rpx;
+    box-shadow: 0 0 0 4rpx rgba(var(--primary-rgb, 255, 107, 61), 0.16);
+
+    &--danger {
+      box-shadow: 0 0 0 4rpx rgba(var(--danger-rgb, 255, 90, 95), 0.16);
+    }
+  }
+}
+
+// —— 模块 ④ 日历首次加载：整块让位给一句虚线便签，不要一个孤零零的灰字 ——
+.calendar-loading {
+  padding: 56rpx 0;
+
+  &__text {
+    display: block;
+    padding: 16rpx 32rpx;
+    font-size: 24rpx;
+    color: $color-text-secondary;
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+    border-radius: 24rpx;
+  }
+}
+
+// —— 模块 ⑤ 错误态（整页替换渲染，预览看不到）：纸质便签 + 手账按钮 ——
+.calendar-error {
+  // 错误页只有这一块内容，让它自己成为一张纸，避免"文字直接浮在页面底色上"
+  &__text {
+    display: block;
+    padding: 24rpx 32rpx;
+    border-radius: 28rpx;
+    background: #fffdf8;
+    border: 3rpx dashed rgba(var(--danger-rgb, 255, 90, 95), 0.45);
+    color: $color-danger;
+    font-size: 28rpx;
+    text-align: center;
+  }
+
+  // 手账按钮自带渐变 + 投影 + 按压缩放，原来的"渐变胶囊"写法被它完整覆盖
+  &__btn {
+    @include journal-button;
+    // 原规则是 padding 撑高，这里改由按钮 mixin 的 height: 96rpx 定高，宽度按内容撑开
+    width: auto;
+    padding: 0 56rpx;
+    border-radius: $radius-round;
+
+    // tsx 里按钮文字是裸 <Text>（无类名），只能靠后代选择器命中，
+    // 用子元素直接匹配，避免影响将来可能加进来的其它文字
+    > Text {
+      color: #ffffff;
+      font-size: 30rpx;
+      font-weight: 700;
+      letter-spacing: 2rpx;
+    }
+  }
+}
+
+// —— 模块 ⑥ 日程列表：日期小标题（衬线 + 虚线分隔）、加载/空态便签、日程卡 ——
+.calendar-events {
+  &__date {
+    @include journal-serif(28rpx);
+    padding-bottom: 14rpx;
+    margin-bottom: 20rpx;
+    border-bottom: 2rpx dashed rgba(243, 226, 210, 0.95);
+    font-variant-numeric: tabular-nums;
+  }
+
+  // 三个"没有内容可看"的文案统一成虚线便签：观感一致，也避免 26rpx 灰字看起来像页脚注释
+  &__loading,
+  &__empty,
+  &__placeholder {
+    display: block;
+    margin-top: 8rpx;
+    padding: 36rpx 32rpx;
+    border-radius: 28rpx;
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+    font-size: 24rpx;
+    line-height: 1.7;
+    text-align: center;
+    color: $color-text-secondary;
+  }
+
+  // 日程卡＝贴在日历下面的小纸片：虚线便签 + 左侧色条（颜色由 tsx 内联 style 决定，这里只改形状）
+  &__item {
+    @include journal-note(primary, 0.42);
+    // 左色条加粗到 8rpx（原 6rpx）：纸卡的虚线边和色条要在小屏上分得开
+    border-left-width: 8rpx;
+    border-left-style: solid;
+    border-left-color: rgba(var(--primary-rgb, 255, 107, 61), 0.55);
+    // 左色条在圆角处会被裁掉一截，改小圆角让色条与纸卡贴合
+    border-radius: 26rpx;
+    padding: 26rpx 30rpx;
+  }
+
+  // 事件类型 emoji（💉🪱✅）是"事件形象"本身，属内容型符号，按 emojiIconMap 取舍原则保留；
+  // 只统一尺寸与行高，避免不同 emoji 基线不一致把卡片撑歪
+  &__item-emoji {
+    font-size: 38rpx;
+    line-height: 1;
+  }
+
+  &__item-title {
+    font-size: 28rpx;
+    font-weight: 600;
+    line-height: 1.5;
+    color: $color-text-primary;
+  }
+
+  // 类型标签做成"贴纸胶囊"：原来的 8rpx 小圆角方片在手账语言里显得太"系统控件"
+  &__item-type {
+    display: inline-flex;
+    align-items: center;
+    height: 40rpx;
+    padding: 0 18rpx;
+    border-radius: $radius-round;
+    border: 3rpx dashed currentColor;
+    // 颜色由 tsx 内联 style 指定（疫苗金/驱虫绿/打卡青），用 currentColor 跟随，
+    // 底色取极淡的同色系，避免写死三个 hex 后主题切换时对不上
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+    font-size: 20rpx;
+    font-weight: 700;
+  }
+
+  &__item-pet {
+    font-size: 22rpx;
+    color: $color-text-secondary;
+  }
+}
+
+// —— 模块 ⑦ 底部两个入口按钮：手账渐变胶囊（二者同级，用同一套按钮语言） ——
+.calendar-footer {
+  // 原规则是 2rpx 实线分隔，换成虚线：手账里"撕口/分隔"用虚线，实线更像表格
+  border-top: 2rpx dashed rgba(243, 226, 210, 0.95);
+  padding-top: 28rpx;
+
+  &__btn {
+    @include journal-button;
+    padding: 0 24rpx;
+  }
+
+  &__btn-text {
+    font-size: 28rpx;
+    font-weight: 700;
+    letter-spacing: 2rpx;
+    color: #ffffff;
   }
 }

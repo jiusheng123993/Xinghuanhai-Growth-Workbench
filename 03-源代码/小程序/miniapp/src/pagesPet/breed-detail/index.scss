@@ -1,9 +1,12 @@
 @import '../../styles/_theme';
 @import '../../styles/_animations';
+// 手账皮肤 mixin（方向 C）：本页末尾的皮肤层要用它，故在此补齐公共入口
+@import '../../styles/_journal';
 
 .breed-detail {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
   position: relative;
   animation: pageEnter 0.4s ease-out;
 
@@ -65,7 +68,7 @@
     border-radius: $radius-full;
     font-size: 22px;
     color: $color-primary-light;
-    border: 1px solid rgba($color-primary-light, 0.3);
+    border: 1px solid rgba(var(--primary-light-rgb, 255, 160, 130), 0.3);
   }
 
   &__info-grid {
@@ -138,12 +141,12 @@
     color: $color-text-secondary;
 
     &--primary {
-      background: rgba($color-primary, 0.12);
+      background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
       color: $color-primary-light;
     }
 
     &--green {
-      background: rgba($color-success, 0.12);
+      background: rgba(var(--success-rgb, 47, 201, 142), 0.12);
       color: $color-success;
     }
   }
@@ -159,7 +162,7 @@
     align-items: center;
     gap: $spacing-sm;
     padding: $spacing-md $spacing-lg;
-    background: rgba($color-danger, 0.08);
+    background: rgba(var(--danger-rgb, 255, 90, 95), 0.08);
     border-radius: $radius-md;
     border-left: 6px solid $color-danger;
     animation: fadeInUp 0.4s ease-out both;
@@ -191,7 +194,7 @@
     align-items: center;
     gap: $spacing-sm;
     padding: $spacing-md $spacing-lg;
-    background: rgba($color-primary, 0.08);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
     border-radius: $radius-md;
     border-left: 6px solid $color-primary;
     animation: fadeInUp 0.4s ease-out both;
@@ -223,7 +226,7 @@
     align-items: flex-start;
     gap: $spacing-sm;
     padding: $spacing-md $spacing-lg;
-    background: rgba($color-success, 0.08);
+    background: rgba(var(--success-rgb, 47, 201, 142), 0.08);
     border-radius: $radius-md;
     border-left: 6px solid $color-success;
     animation: fadeInUp 0.4s ease-out both;
@@ -307,7 +310,7 @@
     right: 0;
     padding: $spacing-md $spacing-lg;
     padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
-    background: rgba($color-bg-card, 0.95);
+    background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.95);
     backdrop-filter: blur(12px);
     border-top: 1px solid $color-border;
     z-index: 100;
@@ -318,7 +321,7 @@
     border-radius: $radius-full;
     height: 88px;
     @include flex-center;
-    box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.25);
+    box-shadow: 0 4rpx 16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.25);
     @include press-feedback;
   }
 
@@ -326,5 +329,334 @@
     font-size: $font-size-lg;
     font-weight: $font-weight-medium;
     color: $color-text-inverse;
+  }
+}
+
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖）
+// ============================================
+// 【为什么追加而不是重写】本页原有 331 行是 BEM 嵌套写法，但里面藏着**预览里复现不了**的分支：
+//   ① 首屏「加载中…」——只有 router.params.id 还没命中品种数据的那一瞬间才渲染（`!breed` 分支）；
+//   ② 七个业务区块（别名 / 性格特征 / 适合人群 / 饮食禁忌 / 常见疾病 / 养护建议 / 饮食建议）
+//      全部是"该品种数据里真有这两个数组字段"才渲染的条件节点；
+//   ③ 底部固定条 + 多宠 ActionSheet 的入口按钮（要真机点、且要有宠物档案）。
+// 这条页是从品种百科带 id 参数进来的，预览里打不开全部分支，整体重写必然静默删掉看不见的状态。
+// 因此本轮**只做追加覆盖**：靠"同特异性 + 顺序在后"生效。
+//
+// 【主题安全】页面根类上还挂着 theme-xxx（四季亮色 / 星空深色）。星空主题会把 --text-* 与
+// --glass-bg 转成浅色，而纸面恒为浅底 —— 所以每个纸面容器都要 include journal-paper-tokens
+// 把卡内 token 钉回浅色取值，否则深色主题下就是白字压白纸。
+//
+// 【图标口径】「⚠️ 饮食禁忌 / ⚡ 常见疾病 / 💚 养护建议」这几个 emoji 与 🚫 写在 tsx 里，
+// 本工作包不许改 tsx，故保留原样；「常见疾病」行的灯泡早已是 <Icon name='lightbulb'>，无需再动。
+.breed-detail {
+  // ① 浅色面统一钉"卡内 token"
+  &__info-grid,
+  &__tag,
+  &__danger-card,
+  &__warning-card,
+  &__success-card,
+  &__list,
+  &__list-item,
+  &__disclaimer,
+  &__footer {
+    @include journal-paper-tokens;
+  }
+
+  // —— 封面（hero）：保留暖色渐变当"相册封面"，只把圆角、留白、字与徽章拉进手账语言 ——
+  // 顶部加大到 44rpx、底部加大到 64rpx：底部那 64rpx 是给"资料卡的胶带"留的净空，
+  // 避免胶带（贴在资料卡顶边、向上溢出 12rpx）压到品种名与徽章上。
+  &__hero {
+    padding: 44rpx $spacing-lg 64rpx;
+    background: linear-gradient(160deg, #ff8a4d 0%, $color-primary 48%, $color-primary-dark 100%);
+    border-bottom-left-radius: 40rpx;
+    border-bottom-right-radius: 40rpx;
+    box-shadow: 0 18rpx 40rpx -26rpx rgba(61, 33, 18, 0.6);
+  }
+
+  // 圆头像：白纸相框 + 暖金外圈 + 一层半透明白晕，与品种列表页 __card-emoji 同一"贴纸"语言
+  &__hero-emoji {
+    background: #fffdf8;
+    box-shadow:
+      0 0 0 8rpx rgba(var(--gold-rgb, 255, 176, 32), 0.42),
+      0 0 0 16rpx rgba(255, 255, 255, 0.16),
+      0 18rpx 34rpx -18rpx rgba(61, 33, 18, 0.55);
+  }
+
+  // 品种名：衬线大字压封面；include 之后必须显式写白色 —— journal-serif 给的是墨色，
+  // 而这里是"白字压彩色封面"，不是纸面
+  &__hero-name {
+    @include journal-serif(48rpx);
+    color: #ffffff;
+    letter-spacing: 4rpx;
+    text-shadow: 0 4rpx 16rpx rgba(61, 33, 18, 0.32);
+  }
+
+  // 徽章（犬类 / 中型 / 原产地）：封面上的半透明白贴纸
+  // 原来写死 rgba(0, 0, 0, 0.2) 纯黑底 + 浅橙字，既不是品牌色、对比度也低，这里换成白色半透 + 3rpx 白虚线
+  &__hero-badge {
+    display: flex;
+    align-items: center;
+    height: 44rpx;
+    padding: 0 18rpx;
+    border-radius: $radius-round;
+    background: rgba(255, 255, 255, 0.18);
+    border: 3rpx dashed rgba(255, 255, 255, 0.55);
+    font-size: 22rpx;
+    font-weight: 600;
+    letter-spacing: 1rpx;
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  // —— 资料卡（寿命 / 体重 / 运动需求 / 美容需求）：虚线便签 + 顶部胶带 ——
+  // 注意 margin 不要重写：原规则靠 `margin-top: -20px` 让卡片压上封面 40rpx，
+  // 皮肤层只改 padding / gap，把它留给原规则（重写 shorthand 会把这个负边距抹掉）
+  &__info-grid {
+    @include journal-note(primary, 0.4);
+    padding: 28rpx 16rpx 22rpx;
+    gap: 0;
+
+    // 胶带：压在卡片顶边（向上溢出 12rpx），像把资料卡贴到封面上
+    &::before {
+      @include journal-tape(140rpx);
+    }
+  }
+
+  // 四格之间用手账的虚线竖线分隔（卡片两侧不留竖线，故最后一项去掉）
+  &__info-item {
+    padding: 6rpx 8rpx;
+    border-right: 3rpx dashed rgba(243, 226, 210, 0.95);
+
+    &:last-child {
+      border-right: 0;
+    }
+  }
+
+  // 标签（寿命/体重…）降为说明性小字：原来 20px(≈40rpx) 比数值还大，主次是反的
+  &__info-label {
+    font-size: 20rpx;
+    letter-spacing: 1rpx;
+    color: $color-text-tertiary;
+  }
+
+  // 数值用衬线 + 等宽数字：手账里"填进去的数值"永远是主角
+  &__info-value {
+    @include journal-serif(26rpx);
+    margin-top: 6rpx;
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  // —— 区块标题：衬线 + 左侧色条（手账的小标题） ——
+  &__section-title {
+    @include journal-serif(30rpx);
+    position: relative;
+    padding-left: 20rpx;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 6rpx;
+      height: 30rpx;
+      border-radius: $radius-round;
+      background: $color-primary;
+    }
+  }
+
+  // 【必须重述】上面 include 的 journal-serif 把颜色写成墨色，而它与 --danger / --warning / --success
+  // 都是单类选择器（特异性相同）；顺序在后的会把语义色顶掉，所以这里逐条写回，并把左侧色条一并跟随
+  &__section-title--danger {
+    color: $color-danger;
+
+    &::before {
+      background: $color-danger;
+    }
+  }
+
+  &__section-title--warning {
+    color: $color-primary;
+
+    &::before {
+      background: $color-primary;
+    }
+  }
+
+  &__section-title--success {
+    color: $color-success;
+
+    &::before {
+      background: $color-success;
+    }
+  }
+
+  // —— 标签组（别名 / 性格特征 / 适合人群）：虚线贴纸胶囊 ——
+  &__tags {
+    gap: 14rpx;
+  }
+
+  &__tag {
+    display: inline-flex;
+    align-items: center;
+    height: 52rpx;
+    padding: 0 22rpx;
+    border-radius: $radius-round;
+    background: #fffdf8;
+    border: 3rpx dashed $color-border;
+    font-size: 24rpx;
+    font-weight: 600;
+    color: $color-text-secondary;
+  }
+
+  // 性格标签：主色淡底 + 主色实边（实线＝"有语义的"贴纸，虚线＝"中性的"，与筛选/状态贴纸同一约定）
+  &__tag--primary {
+    border-style: solid;
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.42);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+    color: $color-primary-dark;
+  }
+
+  // 适合人群：绿（"适合"是正向语义）
+  &__tag--green {
+    border-style: solid;
+    border-color: rgba(var(--success-rgb, 47, 201, 142), 0.42);
+    background: rgba(var(--success-rgb, 47, 201, 142), 0.1);
+    color: $color-success;
+  }
+
+  // —— 饮食禁忌：危险色虚线便签 ——
+  // 原规则的 `border-left: 6px solid` 是"系统告警条"的样子；手账里用整圈红虚线更像"红笔圈出来的忌口"
+  &__danger-card {
+    @include journal-note(danger, 0.45);
+    padding: 20rpx 22rpx;
+    gap: 16rpx;
+  }
+
+  &__danger-text {
+    font-size: 24rpx;
+    line-height: 1.5;
+    font-weight: 600;
+    color: $color-danger;
+  }
+
+  // —— 常见疾病：主色虚线便签 ——
+  &__warning-card {
+    @include journal-note(primary, 0.42);
+    padding: 20rpx 22rpx;
+    gap: 16rpx;
+  }
+
+  // 原色是 $color-primary-light（浅橙压浅橙底，对比度不足），改用深一档的主色
+  &__warning-text {
+    font-size: 24rpx;
+    line-height: 1.5;
+    font-weight: 600;
+    color: $color-primary-dark;
+  }
+
+  // —— 养护建议：绿虚线便签 + 序号贴纸 ——
+  &__success-card {
+    @include journal-note(sage, 0.45);
+    padding: 20rpx 22rpx;
+    gap: 16rpx;
+  }
+
+  // 序号：原为实心绿底白字（像"系统徽标"），改成绿淡底 + 绿虚线边的编号贴纸
+  &__success-index {
+    width: 44rpx;
+    height: 44rpx;
+    line-height: 44rpx;
+    border-radius: 50%;
+    background: rgba(var(--success-rgb, 47, 201, 142), 0.16);
+    border: 3rpx dashed rgba(var(--success-rgb, 47, 201, 142), 0.5);
+    color: $color-success;
+    font-size: 22rpx;
+    font-weight: 700;
+  }
+
+  &__success-text {
+    font-size: 24rpx;
+    line-height: 1.7;
+    color: $color-text-secondary;
+  }
+
+  // —— 饮食建议：先给整个列表一张暖金便签，行与行之间用虚线分条 ——
+  // 原实现是"每行一张白卡"，一屏里会堆出很多卡片；收进一张便签更像手账的"条款清单"
+  &__list {
+    @include journal-note(gold, 0.42);
+    padding: 10rpx 26rpx;
+  }
+
+  &__list-item {
+    background: transparent;
+    border: 0;
+    border-bottom: 3rpx dashed rgba(243, 226, 210, 0.95);
+    border-radius: 0;
+    padding: 18rpx 0;
+    gap: 14rpx;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  &__list-dot {
+    font-size: 28rpx;
+    color: $color-primary;
+  }
+
+  &__list-text {
+    font-size: 24rpx;
+    line-height: 1.7;
+    color: $color-text-secondary;
+  }
+
+  // —— 免责声明：暖金便签 ——
+  // 底色写成**不透明纸色**（不是 10% 金淡底）：上面钉回了深墨字，
+  // 半透明底在星空主题下会透出深色页面背景，深字就看不清了
+  &__disclaimer {
+    padding: 20rpx 24rpx;
+    border-radius: 24rpx;
+    background: #fffaf0;
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.45);
+    box-shadow: $shadow-xs;
+  }
+
+  &__disclaimer-text {
+    font-size: 20rpx;
+    line-height: 1.7;
+    color: $color-text-secondary;
+  }
+
+  // —— 底部固定条：纸色实底 + 3rpx 虚线压边 ——
+  // 原规则用了半透明白底 + 模糊滤镜；模糊在小程序端不生效，这里把底换成不透明纸色，
+  // 视觉上等价（内容从下方滚过时不再透色）且真机一定生效
+  &__footer {
+    background: #fffdf8;
+    border-top: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.28);
+    box-shadow: 0 -12rpx 30rpx -22rpx rgba(61, 33, 18, 0.55);
+  }
+
+  // 主按钮：手账渐变胶囊（高度统一到 mixin 的 96rpx，原 88px≈176rpx 过高）
+  &__footer-btn {
+    @include journal-button;
+  }
+
+  &__footer-btn-text {
+    font-size: 28rpx;
+    font-weight: 800;
+    letter-spacing: 2rpx;
+    color: #ffffff;
+  }
+
+  // —— 加载态 ——
+  // 【推断项】这个分支只在"品种数据还没命中"的一瞬间出现，截图与预览都抓不到，
+  // 样式按类名推断：与全站手账口径一致，用衬线小字 + 三级文字色，不加动效（避免首屏闪烁）
+  &__loading-text {
+    @include journal-serif(26rpx);
+    letter-spacing: 2rpx;
+    color: $color-text-tertiary;
   }
 }

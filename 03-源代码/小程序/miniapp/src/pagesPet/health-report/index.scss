@@ -1,12 +1,16 @@
 @import '../../styles/_theme';
 @import '../../styles/_animations';
+// 手账皮肤 mixin（方向 C）：本页末尾的皮肤层要用 journal-note / journal-serif / journal-button 等，
+// 不 import 会直接编译报 Undefined mixin
+@import '../../styles/_journal';
 
 // ============================================
 // 健康报告页 · 原型 1:1
 // ============================================
 .health-report {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
   padding: $spacing-xl $spacing-lg $spacing-xxl;
   display: flex;
   flex-direction: column;
@@ -82,11 +86,11 @@
     }
 
     &--success {
-      background: rgba($color-success, 0.14);
+      background: rgba(var(--success-rgb, 47, 201, 142), 0.14);
     }
 
     &--warn {
-      background: rgba($color-gold, 0.16);
+      background: rgba(var(--gold-rgb, 255, 176, 32), 0.16);
     }
   }
 
@@ -143,9 +147,9 @@
     font-size: 32rpx;
     flex-shrink: 0;
 
-    &--coral { background: rgba($color-primary, 0.14); }
-    &--gold { background: rgba($color-gold, 0.16); }
-    &--warn { background: rgba($color-gold, 0.16); }
+    &--coral { background: rgba(var(--primary-rgb, 255, 107, 61), 0.14); }
+    &--gold { background: rgba(var(--gold-rgb, 255, 176, 32), 0.16); }
+    &--warn { background: rgba(var(--gold-rgb, 255, 176, 32), 0.16); }
   }
 
   &__section-titles {
@@ -254,8 +258,8 @@
   justify-content: center;
   font-size: 30rpx;
 
-  &--ok { background: rgba($color-success, 0.14); }
-  &--warn { background: rgba($color-gold, 0.18); }
+  &--ok { background: rgba(var(--success-rgb, 47, 201, 142), 0.14); }
+  &--warn { background: rgba(var(--gold-rgb, 255, 176, 32), 0.18); }
 }
 
 .hr-metric__name {
@@ -440,9 +444,9 @@
   border-radius: $radius-round;
   flex-shrink: 0;
 
-  &--warn { background: rgba($color-gold, 0.16); }
+  &--warn { background: rgba(var(--gold-rgb, 255, 176, 32), 0.16); }
   &--error { background: $color-danger-bg; }
-  &--ok { background: rgba($color-success, 0.14); }
+  &--ok { background: rgba(var(--success-rgb, 47, 201, 142), 0.14); }
 }
 
 .hr-pill-sm-text {
@@ -522,4 +526,350 @@
 .hr-loading-text {
   font-size: $font-size-sm;
   color: $color-text-secondary;
+}
+
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖）
+// ============================================
+// 【为什么追加而不是重写】本页可见结构分两种状态：
+//   ① 非会员 —— 只渲染 <MemberGate/>（在共享组件里，本包不许碰），本页样式一条都看不到；
+//   ② 会员 —— 才出现报告头 / 健康总览 / 食欲趋势 / 异常记录 / 用药史 / 操作区 / 加载态。
+// 预览环境里大多数情况落在 ①（页面上只显示"会员专属"），
+// 因此"报告头、指标卡、AI 分析段、图表区、导出按钮"这些模块在预览里都无法逐条肉眼验收。
+// 为避免误删看不见状态的样式，本轮**只追加覆盖、不删不改原规则**（同特异性 + 顺序在后取胜）；
+// 下面每一条都按 tsx 里的类名与状态变体逐一核对过，不确定的已写进自述文件。
+//
+// 【图表本体不动的边界】`.hr-bars/.hr-bar-col/.hr-bar-track/.hr-bar` 是柱状图本体（含内联 height 撑高），
+// 本轮**只改容器与文字层**（指标格 / 图例 / 坐标文字），柱子的尺寸与高度计算一律不碰。
+//
+// 【emoji 保留】❤️🍽️⚠️💊💩🐾⬇️📤 是"内容型"图标（页面语义的一部分，含会员门禁相关文案），
+// 不属于功能性 emoji，按项目取舍原则保留，不做 Icon 替换（本轮也没动 tsx）。
+.health-report {
+  // —— ① 浅色面统一钉"卡内 token" ——
+  // 深色主题（.theme-starry）会把 --text-* / --glass-bg 转成浅色，而纸面恒为浅底，
+  // 不在纸面容器上钉回深色文字，就是"白字压白纸"。
+  // 只挂在**叶子级浅色面**上（不能写 &__card / &__item 这种根下不存在的类名，写了会产出死选择器）：
+  // .xhh-card 是卡片白底，hr-metric / hr-anomaly / hr-med / hr-bar-track 是卡内的次级浅色面。
+  & .xhh-card,
+  & .hr-metric,
+  & .hr-anomaly,
+  & .hr-med,
+  & .hr-bar-track {
+    @include journal-paper-tokens;
+  }
+
+  // —— ② 报告头 / 各分区卡：统一换成"虚线便签"纸面 ——
+  & .xhh-card {
+    @include journal-note(primary, 0.4);
+    padding: 26rpx 26rpx 22rpx;
+    box-shadow: $shadow-xs;
+  }
+
+  // 报告头是"这份报告是谁的"的抬头，用暖金描边与正文卡区分开（像一本册子的封面贴纸）
+  & .xhh-card.hr-card:first-of-type {
+    border-color: rgba(var(--gold-rgb, 255, 176, 32), 0.45);
+  }
+
+  // 头像：加一圈金色压边，模拟手账里贴照片的习惯
+  .hr-card__avatar {
+    border: 3rpx solid rgba(var(--gold-rgb, 255, 176, 32), 0.35);
+    box-shadow: 0 6rpx 16rpx -10rpx rgba(61, 33, 18, 0.45);
+    background: #fffaf3;
+  }
+
+  // —— ③ 分区标题：衬线（手账标题的字体记号） ——
+  .hr-card__name,
+  .hr-card__section-title {
+    @include journal-serif(30rpx);
+    display: block;
+  }
+
+  .hr-card__meta {
+    font-size: 21rpx;
+    color: $color-text-secondary;
+  }
+
+  // —— ④ 状态胶囊：虚线贴纸（默认虚线灰，语义色各自描边 + 淡底） ——
+  .hr-card__pill {
+    height: 44rpx;
+    padding: 0 16rpx;
+    display: flex;
+    align-items: center;
+    border: 3rpx dashed $color-border;
+    background: #fffaf3;
+  }
+
+  .hr-card__pill--coral {
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.5);
+  }
+
+  .hr-card__pill--success {
+    border-color: rgba(var(--success-rgb, 47, 201, 142), 0.5);
+  }
+
+  .hr-card__pill--warn {
+    border-color: rgba(var(--gold-rgb, 255, 176, 32), 0.55);
+  }
+
+  // —— ⑤ 报告头信息行：手账便签里的"分隔行"记号 ——
+  .hr-card__row {
+    @include journal-row;
+  }
+
+  .hr-card__row-text {
+    font-size: 22rpx;
+    color: $color-text-tertiary;
+  }
+
+  .hr-card__row-bold {
+    color: $color-text-primary;
+    font-weight: 700;
+  }
+
+  // 分区头左侧的小图标：底色改暖白纸面 + 虚线描边
+  .hr-card__ico {
+    background: #fffaf3;
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+  }
+
+  // —— ⑥ 健康总览：评分环 + 四个指标格 ——
+  .hr-overview {
+    padding-top: 20rpx;
+    border-top: 2rpx dashed rgba(243, 226, 210, 0.95);
+  }
+
+  // 评分环本体（渐变与分数不算图表，保留）；只补两件事：
+  //   · 外层加虚线刻度圈，呼应"手账里手画的圆环刻度"；
+  //   · 环内孔改用纸面白（原为 --bg-card），与便签底色统一。
+  .hr-score__ring {
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.32);
+
+    &::before {
+      background: #fffdf8;
+    }
+  }
+
+  .hr-score__num {
+    @include journal-serif(56rpx);
+    letter-spacing: 0;
+  }
+
+  .hr-score__label {
+    font-size: 21rpx;
+    letter-spacing: 1rpx;
+    color: $color-text-secondary;
+  }
+
+  // 四个指标格：卡纸小贴纸（比卡体更浅的暖白底 + 虚线边）
+  .hr-metric {
+    padding: 16rpx 10rpx 14rpx;
+    border-radius: 24rpx;
+    background: #fffaf3;
+    border: 3rpx dashed $color-border;
+  }
+
+  .hr-metric__icon {
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.32);
+  }
+
+  .hr-metric__name {
+    font-size: 21rpx;
+    color: $color-text-secondary;
+  }
+
+  .hr-metric__status {
+    font-size: 21rpx;
+  }
+
+  // —— ⑦ 食欲趋势：只动文字层与图例，柱状图本体不碰 ——
+  .hr-bar__val {
+    font-weight: 700;
+    color: $color-text-primary;
+  }
+
+  .hr-bar__date {
+    font-size: 19rpx;
+    color: $color-text-tertiary;
+  }
+
+  // 柱槽底：只把原来的实色浅底换成更淡的暖金底（**不加边框**）。
+  // 【为什么这里不加虚线】.hr-bar-track 是定高 140rpx 且 overflow:hidden 的柱槽，
+  // 给它加 border-bottom 会改变内容盒高度，柱子按百分比算出的实际高度就跟着变（等于动了图表）。
+  // 手账的"刻度感"改由下方图例条顶部的虚线承担。
+  .hr-bar-track {
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.08);
+  }
+
+  // 图例条：顶部虚线分隔（替代柱槽上的虚线，不动图表几何）
+  .hr-legend {
+    padding-top: 18rpx;
+    border-top: 2rpx dashed rgba(243, 226, 210, 0.95);
+  }
+
+  // 图例：两枚小贴纸标签
+  .hr-legend__item {
+    height: 44rpx;
+    padding: 0 18rpx;
+    border-radius: $radius-round;
+    background: #fffaf3;
+    border: 3rpx dashed $color-border;
+  }
+
+  .hr-legend__text {
+    font-size: 20rpx;
+    color: $color-text-secondary;
+  }
+
+  .hr-legend__dot {
+    width: 14rpx;
+    height: 14rpx;
+  }
+
+  // —— ⑧ 异常记录：重点色便签（左侧虚线标记，比实色竖条更"手账"） ——
+  .hr-anomaly {
+    padding: 20rpx 22rpx;
+    border-radius: 26rpx;
+    background: #fffaf3;
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.45);
+    border-left: 3rpx dashed rgba(var(--gold-deep-rgb, 232, 146, 10), 0.7);
+  }
+
+  .hr-anomaly__date {
+    font-size: 20rpx;
+    color: $color-text-tertiary;
+  }
+
+  .hr-anomaly__title {
+    font-size: 25rpx;
+    line-height: 1.6;
+    color: $color-text-primary;
+  }
+
+  // AI 分析段：在手账里像"医生写在便签下沿的批注"——淡底 + 顶部虚线分隔
+  .hr-anomaly__advice {
+    margin-top: 12rpx;
+    padding-top: 12rpx;
+    border-top: 2rpx dashed rgba(243, 226, 210, 0.95);
+    font-size: 22rpx;
+    line-height: 1.7;
+    color: $color-text-secondary;
+  }
+
+  // —— ⑨ 用药史行 ——
+  .hr-med {
+    padding: 20rpx 22rpx;
+    border-radius: 26rpx;
+    background: #fffaf3;
+    border: 3rpx dashed $color-border;
+  }
+
+  .hr-med__icon {
+    background: #fff6ea;
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.3);
+  }
+
+  .hr-med__name {
+    font-size: 26rpx;
+    color: $color-text-primary;
+  }
+
+  .hr-med__meta {
+    font-size: 20rpx;
+    color: $color-text-tertiary;
+  }
+
+  // —— ⑩ 小状态贴纸（观察中 / 较紧急 / 已完成） ——
+  .hr-pill-sm {
+    height: 44rpx;
+    padding: 0 16rpx;
+    display: flex;
+    align-items: center;
+    border: 3rpx dashed $color-border;
+    background: #fffaf3;
+  }
+
+  .hr-pill-sm--warn {
+    border-color: rgba(var(--gold-rgb, 255, 176, 32), 0.55);
+  }
+
+  .hr-pill-sm--error {
+    border-color: rgba(var(--danger-rgb, 255, 90, 95), 0.55);
+  }
+
+  .hr-pill-sm--ok {
+    border-color: rgba(var(--success-rgb, 47, 201, 142), 0.5);
+  }
+
+  .hr-pill-sm-text {
+    font-size: 20rpx;
+    font-weight: 700;
+  }
+
+  // —— ⑪ 空态：一行小纸条（原为纯文字居中，太"报表"、不"手账"） ——
+  // 注意 <Text> 折叠换行问题：保持 inline-block（不改成块级 flex），
+  // 再用 margin 左右自动居中，避免文本节点被折叠成单行显示不全。
+  .hr-empty {
+    display: inline-block;
+    margin: 0 auto;
+    padding: 14rpx 22rpx;
+    border-radius: 20rpx;
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+    font-size: 22rpx;
+    line-height: 1.6;
+    color: $color-text-secondary;
+  }
+
+  // —— ⑫ 操作区：主按钮＝手账渐变胶囊；次按钮＝纸面虚线 ——
+  .hr-btn {
+    padding: 0;
+    min-height: 96rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-round;
+    @include press-feedback;
+  }
+
+  .hr-btn--primary {
+    @include journal-button;
+    height: 96rpx;
+  }
+
+  .hr-btn--ghost {
+    height: 96rpx;
+    background: #fffdf8;
+    border: 3rpx dashed $color-border;
+    box-shadow: $shadow-xs;
+  }
+
+  .hr-btn-text {
+    font-size: 27rpx;
+    font-weight: 800;
+    letter-spacing: 1rpx;
+    color: #ffffff;
+  }
+
+  .hr-btn-text--ghost {
+    font-size: 27rpx;
+    font-weight: 700;
+    color: $color-text-secondary;
+  }
+
+  // —— ⑬ 加载态：暖白底 + 主色虚线圈（保留原 spin 动画） ——
+  .hr-loading {
+    background: rgba(var(--bg-page-rgb, 255, 246, 238), 0.94);
+  }
+
+  .hr-loading-spinner {
+    background: #fffdf8;
+    border: 4rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.22);
+    border-top-color: $color-primary;
+  }
+
+  .hr-loading-text {
+    font-size: 23rpx;
+    letter-spacing: 1rpx;
+    color: $color-text-secondary;
+  }
 }

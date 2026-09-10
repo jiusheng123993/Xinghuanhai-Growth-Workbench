@@ -1,8 +1,11 @@
 @import '../../styles/_theme';
+@import '../../styles/_animations';
+@import '../../styles/_journal';
 
 .pet-trends-page {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
   padding-bottom: 160rpx;
   position: relative;
   // 注意：容器不设 z-index，避免把 fixed 的 .xhh-bg-layer 光斑背景层盖住
@@ -26,7 +29,7 @@
   @include press-feedback;
 
   &--active {
-    background: rgba($color-primary, 0.08);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
     border-color: $color-primary;
 
     .pet-trends__time-btn-text {
@@ -65,7 +68,7 @@
   transition: all $transition-normal;
 
   &--active {
-    background: rgba($color-primary, 0.08);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
 
     .pet-trends__tab-text {
       color: $color-primary;
@@ -145,7 +148,7 @@
   box-shadow: $shadow-xs;
 
   &--warn {
-    background: rgba($color-warning, 0.12);
+    background: rgba(var(--warning-rgb, 255, 176, 32), 0.12);
   }
 }
 
@@ -354,13 +357,13 @@
   }
 
   &--underweight {
-    background: rgba($color-primary, 0.06);
-    border-color: rgba($color-primary, 0.2);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.2);
   }
 
   &--overweight {
-    background: rgba($color-primary, 0.08);
-    border-color: rgba($color-primary, 0.25);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.25);
   }
 
   &--obese {
@@ -535,7 +538,7 @@
   border-radius: 50%;
   background-color: $color-primary;
   border: 3rpx solid $color-bg-card;
-  box-shadow: 0 2rpx 6rpx rgba($color-primary, 0.4);
+  box-shadow: 0 2rpx 6rpx rgba(var(--primary-rgb, 255, 107, 61), 0.4);
 
   &--abnormal {
     background-color: $color-danger;
@@ -813,7 +816,7 @@
   align-items: center;
   gap: 12rpx;
   padding: 12rpx 16rpx;
-  background: rgba($color-primary, 0.06);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
   border-radius: 16rpx;
 }
 
@@ -914,7 +917,7 @@
   .preview-btn {
     background: $color-primary-bg;
     color: $color-primary;
-    border: 1px solid rgba($color-primary, 0.18);
+    border: 1px solid rgba(var(--primary-rgb, 255, 107, 61), 0.18);
   }
 
   .export-btn {
@@ -926,13 +929,13 @@
   .csv-btn {
     background: $color-bg-card;
     color: $color-sage;
-    border: 1px solid rgba($color-sage, 0.35);
+    border: 1px solid rgba(var(--sage-rgb, 47, 201, 142), 0.35);
   }
 
   .vet-btn {
     background: $color-primary-bg;
     color: $color-primary-dark;
-    border: 1px solid rgba($color-primary, 0.18);
+    border: 1px solid rgba(var(--primary-rgb, 255, 107, 61), 0.18);
   }
 
   .share-btn {
@@ -1022,8 +1025,8 @@
 
 .pet-trends__disclaimer {
   padding: 20rpx;
-  background: rgba($color-primary, 0.06);
-  border: 1px solid rgba($color-primary, 0.12);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
+  border: 1px solid rgba(var(--primary-rgb, 255, 107, 61), 0.12);
   border-radius: 16rpx;
   margin: 24rpx 24rpx 0;
 }
@@ -1032,4 +1035,438 @@
   font-size: 22rpx;
   color: $color-primary-light;
   line-height: 1.5;
+}
+
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖）
+// ============================================
+// 【为什么追加而不是重写】本页 1039 行、约 130 个选择器。以下状态在 H5 预览里复现不了
+// （本页拿不到后端数据，会一直停在 loading），若整段重写就会把看不见的状态样式静默删掉：
+//   ① 图表卡内的真实曲线/柱状（需真实打卡数据）；
+//   ② 345-584 行「品种体重分析卡」及 4 种状态变体（--normal / --underweight / --overweight / --obese）；
+//   ③ 664-755 行「柱状图入场动效」（@keyframes barGrow，入场只播一次，截图截不到）；
+//   ④ 873 行之后「导出区」的生成中/禁用态、946 行之后「报告弹窗」；
+//   ⑤ 会员/非会员的时间范围锁定态（--locked，要非会员账号才会出现）。
+// 因此本轮只做**同特异性 + 顺序在后**的覆盖，原有规则一条不删、不重排。
+//
+// 【图表本体为什么一行都不碰】曲线是 <svg><polyline>、柱状是内联 backgroundColor、
+// 网格线/品种区间带是定位用的辅助层 —— 这些属于「数据可视化本体」，
+// 手账化只做容器（卡片/便签/图例/坐标轴文字），改图形会让曲线读不出来。
+//
+// 【为什么所有浅色面都要钉 token】深色主题（.theme-starry）会把 --text-* / --glass-bg 转成浅色，
+// 而纸面恒为浅底；不钉就是白字压白纸。
+.pet-trends-page {
+
+  // —— 顶部时间范围切换：三枚贴纸胶囊（未选虚线纸面 / 选中实线暖底 / 会员锁定降透明） ——
+  &__time-range,
+  &__time-btn,
+  &__time-btn--active,
+  &__time-btn--locked,
+  &__tabs,
+  &__tab,
+  &__tab--active,
+  .trends-ai-card,
+  .trends-ai-card__badge,
+  .trends-ai-card__badge--warn,
+  .trends-chart-card,
+  .trend-card,
+  .trends-note,
+  .trend-chart__container,
+  .trend-chart__breed-range-header,
+  .trend-chart__breed-range-warning,
+  .trend-chart__breed-analysis,
+  .trend-chart__breed-analysis--normal,
+  .trend-chart__breed-analysis--underweight,
+  .trend-chart__breed-analysis--overweight,
+  .trend-chart__breed-analysis--obese,
+  .trend-chart__bar-wrap,
+  .trend-glance,
+  .trend-summary__abnormal-item,
+  .export-section,
+  .report-modal .modal-content,
+  .pet-trends__disclaimer {
+    @include journal-paper-tokens;
+  }
+
+  // 顶部三枚切换胶囊：底改纸面（原 card-base 的 -bg-card 在深色主题下会变浅），描边改 3rpx 虚线
+  &__time-btn {
+    background: #fffdf8;
+    border: 3rpx dashed $color-border;
+    box-shadow: $shadow-xs;
+    padding: 14rpx 30rpx;
+
+    // 选中态：虚线转实线 + 主色淡底（沿用原 --active 的 0.08 底，只补描边）
+    // 必须写成嵌套 &--active：本页原文件里的 .pet-trends__time-btn--active 规则在更前面，
+    // 若这里平铺写，同特异性下会被上面的基础规则盖掉（选中态永远看不到变化）。
+    &--active {
+      border-style: solid;
+      border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+      background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+    }
+
+    &--locked {
+      border-style: dashed;
+      border-color: rgba(var(--border-rgb, 243, 226, 210), 0.9);
+      background: #fffaf3;
+    }
+  }
+
+  &__time-btn-text {
+    font-size: 26rpx;
+    font-weight: $font-weight-semibold;
+    color: $color-text-secondary;
+  }
+
+  &__time-btn--active &__time-btn-text {
+    color: $color-primary-dark;
+  }
+
+  // 头像切换条/tab 条：加一层虚线，与板块内其它便签呼应
+  &__tabs {
+    background: #fffdf8;
+    border: 3rpx dashed $color-border;
+  }
+
+  &__tab {
+    border-radius: 28rpx;
+
+    &--active {
+      border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.5);
+    }
+  }
+
+  &__tab-text {
+    font-size: 26rpx;
+  }
+
+  // —— AI 月度小结卡：整卡便签化 + 顶部一条胶带 ——
+  .trends-ai-card {
+    @include journal-note(primary, 0.5);
+    padding: 36rpx 32rpx 30rpx;
+
+    // 胶带：贴在便签顶边，强化"手贴"的观感（journal-tape 自身是 absolute 装饰，不影响布局）
+    &::before {
+      @include journal-tape(104rpx);
+    }
+  }
+
+  .trends-ai-card__title {
+    @include journal-serif(32rpx);
+  }
+
+  // 状态贴纸：无异常＝鼠尾草绿虚线贴纸；有异常＝金色虚线贴纸（与"异常用暖色标记"的语义一致）
+  .trends-ai-card__badge {
+    @include journal-status(sage);
+    flex-shrink: 0;
+  }
+
+  .trends-ai-card__badge-text {
+    color: $color-text-secondary;
+  }
+
+  .trends-ai-card__badge--warn {
+    @include journal-status(gold);
+    border-style: dashed;
+  }
+
+  .trends-ai-card__badge--warn .trends-ai-card__badge-text {
+    color: $color-primary-dark;
+  }
+
+  .trends-ai-card__text {
+    margin-top: 22rpx;
+    font-size: 25rpx;
+    line-height: 1.8;
+  }
+
+  // —— 图表卡：便签纸面（图表本体 svg/柱状/网格一律不动） ——
+  .trends-chart-card {
+    @include journal-note(primary, 0.36);
+    padding: 28rpx 26rpx 24rpx;
+  }
+
+  .trends-chart-card__title {
+    @include journal-serif(30rpx);
+  }
+
+  .trends-chart-card__metric-text {
+    font-size: 22rpx;
+    font-weight: $font-weight-bold;
+  }
+
+  // 遗留的通用图卡类（当前 tsx 未渲染，但 index.test.tsx 仍在断言，保留并同步手账化）
+  .trend-card {
+    @include journal-note(primary, 0.36);
+  }
+
+  .trend-card__title {
+    @include journal-serif(30rpx);
+  }
+
+  // —— 异常标记说明：整条做成金色便签（原来只是一行灰字，信息容易被忽略） ——
+  .trends-note {
+    align-items: flex-start;
+    padding: 16rpx 20rpx;
+    border-radius: 26rpx;
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+  }
+
+  .trends-note__text {
+    font-size: 22rpx;
+    line-height: 1.6;
+  }
+
+  // —— 图表内层容器：让出纸面（原规则已是 transparent，这里只保证不再叠一层白底） ——
+  .trend-chart__container {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+
+  // —— 空态：虚线槽（配图/曲线都没有时给一块"待填写"的格子） ——
+  .trend-chart__empty {
+    padding: 56rpx 24rpx;
+    margin: 8rpx 0;
+    border-radius: 28rpx;
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.26);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.04);
+  }
+
+  .trend-chart__empty-text {
+    @include journal-serif(30rpx);
+    margin-bottom: 10rpx;
+  }
+
+  .trend-chart__empty-hint {
+    font-size: 22rpx;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  // —— 品种体重分析卡：内层小纸卡。
+  // 外层图表卡已经是 3rpx 虚线，这里若再用虚线会"虚线套虚线"糊成一片，故内层一律 2rpx 实线。
+  .trend-chart__breed-analysis {
+    border-radius: 26rpx;
+    border-width: 2rpx;
+    border-style: solid;
+    padding: 20rpx 22rpx;
+    margin-bottom: 20rpx;
+  }
+
+  .trend-chart__breed-analysis--normal {
+    background: rgba(var(--sage-rgb, 47, 201, 142), 0.09);
+    border-color: rgba(var(--sage-rgb, 47, 201, 142), 0.3);
+  }
+
+  .trend-chart__breed-analysis--underweight {
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+    border-color: rgba(var(--gold-rgb, 255, 176, 32), 0.34);
+  }
+
+  .trend-chart__breed-analysis--overweight {
+    background: rgba(var(--gold-deep-rgb, 232, 146, 10), 0.1);
+    border-color: rgba(var(--gold-deep-rgb, 232, 146, 10), 0.34);
+  }
+
+  .trend-chart__breed-analysis--obese {
+    background: rgba(var(--danger-rgb, 255, 90, 95), 0.1);
+    border-color: rgba(var(--danger-rgb, 255, 90, 95), 0.34);
+  }
+
+  .trend-chart__breed-analysis-title {
+    @include journal-serif(28rpx);
+  }
+
+  .trend-chart__breed-analysis-value {
+    font-weight: $font-weight-semibold;
+  }
+
+  .trend-chart__breed-analysis-suggestion {
+    line-height: 1.7;
+  }
+
+  // 品种标准体重范围条：实线小框改虚线便签边（同一块纸上的"标准区间"记号）
+  .trend-chart__breed-range-header {
+    border: 3rpx dashed rgba(var(--sage-rgb, 47, 201, 142), 0.4);
+    background: rgba(var(--sage-rgb, 47, 201, 142), 0.09);
+    border-radius: 22rpx;
+  }
+
+  .trend-chart__breed-range-warning {
+    border: 3rpx dashed rgba(var(--danger-rgb, 255, 90, 95), 0.4);
+    background: rgba(var(--danger-rgb, 255, 90, 95), 0.1);
+    border-radius: $radius-round;
+  }
+
+  // 区间内的"近期趋势"分隔线：2rpx 实线改 3rpx 虚线（手账的分隔语言）
+  .trend-chart__breed-trend {
+    border-top: 3rpx dashed rgba(var(--border-rgb, 243, 226, 210), 0.95);
+  }
+
+  .trend-chart__breed-trend-label {
+    font-size: 22rpx;
+  }
+
+  .trend-chart__breed-trend-value {
+    font-size: 22rpx;
+  }
+
+  // —— 坐标轴文字 / 图例：只调字，不动图形 ——
+  .trend-chart__y-label,
+  .trend-chart__x-label,
+  .trend-chart__point-value {
+    font-size: 22rpx;
+    font-weight: $font-weight-medium;
+  }
+
+  .trend-chart__bar-label {
+    font-size: 22rpx;
+    font-weight: $font-weight-semibold;
+  }
+
+  .trend-chart__legend {
+    border-top: 3rpx dashed rgba(var(--border-rgb, 243, 226, 210), 0.95);
+  }
+
+  .trend-chart__legend-text {
+    font-size: 22rpx;
+  }
+
+  // 柱槽底：给"未填满"的槽一点纸面凹槽感（柱体本身是内联色，不碰）
+  .trend-chart__bar-wrap {
+    background-color: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+  }
+
+  // —— 健康概览摘要：便签 + 数值衬线体 ——
+  .trend-glance {
+    @include journal-note(sage, 0.4);
+    padding: 26rpx 30rpx;
+  }
+
+  .trend-glance__title {
+    @include journal-serif(30rpx);
+  }
+
+  .trend-glance__score-value {
+    font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
+    font-size: 44rpx;
+    letter-spacing: 1rpx;
+  }
+
+  .trend-glance__row-value {
+    font-weight: $font-weight-semibold;
+  }
+
+  // —— 趋势摘要 / 异常项列表 ——
+  .trend-summary__section-title {
+    @include journal-serif(28rpx);
+  }
+
+  .trend-summary__stat-value {
+    font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
+    font-size: 42rpx;
+    letter-spacing: 1rpx;
+  }
+
+  .trend-summary__stats {
+    border-bottom: 3rpx dashed rgba(var(--border-rgb, 243, 226, 210), 0.95);
+  }
+
+  .trend-summary__abnormal-item {
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.3);
+    background: #fffaf3;
+    border-radius: 20rpx;
+  }
+
+  .trend-summary__ai-label {
+    @include journal-serif(26rpx);
+  }
+
+  .trend-summary__list-text {
+    line-height: 1.7;
+  }
+
+  // —— 导出区：五枚按钮统一手账化（3+2 布局与 calc 宽度沿用原规则，不重写） ——
+  .export-section {
+    gap: 16rpx;
+
+    // 首行三枚（预览 / 保存图片 / 导出CSV）
+    .preview-btn,
+    .csv-btn {
+      background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
+      color: $color-primary-dark;
+      border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.4);
+      box-shadow: none;
+    }
+
+    // 导出 CSV 用鼠尾草绿，和"数据类"操作区分开
+    .csv-btn {
+      background: rgba(var(--sage-rgb, 47, 201, 142), 0.1);
+      color: $color-sage;
+      border-color: rgba(var(--sage-rgb, 47, 201, 142), 0.42);
+    }
+
+    // 保存图片＝主按钮：手账渐变胶囊（原 $gradient-gold + glow 保留为兜底，这里显式给渐变与投影）
+    .export-btn {
+      background: $gradient-gold;
+      border: 0;
+      box-shadow: 0 14rpx 30rpx -12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.8);
+    }
+
+    // 次行两枚（分享给兽医 / 分享趋势）
+    .vet-btn {
+      background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+      color: $color-text-secondary;
+      border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.42);
+      box-shadow: none;
+    }
+
+    .share-btn {
+      background: $gradient-warm;
+      border: 0;
+      box-shadow: 0 14rpx 30rpx -12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.75);
+    }
+  }
+
+  // —— 免责声明：金色虚线便签（原来只是淡色底 + 实线边） ——
+  &__disclaimer {
+    padding: 20rpx 22rpx;
+    border-radius: 26rpx;
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+  }
+
+  &__disclaimer-text {
+    font-size: 22rpx;
+    line-height: 1.7;
+    color: $color-text-secondary;
+  }
+
+  // —— 报告弹窗：纸卡 + 虚线分隔（弹窗要真点"预览报告"才出现，预览里看不到） ——
+  .report-modal {
+    .modal-content {
+      @include journal-note(primary, 0.42);
+      border-radius: 44rpx;
+    }
+
+    .modal-header {
+      padding: 24rpx 26rpx;
+      border-bottom: 3rpx dashed rgba(var(--border-rgb, 243, 226, 210), 0.95);
+    }
+
+    .modal-title {
+      @include journal-serif(32rpx);
+    }
+
+    .modal-footer {
+      padding: 22rpx 26rpx;
+      border-top: 3rpx dashed rgba(var(--border-rgb, 243, 226, 210), 0.95);
+    }
+
+    .download-btn {
+      @include journal-button;
+      height: 92rpx;
+    }
+  }
 }
