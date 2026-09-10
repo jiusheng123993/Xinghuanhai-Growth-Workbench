@@ -79,7 +79,14 @@ export interface VideoGenerationResult {
   engine: string;
 }
 
-/** 产品线配置常量 */
+/**
+ * 产品线配置常量（**历史遗留兜底**，不是档位边界）
+ *
+ * ⚠️ 边界口径以**档位**为准（`config.ts` 的 `MEMOIR_TIER_CONFIG`）。这里的 memorial=8-15 恰好等于
+ * 「完整档」的边界，但产品线与档位是多对一（standard 与 full 共用 memorial 线），
+ * 所以**只应在调用方拿不到 tier 的历史路径上作为兜底**，永远不要用它替代档位校验。
+ * @deprecated 新代码请用 `validateTierPhotoCount(tier, count)` / `validateTierDuration(tier, duration)`
+ */
 export const PRODUCT_LINE_CONFIG = {
   daily: {
     minPhotos: 1,
@@ -197,7 +204,13 @@ export function mapMemoirTypeToProductLine(memoirType: string): VideoProductLine
 }
 
 /**
- * 校验源照片数量是否符合产品线要求
+ * 校验源照片数量是否符合产品线要求（**历史遗留兜底**）
+ *
+ * ⚠️ 不要用于新代码：它按产品线取边界，而 standard 与 full 共用 memorial 线，
+ * 拿只服务某一档的边界去校验另一档必然误伤——2026-09-11「标准档付不了款」事故即为该模式所致
+ * （当时 `memoirScriptService` 也按产品线校验，标准档 5-7 张被完整档 8-15 门槛拦住）。
+ * 新代码一律用 `validateTierPhotoCount(tier, count)`；本函数仅保留给拿不到 tier 的历史调用方。
+ * @deprecated 请改用 `validateTierPhotoCount(tier, photoCount)`
  * @returns null 表示通过，否则返回错误消息
  */
 export function validatePhotoCount(
@@ -212,7 +225,10 @@ export function validatePhotoCount(
 }
 
 /**
- * 校验目标时长是否符合产品线要求
+ * 校验目标时长是否符合产品线要求（**历史遗留兜底**）
+ * ⚠️ 产品线口径的兜底同上：standard 与 full 共用 memorial 线，拿单档边界校验另一档必然误伤。
+ * 新代码请用 `validateTierDuration(tier, duration)`。
+ * @deprecated 请改用 `validateTierDuration(tier, duration)`
  * @returns null 表示通过，否则返回错误消息
  */
 export function validateDuration(

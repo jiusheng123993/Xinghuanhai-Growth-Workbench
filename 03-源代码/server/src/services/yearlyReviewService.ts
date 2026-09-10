@@ -10,6 +10,7 @@ import {
   generateMemoirVideo,
   type VideoProductLine,
 } from './videoGenerationService.js';
+import type { MemoirTier } from '../config.js';
 import { moderateVideo } from './videoModerationService.js';
 import { sendToUser } from './websocketService.js';
 import { sanitizeError } from '../utils/sanitize.js';
@@ -385,6 +386,11 @@ async function processYearlyVideoGeneration(
   photos: string[],
 ): Promise<void> {
   const { productLine, sourcePhotos } = selectProductLine(photos);
+  // 显式给出档位（2026-09-11 审查 R-2）：年度回顾没有"用户选档"这一概念，产品线由张数决定，
+  // 而 selectProductLine 已把张数裁剪到该线的区间内（memorial→8..15、daily→1..3），
+  // 与 full(8-15)/light(1-3) 的档位边界完全重合，故这里映射是等价的；
+  // 显式传 tier 是为了不再依赖"产品线兜底恰好蒙对"，把隐式不变式变成显式约束。
+  const tier: MemoirTier = productLine === 'memorial' ? 'full' : 'light';
   let lastError = '';
 
   try {
@@ -393,6 +399,8 @@ async function processYearlyVideoGeneration(
         const result = await generateMemoirVideo({
           taskId: record.id,
           productLine,
+          // 传档位：让照片数/时长校验走档位边界（与产品线兜底等价，见上方注释）
+          tier,
           sourcePhotos,
           sourceText: null,
           musicStyle: 'warm',
