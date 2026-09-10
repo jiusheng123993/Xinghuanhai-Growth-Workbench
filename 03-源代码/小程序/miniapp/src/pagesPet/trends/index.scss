@@ -940,7 +940,12 @@
 
   .share-btn {
     background: $gradient-warm;
-    color: #FFFFFF;
+    // 【2026-09-11 修审-6 的 P0】原来这里是 #FFFFFF：$gradient-warm 的**末色标是浅金**
+    // （spring #FFE08F / autumn #FFD068 / summer #FFD98F），白字压浅金实测仅 1.29:1（spring 最差），
+    // 五套主题全部不达标 —— 分享按钮的字基本看不见。
+    // 修法：不改渐变（那是"暖阳"的品牌观感），改文字为墨色 —— 墨色压浅金约 12:1，压首色珊瑚约 4.7:1，整段都稳。
+    color: $color-text-primary;
+    text-shadow: 0 1rpx 0 rgba(255, 255, 255, 0.45);
     box-shadow: $glow-md;
   }
 }

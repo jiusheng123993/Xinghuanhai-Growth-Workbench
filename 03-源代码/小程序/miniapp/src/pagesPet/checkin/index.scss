@@ -865,7 +865,10 @@
 }
 
 .pet-checkin__feedback-btn--food .pet-checkin__feedback-btn-text {
-  color: #ffffff;
+  // 【2026-09-11 修审-6 的 P0】同 trends 的分享按钮：$gradient-warm 末色标是浅金，
+  // 白字压浅金在 spring 下只有 1.29:1；改墨色后整段渐变（珊瑚→浅金）都保持可读。
+  color: $color-text-primary;
+  text-shadow: 0 1rpx 0 rgba(255, 255, 255, 0.45);
 }
 
 .pet-checkin__feedback-btn--close {
