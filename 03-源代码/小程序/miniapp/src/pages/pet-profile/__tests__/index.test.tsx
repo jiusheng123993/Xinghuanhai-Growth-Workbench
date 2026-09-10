@@ -251,10 +251,15 @@ describe('formatDate', () => {
   })
 })
 
-/** 造一个"n 个月前"的日期：先固定日号为 15，避开 setMonth 的月末溢出（否则期望值随日历抖动） */
+/**
+ * 造一个"n 个月前"的日期：用当月 **1 号**。
+ * 既避开 setMonth 的月末溢出，也保证任何一天（必然 ≥ 1 号）都算满整月，
+ * 期望值不会随"今天几号"抖动 —— 这也是 2026-09-11 统一年龄算法时踩到的点：
+ * 原实现按月相减不减「日」，导致同样构造会多算一个月。
+ */
 function monthsAgo(n: number): string {
   const d = new Date()
-  d.setDate(15)
+  d.setDate(1)
   d.setMonth(d.getMonth() - n)
   return d.toISOString()
 }
@@ -265,17 +270,15 @@ describe('calcAge', () => {
   })
 
   it('should return years and months for an older pet', () => {
-    expect(calcAge(monthsAgo(15))).toBe('1岁3月')
+    // 统一后的格式是「1岁3个月」（旧实现输出「1岁3月」）
+    expect(calcAge(monthsAgo(15))).toBe('1岁3个月')
   })
 
-  it('should not drift on month-end dates', () => {
-    // 回归锁：以前用 setMonth 直接回退，7/31 会溢出成 4/30，算出 1岁2月
-    const d = new Date()
-    d.setDate(31)
-    d.setMonth(d.getMonth() - 15)
-    const months = (new Date().getFullYear() - d.getFullYear()) * 12 + (new Date().getMonth() - d.getMonth())
-    expect(calcAge(d.toISOString())).toBe(`${Math.floor(months / 12)}岁${months % 12}月`)
-  })
+  // 说明：原先这里还有一条「月末不漂移」用例，但它的期望值是用**和被测实现同样的公式**
+  // 现算出来的（`(y2-y1)*12 + (m2-m1)` 再拼模板），属同义反复 —— 把算法改回旧版本它照样绿，
+  // 且 setDate(31) 在 2 月会溢出，期望值还随真实日历漂移。
+  // 月末 / 闰年 / 未来日期这些边界已由 utils/date 的固定时钟用例精确覆盖
+  // （见 src/utils/__tests__/date.test.ts → describe('formatPetAge')），故此处删除。
 
   it('should return an empty string when birth date is missing', () => {
     expect(calcAge('')).toBe('')
@@ -295,8 +298,10 @@ describe('PetProfile 渲染', () => {
     const cover = document.querySelector('.pf-polaroid-img') as HTMLImageElement
     expect(cover).toBeTruthy()
     expect(cover.getAttribute('src')).toContain('/uploads/avatars/home-style/cat/')
-    // 等比缩放：方形品牌头像靠 aspectFit + 相纸底色托底，不用 aspectFill 拉扁
-    expect(cover.getAttribute('data-mode')).toBe('aspectFit')
+    // 【2026-09-11 用户反馈后改】方形品牌头像原来靠 aspectFit + 同图模糊环境层托底，
+    // 实机观感是"一团圆晕"（用户原话：怎么还是圆的，直接方的、就一层就行）；
+    // 现改为 aspectFill 铺满方框（证件照式裁切），托底的环境层已一并删除。
+    expect(cover.getAttribute('data-mode')).toBe('aspectFill')
     expect(screen.queryByTestId('illustration')).toBeNull()
   })
 

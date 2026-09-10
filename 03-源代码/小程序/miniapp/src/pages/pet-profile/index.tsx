@@ -28,6 +28,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuthStore } from '../../stores/authStore'
 import { usePetStore } from '../../stores/petStore'
 import { useFamilyStore } from '../../stores/familyStore'
+import { formatPetAge } from '../../utils/date'
 import PageLoading from '../../components/PageLoading'
 import PetAvatar from '../../components/PetAvatar'
 import { useThemeClass } from '../../hooks/useThemeClass'
@@ -165,14 +166,15 @@ export function formatDate(value: string): string {
   return `${y}-${m}-${day}`
 }
 
-/** 计算年龄（岁/月） */
+/**
+ * 年龄文案 —— 统一走 utils/date 的 formatPetAge（2026-09-11 收敛）
+ *
+ * 原实现按月相减但**不减「日」**（生日 20 号、今天 5 号会多算一个月），
+ * 且用 `new Date('YYYY-MM-DD')`（UTC 解析）；返回格式也与别页不统一（`1岁3月`）。
+ * 保留函数名与导出，是因为本页测试与页面内都按 calcAge 引用。
+ */
 export function calcAge(birthDate: string): string {
-  if (!birthDate) return ''
-  const birth = new Date(birthDate)
-  const now = new Date()
-  const months = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
-  if (months < 12) return `${months}个月`
-  return `${Math.floor(months / 12)}岁${months % 12}月`
+  return formatPetAge(birthDate)
 }
 
 /** 根据最近打卡计算健康评分（0-100）——已收敛到 checkinService.calcHealthScore（正常档高分，历史 64 分 bug 修复） */
@@ -421,21 +423,17 @@ export default function PetProfile() {
             {cover.showIllustration && (
               <Illustration name='page-pet-profile' fill mode='aspectFill' className='pf-polaroid-art' />
             )}
-            {/* 环境层：同一张图放大 + 高斯模糊铺满相纸，给 aspectFit 的留白补上图片自身的颜色。
-                为什么不用写死的底色：实测预设图边缘是暖沙色（#F8D3B9），而相纸底色是 #FFF3E7，
-                两者差约 14/255，留白会变成一条清晰可见的"硬接缝"；取图自身当底色则任何图都无缝。
-                这一层不带 onError：真的加载不出来时，主图会先报错并把 show 置 false，
-                本层与主图一起被卸载，露出下层插画。 */}
-            {cover.show && (
-              <Image className='pf-polaroid-ambient' src={coverImageUrl} mode='aspectFill' />
-            )}
+            {/* 【2026-09-11 用户反馈后简化】这里原来还有一层"同图放大 + 高斯模糊"的环境层（pf-polaroid-ambient），
+                用来给 aspectFit 的留白补色。用户实机反馈"头像看着是圆的、要方的、就一层"，据此改成：
+                主图直接用 aspectFill **铺满整个方框**（证件照式的裁切），留白不存在了 → 环境层随之删除。
+                这样头像区只剩一层（插画兜底 or 主图），不再有"圆晕 + 硬接缝"的问题。 */}
             {cover.show && (
               <Image
                 className='pf-polaroid-img'
-                // data-role 只用于单测定位"封面主图"（环境层与它同 src，靠 class 区分）
+                // data-role 只用于单测定位"封面主图"
                 data-role='cover'
                 src={coverImageUrl}
-                mode='aspectFit'
+                mode='aspectFill'
                 onError={() => setCoverFailed(true)}
               />
             )}
@@ -566,7 +564,14 @@ export default function PetProfile() {
               <View
                 key={p.id}
                 className={`pf-switch-chip ${currentPet?.id === p.id ? 'pf-switch-chip--on' : ''}`}
-                onClick={() => switchPet(p.id)}
+                onClick={() => {
+                  // 切换失败给提示（2026-09-11）：petStore.switchPet 失败会 throw，
+                  // 直接丢在 onClick 里既是未处理的 Promise rejection，用户也会觉得"点了没反应"
+                  switchPet(p.id).catch((err: unknown) => {
+                    const msg = err instanceof Error ? err.message : ''
+                    Taro.showToast({ title: msg || usePetStore.getState().error || '切换失败，请重试', icon: 'none' })
+                  })
+                }}
               >
                 <PetAvatar
                   species={p.species}
