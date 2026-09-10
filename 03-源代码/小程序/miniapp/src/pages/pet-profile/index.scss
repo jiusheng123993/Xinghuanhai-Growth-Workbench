@@ -1,5 +1,8 @@
 @import '../../styles/_theme';
 @import '../../styles/_animations';
+// 手账皮肤公共 mixin（本页用 journal-idcard 让形象卡与档案卡同一套卡纸语言）
+// 顺序不能反：先 _theme 再 _journal（_journal 不自带主题，避免主题块被打进产物两遍）
+@import '../../styles/_journal';
 
 // ============================================
 // 宠物档案 — 视觉方向 C「温暖手账」
@@ -94,38 +97,35 @@
   animation: fadeInUp 0.5s ease-out;
 }
 
-// —— 模块 1：拍立得照片（白边相纸 + 胶带 + 微旋转） ——
+// —— 模块 1：形象卡（用户 2026-09-11 反馈："头像很突兀，能不能做成方卡片、跟档案一样的效果"）——
+// 改版前是"宽幅拍立得"（1.5:1 + 微旋转 + 胶带），与下面那张双层金描边的档案卡是两种语言：
+// 宽幅还把方形的形象图裁成"脸偏左、右半边一片虚化"，所以看着跳。
+// 现在改成：**与 .pf-idcard 同一套卡纸语言**（journal-idcard 双层描边 + 同款圆角/纸色），
+// 照片改成**居中的 1:1 方卡**（证件照），并去掉歪斜与胶带 —— 两张卡读起来是一套。
 .pf-polaroid {
+  @include journal-idcard(gold, 0.55);
   position: relative;
-  padding: 14rpx 14rpx 0;
-  border-radius: 20rpx;
-  background: #ffffff;
-  transform: rotate(-1.2deg);
-  box-shadow: 0 10rpx 24rpx -14rpx rgba(61, 33, 18, 0.5);
+  padding: 26rpx 26rpx 22rpx;
+  text-align: center;
 }
 
-/* 胶带：半透明暖色小方块压在相纸顶边，两侧虚线像撕口 */
+/* 胶带：与"证件卡"语言冲突（歪斜 + 撕口是拍立得的语汇），本次隐去。
+   保留规则而不删，是为了万一要退回拍立得风格时一行即可恢复。 */
 .pf-polaroid-tape {
-  position: absolute;
-  left: 50%;
-  top: -14rpx;
-  width: 132rpx;
-  height: 34rpx;
-  transform: translateX(-50%) rotate(-3deg);
-  background: rgba(255, 214, 150, 0.85);
-  border-left: 2rpx dashed rgba(255, 255, 255, 0.9);
-  border-right: 2rpx dashed rgba(255, 255, 255, 0.9);
+  display: none;
 }
 
-/* 照片区高度 400rpx（≈1.5:1）：早先给 300rpx 时量出来是 2.5:1 的扁横幅，
-   品牌插画（1.775:1）要裁掉 15% 宽、用户竖版照片更会被裁掉一半以上高度。
-   1.5:1 是"插画几乎不裁 + 4:3 照片只裁 12%"的折中，且照片作为主角更站得住。
-   这层底色只在"连环境层都没渲染出来"的极端情况下露出，正常都被 .pf-polaroid-art
-   或 .pf-polaroid-ambient 盖住。 */
+/* 照片区：1:1 方卡（证件照）。
+   为什么改成方：① 品牌预设形象是 256×256 方图，方框能**零裁切**铺满，不再需要靠模糊层补左右留白；
+   ② 竖版/横版用户照片在方框里只裁两侧，脸部位置比 1.5:1 横幅更稳；
+   ③ 方卡与档案卡并排时，两张卡的"证件感"统一，这是用户这次提的核心诉求。
+   尺寸 360rpx（≈180px）居中：整宽会到 700rpx（约 350px）太高，把下面的档案卡挤出首屏。 */
 .pf-polaroid-frame {
   position: relative;
-  height: 400rpx;
-  border-radius: 12rpx;
+  width: 360rpx;
+  height: 360rpx;
+  margin: 0 auto;
+  border-radius: 20rpx;
   overflow: hidden;
   background: #fff3e7;
 }
