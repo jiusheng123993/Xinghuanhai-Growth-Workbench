@@ -1,6 +1,10 @@
 /**
  * 成就页样式
  */
+// 本页原先完全没有 SCSS import（只用 CSS 变量 + var(--x, 兜底) 写法）；
+// 加入手账皮肤层后必须补 _theme —— 皮肤层的 mixin 引用 $color-* 等 SCSS 变量。
+// 顺序也不能反：先 _theme 再 _journal（_journal 已不自带主题，免得主题块被打进产物两遍）
+@import '../../styles/_theme';
 @import '../../styles/_journal';
 .achievement-page {
   min-height: 100vh;

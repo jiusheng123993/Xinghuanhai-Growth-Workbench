@@ -4,8 +4,10 @@
 // 宠物板块（宠物档案 / 健康打卡 / 疫苗日历 / 健康趋势 …）统一用这套语言，
 // 目的：① 各页观感一致；② 一处改、全板块跟随；③ 新页面少写重复样式。
 //
-// 用法：
-//   @import '../../styles/journal';
+// 用法（**顺序不能反**：必须先 `_theme` 再 `_journal`）：
+//   @import '../../styles/_theme';
+//   @import '../../styles/_animations';   // 用到 press-feedback 时必须
+//   @import '../../styles/_journal';
 //   .my-page__card { @include journal-paper-tokens; @include journal-note; }
 //   .my-page__title { @include journal-serif; }
 //
@@ -15,9 +17,14 @@
 //
 // 【通道写法】淡色底一律 rgba(var(--x-rgb, 回退), α)。**不能**写 rgba(var(--x), α)：
 // 那种写法在部分端上属非法 CSS，整条声明会被丢弃（见项目 skill「小程序样式陷阱」）。
+//
+// 【为什么这里不 @import './_theme'（2026-09-11 修）】原来这里写了 `@import './_theme'`，
+// 而每个页面自己第一行也 import 了 `_theme` —— 两处路径写法不同（`./_theme` vs
+// `../../styles/_theme`），Sass 视为两个文件，于是**主题块被打进页面 WXSS 两遍**：
+// 实测 `_theme` 单独编译 15,446 字节，页面产物里 `--primary:` 出现 14 次（= 恰好两遍）。
+// 宠物板块 20+ 页 × 15KB ≈ 300KB 的纯冗余。去掉这行后，变量由页面自己的 `_theme` 提供；
+// 万一某页只 import 了 `_journal` 而没 import `_theme`，编译会直接报未定义变量（不会静默出错）。
 // ============================================
-
-@import './_theme';
 
 /// 纸面 token 兜底：给"恒为浅底"的容器钉回浅色主题的文字/描边/玻璃色
 @mixin journal-paper-tokens {

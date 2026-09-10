@@ -1,5 +1,8 @@
 @import '../../styles/_theme';
 @import '../../styles/_animations';
+// 手账皮肤 mixin（方向 C）：本页末尾追加的皮肤层要用 journal-note / journal-serif /
+// journal-button / journal-row 等；不 import 会直接编译报 Undefined mixin
+@import '../../styles/_journal';
 
 .chronic-page {
   min-height: 100vh;
@@ -10,10 +13,10 @@
 
 .chronic-header {
   // 方案A（用户选定）：柔和浅底 + 深色文字，替代饱和橙色大渐变
-  background: linear-gradient(135deg, rgba($color-primary, 0.12) 0%, rgba($color-primary, 0.04) 100%);
+  background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.12) 0%, rgba(var(--primary-rgb, 255, 107, 61), 0.04) 100%);
   padding: 80rpx 48rpx 40rpx;
   color: $color-text-primary;
-  border-bottom: 1px solid rgba($color-primary, 0.08);
+  border-bottom: 1px solid rgba(var(--primary-rgb, 255, 107, 61), 0.08);
 }
 
 .chronic-header-top {
@@ -27,7 +30,7 @@
   height: 80rpx;
   border-radius: 50%;
   // 浅色头部下同步按钮改为主色淡底圆钮
-  background: rgba($color-primary, 0.1);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -89,12 +92,12 @@
 .chronic-alert {
   margin: 0 32rpx 24rpx;
   padding: 24rpx 32rpx;
-  background: linear-gradient(135deg, rgba($color-danger, 0.1), rgba($color-danger, 0.05));
+  background: linear-gradient(135deg, rgba(var(--danger-rgb, 255, 90, 95), 0.1), rgba(var(--danger-rgb, 255, 90, 95), 0.05));
   border-radius: $radius-md;
   display: flex;
   align-items: center;
   gap: 16rpx;
-  border: 1px solid rgba($color-danger, 0.2);
+  border: 1px solid rgba(var(--danger-rgb, 255, 90, 95), 0.2);
   animation: fadeIn 0.3s ease-out;
 }
 
@@ -113,8 +116,8 @@
   @include card-base;
   margin: 0 32rpx 24rpx;
   padding: 32rpx;
-  background: linear-gradient(180deg, rgba($color-warning, 0.08), rgba($color-warning, 0.02));
-  border: 1px solid rgba($color-warning, 0.2);
+  background: linear-gradient(180deg, rgba(var(--warning-rgb, 255, 176, 32), 0.08), rgba(var(--warning-rgb, 255, 176, 32), 0.02));
+  border: 1px solid rgba(var(--warning-rgb, 255, 176, 32), 0.2);
   border-radius: $radius-lg;
   animation: fadeInUp 0.35s ease-out both;
 }
@@ -183,18 +186,18 @@
 }
 
 .chronic-risk-signal--alert {
-  border-color: rgba($color-danger, 0.3);
-  background: rgba($color-danger, 0.05);
+  border-color: rgba(var(--danger-rgb, 255, 90, 95), 0.3);
+  background: rgba(var(--danger-rgb, 255, 90, 95), 0.05);
 }
 
 .chronic-risk-signal--warning {
-  border-color: rgba($color-warning, 0.3);
-  background: rgba($color-warning, 0.05);
+  border-color: rgba(var(--warning-rgb, 255, 176, 32), 0.3);
+  background: rgba(var(--warning-rgb, 255, 176, 32), 0.05);
 }
 
 .chronic-risk-signal--info {
-  border-color: rgba($color-teal, 0.3);
-  background: rgba($color-teal, 0.05);
+  border-color: rgba(var(--teal-rgb, 79, 163, 227), 0.3);
+  background: rgba(var(--teal-rgb, 79, 163, 227), 0.05);
 }
 
 .chronic-risk-signal-head {
@@ -286,8 +289,8 @@
   @include card-base;
   margin: 0 32rpx 24rpx;
   padding: 32rpx;
-  background: linear-gradient(180deg, rgba($color-primary, 0.06), rgba($color-primary, 0.02));
-  border: 1px solid rgba($color-primary, 0.15);
+  background: linear-gradient(180deg, rgba(var(--primary-rgb, 255, 107, 61), 0.06), rgba(var(--primary-rgb, 255, 107, 61), 0.02));
+  border: 1px solid rgba(var(--primary-rgb, 255, 107, 61), 0.15);
   border-radius: $radius-lg;
   animation: fadeInUp 0.35s ease-out both;
 }
@@ -385,7 +388,7 @@
   background: linear-gradient(135deg, $color-primary, $color-primary-dark);
   color: $color-text-inverse;
   font-weight: $font-weight-medium;
-  box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.3);
+  box-shadow: 0 4rpx 16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
 }
 
 .chronic-actions {
@@ -402,7 +405,7 @@
   border-radius: $radius-md;
   font-size: 32rpx;
   font-weight: $font-weight-medium;
-  box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.25);
+  box-shadow: 0 4rpx 16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.25);
   @include press-feedback;
 }
 
@@ -459,7 +462,7 @@
 }
 
 .chronic-card-header:active {
-  background: rgba($color-primary, 0.05);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.05);
 }
 
 .chronic-card-main {
@@ -562,15 +565,15 @@
 }
 
 .chronic-card-btn-edit {
-  background: rgba($color-primary, 0.1);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
   color: $color-primary;
-  border: 1px solid rgba($color-primary, 0.3);
+  border: 1px solid rgba(var(--primary-rgb, 255, 107, 61), 0.3);
 }
 
 .chronic-card-btn-danger {
-  background: rgba($color-danger, 0.1);
+  background: rgba(var(--danger-rgb, 255, 90, 95), 0.1);
   color: $color-danger;
-  border: 1px solid rgba($color-danger, 0.3);
+  border: 1px solid rgba(var(--danger-rgb, 255, 90, 95), 0.3);
 }
 
 .chronic-trend {
@@ -703,9 +706,9 @@
 
 .chronic-trend-condition-tag {
   padding: 8rpx 24rpx;
-  background: rgba($color-primary, 0.1);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
   border-radius: 16px;
-  border: 1px solid rgba($color-primary, 0.2);
+  border: 1px solid rgba(var(--primary-rgb, 255, 107, 61), 0.2);
 }
 
 .chronic-trend-condition-text {
@@ -748,7 +751,7 @@
 
 .chronic-reminder-card--urgent {
   border-left-color: $color-danger;
-  background: linear-gradient(135deg, rgba($color-danger, 0.03), $color-bg-card);
+  background: linear-gradient(135deg, rgba(var(--danger-rgb, 255, 90, 95), 0.03), $color-bg-card);
 }
 
 .chronic-reminder-card--soon {
@@ -757,16 +760,16 @@
 
 .chronic-reminder-badge {
   padding: 16rpx 24rpx;
-  background: rgba($color-primary, 0.08);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
   border-bottom: 1px solid $color-divider;
 }
 
 .chronic-reminder-badge--soon {
-  background: rgba($color-warning, 0.1);
+  background: rgba(var(--warning-rgb, 255, 176, 32), 0.1);
 }
 
 .chronic-reminder-card--urgent .chronic-reminder-badge {
-  background: rgba($color-danger, 0.08);
+  background: rgba(var(--danger-rgb, 255, 90, 95), 0.08);
 }
 
 .chronic-reminder-badge-text {
@@ -1024,4 +1027,577 @@
 
 .chronic-bottom-safe {
   height: 80rpx;
+}
+
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖）
+// ============================================
+// 【为什么追加而不是重写】本页数据全部来自后端（chronicService：记录 / 统计 / 趋势 / 复查提醒），
+// H5 预览里拿不到数据，下面这些状态**在预览里都无法肉眼验收**：
+//   ① 记录卡展开态（.chronic-card-body 及其内部 6 行信息 + 三个操作按钮，要点击卡片才出现）；
+//   ② 趋势 tab 的图表（.chronic-trend-* 只在 records 非空时渲染）；
+//   ③ 提醒 tab 的"已逾期 / 即将到期"两组（.chronic-reminder-card--urgent / --soon）；
+//   ④ 新增 / 编辑弹层（.chronic-modal-* 要点击"添加记录"才出现）；
+//   ⑤ 风险扫描的三种结果（alert / warning / info 信号、AI 洞察、错误文案）。
+// 为避免误删看不见状态的样式，本轮**只追加覆盖、不删不改原规则**（同特异性 + 顺序在后取胜）；
+// 下面每一条都按 index.tsx 里的类名与状态变体逐一核对过，拿不准的写进了自述文件。
+//
+// 【本层最容易踩的坑：变体被静默盖掉】原文件里大量状态变体是"单类名"写法
+// （例：.chronic-risk-ai--muted 只写 color），而本层用的是「.chronic-page + 后代」的双类名写法，
+// 特异性更高。因此凡是"本层给基础类设了某属性、原文件里又有变体类设同一属性"的地方，
+// 下面都把变体**重新声明一次**（并在注释里标注），否则错误态 / 选中态的颜色会被悄悄覆盖。
+//
+// 【图表本体不动的边界】`.chronic-trend-bars / -bar-wrap / -bar-bg / -bar` 是柱状图本体：
+// 柱高由 tsx 内联 `height: x%` 撑开、颜色也由内联 backgroundColor 决定，
+// 且 .chronic-trend-bars / -bar-bg 是定高（340rpx）的百分比参照物。
+// 本轮**只改容器与文字层**（图表卡外壳、Y 轴文字、日期文字、图例），柱子与坐标轴几何一律不碰。
+//
+// 【emoji 保留】🔍✨🚨⚠️ℹ️⏳✅☁️ 属"内容型"图标（页面语义的一部分），不做 Icon 替换（本轮没动 tsx）。
+.chronic-page {
+  // —— ① 纸面容器统一钉"卡内 token" ——
+  // 深色主题（.theme-starry）会把 --text-* / --glass-bg 转成浅色，而纸面恒为浅底；
+  // 不在纸面容器上钉回深色取值，就是"白字压白纸"。
+  // 只挂在**真实存在的**浅色面上（写根下不存在的类名只会产出永不匹配的死选择器）。
+  & .chronic-summary,
+  & .chronic-alert,
+  & .chronic-risk-card,
+  & .chronic-ai-card,
+  & .chronic-tabs,
+  & .chronic-empty-state,
+  & .chronic-card,
+  & .chronic-trend-chart,
+  & .chronic-trend-conditions,
+  & .chronic-reminder-card,
+  & .chronic-modal {
+    @include journal-paper-tokens;
+  }
+
+  // —— ② 页头：手账封面抬头（主色淡晕收口到透明 + 一条虚线页脚） ——
+  // 【为什么渐变第二档用透明】深色主题下页面底色是深夜蓝，若第二档写成暖白实色，
+  // 页头会变成一块亮斑（白字压白纸）；用"页底色的透明版"让晕染自然收口，浅/深主题都成立。
+  & .chronic-header {
+    background: linear-gradient(180deg, rgba(var(--primary-rgb, 255, 107, 61), 0.12) 0%, rgba(var(--bg-page-rgb, 255, 246, 238), 0) 100%);
+    border-bottom: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.3);
+  }
+
+  & .chronic-title {
+    @include journal-serif(56rpx);
+    margin-bottom: 12rpx;
+  }
+
+  & .chronic-subtitle {
+    font-size: 24rpx;
+    letter-spacing: 1rpx;
+  }
+
+  // 同步钮：纸面小圆贴（box-sizing 是必须的——它是 80rpx 定宽定高的圆，加了边不按 border-box 会变 86rpx）
+  & .chronic-sync-btn {
+    box-sizing: border-box;
+    background: #fffdf8;
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.5);
+  }
+
+  // —— ③ 概览四格：一张虚线便签，格与格之间用虚线分隔 ——
+  & .chronic-summary {
+    @include journal-note(primary, 0.42);
+    padding: 32rpx 0 26rpx;
+  }
+
+  & .chronic-summary-item + .chronic-summary-item {
+    border-left: 3rpx dashed rgba(243, 226, 210, 0.95);
+  }
+
+  & .chronic-summary-number {
+    @include journal-serif(52rpx);
+  }
+
+  // 变体重声明：journal-serif 自带 color，会把原有的"逾期 = 危险色"盖掉
+  & .chronic-summary-number--warn {
+    color: $color-danger;
+  }
+
+  & .chronic-summary-label {
+    font-size: 22rpx;
+    letter-spacing: 2rpx;
+    margin-top: 10rpx;
+  }
+
+  // —— ④ 逾期提醒条：危险色虚线便签 ——
+  & .chronic-alert {
+    @include journal-note(danger, 0.45);
+    padding: 22rpx 28rpx;
+  }
+
+  & .chronic-alert-text {
+    font-size: 27rpx;
+    line-height: 1.6;
+  }
+
+  // —— ⑤ 慢病风险扫描卡（暖金虚线便签） ——
+  & .chronic-risk-card {
+    @include journal-note(warning, 0.5);
+    padding: 28rpx 26rpx 26rpx;
+  }
+
+  & .chronic-risk-icon {
+    box-sizing: border-box;
+    background: #fffaf3;
+    border: 3rpx dashed rgba(var(--warning-rgb, 255, 176, 32), 0.55);
+  }
+
+  & .chronic-risk-title {
+    @include journal-serif(32rpx);
+  }
+
+  // 徽标是嵌在标题 <Text> 里的子 <Text>，会继承衬线的字体与字距，这里还原成无衬线小贴纸
+  & .chronic-risk-alert-badge {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    letter-spacing: 0;
+    padding: 2rpx 16rpx;
+    border-radius: $radius-round;
+    background: rgba(var(--danger-rgb, 255, 90, 95), 0.12);
+    border: 3rpx dashed rgba(var(--danger-rgb, 255, 90, 95), 0.5);
+    color: $color-danger;
+  }
+
+  & .chronic-risk-sub {
+    font-size: 22rpx;
+    line-height: 1.6;
+  }
+
+  // 风险信号条目：虚线小贴纸。
+  // 三条语义色变体必须在基础规则【之后】重声明——基础规则写的是 border 简写（双类名），
+  // 会把原来单类名变体设的 border-color 盖掉。
+  & .chronic-risk-signal {
+    padding: 22rpx;
+    border-radius: 26rpx;
+    background: #fffaf3;
+    border: 3rpx dashed $color-border;
+  }
+
+  & .chronic-risk-signal--alert {
+    border-color: rgba(var(--danger-rgb, 255, 90, 95), 0.5);
+    background: rgba(var(--danger-rgb, 255, 90, 95), 0.05);
+  }
+
+  & .chronic-risk-signal--warning {
+    border-color: rgba(var(--warning-rgb, 255, 176, 32), 0.55);
+    background: rgba(var(--warning-rgb, 255, 176, 32), 0.06);
+  }
+
+  & .chronic-risk-signal--info {
+    border-color: rgba(var(--teal-rgb, 79, 163, 227), 0.5);
+    background: rgba(var(--teal-rgb, 79, 163, 227), 0.05);
+  }
+
+  // 徽标只改形状，不碰底色：底色由原文件的语义色规则与 .chronic-risk-signal--x 后代选择器决定
+  & .chronic-risk-signal-badge {
+    padding: 4rpx 18rpx;
+    border-radius: $radius-round;
+    font-weight: 700;
+    letter-spacing: 1rpx;
+  }
+
+  & .chronic-risk-signal-title {
+    font-size: 27rpx;
+    line-height: 1.6;
+  }
+
+  & .chronic-risk-signal-detail {
+    font-size: 25rpx;
+  }
+
+  // AI 解析段：只改排版，不改 color——--muted / --error 两个变体就是靠 color 表达状态的
+  & .chronic-risk-ai {
+    font-size: 26rpx;
+    line-height: 1.8;
+    margin-bottom: 22rpx;
+  }
+
+  // 主按钮：手账渐变胶囊。
+  // 【为什么显式写白色】journal-button 的渐变是固定的橙色，而深色主题下 --text-inverse 会变成深蓝，
+  // 沿用原规则会出现"深蓝字压橙底"，所以这里把按钮文字恒定为白。
+  & .chronic-risk-btn {
+    @include journal-button;
+    color: #ffffff;
+  }
+
+  // —— ⑥ AI 慢病管理建议卡（暖金虚线便签） ——
+  & .chronic-ai-card {
+    @include journal-note(gold, 0.45);
+    padding: 28rpx 26rpx 26rpx;
+  }
+
+  & .chronic-ai-icon {
+    box-sizing: border-box;
+    background: #fffaf3;
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.55);
+  }
+
+  & .chronic-ai-title {
+    @include journal-serif(32rpx);
+  }
+
+  & .chronic-ai-sub {
+    font-size: 22rpx;
+    line-height: 1.6;
+  }
+
+  & .chronic-ai-text {
+    font-size: 26rpx;
+    line-height: 1.8;
+    margin-bottom: 22rpx;
+  }
+
+  // 与风险卡的主按钮区分：保留原来"暖金渐变"的语义（写在 mixin 之后，故覆盖 journal-button 的橙）
+  & .chronic-ai-btn {
+    @include journal-button;
+    background: $gradient-gold;
+    color: #ffffff;
+  }
+
+  // —— ⑦ 分段签：胶囊纸槽 + 选中态实心贴纸 ——
+  & .chronic-tabs {
+    background: #fffdf8;
+    border: 3rpx dashed $color-border;
+    border-radius: $radius-round;
+  }
+
+  & .chronic-tab {
+    border-radius: $radius-round;
+    font-size: 26rpx;
+    letter-spacing: 2rpx;
+  }
+
+  // 变体重声明：基础规则改了圆角与字号，选中态的文字色也要钉成白色（同上的深色主题问题）
+  & .chronic-tab--active {
+    color: #ffffff;
+    box-shadow: 0 8rpx 20rpx -14rpx rgba(var(--primary-rgb, 255, 107, 61), 0.8);
+  }
+
+  // —— ⑧ 页面主行动按钮：手账渐变胶囊 ——
+  & .chronic-add-btn {
+    @include journal-button;
+    color: #ffffff;
+  }
+
+  // —— ⑨ 空态便签（三种空态共用 .chronic-empty-state：无记录 / 无趋势 / 无提醒） ——
+  // 【为什么不做成 flex 居中】里面是两个 <Text>，Taro 下改成 flex 容易触发文本节点折叠；
+  // 保持原来的"块级 + 居中文字"最稳，只补一张纸底与虚线边。
+  & .chronic-empty-state {
+    margin: 0 32rpx 24rpx;
+    padding: 56rpx 32rpx 52rpx;
+    border-radius: 36rpx;
+    background: #fffdf8;
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.3);
+    box-shadow: $shadow-xs;
+  }
+
+  & .chronic-empty-title {
+    @include journal-serif(30rpx);
+    display: block;
+    margin-bottom: 12rpx;
+  }
+
+  & .chronic-empty-hint {
+    display: block;
+    font-size: 24rpx;
+    line-height: 1.7;
+  }
+
+  // —— ⑩ 记录卡：虚线便签 + 手账"行" ——
+  & .chronic-card {
+    @include journal-note(primary, 0.4);
+  }
+
+  & .chronic-card-title {
+    @include journal-serif(30rpx);
+  }
+
+  & .chronic-card-overdue-badge {
+    padding: 4rpx 16rpx;
+    border-radius: $radius-round;
+    background: rgba(var(--danger-rgb, 255, 90, 95), 0.12);
+    border: 3rpx dashed rgba(var(--danger-rgb, 255, 90, 95), 0.5);
+    color: $color-danger;
+  }
+
+  // 严重程度 / 状态标签的颜色由 tsx 内联（CHRONIC_SEVERITY_MAP / CHRONIC_STATUS_MAP），
+  // 内联样式优先级最高，本层只统一形状，不去争颜色
+  & .chronic-card-tag {
+    padding: 6rpx 20rpx;
+    border-radius: $radius-round;
+    font-weight: 700;
+    letter-spacing: 1rpx;
+  }
+
+  & .chronic-card-body {
+    border-top: 3rpx dashed rgba(243, 226, 210, 0.95);
+  }
+
+  // 展开区信息行：直接用手账"行"mixin（虚线分隔 + 自动去掉末行分隔线）
+  & .chronic-card-row {
+    @include journal-row;
+  }
+
+  & .chronic-card-value {
+    font-size: 27rpx;
+    line-height: 1.6;
+  }
+
+  & .chronic-card-actions {
+    border-top: 3rpx dashed rgba(243, 226, 210, 0.95);
+  }
+
+  & .chronic-card-btn {
+    padding: 18rpx 8rpx;
+    border-radius: $radius-round;
+    font-size: 25rpx;
+    font-weight: 700;
+  }
+
+  & .chronic-card-btn-primary {
+    color: #ffffff;
+  }
+
+  // 编辑 / 删除两个次级按钮：纸面虚线贴。
+  // 【为什么文字用"深主色"】浅纸上主色（尤其星空白主题的 #7A8CFF）对比度不足，深主色各主题下都够用。
+  & .chronic-card-btn-edit {
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.5);
+    color: $color-primary-dark;
+  }
+
+  & .chronic-card-btn-danger {
+    background: rgba(var(--danger-rgb, 255, 90, 95), 0.1);
+    border: 3rpx dashed rgba(var(--danger-rgb, 255, 90, 95), 0.5);
+    color: $color-danger;
+  }
+
+  // —— ⑪ 趋势 tab：只动容器与文字层，柱状图本体不碰 ——
+  & .chronic-trend-title {
+    @include journal-serif(32rpx);
+  }
+
+  & .chronic-trend-subtitle {
+    font-size: 24rpx;
+    letter-spacing: 1rpx;
+  }
+
+  // 图表卡外壳：暖金虚线纸面。
+  // padding 与原值保持一致；外壳加 3rpx 边不会改变柱子几何——柱子由 .chronic-trend-bars 的
+  // 定高 340rpx 与内联百分比高度决定，画布本身是横向滚动容器（少 6rpx 可见宽度不影响柱高）。
+  & .chronic-trend-chart {
+    @include journal-note(gold, 0.5);
+    padding: 32rpx 24rpx;
+  }
+
+  & .chronic-trend-y-label {
+    font-size: 20rpx;
+  }
+
+  & .chronic-trend-bar-label {
+    font-size: 18rpx;
+  }
+
+  // 图例条顶部虚线（手账的"刻度感"放在这里，而不是给柱槽加线——
+  // 柱槽 .chronic-trend-bar-bg 是 flex:1 的定高容器，加边框会改变内容盒高度、等于动了图表）
+  & .chronic-trend-legend {
+    padding-top: 20rpx;
+    border-top: 3rpx dashed rgba(243, 226, 210, 0.95);
+  }
+
+  & .chronic-trend-legend-item {
+    height: 44rpx;
+    padding: 0 18rpx;
+    border-radius: $radius-round;
+    background: #fffaf3;
+    border: 3rpx dashed $color-border;
+  }
+
+  & .chronic-trend-legend-text {
+    font-size: 20rpx;
+  }
+
+  & .chronic-trend-conditions {
+    @include journal-note(primary, 0.36);
+    padding: 22rpx 26rpx;
+  }
+
+  & .chronic-trend-conditions-title {
+    @include journal-serif(28rpx);
+  }
+
+  & .chronic-trend-condition-tag {
+    padding: 8rpx 24rpx;
+    border-radius: $radius-round;
+    background: #fffaf3;
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.35);
+  }
+
+  & .chronic-trend-condition-text {
+    color: $color-primary-dark;
+  }
+
+  // —— ⑫ 复查提醒：保留"左侧竖条"的索引贴语义，但把实色宽条换成虚线（实色宽条太像系统通知） ——
+  & .chronic-reminders-section-title {
+    @include journal-serif(30rpx);
+  }
+
+  & .chronic-reminder-card {
+    border-left: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+  }
+
+  // 两条变体重声明：上面的 border-left 简写会盖掉原有的 border-left-color
+  & .chronic-reminder-card--urgent {
+    border-left-color: rgba(var(--danger-rgb, 255, 90, 95), 0.75);
+    background: rgba(var(--danger-rgb, 255, 90, 95), 0.05);
+  }
+
+  & .chronic-reminder-card--soon {
+    border-left-color: rgba(var(--warning-rgb, 255, 176, 32), 0.8);
+  }
+
+  & .chronic-reminder-badge {
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
+    border-bottom: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.28);
+  }
+
+  & .chronic-reminder-badge--soon {
+    background: rgba(var(--warning-rgb, 255, 176, 32), 0.12);
+    border-bottom-color: rgba(var(--warning-rgb, 255, 176, 32), 0.35);
+  }
+
+  & .chronic-reminder-card--urgent .chronic-reminder-badge {
+    background: rgba(var(--danger-rgb, 255, 90, 95), 0.08);
+    border-bottom-color: rgba(var(--danger-rgb, 255, 90, 95), 0.3);
+  }
+
+  // 徽标文字：基础色也必须重声明一次（原变体是单类名，与本层同性，靠"顺序在后"取胜）
+  & .chronic-reminder-badge-text {
+    font-size: 24rpx;
+    font-weight: 700;
+    letter-spacing: 1rpx;
+    color: $color-primary-dark;
+  }
+
+  & .chronic-reminder-card--urgent .chronic-reminder-badge-text {
+    color: $color-danger;
+  }
+
+  & .chronic-reminder-badge--soon .chronic-reminder-badge-text {
+    // 原为 $color-warning(#FFB020)，在浅纸上对比度太低，换同色系的"深金"
+    color: $color-gold-deep;
+  }
+
+  & .chronic-reminder-condition {
+    @include journal-serif(30rpx);
+  }
+
+  & .chronic-reminder-date {
+    font-size: 26rpx;
+    line-height: 1.6;
+  }
+
+  & .chronic-reminder-vet {
+    font-size: 24rpx;
+    line-height: 1.6;
+  }
+
+  // —— ⑬ 新增 / 编辑弹层：纸面抽屉 ——
+  & .chronic-modal {
+    background: #fffdf8;
+    border-top: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.35);
+  }
+
+  & .chronic-modal-header {
+    border-bottom: 3rpx dashed rgba(243, 226, 210, 0.95);
+  }
+
+  & .chronic-modal-title {
+    @include journal-serif(34rpx);
+  }
+
+  & .chronic-modal-footer {
+    border-top: 3rpx dashed rgba(243, 226, 210, 0.95);
+  }
+
+  & .chronic-form-label {
+    font-size: 26rpx;
+    letter-spacing: 1rpx;
+  }
+
+  // 表单控件统一成"纸上留白格"：暖白底 + 虚线边。
+  // box-sizing 必须一起写：切换钮是 72×88rpx 定尺寸，不按 border-box 算会与 88rpx 的输入框错位。
+  & .chronic-form-input,
+  & .chronic-form-picker,
+  & .chronic-form-textarea,
+  & .chronic-form-condition-toggle {
+    box-sizing: border-box;
+    background: #fffdf8;
+    border: 3rpx dashed $color-border;
+  }
+
+  & .chronic-severity-option {
+    border: 3rpx dashed $color-border;
+    border-radius: $radius-round;
+    background: #fffdf8;
+    font-size: 26rpx;
+  }
+
+  // 选中态：tsx 内联了语义底色，这里只把文字钉成白色。
+  // 原规则 .chronic-severity-active 带 !important（深色主题下 --text-inverse 是深蓝），
+  // 所以这里也必须带 !important 且特异性更高才能压过去。
+  & .chronic-severity-active {
+    color: #ffffff !important;
+  }
+
+  & .chronic-condition-picker {
+    background: #fffdf8;
+    border: 3rpx dashed $color-border;
+  }
+
+  & .chronic-condition-option {
+    border-radius: $radius-round;
+    background: #fffaf3;
+    border: 3rpx dashed $color-border;
+  }
+
+  // 变体重声明：上面的基础规则（双类名）会盖掉原来的单类名选中色
+  & .chronic-condition-option--active {
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.55);
+    color: $color-primary-dark;
+  }
+
+  & .chronic-modal-btn {
+    border-radius: $radius-round;
+    font-size: 30rpx;
+    font-weight: 700;
+  }
+
+  & .chronic-modal-btn-cancel {
+    background: #fffdf8;
+    border: 3rpx dashed $color-border;
+  }
+
+  & .chronic-modal-btn-confirm {
+    color: #ffffff;
+  }
+}
+
+// —— ⑭「请先添加宠物」整屏空态 ——
+// 【为什么写在 .chronic-page 之外】这个分支的根节点是 .chronic-empty（不是 .chronic-page），
+// 把选择器嵌进 .chronic-page 下会变成永不匹配的死规则，所以单独成块。
+// display: inline-block 是必要的：<Text> 默认内联，直接加内边距/边框不会撑开行盒，会与相邻内容叠字。
+.chronic-empty-text {
+  @include journal-paper-tokens;
+  display: inline-block;
+  padding: 18rpx 32rpx;
+  border-radius: 28rpx;
+  background: #fffdf8;
+  border: 3rpx dashed $color-border;
+  box-shadow: $shadow-xs;
+  font-size: 28rpx;
+  color: $color-text-secondary;
 }

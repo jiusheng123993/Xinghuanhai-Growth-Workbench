@@ -1,9 +1,12 @@
 @import '../../styles/_theme';
 @import '../../styles/_animations';
+/* 手账皮肤公共 mixin（方向 C）——本板块唯一事实源，勿在页面里重复造轮子 */
+@import '../../styles/_journal';
 
 .pet-food-query {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
   padding: 32rpx 24rpx;
   padding-bottom: 200rpx;
   position: relative;
@@ -64,14 +67,14 @@
   color: $color-primary-light;
   padding: 12rpx 28rpx;
   border-radius: 40rpx;
-  background: rgba($color-primary, 0.08);
-  border: 1px solid rgba($color-primary, 0.15);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
+  border: 1px solid rgba(var(--primary-rgb, 255, 107, 61), 0.15);
   transition: all 0.3s ease;
   @include press-feedback;
 }
 
 .pet-food-query__empty-example-chip:active {
-  background: rgba($color-primary, 0.2);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.2);
   transform: scale(0.95);
 }
 
@@ -113,7 +116,7 @@
 
 .pet-food-query__search-input-wrapper:focus-within {
   border-color: $color-primary-light;
-  box-shadow: 0 0 0 2rpx rgba($color-primary-light, 0.15);
+  box-shadow: 0 0 0 2rpx rgba(var(--primary-light-rgb, 255, 160, 130), 0.15);
 }
 
 .pet-food-query__search-icon {
@@ -182,18 +185,18 @@
   text-align: center;
 
   &--safe {
-    background: rgba($color-success, 0.12);
-    border: 1rpx solid rgba($color-success, 0.26);
+    background: rgba(var(--success-rgb, 47, 201, 142), 0.12);
+    border: 1rpx solid rgba(var(--success-rgb, 47, 201, 142), 0.26);
   }
 
   &--warning {
-    background: rgba($color-warning, 0.12);
-    border: 1rpx solid rgba($color-warning, 0.26);
+    background: rgba(var(--warning-rgb, 255, 176, 32), 0.12);
+    border: 1rpx solid rgba(var(--warning-rgb, 255, 176, 32), 0.26);
   }
 
   &--toxic {
-    background: rgba($color-danger, 0.12);
-    border: 1rpx solid rgba($color-danger, 0.26);
+    background: rgba(var(--danger-rgb, 255, 90, 95), 0.12);
+    border: 1rpx solid rgba(var(--danger-rgb, 255, 90, 95), 0.26);
   }
 }
 
@@ -315,7 +318,7 @@
 }
 
 .pet-food-query__category-chip:active {
-  background: rgba($color-primary, 0.2);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.2);
   transform: scale(0.95);
 }
 
@@ -398,7 +401,10 @@
 }
 
 .pet-food-query__result-section-title {
-  display: block;
+  /* 图标 + 文字水平排列（原来 emoji 内联在标题文字里） */
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
   color: $color-text-primary;
@@ -422,7 +428,7 @@
   font-size: $font-size-xs;
   padding: 8rpx 20rpx;
   border-radius: 20rpx;
-  background: rgba($color-primary, 0.08);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
   color: $color-text-secondary;
   animation: fadeIn 0.3s ease-out;
 }
@@ -643,4 +649,326 @@
   font-size: 24rpx;
   color: $color-text-secondary;
   line-height: 1.5;
+}
+
+// ============================================
+// 方向 C「温暖手账」皮肤层（追加覆盖）
+// ============================================
+// 【为什么用追加而不是整体重写】本页是"食物查询"，页面上几乎全部关键状态都依赖后端数据与交互：
+//   · 结果卡 + 四个安全等级变体（safe / caution / dangerous / toxic）
+//   · 危险成分、中毒剂量、中毒症状、品种特殊禁忌、急救措施（接口字段有值才渲染）
+//   · 搜索建议下拉（真输入才出现）、查询历史与配额条（要登录态 + 后端）
+//   · 分享卡、付费墙、有毒食物弹窗、焦虑干预、危机转介、NPS（均为子组件，本轮不碰）
+//   · 空态两种（未添加宠物 / 未查询）
+// 而本页在 H5 预览里拿不到后端数据、一直转圈，上述状态**一个都看不到**——整体重写等于闭眼删样式，
+// 因此本轮只做"同特异性 + 顺序在后"的追加覆盖；等页面做完整重写时再把这些规则并回上面各段。
+//
+// 【主题安全】纸面恒为浅底，而深色主题（.theme-starry）会把 --text-* / --bg-* / --glass-bg
+// 转成浅色，所以每个"浅色面"都必须 include journal-paper-tokens，否则就是白字压白纸。
+//
+// 【本页最大的坑】搜索栏原本是"彩色渐变胶囊 + 透明按钮上的白字"：把渐变底换成浅色纸面后，
+// 搜索按钮的白字就会消失在纸上 → 本次把按钮同步改成实心主色胶囊 + 白字，保住对比度。
+// （覆盖浅色底时最容易漏的就是这一类"原底色托着的文字色"，改动前务必回头确认。）
+.pet-food-query {
+  // ① 浅色面统一钉"卡内 token"（深色主题下也不会变成白字压白纸）
+  &__search-glow,
+  &__suggestions,
+  &__legend-item,
+  &__quota,
+  &__result,
+  &__result-firstaid,
+  &__history,
+  &__history-item,
+  &__empty,
+  &__disclaimer {
+    @include journal-paper-tokens;
+  }
+
+  // ② 空态：一张虚线便签（本页空态是"首屏即可见"的模块，值得做成手账贴纸）
+  &__empty {
+    @include journal-note(primary, 0.34);
+    margin-top: 24rpx;
+    padding: 52rpx 36rpx 44rpx;
+  }
+
+  &__empty-text {
+    color: $color-text-secondary;
+  }
+
+  &__empty-examples-title {
+    letter-spacing: 2rpx;
+    color: $color-text-tertiary;
+  }
+
+  // 示例词做成小贴纸胶囊；原样式是"淡底 + 1px 实线"，这里换成虚线（手账语言），
+  // 尺寸仍靠 padding 撑（容器是 flex-wrap，子项被块化，padding 可靠）
+  &__empty-example-chip {
+    padding: 12rpx 26rpx;
+    border-radius: $radius-round;
+    background: #fffdf8;
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.45);
+    color: $color-primary-dark;
+    font-weight: 700;
+  }
+
+  // ③ 搜索区：渐变发光胶囊 → 贴在纸上的虚线搜索条
+  //    padding 8rpx 与内部输入框/按钮的 80rpx 高相加 = 96rpx，与原 min-height 一致（高度不变形）
+  &__search-glow {
+    padding: 8rpx 8rpx 8rpx 20rpx;
+    border-radius: $radius-round;
+    background: #fffdf8;
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.42);
+    box-shadow: $shadow-xs;
+  }
+
+  // 输入框在纸面里不再需要"白色胶囊壳"，去掉壳与焦点环（焦点提示交给外层虚线槽）
+  &__search-input-wrapper {
+    background: transparent;
+    border: none;
+  }
+
+  &__search-input-wrapper:focus-within {
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  &__search-icon {
+    padding-left: 12rpx;
+  }
+
+  // 按钮改实心主色胶囊：底变了，白字才不会丢（见开头"本页最大的坑"）
+  &__search-btn {
+    background: linear-gradient(135deg, #ff8a4d 0%, $color-primary 55%, $color-primary-dark 100%);
+    box-shadow: 0 10rpx 24rpx -14rpx rgba(var(--primary-rgb, 255, 107, 61), 0.85);
+    font-weight: 700;
+    letter-spacing: 2rpx;
+  }
+
+  // 原 --disabled 只写了 opacity / box-shadow，会被上面新加的 box-shadow 盖掉 → 这里补回来
+  &__search-btn--disabled {
+    opacity: 0.45;
+    box-shadow: none;
+  }
+
+  // ④ 搜索建议下拉：浮层也是浅色面，必须显式给纸底（深色主题下 --bg-card 会变深）
+  &__suggestions {
+    background: #fffdf8;
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.38);
+    border-radius: 28rpx;
+    padding: 10rpx 0;
+    box-shadow: 0 18rpx 40rpx -20rpx rgba(61, 33, 18, 0.45);
+  }
+
+  &__suggestion-item {
+    padding: 18rpx 26rpx;
+    gap: 14rpx;
+  }
+
+  // ⑤ 状态说明条（安全 / 注意 / 有毒）：形状统一成"虚线贴纸"，**语义色一律不动**
+  //    —— 只调底色浓度与描边形状，绿/黄/红的语义映射保持与原来完全一致
+  &__legend {
+    gap: 14rpx;
+  }
+
+  &__legend-item {
+    padding: 22rpx 10rpx 20rpx;
+    border-radius: 28rpx;
+
+    &--safe {
+      background: rgba(var(--success-rgb, 47, 201, 142), 0.1);
+      border: 3rpx dashed rgba(var(--success-rgb, 47, 201, 142), 0.42);
+    }
+
+    &--warning {
+      background: rgba(var(--warning-rgb, 255, 176, 32), 0.1);
+      border: 3rpx dashed rgba(var(--warning-rgb, 255, 176, 32), 0.45);
+    }
+
+    &--toxic {
+      background: rgba(var(--danger-rgb, 255, 90, 95), 0.1);
+      border: 3rpx dashed rgba(var(--danger-rgb, 255, 90, 95), 0.42);
+    }
+  }
+
+  // 色点加白环 → 像贴纸圆点；色值仍由原有 --safe/--warning/--toxic 规则提供（语义色未改）
+  &__legend-dot {
+    width: 52rpx;
+    height: 52rpx;
+    box-shadow:
+      0 0 0 6rpx rgba(255, 255, 255, 0.85),
+      0 6rpx 14rpx -8rpx rgba(61, 33, 18, 0.5);
+  }
+
+  &__legend-label {
+    letter-spacing: 2rpx;
+  }
+
+  &__legend-desc {
+    line-height: 1.2;
+  }
+
+  // ⑥ 配额条：一张金色虚线小票（胶囊形，避免和结果卡抢视觉）
+  &__quota {
+    @include journal-note(gold, 0.36);
+    margin-bottom: 14rpx;
+    padding: 14rpx 24rpx;
+    letter-spacing: 1rpx;
+    color: $color-text-tertiary;
+    border-radius: $radius-round;
+  }
+
+  // 上面新写了 color，会把原 --exhausted 的红字盖掉 → 必须补回来（额度用尽是警示信息）
+  &__quota--exhausted {
+    color: $color-danger;
+    font-weight: $font-weight-semibold;
+  }
+
+  // ⑦ 结果卡：整张虚线便签（手账本里"贴上去的一页"）
+  &__result {
+    @include journal-note(primary, 0.42);
+    padding: 28rpx 28rpx 24rpx;
+    margin-bottom: 22rpx;
+  }
+
+  // 左侧色条改成"书签条"：色值仍由原有 --safe/--caution/--dangerous/--toxic 提供，这里只改几何。
+  // height 必须显式写 auto —— 原规则是 height:100%，top/bottom/height 同时存在时 height 优先、bottom 会被忽略
+  &__result::before {
+    top: 16rpx;
+    bottom: 16rpx;
+    height: auto;
+    width: 10rpx;
+    border-radius: 0 6rpx 6rpx 0;
+  }
+
+  &__result-header {
+    margin-bottom: 18rpx;
+    padding-left: 10rpx;
+  }
+
+  // 食物名用衬线（比原 36rpx 略放大，作为卡片主标题）
+  &__result-name {
+    @include journal-serif(38rpx);
+  }
+
+  // 等级徽章：底色仍是原有语义色（不改），只加白描边 + 胶囊 + 字距，像一枚贴在卡上的标签
+  &__result-badge {
+    padding: 8rpx 22rpx;
+    border-radius: $radius-round;
+    border: 2rpx solid rgba(255, 255, 255, 0.72);
+    letter-spacing: 2rpx;
+    box-shadow: 0 8rpx 18rpx -12rpx rgba(61, 33, 18, 0.6);
+  }
+
+  // 小节标题改衬线；不改字号以外的盒模型（避免影响原有间距）
+  &__result-section-title {
+    @include journal-serif(26rpx);
+    letter-spacing: 1rpx;
+  }
+
+  &__result-section-text {
+    line-height: 1.75;
+  }
+
+  // 标签做小贴纸（原为无边框淡底）→ 虚线 3rpx
+  &__result-tag {
+    padding: 8rpx 20rpx;
+    border-radius: $radius-round;
+    background: #fffaf3;
+    border: 3rpx dashed rgba(243, 226, 210, 0.95);
+  }
+
+  // 注意：上面给基类新写了 background / border，会把原有的 --danger 变体盖掉 → 这里按原语义补回
+  &__result-tag--danger {
+    background: rgba(var(--danger-rgb, 255, 90, 95), 0.1);
+    border-color: rgba(var(--danger-rgb, 255, 90, 95), 0.42);
+    color: $color-danger;
+  }
+
+  // ⑧ 急救措施：红系警示便签（语义色不变，只把实线换成虚线、加圆角与淡纸底）
+  &__result-firstaid {
+    margin-top: 22rpx;
+    padding: 22rpx 24rpx;
+    border-radius: 28rpx;
+    background: rgba(var(--danger-rgb, 255, 90, 95), 0.09);
+    border: 3rpx dashed rgba(var(--danger-rgb, 255, 90, 95), 0.5);
+  }
+
+  // ⑨ 分享按钮：从"渐变卡+浅色文字"改成"虚线描边 + 主色淡底 + 主色深字"（纸面上更清晰）
+  //    定高 88rpx + flex 居中，替代原来的 padding 撑高
+  &__result-share-btn {
+    height: 88rpx;
+    padding: 0 24rpx;
+    margin-top: 22rpx;
+    border-radius: $radius-round;
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
+    border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.5);
+    @include flex-center;
+  }
+
+  &__result-share-btn-text {
+    letter-spacing: 2rpx;
+    color: $color-primary-dark;
+  }
+
+  // ⑩ 品种特殊禁忌：金色虚线便签（与"危险成分/中毒"的小节区分开）
+  //    注意 --breed 变体在原文件里写了 background / padding / margin-top，
+  //    上面若给基类 __result-section 写盒模型会把它盖掉；本次刻意不动基类的 padding/margin
+  &__result-section--breed {
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.08);
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+    border-radius: 28rpx;
+    padding: 22rpx 22rpx 16rpx;
+    margin-top: 22rpx;
+  }
+
+  // 单条禁忌：纸面小条 + 左侧主色书签边（左侧 6rpx 实线沿用原设计，只换背景与圆角）
+  &__breed-warning {
+    padding: 18rpx 20rpx;
+    margin-bottom: 14rpx;
+    border-radius: 20rpx;
+    background: #fffdf8;
+    border: 2rpx solid rgba(var(--gold-rgb, 255, 176, 32), 0.34);
+    border-left: 6rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+  }
+
+  // ⑪ 查询历史：标题衬线 + 每条一张轻虚线便签
+  &__history-title {
+    @include journal-serif(32rpx);
+    margin-bottom: 14rpx;
+  }
+
+  &__history-item {
+    @include journal-note(primary, 0.3);
+    border-radius: 24rpx;
+    padding: 20rpx 24rpx;
+  }
+
+  // 历史条右侧等级胶囊：颜色由 tsx 的行内 style 提供（见自述"硬编码色"一节），
+  // 这里只改形状，不碰 color / background，避免与行内样式对打
+  &__history-item-badge {
+    padding: 4rpx 18rpx;
+    border-radius: $radius-round;
+    letter-spacing: 1rpx;
+    font-weight: 700;
+  }
+
+  &__history-item-time {
+    font-variant-numeric: tabular-nums;
+  }
+
+  // ⑫ 免责声明：金色虚线便签（原为写死的 #FFF6DC 浅金底 + 1px 实线，
+  //    深色主题下那块底不会跟着变；这里换成金色通道淡底，顺带修好主题跟随）
+  &__disclaimer {
+    margin-top: 22rpx;
+    padding: 20rpx 24rpx;
+    border-radius: 24rpx;
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+    border: 3rpx dashed rgba(var(--gold-rgb, 255, 176, 32), 0.42);
+  }
+
+  &__disclaimer-text {
+    font-size: 22rpx;
+    line-height: 1.6;
+    color: $color-text-secondary;
+  }
 }
