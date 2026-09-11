@@ -104,7 +104,8 @@ export interface PetAgeFormatOptions {
  * 【为什么必须统一】2026-09-11 排查发现全站有 **11 份各写各的实现**，
  * 同一只宠物在不同页面会显示**不同的年龄**。实测（生日 2025-09-20、当天 2026-09-11）：
  *   - 6 处「月相减、但不减"日"」（或只在某个分支减）：`components/PetCard`（跨年分支没减、
- *     不足岁分支减了）、`pages/index`、`pages/family/utils`、`pagesPet/diary`、
+ *     不足岁分支减了）、`pages/index`、`pages/family/utils`、「宠物日记」页（该页 2026-09-12
+ *     已并入 `pages/timeline`，此处保留历史记录）、
  *     `pagesPet/family/lineage`、`pagesPet/health-report` → 得「1岁」（多算一个月）
  *   - 3 处减了"日"：`pages/creative`、`pagesPet/avatar-customize` → 得「11个月」（正确）
  *   - 2 处只精确到"岁"、整月信息直接丢：`services/reportService`、`pages/timeline`

@@ -23,12 +23,33 @@ import TimelinePage from '../index'
 import { usePetStore } from '../../../stores/petStore'
 import type { PetMoment } from '../../../types/familyTypes'
 
-const { mockGetMoments, mockGetCheckins, mockAddMoment, showCallbacks, mockPet, mockPet2 } = vi.hoisted(() => ({
+const {
+  mockGetMoments,
+  mockGetCheckins,
+  mockAddMoment,
+  showCallbacks,
+  shareAppCallbacks,
+  mockGenerateDiary,
+  mockTrackEvent,
+  mockPet,
+  mockPet2,
+} = vi.hoisted(() => ({
   mockGetMoments: vi.fn(),
   mockGetCheckins: vi.fn(),
   mockAddMoment: vi.fn(),
   // 收集页面注册的 onShow 回调，测试里手动触发模拟「切走再切回」
   showCallbacks: [] as Array<() => void>,
+  /**
+   * 收集页面注册的 useShareAppMessage 回调（2026-09-12 IA 第 2c 批新增）
+   *
+   * 为什么要测它：本页承接了被删的「宠物日记」页的分享出口，
+   * 分享 path 必须指回本页 —— 否则用户点开分享卡片就是死链。
+   */
+  shareAppCallbacks: [] as Array<() => { title: string; path?: string }>,
+  /** 日记正文生成器（默认实现＝真 diaryService，见下方 mock 工厂） */
+  mockGenerateDiary: vi.fn(),
+  /** 埋点：日记卡分享沿用原 diary 页的 share_diary 事件 */
+  mockTrackEvent: vi.fn(),
   mockPet: {
     id: 'pet_1',
     name: '可乐',
@@ -79,6 +100,8 @@ vi.mock('@tarojs/taro', () => ({
     // 实际是页面 .catch 把异常吞了（2026-09-11 审查 P3 测试保真度）。
     setStorageSync: vi.fn(),
     removeStorageSync: vi.fn(),
+    // 日记卡的「分享这篇日记」会调它（Taro.showShareMenu）
+    showShareMenu: vi.fn(),
   },
   // 注册即收集：页面注册的 onShow 回调由测试显式触发。
   // 只保留最后一次注册的回调——Taro 真实的 useDidShow 把回调存进 ref，每次渲染只更新不叠加，
@@ -87,6 +110,12 @@ vi.mock('@tarojs/taro', () => ({
     showCallbacks.length = 0
     showCallbacks.push(cb)
   },
+  // 2026-09-12 IA 第 2c 批：本页开始注册分享（承接被删的 diary 页）→ mock 必须收下回调
+  useShareAppMessage: (cb: () => { title: string; path?: string }) => {
+    shareAppCallbacks.length = 0
+    shareAppCallbacks.push(cb)
+  },
+  useShareTimeline: () => {},
   showToast: vi.fn(),
   switchTab: vi.fn(),
 }))
@@ -112,6 +141,30 @@ vi.mock('../../../services/timelineService', () => ({
 vi.mock('../../../services/api', () => ({
   resolveAvatarUrl: (u: string) => u || '',
 }))
+
+/** 埋点：本页只用到 trackEvent（日记卡分享），不去碰 analyticsService 的本地队列 */
+vi.mock('../../../hooks/useAnalytics', () => ({
+  useAnalytics: () => ({ trackPageView: vi.fn(), trackEvent: mockTrackEvent }),
+  usePageView: () => {},
+}))
+
+/**
+ * 日记服务：默认实现**委托真实现**（importOriginal）
+ *
+ * 这样既能断言「喂进去的正是 checkinService 那批 entries」（数据源统一的关键证据），
+ * 又不会把 diaryEngine 换掉 —— 日记正文仍是它真算出来的，
+ * 顺带证明 2026-09-12 并入后 diaryEngine 没有被孤儿化。
+ */
+vi.mock('../../../services/diaryService', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../services/diaryService')>()
+  mockGenerateDiary.mockImplementation((...args: unknown[]) =>
+    (actual.generateDiaryFromEntries as (...a: unknown[]) => unknown)(...args),
+  )
+  return {
+    ...actual,
+    generateDiaryFromEntries: (...args: unknown[]) => mockGenerateDiary(...args),
+  }
+})
 
 /** 构造一条 pet_moments 回忆（字段对齐后端返回） */
 function makeMoment(description: string, pet: { id: string; name: string } = mockPet): PetMoment {
@@ -286,7 +339,9 @@ describe('时光页 - 所有宠物共用一本回忆录', () => {
 
       // 每只各产出 2 条：生日 + 这条打卡动态（两只宠物的 createdAt 与生日同一天，
       // 所以 generateTimelineFromData 不会产出「加入家庭的第1天」）→ 合计 4 条，精确断言
-      await waitFor(() => expect(container.querySelectorAll('.timeline-card').length).toBe(4))
+      // 注意选择器要限定在「时光足迹」那段（.timeline-list）里：2026-09-12 并入的日记分区
+      // 复用了同一个 .timeline-card 类名，不限定的话这条断言会把日记卡也算进来
+      await waitFor(() => expect(container.querySelectorAll('.timeline-list .timeline-card').length).toBe(4))
 
       const titles = Array.from(container.querySelectorAll('.timeline-card-title')).map((el) => el.textContent || '')
       expect(titles.filter((t) => t.includes('可乐')).length).toBeGreaterThan(0)
@@ -406,7 +461,9 @@ describe('时光页 - 所有宠物共用一本回忆录', () => {
     // 回忆拿不到，但两只宠物的里程碑照样合并展示（改前会整体降级成"只有当前宠物"）。
     // 条数说明：两只宠物的建档日都与生日同一天 → generateTimelineFromData 各只产出 1 条（生日），
     // 所以这里断言"两只宠物都在列表里"，而不是断言条数（条数由生成规则决定，不是本用例要锁的东西）。
-    await waitFor(() => expect(container.querySelectorAll('.timeline-card').length).toBeGreaterThanOrEqual(2))
+    await waitFor(() =>
+      expect(container.querySelectorAll('.timeline-list .timeline-card').length).toBeGreaterThanOrEqual(2),
+    )
     const tagTexts = Array.from(container.querySelectorAll('.timeline-pet-tag-text')).map((el) => el.textContent || '')
     expect(tagTexts.some((t) => t.includes('可乐'))).toBe(true)
     expect(tagTexts.some((t) => t.includes('布丁'))).toBe(true)
@@ -450,3 +507,158 @@ describe('时光页 - 所有宠物共用一本回忆录', () => {
 
 // 【已删除】localDaysSince 辅助函数：它原本用来独立复算"相伴天数"，
 // 而 2026-09-11 用户拍板把「相伴天数」整格撤掉（换成「毛孩子 N 只」纯计数），该辅助函数随之无用。
+
+/**
+ * 宠物日记并入时光线（2026-09-12 IA 第 2c 批）
+ *
+ * 背景：原「宠物日记」页是独立分包页，数据源是 useCheckinStore（单宠 + 视图态 Checkin），
+ * 而本页是 checkinService + timelineService 双源、全宠共用一本。合并时选择「日记跟本页的
+ * 数据源走」，下面这组用例锁的就是这个决定：同一次拉取的同一批 entries → 既出里程碑也出日记。
+ *
+ * 另：原日记页的 4 条用例随页面删除（3 条是「相伴天数口径」，那个统计格 2026-09-11 已被用户
+ * 要求整格撤掉、并入时没有迁过来；1 条是页面各自的加载竞态，并入后日记不再有自己的 loader，
+ * 该场景在本页结构上已不存在，竞态由本文件上半部分的时间线刷新用例覆盖）。
+ */
+describe('时光页 - 宠物日记分区（原 diary 页并入）', () => {
+  /** 构造一条打卡记录（字段对齐 checkinService 返回的 PetHealthEntry） */
+  function makeEntry(id: string, createdAt: string, note?: string) {
+    return {
+      id,
+      petId: mockPet.id,
+      userId: 'user_1',
+      poopLevel: 'normal',
+      appetiteLevel: 'normal',
+      spiritLevel: 'normal',
+      exerciseLevel: 'normal',
+      hasAnomaly: false,
+      anomalyItems: [],
+      riskLevel: 'normal',
+      note,
+      createdAt,
+    }
+  }
+
+  beforeEach(async () => {
+    showCallbacks.length = 0
+    shareAppCallbacks.length = 0
+    vi.clearAllMocks()
+    mockGetMoments.mockResolvedValue([])
+    mockGetCheckins.mockResolvedValue([])
+    usePetStore.setState({ currentPet: mockPet as any, pets: [mockPet] as any, userId: 'user_1' })
+    // 每个用例都从「真 diaryService」起跑：个别用例会临时换成固定数据，不能污染别的用例
+    const actual = await vi.importActual<typeof import('../../../services/diaryService')>(
+      '../../../services/diaryService',
+    )
+    mockGenerateDiary.mockReset()
+    mockGenerateDiary.mockImplementation((...args: unknown[]) =>
+      (actual.generateDiaryFromEntries as (...a: unknown[]) => unknown)(...args),
+    )
+  })
+
+  it('打卡记录会在时光线上生成日记正文（来自 diaryEngine），卡片带心情角标与宠物标签', async () => {
+    mockGetCheckins.mockResolvedValue([makeEntry('c1', '2026-09-10T02:00:00.000Z', '今天去公园了')])
+
+    const { container } = render(createElement(TimelinePage))
+    await waitFor(() => expect(container.querySelectorAll('.timeline-diary .timeline-card').length).toBe(1))
+
+    // 正文非空，且不是打卡备注的复读 → 证明走的是 diaryEngine 的模板文案
+    const text = container.querySelector('.timeline-diary-text')?.textContent || ''
+    expect(text.length).toBeGreaterThan(0)
+    expect(text).not.toBe('今天去公园了')
+    // 心情角标（6 档筛选的取值来源）
+    expect(container.querySelector('.timeline-diary-mood-text')?.textContent || '').toMatch(/开心|平静|疲惫|不舒服|骄傲/)
+    // 宠物归属标签：本页全宠共用一本，卡片必须能看出这日记是谁的
+    expect(container.querySelector('.timeline-diary .timeline-pet-tag-text')?.textContent || '').toContain('可乐')
+    // 原 diary 页的「📝 备注」照旧显示
+    expect(container.querySelector('.timeline-diary-note-text')?.textContent).toBe('今天去公园了')
+    // 区块计数与实际条数一致
+    expect(screen.getByText(/共 1 篇/)).toBeTruthy()
+  })
+
+  it('数据源统一：日记吃的是 checkinService 那批 entries（不再读 useCheckinStore）', async () => {
+    const entries = [makeEntry('c1', '2026-09-10T02:00:00.000Z')]
+    mockGetCheckins.mockResolvedValue(entries)
+
+    render(createElement(TimelinePage))
+    await waitFor(() => expect(mockGetCheckins).toHaveBeenCalledWith(mockPet.id, 'user_1'))
+    await waitFor(() => expect(mockGenerateDiary).toHaveBeenCalledTimes(1))
+
+    // 同一个数组引用 ⇒ 与打卡里程碑同一次请求的结果，同屏不可能出现两套打卡口径
+    expect(mockGenerateDiary.mock.calls[0][0]).toBe(entries)
+    // 第二个参数是该宠物的出生日期（diaryEngine 靠它判断「今天是不是生日」）
+    expect(mockGenerateDiary.mock.calls[0][1]).toBe(mockPet.birthDate)
+  })
+
+  it('多宠共用一本：每只宠物各自的打卡生成各自的日记，靠归属标签区分', async () => {
+    usePetStore.setState({ currentPet: mockPet as any, pets: [mockPet, mockPet2] as any, userId: 'user_1' })
+    const entriesA = [makeEntry('c1', '2026-09-10T02:00:00.000Z')]
+    const entriesB = [{ ...makeEntry('c2', '2026-09-11T02:00:00.000Z'), petId: mockPet2.id }]
+    mockGetCheckins.mockImplementation(async (petId: string) =>
+      petId === mockPet.id ? entriesA : entriesB,
+    )
+
+    const { container } = render(createElement(TimelinePage))
+    await waitFor(() => expect(container.querySelectorAll('.timeline-diary .timeline-card').length).toBe(2))
+
+    const tagTexts = Array.from(container.querySelectorAll('.timeline-diary .timeline-pet-tag-text')).map(
+      (el) => el.textContent || '',
+    )
+    expect(tagTexts.some((t) => t.includes('可乐'))).toBe(true)
+    expect(tagTexts.some((t) => t.includes('布丁'))).toBe(true)
+    expect(mockGenerateDiary).toHaveBeenCalledTimes(2)
+  })
+
+  it('6 档心情筛选：点「开心」只剩开心日记，点「全部」恢复；不影响时光足迹', async () => {
+    // 心情由 diaryEngine 按 seed 决定 → 这里用固定数据，避免测试依赖 hash 细节
+    mockGetCheckins.mockResolvedValue([
+      makeEntry('c1', '2026-09-10T02:00:00.000Z'),
+      makeEntry('c2', '2026-09-11T02:00:00.000Z'),
+    ])
+    mockGenerateDiary.mockImplementation(() => [
+      {
+        date: '2026-09-10',
+        diary: { text: '今天便便很正常，我很舒服~', tone: 'happy', emoji: '💩' },
+        entry: makeEntry('c1', '2026-09-10T02:00:00.000Z'),
+      },
+      {
+        date: '2026-09-11',
+        diary: { text: '今天肚子不太舒服，主人要留意哦...', tone: 'sick', emoji: '🤒' },
+        entry: makeEntry('c2', '2026-09-11T02:00:00.000Z'),
+      },
+    ])
+
+    const { container } = render(createElement(TimelinePage))
+    await waitFor(() => expect(container.querySelectorAll('.timeline-diary .timeline-card').length).toBe(2))
+    expect(screen.getByText(/共 2 篇/)).toBeTruthy()
+
+    // 6 档胶囊都在（全部 + 5 种心情）
+    const chips = Array.from(
+      container.querySelectorAll('.timeline-diary-filter-list .timeline-pet-chip-text'),
+    ).map((el) => el.textContent)
+    expect(chips).toEqual(['全部', '开心', '平静', '疲惫', '不舒服', '骄傲'])
+
+    fireEvent.click(screen.getByText('开心'))
+    await waitFor(() => expect(container.querySelectorAll('.timeline-diary .timeline-card').length).toBe(1))
+    expect(screen.getByText('今天便便很正常，我很舒服~')).toBeTruthy()
+    expect(screen.queryByText('今天肚子不太舒服，主人要留意哦...')).toBeNull()
+    // 关键：筛选只作用在日记分区，上面的时光足迹照旧（时间线卡片还在 .timeline-list 里）
+    expect(container.querySelectorAll('.timeline-list .timeline-card').length).toBeGreaterThan(0)
+
+    fireEvent.click(screen.getByText('全部'))
+    await waitFor(() => expect(container.querySelectorAll('.timeline-diary .timeline-card').length).toBe(2))
+  })
+
+  it('没有打卡时只提示不报错；分享 path 已从被删的 diary 路由改指本页', async () => {
+    mockGetCheckins.mockResolvedValue([])
+
+    render(createElement(TimelinePage))
+    await waitFor(() => expect(screen.getByText('还没有日记哦~')).toBeTruthy())
+    expect(screen.getByText('每天打卡后会自动生成一篇日记')).toBeTruthy()
+
+    // 分享出口：原日记页硬编码的分享 path 已随页面一起删除，
+    // 必须改指本页，否则分享卡片全是死链（微信分享 path 无法重定向）
+    expect(shareAppCallbacks.length).toBe(1)
+    const shareConfig = shareAppCallbacks[0]()
+    expect(shareConfig.path).toBe('/pages/timeline/index')
+  })
+})

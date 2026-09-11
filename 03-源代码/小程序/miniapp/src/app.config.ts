@@ -63,7 +63,9 @@ export default defineAppConfig({
         'breed/index',
         'breed-detail/index',
         'checkin/index',
-        'diary/index',
+        // 宠物日记页（diary）已于 2026-09-12（IA 第 2c 批）并入 pages/timeline/index：
+        // 日记视图（diaryEngine 拟人日记 + 6 档心情筛选）搬进时光线，此路由不再注册。
+        // diaryService / diaryEngine 是数据与引擎层，仍在被 pages/timeline 与打卡页使用，不能删。
         'food-query/index',
         'symptom-check/index',
         'trends/index',

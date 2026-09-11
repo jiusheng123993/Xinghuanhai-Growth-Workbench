@@ -425,6 +425,144 @@
   height: 60rpx;
 }
 
+// ===== 宠物日记（2026-09-12 IA 第 2c 批：原「宠物日记」页并入本页）=====
+// 这里只写「本页原有词汇里没有」的部分：区块标题行、心情筛选行、心情角标、正文/备注/分享、空态。
+// 卡片、时间轴、圆点、宠物标签一律复用上面的 .timeline-item / .timeline-dot / .timeline-card /
+// .timeline-pet-tag —— 另造一套会让同一屏的两个分区看起来像两个页面。
+.timeline-diary {
+  padding: 0 32rpx;
+  margin-top: 16rpx;
+}
+
+.timeline-diary-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.timeline-diary-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: $color-text-primary;
+}
+
+.timeline-diary-count {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+}
+
+// 心情筛选行：照「新增回忆弹窗」里那套横滑胶囊的写法（父级 nowrap + 子级 inline-flex）。
+// 坑点：不能给胶囊直接加 display: flex —— 那会让它变成整行宽、竖着堆起来（本项目已踩过）。
+.timeline-diary-filter-scroll {
+  width: 100%;
+  white-space: nowrap;
+  margin-bottom: 24rpx;
+}
+
+.timeline-diary-filter-list {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12rpx;
+}
+
+// 心情角标：底色由 tsx 按心情内联给（心情是语义色，不跟主题走），这里只管形状与文字
+.timeline-diary-mood {
+  padding: 4rpx 14rpx;
+  border-radius: 20rpx;
+  flex-shrink: 0;
+}
+
+.timeline-diary-mood-text {
+  font-size: 20rpx;
+  font-weight: $font-weight-semibold;
+  color: #FFFFFF;
+}
+
+// 日记正文：卡片主内容，比回忆描述（.timeline-card-desc，24rpx）略大一档
+.timeline-diary-text {
+  display: block;
+  font-size: 26rpx;
+  line-height: 1.8;
+  color: $color-text-primary;
+}
+
+// 备注块：复用打卡记录自带的 note（原 diary 页也是把它显示在正文下面）
+.timeline-diary-note {
+  margin-top: 16rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 16rpx;
+  background: $color-bg-secondary;
+}
+
+.timeline-diary-note-label {
+  display: block;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-bottom: 4rpx;
+}
+
+.timeline-diary-note-text {
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: $color-text-secondary;
+}
+
+.timeline-diary-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16rpx;
+}
+
+.timeline-diary-share {
+  padding: 8rpx 24rpx;
+  border-radius: $radius-round;
+  background: $color-primary-bg;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.timeline-diary-share-text {
+  font-size: 20rpx;
+  font-weight: $font-weight-medium;
+  color: $color-primary;
+}
+
+// 日记卡：系统生成的内容用虚线边，与用户手记的实线回忆卡区分（沿用全站手账便签语言）
+.timeline-card--diary {
+  border-style: dashed;
+}
+
+// 日记圆点：底色由心情内联给，这里只补一圈柔光，让它在时间轴上站得住
+.timeline-dot--diary {
+  box-shadow: 0 0 14rpx rgba(var(--primary-rgb, 255, 107, 61), 0.32);
+}
+
+// 日记空态：轻量提示（本页上方可能已经有一个大插画空态，不再上第二个插画）
+.timeline-diary-empty {
+  padding: 56rpx 40rpx;
+  border-radius: $radius-md;
+  background: $color-bg-secondary;
+  border: 1rpx dashed $color-border;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.timeline-diary-empty-text {
+  font-size: 26rpx;
+  color: $color-text-secondary;
+}
+
+.timeline-diary-empty-hint {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
 // ===== 年度回忆模态 =====
 .timeline-review-overlay {
   position: fixed;
@@ -840,11 +978,13 @@
 // ===== 星空银河（唯一的深色主题）页面级兜底 =====
 //
 // 【问题】`.theme-starry` 把 `--text-*` 整体转成白色，而 `--bg-card` 仍是 `#FFFFFF`
-//   —— 于是"白卡 + 主题文字色"的组合变成白底白字。本页受影响的浅色纸面有四处：
+//   —— 于是"白卡 + 主题文字色"的组合变成白底白字。本页受影响的浅色纸面有五处：
 //   · 速览卡 `.timeline-overview`（白底 + 主文字色的三个数字）
 //   · 时间线卡片 `.timeline-card`（白底，含新增的宠物标签 `.timeline-pet-tag-text`）
 //   · 两个弹窗 `.timeline-add-memory-modal` / `.timeline-detail-modal`（白纸，含新增的宠物胶囊）
 //   · 固定页头里的 `<PageHero>`（自带硬编码浅奶油底，标题却吃主题文字色）
+//   · 心情筛选胶囊 `.timeline-diary .timeline-pet-chip` 与日记空态 `.timeline-diary-empty`
+//     （2026-09-12 并入日记分区后新增：胶囊是白底 + 次级文字色，空态是浅纸底 + 次级文字色）
 //   实测（2026-09-11 审查 P1-2）：星空主题下速览数字与宠物标签直接看不见。
 // 【这是既有全站缺陷】不是本页引入：全局修复要动 100+ 个页面、需整体回归，属另案。
 // 【做法】沿用宠物档案页/打卡页/我的页已用的**页面级兜底**：在"浅底纸面"作用域内把
@@ -854,6 +994,11 @@
   .timeline-card,
   .timeline-add-memory-modal,
   .timeline-detail-modal,
+  // 【2026-09-12 并入日记分区后新增】心情筛选胶囊与日记空态坐在页面背景上、
+  //   不在弹窗纸面作用域里：胶囊底色是 --bg-card（星空下仍是 #FFFFFF），文字却吃
+  //   --text-secondary（星空下是白色 74%）→ 不钉回来就是白底白字。
+  .timeline-diary .timeline-pet-chip,
+  .timeline-diary-empty,
   .timeline-fixed-top .page-hero {
     --text-primary: #40281C;
     --text-secondary: #8B6E58;

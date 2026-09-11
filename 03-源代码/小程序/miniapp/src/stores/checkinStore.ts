@@ -57,11 +57,14 @@ let fetchSeq = 0
  * `{...raw, ...}`，会把服务端回包的原始字段一并保留 —— 两者字段差集有 8 个：
  *   poopLevel / appetiteLevel / spiritLevel / exerciseLevel /
  *   hasAnomaly / anomalyItems / aiFeedback / riskLevel
- * 这不只是"看起来不同"：日记页把 store 里的 checkins 原样当 PetHealthEntry 喂给
- * diaryEngine（pagesPet/diary/index.tsx 的 `as any`），后者读 `entry.hasAnomaly` /
- * `entry.anomalyItems` 决定走不走异常文案。日记页自己那次 fetchCheckins 失败时
+ * 这不只是"看起来不同"：原日记页把 store 里的 checkins 原样当 PetHealthEntry 喂给
+ * diaryEngine（当年的日记页只能 `as any`），后者读 `entry.hasAnomaly` /
+ * `entry.anomalyItems` 决定走不走异常文案；该页自己那次 fetchCheckins 失败时
  * （离线 / 401，store 的 catch 只关 loading、不动 checkins），用户刚提交的异常打卡
  * 会被渲染成"一切正常"的日记。
+ * 【2026-09-12 IA 第 2c 批】日记视图已并入 pages/timeline，且改吃 checkinService 的
+ * PetHealthEntry（不再经过本 store），那条坑对日记已经消失；本 store 仍被首页/个人资料等
+ * 页面消费，下面这层修复照旧必要。
  *
  * 复用 normalizeCheckin 之后，"刚提交写进 store 的记录"与"刷新后读回的记录"由
  * **同一段代码**产出，字段集不可能再分叉；将来服务端回包加字段也自动两条路径同步。

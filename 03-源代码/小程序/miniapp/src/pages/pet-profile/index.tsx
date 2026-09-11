@@ -678,7 +678,9 @@ export default function PetProfile() {
           <View className='pf-grid-icon pf-grid-icon--gold'><Icon name='bowl-food' size={20} tone='gold-deep' /></View>
           <Text className='pf-grid-text'>喂养建议</Text>
         </View>
-        <View className='pf-grid-item' onClick={() => navigateTo('/pagesPet/diary/index')}>
+        {/* 成长日记：原独立分包页「宠物日记」，2026-09-12（IA 第 2c 批）并入时光线页。
+            注意必须用 switchTab —— 时光线是 tabBar 页面，navigateTo 打开 tabBar 页在微信端会直接失败。 */}
+        <View className='pf-grid-item' onClick={() => Taro.switchTab({ url: '/pages/timeline/index' })}>
           <View className='pf-grid-icon pf-grid-icon--sage'><Icon name='note-pencil' size={20} tone='sage' /></View>
           <Text className='pf-grid-text'>成长日记</Text>
         </View>

@@ -7,14 +7,23 @@
  * 本页原有的「回忆精选」三张卡（年度回忆/日常回忆录/纪念Vlog）已整体移除——
  * 后两个与回忆录馆的轻纪念/标准档完全重复，年度回忆则不重复、已迁入回忆录馆。
  * 本页职责收窄为：看时光线 + 记一条回忆。
+ *
+ * 2026-09-12（IA 第 2c 批）：原独立分包页「宠物日记」（成长日记）已并入本页。
+ * 搬入的是 diary 页**独有**的视图 —— diaryEngine 生成的拟人化日记正文 + 6 档心情筛选；
+ * 日记正文与页面上的打卡里程碑**共用同一次 checkinService 拉取结果**（见 loadTimelineData ④），
+ * 保证同一屏里同一天的数据不会两套口径。
  */
 import { View, Text, ScrollView, Image, Textarea, Picker } from '@tarojs/components'
-import Taro, { useDidShow } from '@tarojs/taro'
+import Taro, { useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useThemeClass } from '../../hooks/useThemeClass'
+import { useAnalytics } from '../../hooks/useAnalytics'
 import { usePetStore } from '../../stores/petStore'
 import { getCheckins } from '../../services/checkinService'
 import { timelineService } from '../../services/timelineService'
+// 2026-09-12 IA 第 2c 批：diary 页并入本页后，日记正文改由这里生成
+// （diaryService → engines/petAvatar/diaryEngine，正是原页面的核心资产）
+import { generateDiaryFromEntries, type DiaryRecord } from '../../services/diaryService'
 import { resolveAvatarUrl } from '../../services/api'
 import { CONFIG } from '../../config'
 import { storage } from '../../utils/storage'
@@ -24,6 +33,7 @@ import { detectPetsInText, toPetTags } from '../../utils/petMatching'
 import type { PetProfile } from '../../services/petService'
 import type { PetHealthEntry } from '../../memory-body/types/memoryBodyTypes'
 import type { PetMoment } from '../../types/familyTypes'
+import type { DiaryTone } from '../../types/avatarTypes'
 import './index.scss'
 import { Icon, EmptyState, PageHero } from '../../components'
 import PageBackground from '../../components/PageBackground'
@@ -65,6 +75,57 @@ interface FlashbackMemory {
   description: string
   yearsAgo: number
 }
+
+/**
+ * 时光线上的「宠物日记」条目（2026-09-12 IA 第 2c 批并入）
+ *
+ * 复用 diaryService 的 DiaryRecord（日期 + 日记正文 + 来源打卡记录），
+ * 额外补上宠物归属三件套 —— 本页是「所有宠物共用一本回忆录」，
+ * 卡片上必须能看出这篇日记是谁的（与时间线卡片的宠物标签同一套做法）。
+ */
+interface TimelineDiaryRecord extends DiaryRecord {
+  /** 属于哪只宠物（多宠共用一本时靠它区分归属） */
+  petId: string
+  petName: string
+  petEmoji: string
+}
+
+/**
+ * 心情色板（随 2026-09-12 并入的 diary 页原样搬入）
+ *
+ * 这五个色是**心情语义色**（开心/平静/疲惫/不舒服/骄傲），不是主题色：
+ * 换主题时心情的颜色本身不该跟着变，所以刻意保留 hex、没有改成 var(--*)。
+ */
+const TONE_COLORS: Record<string, string> = {
+  happy: '#52C41A',
+  neutral: '#8C8C8C',
+  tired: '#FAAD14',
+  sick: '#FF4D4F',
+  proud: '#FF8C42',
+}
+
+/** 心情中文名（筛选胶囊与卡片角标共用，避免同一套文案两处各写各的） */
+const TONE_LABELS: Record<string, string> = {
+  happy: '开心',
+  neutral: '平静',
+  tired: '疲惫',
+  sick: '不舒服',
+  proud: '骄傲',
+}
+
+/**
+ * 6 档心情筛选（全部 + 5 种心情）—— diary 页原有能力，原样保留
+ *
+ * key 用 DiaryTone 收口：diaryEngine 将来新增心情时，这里漏加会被 tsc 直接报出来。
+ */
+const TONE_FILTERS: { key: DiaryTone | 'all'; label: string }[] = [
+  { key: 'all', label: '全部' },
+  { key: 'happy', label: '开心' },
+  { key: 'neutral', label: '平静' },
+  { key: 'tired', label: '疲惫' },
+  { key: 'sick', label: '不舒服' },
+  { key: 'proud', label: '骄傲' },
+]
 
 /**
  * 本地日期字符串（YYYY-MM-DD）
@@ -344,9 +405,27 @@ export default function TimelinePage() {
   const [dynamicEvents, setDynamicEvents] = useState<TimelineEvent[]>([])
   // 真实回忆事件（pet_moments），与打卡生成的动态事件分开维护，便于局部刷新
   const [momentEvents, setMomentEvents] = useState<TimelineEvent[]>([])
+  /**
+   * 宠物日记（2026-09-12 IA 第 2c 批并入）
+   *
+   * 与 dynamicEvents **同源不同粒度**：dynamicEvents 只取每只宠物最近 6 条打卡做记录/里程碑，
+   * 日记则是**每条打卡一篇**（diaryService 1:1 映射）。
+   * 两者由同一次 loadTimelineData 一起写入 —— 这正是把 diary 并进来的意义：
+   * 同一屏里「打卡了几次」和「有几篇日记」不可能再出现两套数字。
+   */
+  const [diaryRecords, setDiaryRecords] = useState<TimelineDiaryRecord[]>([])
+  /**
+   * 心情筛选当前值（6 档：all + 5 种心情）
+   *
+   * 与既有筛选的关系：本页此前**没有任何筛选控件**（时间线是全量倒序展示），
+   * 所以这里不需要做互斥/联动，只作用在日记分区，不会改变时光足迹的显示。
+   */
+  const [toneFilter, setToneFilter] = useState<DiaryTone | 'all'>('all')
   const [flashback, setFlashback] = useState<FlashbackMemory | null>(null)
   const [flashbackAdded, setFlashbackAdded] = useState(false)
   const themeClass = useThemeClass()
+  /** 埋点：日记卡的「分享这篇日记」沿用 diary 页原有的 share_diary 事件，不另造事件名 */
+  const { trackEvent } = useAnalytics()
   const currentPet = usePetStore((s) => s.currentPet)
   const userId = usePetStore((s) => s.userId)
   // 【本页的宠物归属口径（2026-09-11 两轮反复后的最终结论）】
@@ -438,6 +517,8 @@ export default function TimelinePage() {
       hasLoadedRef.current = false
       setMomentEvents([])
       setDynamicEvents([])
+      // 日记同属上一账号的数据，必须一起清（否则换号后日记分区会残留别人的记录）
+      setDiaryRecords([])
       setFlashback(null)
     }
     // 宠物列表以 store 为准；冷启动时 store 可能还没加载，用 currentPet 兜底成"只有一只"
@@ -490,6 +571,34 @@ export default function TimelinePage() {
         )
         setDynamicEvents(merged)
 
+        /**
+         * ④ 宠物日记（2026-09-12 IA 第 2c 批并入）：用**本次刚拉到的那批打卡记录**生成
+         *
+         * 【数据源统一决策：跟本页的 service 走，不用 useCheckinStore】
+         *   ① 同屏不自相矛盾（本页合并的初衷）——日记与上面的打卡里程碑吃的是同一个
+         *      `perPetEvents.entries` 数组、同一次请求，不存在「里程碑 3 条、日记 5 篇」这种两套口径；
+         *      也不会出现「接口刷新了、store 还是旧的」导致的半屏新半屏旧。
+         *   ② 类型正确 —— PetHealthEntry 正是 generateDiaryFromEntries 的入参类型；
+         *      原 diary 页因为 store 里存的是视图态 Checkin，只能 `as any` 硬塞，
+         *      一旦服务端字段变了就会静默退化成「一切正常」的文案（checkinStore.ts 注释里记着这个坑）。
+         *   ③ 归属正确 —— store 只有「当前宠物」那一只（checkinsPetId），而本页已改成
+         *      「所有宠物共用一本回忆录」；用 store 会让日记只剩一只宠物，与页面定位直接冲突。
+         *   ④ 失败语义一致 —— 某只宠物打卡拉取失败时 entries 为空数组，
+         *      于是它既没有打卡里程碑也没有日记，两边同时缺席而不是一边有一边没有。
+         */
+        const diaryList = perPetEvents
+          .flatMap(({ pet, entries }) =>
+            generateDiaryFromEntries(entries, pet.birthDate).map((record) => ({
+              ...record,
+              petId: pet.id,
+              petName: pet.name,
+              petEmoji: pet.species === 'cat' ? '🐱' : pet.species === 'dog' ? '🐕' : '🐾',
+            })),
+          )
+          // 多宠混排后必须整体重排：最近的在最上面，与「时光足迹」同一阅读方向
+          .sort((a, b) => b.date.localeCompare(a.date))
+        setDiaryRecords(diaryList)
+
         // ③ 旧时光提醒：扫全部宠物，取第一只有"往年今天"的（横幅文案里已含宠物名）
         let memory: FlashbackMemory | null = null
         for (const { pet, entries } of perPetEvents) {
@@ -504,6 +613,8 @@ export default function TimelinePage() {
         const pet = currentPetRef.current
         setDynamicEvents(tagPetEvents(generateTimelineFromData(pet, []), pet))
         setMomentEvents([])
+        // 这一支连账号都还没有，没拉过打卡 → 日记同步置空，别让上一轮的日记留在屏幕上
+        setDiaryRecords([])
         setFlashback(findFlashbackMemory(pet, []))
         hasLoadedRef.current = true
       }
@@ -521,6 +632,8 @@ export default function TimelinePage() {
         const pet = currentPetRef.current
         setDynamicEvents(tagPetEvents(generateTimelineFromData(pet, []), pet))
         setMomentEvents([])
+        // 同上一支：这里只会在「从未加载成功过」时走到，日记也一并为空
+        setDiaryRecords([])
         setFlashback(findFlashbackMemory(pet, []))
       }
     }
@@ -577,6 +690,27 @@ export default function TimelinePage() {
     void loadTimelineData()
   })
 
+  /**
+   * 页面分享（2026-09-12 IA 第 2c 批）
+   *
+   * 【为什么要在这里注册】本页是**被删掉的「宠物日记」页的分享落地页**：
+   * 原日记页注册了 useShareAppMessage/useShareTimeline，其 path 硬编码指向它自己那条路由
+   * （全仓唯一一条指向被删路由的硬编码分享 path）。路由删掉后那条 path 就是死链，因此：
+   *   · path 改指本页 /pages/timeline/index；
+   *   · 标题从「宠物日记」改为「时光线」，与页头文案一致。
+   * ⚠️ 已经发出去的旧分享卡片仍指向**已删除的日记页路由**，微信小程序分享卡片 **path 无法重定向**，
+   *   只能失效 —— 这项取舍在交付自述里单独交代（清单原本建议留 20 行 redirect 页，本批按任务书
+   *   硬约束「删目录」执行，未留 redirect）。
+   * ⚠️ 不注册 share hook 的话，右上角「转发」会被小程序隐藏，日记卡上的「分享这篇日记」也就彻底没用了。
+   */
+  useShareAppMessage(() => ({
+    title: '星河宠记 - 时光线',
+    path: '/pages/timeline/index',
+  }))
+  useShareTimeline(() => ({
+    title: '星河宠记 - 时光线',
+  }))
+
   const timelineEvents = useMemo(() => {
     const allEvents: TimelineEvent[] = []
 
@@ -599,6 +733,18 @@ export default function TimelinePage() {
 
     return allEvents
   }, [dynamicEvents, momentEvents, flashback, flashbackAdded])
+
+  /**
+   * 心情筛选后的日记（照搬 diary 页的 filteredRecords）
+   *
+   * 只作用于日记分区，与上面的 timelineEvents 互不影响：
+   * 本页没有第二套筛选控件，所以不存在两个筛选状态打架的问题
+   * （如果要给时光足迹也加筛选，才需要设计联动，本批不做）。
+   */
+  const filteredDiary = useMemo(
+    () => (toneFilter === 'all' ? diaryRecords : diaryRecords.filter((r) => r.diary.tone === toneFilter)),
+    [diaryRecords, toneFilter],
+  )
 
   /**
    * 从回忆正文里**自动认宠物**（2026-09-11 新增，用户点名要的能力）
@@ -841,6 +987,22 @@ export default function TimelinePage() {
     setDetailEvent(event)
   }
 
+  /**
+   * 分享某篇日记（原 diary 页的「分享这篇日记」，2026-09-12 随页面并入）
+   *
+   * 与原来一致：只埋点 + 打开转发菜单（微信不支持程序化唤起分享面板，
+   * 转发卡片走本页注册的 useShareAppMessage，path = /pages/timeline/index）。
+   * ⚠️ 既有问题如实记录：这个按钮点击后**不会**立刻弹出分享面板，用户需要再点右上角转发
+   * —— 原 diary 页就是这样（属假按钮问题），本批只搬不改，留给后续统一治理。
+   */
+  const handleDiaryShare = useCallback(
+    (record: TimelineDiaryRecord) => {
+      trackEvent('share_diary', { date: record.date, tone: record.diary.tone })
+      Taro.showShareMenu({ withShareTicket: true })
+    },
+    [trackEvent],
+  )
+
   /** 预览大图：支持单张/多张轮播 */
   const handlePreviewPhotos = (urls: string[], current: string) => {
     if (!urls.length) return
@@ -1057,6 +1219,92 @@ export default function TimelinePage() {
               title='还没有时光记录'
               desc='点右上角「记录」，写下第一个珍贵瞬间'
             />
+          )}
+        </View>
+
+        {/* ===== 宠物日记（2026-09-12 IA 第 2c 批：原「宠物日记」页并入本页） =====
+            【搬的是什么】diary 页**独有**的视图：diaryEngine 生成的拟人化日记正文 + 6 档心情筛选。
+            时光足迹是「最近 6 条打卡 + 全部回忆」，日记分区是「每条打卡一篇日记」——
+            粒度不同，所以两段都保留（本页合并的不是重复页，而是把日记视图搬过来）。
+            【视觉】完全沿用本页已有的时间线写法（timeline-item / timeline-line-col /
+            timeline-card / timeline-pet-chip），不引入第二套设计语言。 */}
+        <View className='timeline-diary'>
+          <View className='timeline-diary-head'>
+            <Text className='timeline-diary-title'>宠物日记</Text>
+            <Text className='timeline-diary-count'>共 {filteredDiary.length} 篇</Text>
+          </View>
+
+          {/* 6 档心情筛选（照搬 diary 页）：横滑 + 贴纸胶囊，与弹窗里的宠物胶囊同一套样式 */}
+          <ScrollView scrollX className='timeline-diary-filter-scroll' showScrollbar={false}>
+            <View className='timeline-diary-filter-list'>
+              {TONE_FILTERS.map((f) => (
+                <View
+                  key={f.key}
+                  className={`timeline-pet-chip${toneFilter === f.key ? ' timeline-pet-chip--active' : ''}`}
+                  onClick={() => setToneFilter(f.key)}
+                >
+                  <Text className='timeline-pet-chip-text'>{f.label}</Text>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+
+          {diaryRecords.length === 0 ? (
+            /* 空态沿用 diary 页的原文案（同一套说法），但只做轻量提示：
+               本页上方已经可能有一个大插画空态，同屏再放第二个插画会抢注意力 */
+            <View className='timeline-diary-empty'>
+              <Text className='timeline-diary-empty-text'>还没有日记哦~</Text>
+              <Text className='timeline-diary-empty-hint'>每天打卡后会自动生成一篇日记</Text>
+            </View>
+          ) : filteredDiary.length === 0 ? (
+            <View className='timeline-diary-empty'>
+              <Text className='timeline-diary-empty-text'>该心情下暂无日记</Text>
+              <Text className='timeline-diary-empty-hint'>换一个心情标签看看</Text>
+            </View>
+          ) : (
+            filteredDiary.map((record, index) => (
+              <View key={`${record.petId}-${record.entry.id}`} className='timeline-item'>
+                <View className='timeline-line-col'>
+                  {/* 圆点底色跟随心情（语义色），与卡片上的心情角标同源 */}
+                  <View
+                    className='timeline-dot timeline-dot--diary'
+                    style={{ backgroundColor: TONE_COLORS[record.diary.tone] || '#8C8C8C' }}
+                  >
+                    <Text className='timeline-dot-emoji'>{record.diary.emoji}</Text>
+                  </View>
+                  {index < filteredDiary.length - 1 && <View className='timeline-line' />}
+                </View>
+                <View className='timeline-card timeline-card--diary'>
+                  <View className='timeline-card-date'>
+                    <Text className='timeline-date-text'>{record.date}</Text>
+                    <View
+                      className='timeline-diary-mood'
+                      style={{ backgroundColor: TONE_COLORS[record.diary.tone] || '#8C8C8C' }}
+                    >
+                      <Text className='timeline-diary-mood-text'>
+                        {record.diary.emoji} {TONE_LABELS[record.diary.tone] || record.diary.tone}
+                      </Text>
+                    </View>
+                    {/* 宠物归属标签：与时光足迹卡片同一套写法（共用一本时每张卡都要能看出是谁的） */}
+                    <View className='timeline-pet-tag'>
+                      <Text className='timeline-pet-tag-text'>{record.petEmoji} {record.petName}</Text>
+                    </View>
+                  </View>
+                  <Text className='timeline-diary-text'>{record.diary.text}</Text>
+                  {record.entry.note ? (
+                    <View className='timeline-diary-note'>
+                      <Text className='timeline-diary-note-label'>📝 备注</Text>
+                      <Text className='timeline-diary-note-text'>{record.entry.note}</Text>
+                    </View>
+                  ) : null}
+                  <View className='timeline-diary-actions'>
+                    <View className='timeline-diary-share' onClick={() => handleDiaryShare(record)}>
+                      <Text className='timeline-diary-share-text'>📤 分享这篇日记</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            ))
           )}
         </View>
 
