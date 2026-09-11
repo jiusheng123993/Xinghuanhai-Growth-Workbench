@@ -13,6 +13,7 @@ import {
   formatYuan,
   tierUnavailableReason,
   tierFromRoutePath,
+  resolveMemoirTier,
 } from '../memoirTier'
 
 describe('MEMOIR_TIER_BOUNDS 三档边界（与后端 MEMOIR_TIER_CONFIG 同步锁）', () => {
@@ -133,14 +134,31 @@ describe('formatYuan / tierUnavailableReason 展示工具', () => {
  * isTierAvailable('full', n≤7) 恒为 false —— 最贵的完整档在任何入口都买不到。
  * 下面第一组断言就是"这个 bug 是否复发"的判定线。
  */
-describe('tierFromRoutePath 路由→档位推导（防"复制页面连档位边界一起复制"复发）', () => {
-  it('三条路由各自映射到正确档位', () => {
+describe('memoir 档位分派：路由名兜底 + 显式 ?tier= 优先（防“复制页面连档位边界一起复制”复发）', () => {
+  it('路由名兜底默认值：memoir-full → full、memoir-daily → light、其余 → standard', () => {
     expect(tierFromRoutePath('/pagesMemoir/memoir-full/index')).toBe('full')
-    expect(tierFromRoutePath('/pagesMemoir/memoir-vlog/index')).toBe('standard')
     expect(tierFromRoutePath('/pagesMemoir/memoir-daily/index')).toBe('light')
+    // memoir-vlog 这条 28 行再导出壳路由已于 2026-09-12（IA 第 2d 批）删除；保留该断言是为了锁住
+    // 兜底行为本身：拿着老链接进来只会落 standard，不会被误升成 full（与删壳前完全一致）
+    expect(tierFromRoutePath('/pagesMemoir/memoir-vlog/index')).toBe('standard')
   })
 
-  it('带查询串/带前导斜杠差异的路由同样识别', () => {
+  it('显式 ?tier= 优先于路由名：standard 改由参数承载，不再靠某条路由是否存在', () => {
+    // 回忆录馆「标准回忆录」卡删壳后指向 memoir-full?tier=standard —— 必须仍判 standard（5-7 张）
+    expect(resolveMemoirTier('/pagesMemoir/memoir-full/index', 'standard')).toBe('standard')
+    // 「完整回忆录」卡：参数与路由名同向，仍是 full（8-15 张）
+    expect(resolveMemoirTier('/pagesMemoir/memoir-full/index', 'full')).toBe('full')
+    // 裸进页（老链接/分享页不带参数）：退回路由名兜底，memoir-full 仍是 full
+    expect(resolveMemoirTier('/pagesMemoir/memoir-full/index')).toBe('full')
+    // 脏参数一律忽略：light 由独立页面 memoir-daily 承载，本页不认它，故仍按路由名走 full
+    expect(resolveMemoirTier('/pagesMemoir/memoir-full/index', 'light')).toBe('full')
+    expect(resolveMemoirTier('/pagesMemoir/memoir-full/index', '')).toBe('full')
+    // 路由缺失时仍是最保守的 standard（对旧链接不误升档）
+    expect(resolveMemoirTier(undefined, 'standard')).toBe('standard')
+    expect(resolveMemoirTier(undefined)).toBe('standard')
+  })
+
+  it('带查询串/带前导斜杠差异的路由同样识别（Taro router.path 实际不含 query，这里多一层容错）', () => {
     expect(tierFromRoutePath('pagesMemoir/memoir-full/index?petId=p1&tier=full')).toBe('full')
     expect(tierFromRoutePath('/pagesMemoir/memoir-vlog/index?petId=p1')).toBe('standard')
   })
@@ -152,7 +170,9 @@ describe('tierFromRoutePath 路由→档位推导（防"复制页面连档位边
   })
 
   it('【P0 回归线】完整档页面必须能选到 8 张及以上照片', () => {
-    const fullRouteTier = tierFromRoutePath('/pagesMemoir/memoir-full/index')
+    // 完整档入口有两条：回忆录馆「完整回忆录」卡（?tier=full）与裸进 memoir-full（老链接），都必须判 full
+    const fullRouteTier = resolveMemoirTier('/pagesMemoir/memoir-full/index', 'full')
+    expect(resolveMemoirTier('/pagesMemoir/memoir-full/index')).toBe('full')
     const bounds = MEMOIR_TIER_BOUNDS[fullRouteTier]
     // 上限必须够得着完整档的下限，否则该档永远不可选（本次事故就是这个不等式被破坏）
     expect(bounds.maxPhotos).toBeGreaterThanOrEqual(MEMOIR_TIER_BOUNDS.full.minPhotos)
@@ -164,7 +184,9 @@ describe('tierFromRoutePath 路由→档位推导（防"复制页面连档位边
   })
 
   it('标准档页面仍按 5-7 张限制（不能被"顺手上调"到完整档边界）', () => {
-    const standardRouteTier = tierFromRoutePath('/pagesMemoir/memoir-vlog/index')
+    // 删壳后标准档的新承载入口：同一条 memoir-full 路由 + 参数 ?tier=standard
+    const standardRouteTier = resolveMemoirTier('/pagesMemoir/memoir-full/index', 'standard')
+    expect(standardRouteTier).toBe('standard')
     expect(MEMOIR_TIER_BOUNDS[standardRouteTier]).toEqual(MEMOIR_TIER_BOUNDS.standard)
     expect(isTierAvailable(standardRouteTier, 8)).toBe(false)
   })

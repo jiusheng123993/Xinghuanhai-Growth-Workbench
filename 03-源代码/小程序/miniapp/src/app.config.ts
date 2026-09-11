@@ -93,7 +93,8 @@ export default defineAppConfig({
       pages: [
         'memoir-center/index',
         'memoir-daily/index',
-        'memoir-vlog/index',
+        // 标准档入口页 memoir-vlog（28 行再导出壳，档位靠路由名隐含承载）已于 2026-09-12
+        // （IA 第 2d 批）删除：standard/full 共用唯一实现 memoir-full，档位改由 ?tier= 显式指定
         'memoir-full/index',
         'studio/index',
       ],

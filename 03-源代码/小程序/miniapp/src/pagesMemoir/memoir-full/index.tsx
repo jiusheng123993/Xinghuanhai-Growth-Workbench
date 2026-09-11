@@ -51,7 +51,7 @@ import {
   pickTierPrice,
   formatYuan,
   tierUnavailableReason,
-  tierFromRoutePath,
+  resolveMemoirTier,
   type MemoirTier,
 } from '../../utils/memoirTier'
 import './index.scss'
@@ -112,13 +112,19 @@ const STEP_LABELS = ['盘点', '选照片', '选记忆', '叙事', 'BGM', '确�
 
 const LOADING_STEPS = ['提交成功', '处理中', 'AI编排中', '生成视频中']
 
-// 本页服务的档位由**路由**推导（memoir-full → 完整档 8-15 张；memoir-vlog → 标准档 5-7 张），
+// 本页服务的档位由**显式 ?tier= 参数**决定（回忆录馆三档卡直达），路由名只作兜底默认
+// （memoir-full → 完整档 8-15 张；其余 → 标准档 5-7 张），判定顺序见 utils/memoirTier.resolveMemoirTier；
 // 照片边界一律从 MEMOIR_TIER_BOUNDS 派生，边界值见下方组件内 pageTier / PHOTO_LIMIT / PHOTO_MIN。
+//
+// 2026-09-12（IA 第 2d 批）：standard 原来靠 memoir-vlog 那条 28 行再导出壳路由承载，壳已删，
+// 故档位改由参数显式指定 —— 不允许再出现“某条路由/页面是否存在”决定档位的隐式依赖。
 //
 // 2026-09-11 修复存量 P0：此前这里把边界硬编码成 standard（5-7），而 memoir-full 与 memoir-vlog
 // 又是两份逐字节相同的实现，于是**完整档页面的选照片上限被死锁在 7 张**，
 // isTierAvailable('full', n≤7) 恒为 false —— 最贵的完整档（8-15 张）在任何入口都选不出来。
-// 根因是"复制页面时连档位边界一起复制"，故本次改为按路由分档，禁止再在页面里硬编码档位边界。
+// 根因是"复制页面时连档位边界一起复制"，当时的修法是改为按路由名分档；2026-09-12（IA 第 2d 批）
+// 进一步改为按显式 ?tier= 参数分档（见上），边界仍只从 MEMOIR_TIER_BOUNDS 派生，
+// 禁止再在页面里硬编码某个档位的边界。
 const MAX_MOMENTS = 10
 const NARRATIVE_MAX_LENGTH = 500
 
@@ -141,11 +147,24 @@ type PhotoTab = 'local' | 'pool'
 export default function MemoirVlog() {
   const router = Taro.getCurrentInstance().router
   const routerParams = router?.params as Record<string, string> | undefined
-  // 本页服务的档位（按路由分档）与照片边界（唯一事实源 MEMOIR_TIER_BOUNDS）
-  const pageTier = tierFromRoutePath(router?.path)
+  // 本页服务的档位：显式 ?tier= 优先、路由名兜底（判定顺序见 utils/memoirTier.resolveMemoirTier）；
+  // 照片边界的唯一事实源仍是 MEMOIR_TIER_BOUNDS
+  const pageTier = resolveMemoirTier(router?.path, routerParams?.tier)
   const pageTierName = TIER_META[pageTier].name
   const PHOTO_LIMIT = MEMOIR_TIER_BOUNDS[pageTier].maxPhotos
   const PHOTO_MIN = MEMOIR_TIER_BOUNDS[pageTier].minPhotos
+
+  /**
+   * 导航栏标题按档位动态设置（2026-09-12 IA 第 2d 批新增）
+   *
+   * 为什么必须动态设：标准档原先走自己的路由页 memoir-vlog，标题由那页的 index.config.ts
+   * 写成「标准回忆录」；壳路由删掉后两档共用本页，只能读到本页静态配置的「完整回忆录」，
+   * 标准档用户就会顶着完整档的标题。这里按 pageTier 覆盖一次，把标题行为恢复成删壳前的样子
+   * （完整档的 TIER_META 名称与静态配置同字，等于没变）。写法与 creative / mine 两页一致。
+   */
+  useEffect(() => {
+    Taro.setNavigationBarTitle({ title: pageTierName })
+  }, [pageTierName])
   const petId = routerParams?.petId || ''
   // 回忆录馆（memoir-center）档位卡直达：?tier=standard/full 预选档位（确认页 effect 会自动纠正不可用档）
   const presetTier = routerParams?.tier === 'standard' || routerParams?.tier === 'full'

@@ -365,9 +365,17 @@ export default function MemoirDaily() {
     })
   }, [photos])
 
-  /** 跳转回忆录页（供 handleGenerate 超时引导、挂载检测、轮询闸门引导复用） */
+  /**
+   * 跳转「多段纪念管线」页（供 handleGenerate 超时引导、挂载检测、轮询闸门引导复用）
+   *
+   * 2026-09-12（IA 第 2d 批）：原目标 `memoir-vlog` 那条 28 行壳路由已删，改指唯一实现
+   * `memoir-full`，并显式带 `tier=standard` —— 删壳前本入口落在标准档（5-7 张），
+   * 不显式指定的话页面会按路由名把自己判成完整档（8-15 张），等于悄悄改档位。
+   */
   const handleGoVlog = useCallback(() => {
-    Taro.navigateTo({ url: `/pagesMemoir/memoir-vlog/index${petId ? `?petId=${petId}` : ''}` })
+    // 档位参数放最前；petId 仍按原逻辑可缺省
+    const query = `?tier=standard${petId ? `&petId=${petId}` : ''}`
+    Taro.navigateTo({ url: `/pagesMemoir/memoir-full/index${query}` })
   }, [petId])
 
   // ==================== 生成回忆录（2026-09-09 B2：light 档支付链） ====================

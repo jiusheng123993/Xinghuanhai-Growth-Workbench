@@ -22,7 +22,11 @@ import { Icon } from '../../components'
  * 结构：紫渐变 hero → 素材盘点 banner（前置：告诉用户能做什么档、缺什么素材）
  *       → 三档定价卡同屏（轻纪念/标准/完整，点击直达对应流程）→ 更多（年度回顾/我的回忆录）
  * 档位卡路由规则：轻纪念 → memoir-daily（light 单段流水线）；
- *                标准/完整 → memoir-vlog?tier=standard|full（多段纪念管线，确认页可改档）
+ *                标准/完整 → memoir-full?tier=standard|full（多段纪念管线，确认页可改档）
+ *
+ * 2026-09-12（IA 第 2d 批）：标准档不再靠一条专开的路由承载 —— 原 memoir-vlog（28 行再导出壳）
+ * 已删，两档统一指向唯一实现 memoir-full，档位由 ?tier= 参数显式指定
+ * （判定顺序见 utils/memoirTier.resolveMemoirTier）。
  *
  * 2026-09-10 调整：回忆录类入口统一收口到本页。原「时光」页顶部的「回忆精选」
  * 三张卡（年度回忆/日常回忆录/纪念Vlog）与这里重复，已整体移除；
@@ -81,7 +85,10 @@ const MemoirCenter = () => {
     return fallback[tier]
   }
 
-  /** 档位卡点击：轻纪念→日常回忆录（light 单段）；标准→标准回忆录页；完整→完整回忆录页（各自独立流程） */
+  /**
+   * 档位卡点击：轻纪念 → 日常回忆录（light 单段流水线，独立页面）；
+   * 标准/完整 → 多段纪念管线（同一份实现 memoir-full，靠 ?tier= 参数定档）
+   */
   const goTier = (tier: 'light' | 'standard' | 'full') => {
     if (!petId) {
       if (!currentPet) {
@@ -89,11 +96,14 @@ const MemoirCenter = () => {
         return
       }
       // 中心页被直接打开（无 petId）时回退用当前宠物
-      const base = tier === 'light' ? '/pagesMemoir/memoir-daily/index' : (tier === 'full' ? '/pagesMemoir/memoir-full/index' : '/pagesMemoir/memoir-vlog/index')
+      // 标准/完整共用唯一实现页 memoir-full，档位用 ?tier= 显式告诉它 ——
+      // 绝不能再指向“为某档单开的路由”，否则删路由就等于悄悄改档位
+      const base = tier === 'light' ? '/pagesMemoir/memoir-daily/index' : '/pagesMemoir/memoir-full/index'
       Taro.navigateTo({ url: `${base}?petId=${currentPet.id}${tier !== 'light' ? `&tier=${tier}` : ''}` })
       return
     }
-    const base = tier === 'light' ? '/pagesMemoir/memoir-daily/index' : (tier === 'full' ? '/pagesMemoir/memoir-full/index' : '/pagesMemoir/memoir-vlog/index')
+    // 同上一处：标准/完整都进 memoir-full，靠 ?tier= 定档（轻纪念仍走自己的页面）
+    const base = tier === 'light' ? '/pagesMemoir/memoir-daily/index' : '/pagesMemoir/memoir-full/index'
     Taro.navigateTo({ url: `${base}?petId=${petId}${tier !== 'light' ? `&tier=${tier}` : ''}` })
   }
 

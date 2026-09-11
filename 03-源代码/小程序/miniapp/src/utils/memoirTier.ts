@@ -101,7 +101,7 @@ export function tierUnavailableReason(tier: MemoirTier, photoCount: number): str
 }
 
 /**
- * 由页面路由推导「本页服务的档位」
+ * 由页面路由名推导「该路由的默认档位」（2026-09-12 起只作兜底默认值，不再单独决定页面档位）
  *
  * 背景（2026-09-11 修复存量 P0）：
  * `memoir-vlog`（标准档）与 `memoir-full`（完整档）原本是两份**逐字节完全相同**的实现，
@@ -109,14 +109,46 @@ export function tierUnavailableReason(tier: MemoirTier, photoCount: number): str
  * `isTierAvailable('full', n≤7)` 恒为 false —— **最贵的完整档（8-15 张）在任何入口都选不出来**。
  * 同期该页 toast 还写着"最多选择15张照片"，文案与逻辑自相矛盾，反证原意就是支持 15 张。
  *
- * 修复口径：**本页服务的档位由路由决定，档位边界一律从 MEMOIR_TIER_BOUNDS 派生**，
- * 禁止再在页面里硬编码某个档位的边界（这是防止同一 bug 被再次复制出来的关键）。
+ * 修复口径：**档位边界一律从 MEMOIR_TIER_BOUNDS 派生**，禁止再在页面里硬编码某个档位的边界
+ * （这是防止同一 bug 被再次复制出来的关键）。
+ *
+ * 2026-09-12（IA 第 2d 批）：`memoir-vlog` 那条 28 行再导出壳路由已删除。在此之前 standard 吃的是
+ * 「别的路由一律兜底 standard」这条分支（它自己连名字都没有），所以本函数**已经不能**再被当作
+ * 档位的唯一来源 —— standard 现在由显式 `?tier=standard` 承载，判定顺序见 resolveMemoirTier。
  *
  * @param routePath - 当前页面路由（`Taro.getCurrentInstance().router?.path`）
- * @returns 该路由服务的档位；未知或缺失路由按 `standard` 兜底（对旧链接最保守）
+ * @returns 该路由的默认档位；未知或缺失路由按 `standard` 兜底（对旧链接最保守）
  */
 export function tierFromRoutePath(routePath?: string): MemoirTier {
   if (routePath?.includes('memoir-full')) return 'full'
   if (routePath?.includes('memoir-daily')) return 'light'
   return 'standard'
+}
+
+/**
+ * 解析「多段纪念管线」页（`pagesMemoir/memoir-full/index.tsx` 这份 standard/full 唯一实现）
+ * 本次应该服务哪个档位。
+ *
+ * 为什么要有这个函数（2026-09-12 IA 第 2d 批）：
+ * standard（5-7 张）与 full（8-15 张）共用同一份实现，分档原来靠“进页时用的是哪条路由名”隐含决定
+ * —— standard 甚至连名字都没有，纯粹吃 tierFromRoutePath 的兜底分支。删掉 memoir-vlog 壳路由后，
+ * 回忆录馆的「标准回忆录」卡只能改指 memoir-full，而 memoir-full 会按路由名把自己判成 full，
+ * standard 的照片上下限就会静默从 5-7 变成 8-15，这正是 2026-09-11 修过的「完整档选不出来」P0
+ * 的镜像 bug。更要命的是：因为兜底分支照旧返回 standard，**原来的单元测试仍会全绿**，
+ * 只有真机点「标准回忆录」卡才会暴露 —— 所以分档必须改成显式入参，
+ * 彻底去掉“某个页面/路由是否存在”这类隐式依赖。
+ *
+ * 判定顺序（显式入参优先）：
+ *   1. 显式 `?tier=standard|full` —— 回忆录馆三档卡直达的唯一依据（用户选哪档就是哪档）；
+ *   2. 路由名兜底 —— `memoir-full` → full、`memoir-daily` → light、其余 → standard，
+ *      与删除 memoir-vlog 之前保持一致（老链接/裸进页不会被误升档）。
+ *
+ * @param routePath - 当前页面路由（`Taro.getCurrentInstance().router?.path`）
+ * @param tierParam - 路由 query 里的 `tier` 参数（`Taro.getCurrentInstance().router?.params?.tier`）
+ * @returns 本页应服务的档位；light 有独立页面 memoir-daily、不由本页承载，
+ *          因此脏参数（空串、light、拼错的值）一律忽略并走路由兜底，避免档位边界与管线不符
+ */
+export function resolveMemoirTier(routePath?: string, tierParam?: string): MemoirTier {
+  if (tierParam === 'standard' || tierParam === 'full') return tierParam
+  return tierFromRoutePath(routePath)
 }
