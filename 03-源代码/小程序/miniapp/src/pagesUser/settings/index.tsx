@@ -3,7 +3,7 @@
  * 应用设置、通知管理、主题切换、账号管理
  */
 import { useEffect, useState, useCallback, useMemo } from 'react'
-import { View, Text, Switch } from '@tarojs/components'
+import { View, Text, Switch, Button, Input, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useAuthStore } from '../../stores/authStore'
 import { useSettingsStore, type NotificationSettings } from '../../stores/settingsStore'
@@ -24,6 +24,13 @@ import type { AccountDeletionReason, DataPrivacyStatus, AccountDeletionResult } 
 import { AccountDeletionConfirm } from '../../components/AccountDeletionConfirm'
 import { useThemeClass } from '../../hooks/useThemeClass'
 import BackgroundPicker from '../../components/BackgroundPicker'
+// 【2026-09-12 IA 第 2a 批】「个人资料」页并入本页后新增的依赖：
+// Icon = 非微信端的头像占位图标；api.uploadAvatar = 上传新头像换永久 URL；
+// isWeapp = 判定是否走微信原生资料组件；chooseImageWithPrivacy = 相册选图（含隐私授权处理）
+import { Icon } from '../../components'
+import { api } from '../../services/api'
+import { isWeapp } from '../../platform'
+import { chooseImageWithPrivacy } from '../../utils/privacy'
 import './index.scss'
 
 /** Taro 手机号授权 API 类型扩展（微信 Button open-type=getPhoneNumber 对应运行时能力） */
@@ -38,6 +45,9 @@ interface TaroWithPhoneNumber {
 export default function SettingsPage() {
   const user = useAuthStore(s => s.user)
   const logout = useAuthStore(s => s.logout)
+  // 资料编辑所需：登录态门槛 + 保存资料的动作（原 profile 页同款取用方式）
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated)
+  const updateProfile = useAuthStore(s => s.updateProfile)
   const isMember = useMembership().isMember
   const notification = useSettingsStore(s => s.notification)
   const loadSettings = useSettingsStore(s => s.loadSettings)
@@ -55,10 +65,24 @@ export default function SettingsPage() {
   const [phoneBound, setPhoneBound] = useState<string | null>(null)
   const [bindingPhone, setBindingPhone] = useState(false)
 
+  // ===== 个人资料编辑草稿（2026-09-12 IA 第 2a 批：原 pagesUser 分包的 profile 页并入本页）=====
+  // 昵称草稿：初始跟随现有资料；微信端可在原生输入框里直接填微信昵称
+  const [nicknameDraft, setNicknameDraft] = useState('')
+  // 本次刚选的头像临时文件路径（保存时上传换永久 URL）；null = 未选新头像，保存时沿用原头像
+  const [avatarDraft, setAvatarDraft] = useState<string | null>(null)
+  // 是否正在保存（防连点重复提交）
+  const [saving, setSaving] = useState(false)
+
   useEffect(() => {
     loadSettings()
     setPrivacyStatus(getDataPrivacyStatus())
   }, [loadSettings])
+
+  // 用户资料变化时同步昵称草稿（原 profile 页同款逻辑）：换账号或后台回填资料后，
+  // 输入框不能还留着上一个账号/上一次的旧昵称
+  useEffect(() => {
+    setNicknameDraft(user?.nickname || '')
+  }, [user?.nickname])
 
   useEffect(() => {
     trackPageView('settings')
@@ -273,6 +297,78 @@ export default function SettingsPage() {
     })
   }, [bindingPhone, trackEvent])
 
+  // ===== 个人资料编辑（头像 + 昵称）=====
+  // 为什么原样搬 profile 页的实现：微信已禁止静默获取昵称/头像，唯一官方路径是原生组件
+  // （button open-type=chooseAvatar + input type=nickname）；逻辑里有"临时路径必须先上传换
+  // 永久 URL""未选新头像不重复上传"等细节，重写容易漏，故保持与 profile 页一致。
+  /**
+   * 选择头像：微信端走原生 chooseAvatar（e.detail.avatarUrl 是临时文件路径）；
+   * avatarUrl 为空串（用户点了"从相册选自定义图"）或非微信端时，回退到相册选图
+   * @param e 原生组件 chooseavatar 事件，detail = { avatarUrl }
+   */
+  const handleChooseAvatar = (e?: any) => {
+    const temp = e?.detail?.avatarUrl
+    if (temp) {
+      setAvatarDraft(temp)
+      return
+    }
+    chooseImageWithPrivacy({ count: 1, sizeType: ['compressed'] })
+      .then((res) => {
+        if (res.tempFilePaths.length) setAvatarDraft(res.tempFilePaths[0])
+      })
+      // 用户取消选图属正常操作，静默处理（与 profile 页一致，不弹错误提示）
+      .catch(() => {})
+  }
+
+  /**
+   * 原生组件昵称变更回调（wechat-profile 组件 triggerEvent 传回）
+   * @param e { detail: { value: string } }；非字符串（异常事件）直接忽略，避免写入脏草稿
+   */
+  const handleNicknameChange = (e?: any) => {
+    const value = e?.detail?.value
+    if (typeof value === 'string') setNicknameDraft(value)
+  }
+
+  /**
+   * 保存资料：先把新头像上传换永久 URL（如有），再一次性更新昵称与头像
+   * 无返回值；未登录或正在保存时直接返回（幂等保护），失败只 toast 不抛错
+   */
+  const handleSaveProfile = async () => {
+    if (saving || !isAuthenticated) return
+    setSaving(true)
+    try {
+      // 未选新头像就沿用旧头像：避免每次保存都把同一张图重复上传一遍
+      let avatarUrl = user?.avatar || ''
+      if (avatarDraft && avatarDraft !== user?.avatar) {
+        const uploaded = await api.uploadAvatar(avatarDraft)
+        avatarUrl = uploaded.url
+      }
+      // 昵称为空时兜底用原昵称，避免把用户名字清成空串
+      await updateProfile(nicknameDraft.trim() || user?.nickname || '', avatarUrl)
+      setAvatarDraft(null)
+      Taro.showToast({ title: '已保存', icon: 'success' })
+    } catch (err) {
+      Taro.showToast({
+        title: err instanceof Error ? err.message : '保存失败，请重试',
+        icon: 'none',
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  /**
+   * 健康报告：跳转到正式的健康报告入口（趋势页，与「我的」页「健康报告」同一条路由）
+   *
+   * 【为什么这么改】原 profile 页的「健康报告」是在本地生成文本后用 Taro.showModal 弹
+   * 一段"截断到 500 字 + 完整报告请查看控制台"的字符串，属全站第三套报告实现，用户读不到完整内容。
+   * IA 第 2a 批合并时清掉该实现，改为跳转既有正式入口；埋点事件名保持不变以延续历史口径。
+   */
+  const handleHealthReport = useCallback(() => {
+    trackEvent('click_health_report')
+    Taro.navigateTo({ url: '/pagesPet/trends/index' })
+  }, [trackEvent])
+
   const handleLogout = useCallback(() => {
     Taro.showModal({
       title: '退出登录',
@@ -290,6 +386,55 @@ export default function SettingsPage() {
 
   return (
     <View className={'settings-page ' + themeClass}>
+      {/* ===== 个人资料（2026-09-12 IA 第 2a 批：原 pagesUser 分包的 profile 页并入本页）=====
+          「我的」页点头像、点「编辑」现在都落到本页，故区块放在最顶部，进来就能改；
+          未登录时不渲染（与 profile 页一致：没登录谈不上改资料，登录入口在「我的」页）。 */}
+      {isAuthenticated && (
+        <View className='settings-page__section'>
+          <Text className='settings-page__section-title'>个人资料</Text>
+          {/* 微信端用原生组件（chooseAvatar + nickname）：Taro 3.6 编译层不支持这两个属性，
+              必须原生组件才能跟随微信头像/昵称（否则 errno 112 / 属性被模板丢弃） */}
+          {isWeapp() ? (
+            <wechat-profile
+              nickname={nicknameDraft}
+              avatar={avatarDraft || user?.avatar || ''}
+              onChooseavatar={handleChooseAvatar}
+              onNickchange={handleNicknameChange}
+            />
+          ) : (
+            <View className='settings-page__profile-row'>
+              {/* 非微信端（H5 预览）防御性分支：头像按钮走相册选择 */}
+              <Button className='settings-page__profile-avatar-btn' onClick={handleChooseAvatar}>
+                {avatarDraft ? (
+                  <Image className='settings-page__profile-avatar-img' src={avatarDraft} mode='aspectFill' />
+                ) : user?.avatar ? (
+                  <Image className='settings-page__profile-avatar-img' src={user.avatar} mode='aspectFill' />
+                ) : (
+                  <View className='settings-page__profile-avatar-placeholder'>
+                    <Icon name='user' size={28} tone='primary' />
+                  </View>
+                )}
+              </Button>
+              <Input
+                className='settings-page__profile-nickname-input'
+                value={nicknameDraft}
+                placeholder='输入昵称'
+                onInput={(e) => setNicknameDraft(e.detail.value)}
+              />
+            </View>
+          )}
+          <Text className='settings-page__profile-tip'>头像昵称可跟随微信，也可自定义；保存后全局同步展示</Text>
+          <Button
+            className='settings-page__save-btn'
+            loading={saving}
+            disabled={saving}
+            onClick={handleSaveProfile}
+          >
+            保存
+          </Button>
+        </View>
+      )}
+
       <View className='settings-page__section'>
         <Text className='settings-page__section-title'>账号管理</Text>
         <View className='settings-page__item'>
@@ -324,6 +469,16 @@ export default function SettingsPage() {
         <Text className='settings-page__section-title'>页面背景</Text>
         {/* 预设背景（含星空银河/奶油格纹）+ 宠物照片壁纸；切换与持久化均在组件内部完成 */}
         <BackgroundPicker onChange={handleBackgroundChange} />
+      </View>
+
+      {/* ===== 数据服务（2026-09-12 IA 第 2a 批：接管 profile 页的「健康报告」入口）=====
+          这里只放"跳出去看"的正式入口，不放报告实现；与「我的」页「健康报告」指向同一条路由。 */}
+      <View className='settings-page__section'>
+        <Text className='settings-page__section-title'>数据服务</Text>
+        <View className='settings-page__item' onClick={handleHealthReport}>
+          <Text className='settings-page__item-label'>健康报告</Text>
+          <Text className='settings-page__item-arrow'>›</Text>
+        </View>
       </View>
 
       <View className='settings-page__section'>

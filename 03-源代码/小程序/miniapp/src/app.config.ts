@@ -100,7 +100,7 @@ export default defineAppConfig({
     {
       root: 'pagesUser',
       pages: [
-        'profile/index',
+        // 个人资料页（profile）已于 2026-09-12（IA 第 2a 批）并入 settings/index，故不再注册
         'settings/index',
         'onboarding/index',
         'agreement/index',

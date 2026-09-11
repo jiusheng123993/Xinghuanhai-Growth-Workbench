@@ -275,7 +275,9 @@ export default function Mine() {
         {/* 卡片下半：白色信息区（文字直接在浅底上，可读性最好，不需要任何遮罩） */}
         <View className='mine-card__body'>
           <View className='mine-card__top'>
-            <View className='mine-avatar' onClick={() => navigateTo('/pagesUser/profile/index')}>
+            {/* 点头像 = 改头像昵称：原「个人资料」页已并入「设置」页（IA 第 2a 批），
+                编辑区块在设置页顶部；路由已注销，这里不能再指 profile */}
+            <View className='mine-avatar' onClick={() => navigateTo('/pagesUser/settings/index')}>
               {/* 有头像且未加载失败就显示图片；头像为空或加载失败（onError）才退回昵称首字占位 */}
               {user?.avatar && !avatarLoadFailed ? (
                 <Image
@@ -308,7 +310,8 @@ export default function Mine() {
             </View>
 
             {/* 编辑按钮：白底胶囊 + 铅笔图标（对齐全站"按钮必须带图标"的约定） */}
-            <View className='mine-edit-btn' onClick={() => navigateTo('/pagesUser/profile/index')}>
+            {/* 「编辑」同上：指向设置页顶部的「个人资料」区块（不再有独立的个人资料路由） */}
+            <View className='mine-edit-btn' onClick={() => navigateTo('/pagesUser/settings/index')}>
               <Icon name='pencil-simple' size={13} tone='primary' />
               <Text className='mine-edit-btn__text'>编辑</Text>
             </View>

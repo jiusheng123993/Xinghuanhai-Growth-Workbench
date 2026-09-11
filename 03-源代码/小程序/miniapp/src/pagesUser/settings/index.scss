@@ -162,6 +162,84 @@
     overflow-y: auto;
   }
 
+  // ===== 个人资料区块（2026-09-12 IA 第 2a 批，原 pagesUser 分包的 profile 页并入）=====
+  // 只用本页已有的卡片语言（section 卡片 + 内边距），不引入 profile 页的独立卡片/水墨背景装饰
+  &__profile-row {
+    display: flex;
+    align-items: center;
+    gap: 24rpx;
+    padding: 8rpx 0;
+  }
+
+  // 头像选择按钮：重置微信 Button 的默认外框/背景，否则圆形头像会被方框包住
+  &__profile-avatar-btn {
+    width: 128rpx;
+    height: 128rpx;
+    padding: 0;
+    margin: 0;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    overflow: hidden;
+    line-height: 1;
+
+    &::after {
+      border: none;
+    }
+  }
+
+  &__profile-avatar-img {
+    width: 128rpx;
+    height: 128rpx;
+    border-radius: 50%;
+  }
+
+  &__profile-avatar-placeholder {
+    width: 128rpx;
+    height: 128rpx;
+    border-radius: 50%;
+    background: $color-bg-secondary;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__profile-nickname-input {
+    flex: 1;
+    height: 88rpx;
+    background: $color-bg-secondary;
+    border-radius: 16rpx;
+    padding: 0 24rpx;
+    font-size: 28rpx;
+  }
+
+  // 微信端原生组件与提示文案之间的间距（原生组件内部样式由组件自身 wxss 负责，页面不穿透修改）
+  &__profile-tip {
+    display: block;
+    margin-top: 24rpx;
+    font-size: 24rpx;
+    color: $color-text-secondary;
+  }
+
+  // 保存按钮：沿用本页主色块语言（胶囊圆角 + 主题渐变），与退出登录按钮同一视觉族
+  &__save-btn {
+    margin: 24rpx 0 32rpx;
+    height: 84rpx;
+    border-radius: 42rpx;
+    background: $gradient-gold;
+    color: #ffffff;
+    font-size: 30rpx;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+
+    &::after {
+      border: none;
+    }
+  }
+
   // 主题 / 背景选择的样式已迁至 components/BackgroundPicker.scss
   // （设置页改为复用 BackgroundPicker 组件，样式随组件走，避免两处维护）
 }
