@@ -355,7 +355,15 @@ export default function CheckinPopup({ open, onClose, onComplete }: CheckinPopup
   if (!open) return null
 
   return (
-    <View className='ckp-overlay' catchMove onClick={handleClose}>
+    <View className='ckp-overlay' onClick={handleClose}>
+      {/*
+        防滚动穿透层：catchMove 会编译成 catchtouchmove（Taro 把节点换成 catch-view，
+        产物见 dist/base.wxml 的 tmpl_0_0），而 catchtouchmove 挂在内层滚动区的「祖先」上时，
+        微信 WebView 渲染器下 scroll-view 会出现「有进度条却滑不动」的现象
+        —— 所以它必须是卡片的「兄弟」而不是「祖先」，卡片内 3 个 ScrollView 的祖先链上不能再有 catchMove。
+        本层不绑 onClick：点深色区域的点击照样冒泡到 .ckp-overlay 触发 handleClose，关闭行为与改动前一致。
+      */}
+      <View className='ckp-mask' catchMove />
       <View className='ckp-card' onClick={(e: any) => e.stopPropagation()}>
         {/* 关闭按钮 */}
         <View className='ckp-close' onClick={handleClose}>
@@ -365,7 +373,11 @@ export default function CheckinPopup({ open, onClose, onComplete }: CheckinPopup
         {/* ===== 步骤一：多宠选择（单宠跳过） ===== */}
         {step === 'pet' && (
           <>
-            <View className='ckp-head'>
+            {/* 卡片内「非滚动区」补 catchMove（.ckp-head / .ckp-footer 本步骤及后续步骤统一加）：
+                它们内部只有 View / Text，确认不含任何 ScrollView，
+                所以加 catchMove 不会踩「catchMove 祖先阻断内层 scroll-view」这个坑，
+                但能兜住手指在标题区/按钮区拖动时的滚动穿透。 */}
+            <View className='ckp-head' catchMove>
               <Text className='ckp-head-icon'>📋</Text>
               <Text className='ckp-head-title'>要为谁打卡？</Text>
               <Text className='ckp-head-sub'>
@@ -414,7 +426,7 @@ export default function CheckinPopup({ open, onClose, onComplete }: CheckinPopup
         {/* ===== 步骤二：五项指标勾选表单 ===== */}
         {step === 'form' && targetPet && (
           <>
-            <View className='ckp-head'>
+            <View className='ckp-head' catchMove>
               <Text className='ckp-head-icon'>📋</Text>
               <Text className='ckp-head-title'>
                 {targetPet.name}的健康打卡
@@ -450,7 +462,7 @@ export default function CheckinPopup({ open, onClose, onComplete }: CheckinPopup
             </ScrollView>
 
             {/* 底部进度 + 提交 */}
-            <View className='ckp-footer'>
+            <View className='ckp-footer' catchMove>
               <Text className='ckp-progress'>
                 {answeredCount >= CHECKIN_ITEMS.length
                   ? '全部就绪 ✦'
@@ -470,7 +482,7 @@ export default function CheckinPopup({ open, onClose, onComplete }: CheckinPopup
         {/* ===== 步骤三：结果展示（评分报告 / 批量成功） ===== */}
         {step === 'result' && resultPayload && (
           <>
-            <View className='ckp-head'>
+            <View className='ckp-head' catchMove>
               <Text className='ckp-head-icon'>🎉</Text>
               <Text className='ckp-head-title'>{resultPayload.card ? '今日健康报告' : '打卡完成'}</Text>
               <Text className='ckp-head-sub'>已记录到健康档案</Text>
@@ -507,7 +519,7 @@ export default function CheckinPopup({ open, onClose, onComplete }: CheckinPopup
                 </View>
               </View>
             </ScrollView>
-            <View className='ckp-footer'>
+            <View className='ckp-footer' catchMove>
               {uncheckedCount > 0 && (
                 <View className='ckp-continue' hoverClass='ckp-continue--hover' onClick={handleContinue}>
                   <Text>继续给剩余 {uncheckedCount} 只打卡 ›</Text>

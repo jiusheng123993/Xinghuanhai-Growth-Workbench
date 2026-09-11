@@ -21,6 +21,24 @@
   animation: scpFadeIn 0.3s ease-out;
 }
 
+/* ===== 防滚动穿透层 ===== */
+/* 为什么需要单独一层 .scp-mask（与 CheckinPopup 的 .ckp-mask 同源同因）：
+   防穿透靠的是 catchMove（编译成 catchtouchmove）。这个属性一旦挂在内层滚动区的「祖先」上，
+   微信 WebView 渲染器下卡片里的 scroll-view 会「有进度条却滑不动」；
+   所以不能把它继续留在 .scp-overlay 上（那是 2 个 ScrollView 的祖先），
+   而必须下移到一个既铺满遮罩区、又不包裹卡片的兄弟节点上。
+   视觉与交互：完全透明，绝对定位铺满遮罩区，不参与 .scp-overlay 的 flex 居中布局；
+   z-index:0，而 .scp-card 是 DOM 中位于其后的定位元素（z-index:auto）→ 卡片绘制并命中在它上层，
+   于是「点卡片内部不关闭、点卡片外的深色区域冒泡到 .scp-overlay 触发 handleClose」都保持原样。 */
+.scp-mask {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+}
+
 @keyframes scpFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

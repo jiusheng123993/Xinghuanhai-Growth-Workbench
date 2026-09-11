@@ -188,7 +188,15 @@ export default function SymptomCheckPopup({ open, onClose, onComplete }: Symptom
   const isResultView = stepType === 'result'
 
   return (
-    <View className='scp-overlay' catchMove onClick={handleClose}>
+    <View className='scp-overlay' onClick={handleClose}>
+      {/*
+        防滚动穿透层：catchMove 会编译成 catchtouchmove（Taro 把节点换成 catch-view，
+        产物见 dist/base.wxml 的 tmpl_0_0），而 catchtouchmove 挂在内层滚动区的「祖先」上时，
+        微信 WebView 渲染器下 scroll-view 会出现「有进度条却滑不动」的现象
+        —— 所以它必须是卡片的「兄弟」而不是「祖先」，卡片内 2 个 ScrollView 的祖先链上不能再有 catchMove。
+        本层不绑 onClick：点深色区域的点击照样冒泡到 .scp-overlay 触发 handleClose，关闭行为与改动前一致。
+      */}
+      <View className='scp-mask' catchMove />
       <View className='scp-card' onClick={(e: any) => e.stopPropagation()}>
         {/* 关闭按钮 */}
         <View className='scp-close' onClick={handleClose}>
@@ -198,7 +206,11 @@ export default function SymptomCheckPopup({ open, onClose, onComplete }: Symptom
         {/* ===== 步骤：逐题勾选 ===== */}
         {!isResultView && (
           <>
-            <View className='scp-head'>
+            {/* 卡片内「非滚动区」补 catchMove（.scp-head / .scp-footer 两个步骤统一加）：
+                它们内部只有 View / Text，确认不含任何 ScrollView，
+                所以加 catchMove 不会踩「catchMove 祖先阻断内层 scroll-view」这个坑，
+                但能兜住手指在标题区/底部按钮区拖动时的滚动穿透。 */}
+            <View className='scp-head' catchMove>
               <Text className='scp-head-icon'>🩺</Text>
               <Text className='scp-head-title'>{pet?.name ? `${pet.name}的症状初筛` : '症状初筛'}</Text>
               <Text className='scp-head-sub'>点一点就能完成，大概 10 秒</Text>
@@ -234,7 +246,7 @@ export default function SymptomCheckPopup({ open, onClose, onComplete }: Symptom
               </View>
             </ScrollView>
 
-            <View className='scp-footer'>
+            <View className='scp-footer' catchMove>
               <View
                 className={`scp-back-btn ${stepIndex === 0 ? 'scp-back-btn--disabled' : ''}`}
                 onClick={handlePrev}
@@ -251,7 +263,7 @@ export default function SymptomCheckPopup({ open, onClose, onComplete }: Symptom
         {/* ===== 结果页 ===== */}
         {isResultView && result && (
           <>
-            <View className='scp-head'>
+            <View className='scp-head' catchMove>
               <Text className='scp-head-icon'>📋</Text>
               <Text className='scp-head-title'>症状评估报告</Text>
               <Text className='scp-head-sub'>已生成初筛结论</Text>
@@ -273,7 +285,7 @@ export default function SymptomCheckPopup({ open, onClose, onComplete }: Symptom
                 </View>
               </View>
             </ScrollView>
-            <View className='scp-footer'>
+            <View className='scp-footer' catchMove>
               <View className='scp-submit' hoverClass='scp-submit--hover' onClick={handleDone}>
                 <Text>收下啦 ✨</Text>
               </View>
