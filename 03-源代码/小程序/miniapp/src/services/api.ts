@@ -6,6 +6,7 @@
 import Taro from '@tarojs/taro'
 import { CONFIG } from '../config'
 import { storage } from '../utils/storage'
+import { localDateString } from '../utils/date'
 import { mockApi } from './mock'
 import type { ApiResponse, User, Pet, Checkin, Membership, LoginResponse } from '../types'
 
@@ -45,7 +46,7 @@ function normalizeUser(raw: any): User {
  * 服务端打卡记录统一映射（2026-08-23 前后端契约修复）
  * 服务端 pet_health_entries 返回 createdAt + spiritLevel/appetiteLevel/poopLevel 等 level 字段，
  * 前端 Checkin 类型使用 date/mood/appetite/stool —— 在此按 level 语义映射：
- *   - date    = createdAt 的 YYYY-MM-DD
+ *   - date    = createdAt 落在的**本地日历日**（YYYY-MM-DD）
  *   - mood    = spiritLevel ≤2 → 'sad'（精神差），否则 'happy'
  *   - appetite= appetiteLevel ≤2 → 'poor'，否则 'good'
  *   - stool   = poopLevel ≤2 → 'loose'（软便），≥4 → 'hard'（硬便），否则 'normal'
@@ -54,21 +55,49 @@ function normalizeUser(raw: any): User {
 /** 服务端打卡记录归一化（导出供单测；见函数注释契约说明） */
 export function normalizeCheckin(raw: any): Checkin {
   const createdAt = String(raw.createdAt || '')
-  const spirit = Number(raw.spiritLevel)
-  const appetite = Number(raw.appetiteLevel)
-  const poop = Number(raw.poopLevel)
   return {
     ...raw,                        // 保留原始字段（riskLevel/hasAnomaly/levels 等）
     id: String(raw.id || ''),
     petId: String(raw.petId || ''),
     userId: String(raw.userId || ''),
-    date: createdAt.slice(0, 10),  // 服务端无 date 字段，由 created_at 派生
-    mood: spirit <= 2 ? 'sad' : 'happy',
-    appetite: appetite <= 2 ? 'poor' : 'good',
-    stool: poop <= 2 ? 'loose' : poop >= 4 ? 'hard' : 'normal',
+    // 服务端无 date 字段，由 created_at 派生；必须取**本地日历日**（2026-09-11 统一口径）：
+    // 原实现 `createdAt.slice(0, 10)` 取的是 **UTC 日期**，东八区 00:00–08:00 打的卡会落到前一天，
+    // 而 checkinStore 判定「今天有没有打卡」用的是本地日期 → 清晨打完卡仍显示今天还没打卡。
+    date: localDateString(raw.createdAt) ?? '',
+    ...deriveCheckinView(raw),
     weight: raw.weight != null && raw.weight !== '' ? Number(raw.weight) : undefined,
     createdAt,
   } as Checkin
+}
+
+/**
+ * 由「等级字段」派生前端视图字段（mood / appetite / stool）
+ *
+ * 【为什么要抽成唯一实现】打卡有**两条写路径**（checkinService 落库、checkinStore 的乐观写入）
+ * 和**一条读路径**（normalizeCheckin）。三处若各写一份映射，同一条记录会出现
+ * 「刚提交时显示 A、刷新之后显示 B」——2026-09-11 P0 修复时把该映射收敛到这里，读写共用。
+ *
+ * 注意这是**有损**映射（5 档压成 3 档）：落库与统计一律用 level 字段，
+ * 视图字段只服务于「今日已打卡」结果卡、异常判定与趋势文案。
+ *
+ * @param levels - 服务端/本地记录的等级字段（容忍缺字段、null 与字符串）
+ * @returns 与 Checkin 同名的三个视图字段
+ */
+export function deriveCheckinView(levels: {
+  spiritLevel?: number | string | null
+  appetiteLevel?: number | string | null
+  poopLevel?: number | string | null
+}): Pick<Checkin, 'mood' | 'appetite' | 'stool'> {
+  // Number(undefined) = NaN，而 NaN 参与的比较恒为 false → 缺字段时兜底成 happy/good/normal
+  // （与历史实现一致：不能因为后端漏字段就把未知渲染成精神差/食欲差）
+  const spirit = Number(levels.spiritLevel)
+  const appetite = Number(levels.appetiteLevel)
+  const poop = Number(levels.poopLevel)
+  return {
+    mood: spirit <= 2 ? 'sad' : 'happy',
+    appetite: appetite <= 2 ? 'poor' : 'good',
+    stool: poop <= 2 ? 'loose' : poop >= 4 ? 'hard' : 'normal',
+  }
 }
 
 /**
@@ -78,7 +107,7 @@ export function normalizeCheckin(raw: any): Checkin {
  * @returns 泛型响应数据
  */
 async function request<T>(path: string, options?: { method?: string; data?: any; params?: Record<string, string> }): Promise<T> {
-  if (useMock()) {
+  if (isMockMode()) {
     const method = options?.method || 'GET'
 
     if (method === 'GET' && path.includes('/trends')) {
@@ -154,8 +183,14 @@ async function request<T>(path: string, options?: { method?: string; data?: any;
   }
 }
 
-/** 判断是否启用 Mock 模式 */
-function useMock(): boolean {
+/**
+ * 判断是否启用 Mock 模式
+ *
+ * 命名说明：原名 `useMock` 以 "use" 开头，会被 eslint 的 react-hooks/rules-of-hooks
+ * 误判成 React Hook（它只是普通工具函数，不是 Hook），2026-09-11 与 familyService
+ * 口径统一改名为 isMockMode。
+ */
+function isMockMode(): boolean {
   return CONFIG.USE_MOCK
 }
 
@@ -270,19 +305,19 @@ export const api = {
   },
   /** 微信登录：使用 code 换取登录态 */
   login: async (code: string): Promise<LoginResponse> => {
-    if (useMock()) return mockApi.login(code)
+    if (isMockMode()) return mockApi.login(code)
     const res = await request<LoginResponse>('/api/auth/login', { method: 'POST', data: { provider: 'wechat', code } })
     return { ...res, user: normalizeUser(res.user) }
   },
   /** 获取当前登录用户信息 */
   getUser: async (): Promise<User> => {
-    if (useMock()) return mockApi.getUser()
+    if (isMockMode()) return mockApi.getUser()
     // 服务端真实路由为 /api/auth/profile（旧 /session 不存在，会导致登录态无法恢复）
     return normalizeUser(await request<any>('/api/auth/profile'))
   },
   /** 更新用户资料（昵称 + 头像），跟随微信的资料以用户选择为准 */
   updateProfile: async (nickname: string, avatarUrl: string): Promise<User> => {
-    if (useMock()) return mockApi.updateProfile(nickname, avatarUrl)
+    if (isMockMode()) return mockApi.updateProfile(nickname, avatarUrl)
     const raw = await request<any>('/api/auth/profile', {
       method: 'PUT',
       data: { nickname, avatar_url: avatarUrl },
@@ -317,44 +352,44 @@ export const api = {
   },
   /** 获取用户的所有宠物列表 */
   getPets: async (userId: string): Promise<Pet[]> => {
-    if (useMock()) return mockApi.getPets(userId)
+    if (isMockMode()) return mockApi.getPets(userId)
     return request<Pet[]>('/pets', { params: { userId } })
   },
   /** 获取单个宠物详情 */
   getPet: async (petId: string): Promise<Pet | null> => {
-    if (useMock()) return mockApi.getPet(petId)
+    if (isMockMode()) return mockApi.getPet(petId)
     return request<Pet>(`/pets/${petId}`)
   },
   /** 创建新宠物 */
   createPet: async (data: Partial<Pet>): Promise<Pet> => {
-    if (useMock()) return mockApi.createPet(data)
+    if (isMockMode()) return mockApi.createPet(data)
     return request<Pet>('/pets', { method: 'POST', data })
   },
   /** 更新宠物信息 */
   updatePet: async (petId: string, data: Partial<Pet>): Promise<Pet> => {
-    if (useMock()) return mockApi.updatePet(petId, data)
+    if (isMockMode()) return mockApi.updatePet(petId, data)
     return request<Pet>(`/pets/${petId}`, { method: 'PUT', data })
   },
   /** 删除宠物 */
   deletePet: async (petId: string): Promise<void> => {
-    if (useMock()) return mockApi.deletePet(petId)
+    if (isMockMode()) return mockApi.deletePet(petId)
     return request<void>(`/pets/${petId}`, { method: 'DELETE' })
   },
   /** 获取宠物的打卡列表（归一化为前端 Checkin 结构） */
   getCheckins: async (petId: string): Promise<Checkin[]> => {
-    if (useMock()) return mockApi.getCheckins(petId)
+    if (isMockMode()) return mockApi.getCheckins(petId)
     const rows = await request<Checkin[]>(`/api/pets/${petId}/checkins`)
     return rows.map(normalizeCheckin)
   },
   /** 创建打卡记录（返回归一化结构） */
   createCheckin: async (data: Partial<Checkin>): Promise<Checkin> => {
-    if (useMock()) return mockApi.createCheckin(data)
+    if (isMockMode()) return mockApi.createCheckin(data)
     const row = await request<Checkin>(`/api/pets/${data.petId}/checkins`, { method: 'POST', data })
     return normalizeCheckin(row)
   },
   /** 获取用户的会员信息 */
   getMembership: async (userId: string): Promise<Membership | null> => {
-    if (useMock()) return mockApi.getMembership(userId)
+    if (isMockMode()) return mockApi.getMembership(userId)
     return request<Membership | null>(`/membership/status`, { params: { userId } })
   },
 }

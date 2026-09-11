@@ -4,6 +4,7 @@
  */
 import { useCallback } from 'react';
 import { useCheckinStore } from '../stores/checkinStore';
+import type { CheckinInput } from '../services/checkinService';
 import type { Checkin } from '../types';
 
 interface UseCheckinReturn {
@@ -12,7 +13,13 @@ interface UseCheckinReturn {
   streakDays: number;
   isLoading: boolean;
   initUser: (userId: string) => Promise<void>;
-  doCheckin: (data: Partial<Checkin>) => Promise<Checkin>;
+  /**
+   * 提交今日打卡
+   *
+   * 入参是服务层契约 CheckinInput（2026-09-11 P0 修复：原为 Partial<Checkin>，
+   * 页面据此把 mood/appetite/stool 当 POST body 发出，被服务端 zod 校验挡成 400）。
+   */
+  doCheckin: (data: CheckinInput) => Promise<Checkin>;
   fetchCheckins: (petId: string) => Promise<void>;
 }
 
@@ -39,7 +46,7 @@ export function useCheckin(): UseCheckinReturn {
   );
 
   const handleDoCheckin = useCallback(
-    async (data: Partial<Checkin>): Promise<Checkin> => {
+    async (data: CheckinInput): Promise<Checkin> => {
       return doCheckin(data);
     },
     [doCheckin]

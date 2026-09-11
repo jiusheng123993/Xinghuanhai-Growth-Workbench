@@ -32,6 +32,7 @@ import { AnalyticsEventName } from '../../types/analyticsTypes'
 import { EVENT } from '../../constants/analyticsEvents'
 import { getActiveBreeds } from '../../data/petKnowledge/breeds'
 import type { Checkin } from '../../types'
+import type { AnomalyItem } from '../../memory-body/types/memoryBodyTypes'
 import './index.scss'
 import PageBackground from '../../components/PageBackground'
 
@@ -144,8 +145,15 @@ export function computeRiskLevel(mood: Checkin['mood'], appetite: Checkin['appet
   return 'low'
 }
 
-export function computeAnomalyItems(mood: Checkin['mood'], appetite: Checkin['appetite'], stool: Checkin['stool']): string[] {
-  const items: string[] = []
+/**
+ * 由视图字段推导「异常项」枚举
+ *
+ * 返回值直接作为打卡接口的 anomaly_items 上送，所以必须是 memory-body 的
+ * AnomalyItem 枚举（poop/appetite/spirit/...）——类型收窄后，这里再想塞中文描述
+ * 之类的自由文本，`tsc --noEmit` 会直接报错。
+ */
+export function computeAnomalyItems(mood: Checkin['mood'], appetite: Checkin['appetite'], stool: Checkin['stool']): AnomalyItem[] {
+  const items: AnomalyItem[] = []
   if (mood === 'sad') items.push('spirit')
   if (appetite === 'poor') items.push('appetite')
   if (stool !== 'normal') items.push('poop')
@@ -285,7 +293,22 @@ export default function PetCheckin() {
   }, [checkins])
 
   const handleSubmit = async () => {
-    if (!currentPet) return
+    // 空 userId 必须在**发请求前**挡住（2026-09-11 审查 P1-2）：
+    // doCheckin → checkinService.createCheckin 的**第一行**是 requirePetOwnership
+    // （utils/petOwnership.ts），它在 try **之外**同步抛 —— 既不落本地兜底、也不入同步队列，
+    // 用户只会拿到写死的「打卡失败，请重试」，看不出真实原因。
+    // 这个状态在内存里可达：authStore.logout（stores/authStore.ts）只清 storage 与 user，
+    // **不重置 usePetStore**，而本页又没有登录态守卫（对比 pages/mine、pages/creative 的
+    // isAuthenticated 守卫）→ 登出后停留在本页时 currentPet 仍在、userId 已是空串。
+    if (!currentPet || !userId) {
+      // 按缺哪一项给不同提示：缺 userId 是登录态问题；缺宠物正常渲染下是空态、没有提交按钮，
+      // 这里只是与 handleBatchCheckin 同口径的防御性兜底，提示也不该说成"登录过期"
+      Taro.showToast({ title: currentPet ? '登录已过期，请重新登录' : '请先添加宠物', icon: 'none' })
+      return
+    }
+    // 视图字段（mood/appetite/stool）只服务本页的异常判定、反馈弹窗与埋点，
+    // **不再进提交体**：后端 createCheckinSchema 里没有这三个字段（历史 P0：
+    // 旧实现把它们当 POST body 发出去，恒定被校验中间件挡成 400/code 100001）
     const mood = mapSpiritLevel(formData.spiritLevel)
     const appetite = mapAppetiteLevel(formData.appetiteLevel)
     const stool = mapPoopLevel(formData.poopLevel)
@@ -304,14 +327,19 @@ export default function PetCheckin() {
     })
     setSubmitting(true)
     try {
-      const result = await doCheckin({
+      // 提交体一律用**真实表单等级值**，不要从 mood/appetite/stool 反推：
+      // 那三档是 5 档的有损压缩，反推会把「偏软 / 便秘」「亢进」等档位写成同一个值，
+      // 污染服务端趋势统计与记忆引擎的健康画像。
+      await doCheckin({
         petId: currentPet.id,
         userId,
-        date: new Date().toISOString().split('T')[0],
-        mood,
-        appetite,
-        stool,
+        poopLevel: formData.poopLevel,
+        appetiteLevel: formData.appetiteLevel,
+        spiritLevel: formData.spiritLevel,
+        exerciseLevel: formData.exerciseLevel,
         weight: formData.weight,
+        hasAnomaly,
+        anomalyItems,
         note: noteParts.length > 0 ? noteParts.join('; ') : undefined,
       })
 
