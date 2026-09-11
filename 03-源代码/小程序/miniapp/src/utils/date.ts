@@ -117,7 +117,10 @@ export interface PetAgeFormatOptions {
  * 【有意保留的异口径 —— 不要顺手改】：
  *   - `engines/vaccineScheduler` / `services/feedingService` / `services/symptomService` 的**月龄**：
  *     接种窗口、喂养分档、临床风险阈值，要的是整数月区间与结构化字段（还要上传服务端），不是展示文案
- *   - `pages/product/index.tsx` 的 `petAge` 枚举（puppy_kitten / senior）：喂给推荐引擎的分类
+ *   - `data/petProducts.ts` 的 `petAge` 枚举（puppy_kitten / senior）：喂给商品推荐引擎的分类。
+ *     原唯一产出方 `pages/product/index.tsx` 已随 2026-09-12「IA 落地第 1 批」删除，
+ *     现消费方只剩 `petProducts.ts` 自身的打分逻辑（经 `hooks/useProductCommission` 调用），
+ *     且已无页面写入该字段 —— 此处仅作类型口径记录，不代表还有页面在用。
  *   - `pagesPet/achievement` 的「今年X岁了」：生日成就卡语境，是"今年满 X 岁"而非当前精确年龄
  *   - `pages/mine` 的「养宠 N 个月 / N 年」：算的是用户养宠时长，起算点与宠物年龄不同
  *
