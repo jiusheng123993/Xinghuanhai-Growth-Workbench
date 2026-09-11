@@ -38,10 +38,14 @@ const config = {
       // 微信原生组件（chooseAvatar/nickname 能力，Taro 编译层不支持这两个属性，
       // 用原生 wxml/js 实现并通过 usingComponents 引入，这里显式拷贝进 dist）
       { from: 'src/components/WechatProfile', to: 'dist/components/WechatProfile' },
-      // 分主题 tabBar 图标：themeStore 里是用运行时字符串拼路径（拼给 setTabBarItem），
-      // webpack 静态分析看不到这些文件，不显式拷贝的话真机切主题时图标会 404。
-      // 默认配色那套（autumn/grid）路径写在 app.config.ts 里，会被自动带进去，无需在此声明。
-      { from: 'src/assets/icons/tabbar', to: 'dist/assets/icons/tabbar' },
+      // 整套 tabBar 图标：自定义 tabBar 组件（src/custom-tab-bar）是用**根路径字符串**
+      // 拼给 <Image src>（`/assets/icons/tabbar/<主题>/<名>.png`），webpack 静态分析
+      // 看不到这些文件，不显式拷贝的话真机上会 404。
+      // ⚠️ 这里从 2026-09-12（IA 第 3 批）起由「只拷 tabbar 子目录」改为**拷整个 icons 目录**：
+      // 默认配色那套（autumn/grid → assets/icons/*.png）过去是靠 app.config.ts 的
+      // tabBar.list.iconPath 被 Taro 自动带进 dist 的，而自定义 tabBar 下图标已不走 app.config，
+      // 一旦只依赖那条隐式链路就会「默认主题下 tab 图标全裂」。一条规则覆盖两套，且不再重复拷贝。
+      { from: 'src/assets/icons', to: 'dist/assets/icons' },
     ],
     options: {},
   },

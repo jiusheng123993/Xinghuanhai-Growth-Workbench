@@ -1,0 +1,132 @@
+/**
+ * 自定义 tabBar 样式（只放结构 + 动效，配色由组件从 themeStore 内联注入）
+ *
+ * 【为什么这样分工】主题有 6 套（四季 + 星空银河 + 奶油格纹），底色/文字色/
+ * 分隔线/中心钮渐变写死在 SCSS 里就要改 6 处、切主题时还得重建样式；
+ * 所以这些色值全部由 index.tsx 的 barStyle / aiStyle / `<Text style>` 注入，
+ * 本文件只管「不随主题变」的尺寸、布局、圆角、层级与按下反馈。
+ *
+ * 【本仓库旧坑】不要写 rgba(var(--x), α) 这种写法 —— 小程序 WXSS 解析不了，
+ * 颜色只能用具体字面量（例如 rgba(255, 255, 255, 0.14)）。
+ */
+
+.custom-tab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* z-index 取 900 —— 卡在「页面内容」与「模态/遮罩」之间。
+     本仓库分层是 2026-09-12 **全 src 带 -Recurse 全量扫 scss**得到的既有事实：
+       · 10     页面内容主轴（app.scss 给 .chat-home-page / .mine-page / .timeline-page 等设的；
+                其余局部值还有 1/2/5/9/20/50/100，最高 100）
+       · 900    本底栏
+       · 999    分享卡/问卷遮罩（HealthTrendShareCard / NpsSurvey / VaccineShareCard /
+                pagesPet/symptom-check 的 __overlay）
+       · 1000   弹窗·抽屉·命名弹层·会话抽屉·回忆评审遮罩（PrivacyPopup、AnxietyIntervention、
+                CarePlanCard、PetDeceasedModal、CrisisReferralCard、各 ShareCard、
+                pages/index:1562/2144、pages/timeline:593 等）
+       · 1050   强弹窗（CheckinPopup / SymptomCheckPopup）　· 2000 EmergencyAlert　· 9999 启动缓冲页
+     ⚠️ 有一个**低于 900 的全屏遮罩**：`pages/index/index.scss` 的 `.chat-plus-overlay`（z-index: 99）
+     会被底栏压住 —— 这**不是回归**：原生 tabBar 是 webview 之外的原生层，本来就压在所有页面内容
+     （含该遮罩）之上，改造前后行为一致。反过来，≥999 的模态现在会盖住底栏，
+     相对原生底栏是**改进**（模态本就该盖住底栏）。
+     结论：900 同时满足「高于所有页面内容（最高 100）」与「低于所有模态（最低 999）」。 */
+  z-index: 900;
+
+  display: flex;
+  /* 不能用 stretch：否则中心圆钮所在的槽位会被拉满高，凸出效果消失 */
+  align-items: flex-start;
+  /* 让 iPhone 安全区的 padding 加在 100rpx 内容区之外，不挤压图标与文字 */
+  box-sizing: content-box;
+  height: 100rpx;
+  /* 顶部分隔线：宽度固定 1rpx，颜色由内联 style 按 meta.tabBarBorderStyle 注入 */
+  border-top: 1rpx solid transparent;
+  /* 两行都写：constant() 给老基础库兜底、env() 给新基础库。
+     ⚠️ 但 2026-09-12 实测（独立审查 + 产物核验）：构建产物里 **padding 类属性上的 constant() 会被
+     minifier 丢掉**（dist/custom-tab-bar/index.wxss 只剩 env() 一条；而 min-height/height 上的两行
+     会被保留），所以实际生效的只有 env()。本项目基础库下限远高于 env() 的引入版本，可接受，
+     但**不要误以为这里有 constant 兜底**（同一现象也出现在 pages/mine 与 pages/creative 的让位值上）。 */
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ============================================================
+   选中弹跳（自定义 tabBar 版）
+   ⚠️ 为什么不用 app.scss 里那两条现成的 `.xhh-tab-bounce[data-active='true']`：
+     ① 全局 app.wxss 的**类**选择器对自定义组件不生效（Taro 只给内部 recursive 组件补
+        addGlobalClass，用户组件没有）→ 产物里本文件不含任何全局类；
+     ② `data-*` 属性不落 wxml（实测产物里只有 data-sid）→ 属性选择器永远匹配不到。
+   两条都是产物核验确认过的，所以动效必须写在这里、用类名触发。
+   （app.scss 里那两条全局规则在微信端本就是死代码，清理留给后续批次。） */
+@keyframes custom-tab-bar-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.28) translateY(-2rpx); }
+  100% { transform: scale(1); }
+}
+
+.custom-tab-bar__icon--active {
+  animation: custom-tab-bar-pop 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* 跟随系统「减少动态效果」：本项目既有约定（app.scss 同一开关），组件内需自己再声明一次 */
+@media (prefers-reduced-motion: reduce) {
+  .custom-tab-bar__icon--active {
+    animation: none !important;
+  }
+}
+
+/* 5 个视觉槽位等宽：中心槽位不额外加宽，保证 4 个 tab 均匀分布 */
+.custom-tab-bar__slot {
+  flex: 1;
+  min-width: 0;
+  height: 100rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 中心槽位：内容靠上排，配合圆钮的负 margin 向上凸出 */
+.custom-tab-bar__slot--ai {
+  justify-content: flex-start;
+}
+
+.custom-tab-bar__icon {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.custom-tab-bar__label {
+  margin-top: 4rpx;
+  font-size: 20rpx;
+  line-height: 1.2;
+  /* 选中/未选中文字色同样由内联 style 注入 */
+}
+
+.custom-tab-bar__ai {
+  width: 124rpx;
+  height: 124rpx;
+  box-sizing: border-box;
+  /* 向上凸出约 40rpx（≈20px），形成抬起来的层次感 */
+  margin-top: -40rpx;
+  border: 6rpx solid #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* 动效必须 <=150ms：超出就会拖，按下去像卡了一拍 */
+  transition: transform 140ms ease;
+  /* 渐变外环与投影的色值随主题，由 index.tsx 的 aiStyle 注入 */
+}
+
+/* 按下缩放反馈：走 weapp 的 hover-class（:active 在小程序上不稳定） */
+.custom-tab-bar__ai--press {
+  transform: scale(0.94);
+}
+
+.custom-tab-bar__ai-avatar {
+  width: 92rpx;
+  height: 92rpx;
+  border-radius: 50%;
+}

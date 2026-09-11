@@ -140,7 +140,11 @@ export default function AchievementPage() {
           title='还没有成就'
           desc='坚持每天打卡，记录毛孩子的健康数据，就能解锁各种成就'
           actionText='去打卡'
-          onAction={() => Taro.switchTab({ url: '/pages/pet-profile/index' })}
+          // 2026-09-12（IA 第 3 批·自定义 tabBar）：宠物档案 pages/pet-profile/index 已退出 tabBar，成为普通页面，
+          // 所以这里必须用 navigateTo —— 微信只允许 switchTab 打开 tabBar.list 里的页面，
+          // 对已退出 tabBar 的页面调 switchTab 会静默失败（不抛异常、不报错，用户点了完全没反应）。
+          // 日后宠物档案若重新回到 tabBar，这里要改回 switchTab。
+          onAction={() => Taro.navigateTo({ url: '/pages/pet-profile/index' })}
         />
       )}
     </ScrollView>

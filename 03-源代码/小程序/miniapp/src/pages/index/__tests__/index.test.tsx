@@ -96,6 +96,12 @@ vi.mock('@tarojs/taro', () => ({
     switchTab: mockSwitchTab,
     setClipboardData: mockSetClipboardData,
   },
+  // ⚠️ 必须是**与 default 平级的具名导出**，放进 default 里没用：
+  // 首页现在经 useTabBarSelected(constants/tabBar) 注册 useDidShow 来广播 tabBar 选中态
+  // （自定义 tabBar 第 3 批），而 constants/tabBar.ts 用的是具名导入
+  // `import Taro, { useDidShow } from '@tarojs/taro'`；缺了它本文件 20 条用例会全红，
+  // 报错是「No "useDidShow" export is defined on the "@tarojs/taro" mock」。
+  useDidShow: () => {},
 }))
 
 // ============================================================

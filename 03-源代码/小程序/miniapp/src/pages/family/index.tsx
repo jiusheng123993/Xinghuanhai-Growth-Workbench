@@ -335,8 +335,13 @@ export default function FamilyPage() {
    * 点家庭里的宠物 → 切成当前宠物并跳到它的档案页
    *
    * 2026-09-11 补失败兜底：petStore.switchPet 失败时会 throw，原来这里既不接错、
-   * 后续的 switchTab 也不会执行 —— 用户点一下宠物"什么都没发生"。
+   * 后续的跳转也不会执行 —— 用户点一下宠物"什么都没发生"。
    * 失败时明确提示并**不跳转**：否则会跳到"其实没切成功的那只（还是旧宠物）"的档案页，更容易误解。
+   *
+   * 2026-09-12（IA 第 3 批·自定义 tabBar）：宠物档案 pages/pet-profile/index 已退出 tabBar，成为普通页面，
+   * 所以这里必须用 navigateTo —— 微信只允许 switchTab 打开 tabBar.list 里的页面，
+   * 对已退出 tabBar 的页面调 switchTab 会**静默失败**（不抛异常、不报错，用户点了完全没反应）。
+   * 日后宠物档案若重新回到 tabBar，这里要改回 switchTab。
    */
   const handlePetClick = async (petId: string) => {
     try {
@@ -347,7 +352,7 @@ export default function FamilyPage() {
       Taro.showToast({ title: msg || usePetStore.getState().error || '切换失败，请重试', icon: 'none' })
       return
     }
-    Taro.switchTab({ url: '/pages/pet-profile/index' })
+    Taro.navigateTo({ url: '/pages/pet-profile/index' })
   }
 
   const handleAddPet = () => {

@@ -29,6 +29,8 @@ import { chooseImageWithPrivacy } from '../../utils/privacy'
 import { formatPetAge } from '../../utils/date'
 import { getCachedRiskScan } from '../../services/chronicService'
 import { resolvePetAvatarUrl } from '../../data/homeStyleAvatars'
+// 自定义 tabBar 的选中态广播 hook（与本页路由一一对应，写错页面路径 tsc 直接报错）
+import { useTabBarSelected } from '../../constants/tabBar'
 import './index.scss'
 import PageBackground from '../../components/PageBackground'
 
@@ -85,6 +87,20 @@ const PLUS_MENU_ITEMS: Array<{ icon: FillIconName; label: string; sub: string; b
 
 export default function Index() {
   const themeClass = useThemeClass()
+  /**
+   * 广播「当前选中的是第 1 个 tab」给自定义 tabBar 组件（今天 = 下标 0）。
+   *
+   * 【为什么必须由页面主动广播】微信给**每个 tab 页各创建一个**自定义 tabBar 实例
+   * （官方文档原话：每个 tab 页下的自定义 tabBar 组件实例是不同的），实例建好后就不随
+   * `switchTab` 重新挂载，React 也不会因为路由变化自动重渲染它 —— 所以「现在选中第几个」
+   * 只能由 tab 页在 `useDidShow` 时推进来。不接这一行，症状就是「点了 tab、页面确实切了，
+   * 但底部高亮还停在上一个」。机制细节（含"某页实例刚创建时靠路由兜底"）见
+   * src/custom-tab-bar/index.tsx 文件头。
+   *
+   * 位置要求：必须放在组件函数体顶层、与其它 hook 同级（hook 内部挂的是 useDidShow，
+   * 放进条件分支/循环会让 hook 调用顺序在渲染间漂移）。
+   */
+  useTabBarSelected('/pages/index/index')
   const petInfo = usePetInfo()
   const user = useAuthStore(s => s.user)
   const [todayHealth, setTodayHealth] = useState<PetHealthEntry | null>(null)

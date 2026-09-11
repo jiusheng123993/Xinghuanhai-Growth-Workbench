@@ -32,6 +32,8 @@ import './index.scss'
 // 128×128 / 256 色压缩版（14KB），放在页面级 assets 里，不占分包、不动共用目录。
 import familyAvatar from './assets/family-avatar.png'
 import { Icon, Illustration, PageBackground, type FillIconName } from '../../components'
+// 自定义 tabBar 的选中态广播 hook（本页 = tabBar 第 4 项，路径写错 tsc 直接报错）
+import { useTabBarSelected } from '../../constants/tabBar'
 
 /** 主题配置（对齐原型四季色） */
 const THEME_OPTIONS: { key: ThemeKey; label: string; colors: [string, string] }[] = [
@@ -79,6 +81,11 @@ const MENU_GROUPS: {
       { icon: 'syringe', label: '疫苗日历', url: '/pagesPet/vaccine/index' },
       { icon: 'crown', label: '会员中心', url: '/pagesUser/member/index' },
       { icon: 'trophy', label: '成就墙', url: '/pagesPet/achievement/index' },
+      // 宠物档案（原为「宠物」tab 页）：IA 第 3 批把它退出 tabBar 后，本页此前**没有任何入口**，
+      // 用户会找不到自己宠物的档案卡，故在「数据服务」组补这一条常驻入口。
+      // 走下方 navigateTo（= Taro.navigateTo），与同组其余项一致；图标沿用 icons-fill 里
+      // 语义最贴的 pet 爪印（不新增图标）。
+      { icon: 'paw-print', label: '宠物档案', url: '/pages/pet-profile/index' },
     ],
   },
   {
@@ -117,6 +124,19 @@ export default function Mine() {
   // 头像加载失败标记：Image 触发 onError 时置 true 退回昵称占位，避免显示裂图
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false)
   const themeClass = useThemeClass()
+
+  /**
+   * 广播「当前选中的是第 4 个 tab」给自定义 tabBar 组件（我的 = 下标 3）。
+   *
+   * 【为什么必须由页面主动广播】微信给**每个 tab 页各创建一个**自定义 tabBar 实例
+   * （官方文档原话：每个 tab 页下的自定义 tabBar 组件实例是不同的），实例建好后就不随
+   * `switchTab` 重新挂载，React 也不会因路由变化自动重渲染它 ——
+   * 选中态只能由 tab 页在 `useDidShow` 时推进来，否则「页面切了、底部高亮不动」。
+   *
+   * 本页下面另有一个自己的 `Taro.useDidShow`（未登录时提前 return 刷数据用），两者独立：
+   * 若把广播并进那个回调，未登录/未就绪时就不会广播高亮。故单独占一行、无条件调用。
+   */
+  useTabBarSelected('/pages/mine/index')
 
   // tab 页常驻：每次从其他页切回「我的」时刷新数据
   Taro.useDidShow(() => {

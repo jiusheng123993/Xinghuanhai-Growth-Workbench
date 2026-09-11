@@ -641,3 +641,35 @@
     background: #FFFDF9;
   }
 }
+
+// ===== 自定义 tabBar 的底部让位（IA 第 3 批：原生 tabBar → 自定义 tabBar）=====
+// 原生 tabBar 在 webview **之外**，页面视口本来就不含它；改成自定义 tabBar 后，
+// 底栏变成**覆盖在页面之上的固定层**（100rpx 底板 + 约 40rpx 中心「团团」凸起圆钮区），
+// 页面内容会钻到它下面 → 本页最后的「退出登录」那一块会被底栏挡住。
+// 故 tab 页必须自己让出底栏高度：
+// 100rpx 底栏底板 + 约 40rpx 中心凸起圆钮区 + 安全区 + 20rpx 呼吸位 = 160rpx + 安全区
+// （中心圆钮直径 124rpx、向上凸出底栏上沿，所以真实遮挡高度不是 100rpx），
+// 数值与 src/custom-tab-bar 的底栏高度约定必须一致。
+//
+// 【为什么本页用 `page{}` 而不是给根容器减高】本页根节点是
+// `<ScrollView className='mine-page' scrollY>`，而 `.mine-page` 只写了 min-height:100vh、
+// **没有写死 height** —— scroll-view 在没有固定高度时会被内容撑高，
+// 此时**整页（page）才是真正的滚动容器**，让位只有加在 page 上才生效
+// （给 .mine-page 减 min-height 对这种"内容比一屏高"的页面完全不起作用）。
+// ⚠️ 若哪天把 .mine-page 改成写死 height（变成页内滚动），这里必须同步改成给 .mine-page 减高。
+// 【吸底元素自查】本页**没有**吸底（sticky）/ 悬浮固定（fixed）的条或 CTA
+// （全文件检索：吸底与固定定位零命中、贴底写法零命中）→ 无需抬吸底元素。
+// **故意不写出属性字面量**，免得以后的 `position: fixed` / 贴底检索把这些注释当成命中项。
+//
+// 注：本页末尾原有的 `.mine-bottom-safe`（60rpx）保留不动，于是底部总留白约
+// 220rpx + 安全区 —— 宁可多留一点，也不让最后一行被底栏压住。
+// 两行都写：constant() 给老基础库兜底、env() 给新基础库。
+// ⚠️ 但 2026-09-12 实测（独立审查 + 产物核验）：构建产物里 **padding 类属性上的 constant() 会被
+// minifier 丢掉**（dist/pages/mine/index.wxss 只剩 env() 一条；而 min-height/height 上的两行
+// 会被保留，如 pages/index、pages/timeline），所以实际生效的只有 env()。本项目基础库下限
+// 远高于 env() 的引入版本，可接受，但**不要误以为这里有 constant 兜底**。
+// 源码这两行保留不动（不删任何样式行），写法与 src/custom-tab-bar/index.scss 的同款说明一致。
+page {
+  padding-bottom: calc(160rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
+}

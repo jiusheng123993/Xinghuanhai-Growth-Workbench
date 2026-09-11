@@ -13,7 +13,32 @@
      只有这一页「毫无反应」；另外不透明底色还会让 .xhh-bg 的 z-index:-1 沉到其下方。
      （2026-09-10 与全站 41 个页面的透明化改造对齐） */
   background: transparent;
-  padding: 28rpx 28rpx calc(80rpx + env(safe-area-inset-bottom));
+  // 【自定义 tabBar 的底部让位（IA 第 3 批：原生 tabBar → 自定义 tabBar）】
+  // 原生 tabBar 在 webview **之外**、不占页面高度；改成自定义 tabBar 后底栏成了
+  // **覆盖在页面之上的固定层**（100rpx 底板 + 约 40rpx 中心「团团」凸起圆钮区），
+  // 本页最后一片宫格（「更多」区）会被它挡住。本页是"整页自己滚动"型
+  // （根容器 min-height:100vh、内容全部在页面流里撑高、没有内部滚动容器），
+  // 所以让位就落在根容器这一处**已有的**底部内边距上：
+  // 原值 80rpx + 安全区 → 160rpx + 安全区
+  // （= 100rpx 底栏底板 + 约 40rpx 中心凸起圆钮区 + 安全区 + 20rpx 呼吸位；
+  //   凸起圆钮直径 124rpx、向上凸出底栏上沿，所以真实遮挡高度不是 100rpx）。
+  //
+  // 【为什么本页不加 `page { padding-bottom }`】`.cve` 已经自带 80rpx + 安全区的底部让位，
+  // 再叠加 page 的 160rpx + 安全区会变成 240rpx + 2×安全区（真机上约 190px 空白），
+  // 而且同一件事分散在两个选择器里、以后对不齐。改这一处已有值 = 一个数字说了算。
+  // （本容器 box-sizing: border-box，这 160rpx 含在 min-height 内，不会溢出。）
+  // 两行都写：constant() 给老基础库兜底、env() 给新基础库。
+  // ⚠️ 但 2026-09-12 实测（独立审查 + 产物核验）：构建产物里 **padding 类属性上的 constant() 会被
+  // minifier 丢掉**（dist/pages/creative/index.wxss 只剩 env() 一条；而 min-height/height 上的两行
+  // 会被保留，如 pages/index、pages/timeline），所以实际生效的只有 env()。本项目基础库下限
+  // 远高于 env() 的引入版本，可接受，但**不要误以为这里有 constant 兜底**。
+  // 源码这两行保留不动（不删任何样式行），写法与 src/custom-tab-bar/index.scss 的同款说明一致。
+  // 【吸底元素自查】本页**没有**吸底（sticky）/ 悬浮固定（fixed）的条或 CTA
+  // （全页仅两处绝对定位贴底，都挂在相对定位的 `.cve-feat` 卡片内做插画/文字贴底，
+  //  属卡片内部装饰，不受底栏影响）。**故意不写出属性字面量**，免得以后的
+  //  `position: fixed` / 贴底检索把这些注释当成命中项。
+  padding: 28rpx 28rpx calc(160rpx + constant(safe-area-inset-bottom));
+  padding: 28rpx 28rpx calc(160rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
   animation: pageEnter 0.4s ease-out;
 }

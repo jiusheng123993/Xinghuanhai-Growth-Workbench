@@ -35,7 +35,11 @@ $color-border-light: var(--border-light, rgba(200, 142, 168, 0.08));
 }
 
 .home-skeleton {
-  min-height: 100vh;
+  /* 自定义 tabBar（第 3 批起）是覆盖在页面之上的固定层：100rpx 底板 + 约 40rpx 中心凸起圆钮区。
+     首页根容器已按 160rpx + 安全区让位（pages/index/index.scss），骨架屏这里也必须跟上 ——
+     否则加载态会把根容器重新顶到满屏，骨架最下方约 160rpx 落在底栏后面。 */
+  min-height: calc(100vh - 160rpx - constant(safe-area-inset-bottom));
+  min-height: calc(100vh - 160rpx - env(safe-area-inset-bottom));
   background: $color-bg-page;
   padding: $spacing-lg $spacing-xl;
 

@@ -24,6 +24,9 @@ export type ThemeKey = 'spring' | 'summer' | 'autumn' | 'winter' | 'starry' | 'g
  * 【为什么必须有】图标用 SVG data URI 渲染，颜色得写死进 SVG，拿不到页面的 CSS 变量；
  * 所以「跟随主题」只能靠这里查表。没有这张表时，宫格底色已经跟着主题变了、
  * 图标颜色却还停在默认主题，切换主题后就会出现「图标色 ≠ 底色」的违和。
+ *
+ * 补充（2026-09-12 自定义 tabBar）：底部标签栏的底色/文字色/图标也同理跟着主题走，
+ * 由 `custom-tab-bar` 组件读本表渲染（原生 tabBar API 已失效）。
  */
 export interface ThemePalette {
   /** 明快金黄（--gold） */
@@ -53,15 +56,22 @@ export interface ThemeMeta {
   /**
    * 底部 tabBar 图标目录（主题专属配色图标集）
    *
-   * 微信 tabBar 图标是 PNG 图片，颜色烘焙在文件里，不受 setTabBarStyle 的
-   * color/selectedColor 影响；而 tabBar 文字色是逐主题变化的，所以图标必须成套出。
-   * null 表示沿用 app.config.ts 里声明的默认套（暖阳珊瑚橙配色）。
+   * 微信 tabBar 图标是 PNG 图片，颜色烘焙在文件里，标签栏自带的配色选项改不了图标色；
+   * 而 tabBar 文字色是逐主题变化的，所以图标必须成套出。
+   * null 表示沿用 `assets/icons` 根目录那套（暖阳珊瑚橙配色）。
+   *
+   * 【2026-09-12 自定义 tabBar 后】本字段不再是"给原生 API 换图标用"，而是给
+   * `custom-tab-bar` 组件经 `getTabBarIconDir()` 取目录、直接渲染 `<Image>` 用；
+   * `app.config.ts` 里那份 iconPath 只是让 app.json 的 4 个 tab 描述完整，不再驱动渲染。
    */
   tabBarIconDir: string | null;
   // 导航栏（原生组件，需 Taro.setNavigationBarColor 动态设置）
   navbarBg: string;
   navbarFrontColor: '#ffffff' | '#000000';
-  // 标签栏（原生组件，需 Taro.setTabBarStyle 动态设置）
+  // 标签栏：**不再走原生 API** —— tabBar.custom 下 `Taro.setTabBarStyle` 已失效
+  // （本文件里那条调用已随之删除，只留 Taro.setNavigationBarColor），
+  // 这四个字段现在由 src/custom-tab-bar/index.tsx 读 getThemeMeta(theme) 后内联渲染
+  // （底色 / 未选中文字色 / 选中文字色 / 顶部分隔线）。
   tabBarBg: string;
   tabBarColor: string;
   tabBarSelectedColor: string;
@@ -246,9 +256,12 @@ function getStoredWallpaper(): string | null {
 }
 
 /** 根据主题 key 查找元数据（找不到回退第一套） */
-function getMeta(theme: ThemeKey): ThemeMeta {
+export function getThemeMeta(theme: ThemeKey): ThemeMeta {
   return THEME_LIST.find(t => t.key === theme) ?? THEME_LIST[0];
 }
+
+/** 兼容旧内部调用名的别名（本文件内使用） */
+const getMeta = getThemeMeta;
 
 /**
  * 当前主题是否为深色背景
@@ -258,36 +271,37 @@ export function isDarkTheme(theme: ThemeKey): boolean {
   return getMeta(theme).dark;
 }
 
-/** tabBar 五个 tab 的图标文件名，顺序必须与 app.config.ts 的 tabBar.list 一致 */
-const TAB_BAR_ICON_NAMES = ['home', 'creative', 'timeline', 'pet', 'mine'] as const;
-
 /** 默认配色图标目录，与 app.config.ts 里声明的 iconPath 保持一致 */
 const DEFAULT_TABBAR_ICON_DIR = 'assets/icons';
 
 /**
- * 按主题切换 tabBar 图标
+ * 取某套主题的 tabBar 图标目录（**根路径**，可直接给 `<Image src>` 用）
  *
- * tabBar 图标是 PNG 图片，颜色烘焙在文件里，setTabBarStyle 只能改文字色改不了图标色，
- * 因此每套主题配一套与文字同色的图标，切换主题时逐个 setTabBarItem 换掉。
- * 默认配色（autumn / grid）直接复用 app.config.ts 里声明的那套，不额外发一份资源。
+ * 【为什么返回根路径而不是相对路径】
+ * 自定义 tabBar 组件里 `<Image src='assets/...'>` 的相对路径会按**页面所在包**解析：
+ * 主包页面是 `assets/...`，分包页面则是 `../../assets/...`，一处写错就是「分包里图裂」。
+ * 小程序支持以 `/` 开头的根路径，从任何包引用都解析到同一份文件，故统一前置 `/`。
+ * 对应文件由 `config/index.js` 的 copy 规则从 `src/assets/icons` 原样拷进 `dist/assets/icons`。
+ *
+ * @param theme - 主题 key
+ * @returns 形如 `/assets/icons/tabbar/starry` 或 `/assets/icons`
  */
-function applyTabBarIcons(meta: ThemeMeta) {
-  const dir = meta.tabBarIconDir ?? DEFAULT_TABBAR_ICON_DIR;
-  // 换图标失败绝不能连累页面：单测的 Taro mock、旧版本基础库都可能没有这个 API，
-  // 直接同步抛 TypeError 会把整个页面组件打崩（不是被 .catch 兜住的 Promise 拒绝）。
-  if (typeof Taro.setTabBarItem !== 'function') return;
-  TAB_BAR_ICON_NAMES.forEach((name, index) => {
-    try {
-      Taro.setTabBarItem({
-        index,
-        iconPath: `${dir}/${name}.png`,
-        selectedIconPath: `${dir}/${name}-active.png`,
-      }).catch(() => {});
-    } catch {}
-  });
+export function getTabBarIconDir(theme: ThemeKey): string {
+  return `/${getMeta(theme).tabBarIconDir ?? DEFAULT_TABBAR_ICON_DIR}`;
 }
 
-/** 动态更新微信原生导航栏和标签栏颜色 */
+/**
+ * 动态更新微信原生导航栏颜色
+ *
+ * ⚠️ 2026-09-12（IA 第 3 批）：底部导航改为**自定义 tabBar**（`app.config.ts` 的
+ * `tabBar.custom: true`）后，微信原生 tabBar 不再渲染，`Taro.setTabBarStyle` /
+ * `setTabBarItem` 全部失效（调了也不报错，只是没有任何效果）。因此这里只剩导航栏；
+ * 标签栏的底色/文字色/图标改由 `src/custom-tab-bar/index.tsx` 自己按主题渲染
+ * （它读 `getThemeMeta(theme)` 的 tabBar* 字段 + `getTabBarIconDir(theme)`）。
+ *
+ * 这也意味着「切主题换 tabBar 图标」不再需要运行时替换 —— 组件订阅主题后重渲染即可，
+ * 原先那条 `setTabBarItem` 逐个换图标的链路（及其单测）已随之删除。
+ */
 function applyNativeBars(theme: ThemeKey) {
   const meta = getMeta(theme);
   Taro.setNavigationBarColor({
@@ -295,13 +309,6 @@ function applyNativeBars(theme: ThemeKey) {
     backgroundColor: meta.navbarBg,
     animation: { duration: 300, timingFunc: 'easeInOut' },
   }).catch(() => {});
-  Taro.setTabBarStyle({
-    color: meta.tabBarColor,
-    selectedColor: meta.tabBarSelectedColor,
-    backgroundColor: meta.tabBarBg,
-    borderStyle: meta.tabBarBorderStyle,
-  }).catch(() => {});
-  applyTabBarIcons(meta);
 }
 
 export const useThemeStore = create<ThemeState>((set) => ({

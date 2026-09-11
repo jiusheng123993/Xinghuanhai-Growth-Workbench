@@ -11,7 +11,9 @@ import { useThemeStore, type ThemeKey } from '../stores/themeStore'
  * 不依赖 Zustand 订阅（Taro 3 + Zustand v3 中 selector 不可靠触发重渲染）
  * 改用 local state + Taro.eventCenter 监听变更
  *
- * 每个页面挂载/显示时自动调用 applyNativeBars 确保导航栏和标签栏颜色正确
+ * 每个页面挂载/显示时自动调用 applyNativeBars，**只保证导航栏颜色**正确
+ * （applyNativeBars 现在只调 Taro.setNavigationBarColor，标签栏已不在它的职责内）；
+ * 底部标签栏的底色/文字色/图标由 src/custom-tab-bar 组件按主题渲染，与本 Hook 无关。
  */
 export function useThemeKey(): ThemeKey {
   const [theme, setTheme] = useState<ThemeKey>(() => useThemeStore.getState().current)

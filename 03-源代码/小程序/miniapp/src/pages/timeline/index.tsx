@@ -37,6 +37,8 @@ import type { DiaryTone } from '../../types/avatarTypes'
 import './index.scss'
 import { Icon, EmptyState, PageHero } from '../../components'
 import PageBackground from '../../components/PageBackground'
+// 自定义 tabBar 的选中态广播 hook（本页 = tabBar 第 2 项，路径写错 tsc 直接报错）
+import { useTabBarSelected } from '../../constants/tabBar'
 // 【已移除】PetSwitcher：共用回忆录改造后本页不再"按宠物分类"的切换条（2026-09-11）
 
 interface TimelineEvent {
@@ -424,6 +426,19 @@ export default function TimelinePage() {
   const [flashback, setFlashback] = useState<FlashbackMemory | null>(null)
   const [flashbackAdded, setFlashbackAdded] = useState(false)
   const themeClass = useThemeClass()
+  /**
+   * 广播「当前选中的是第 2 个 tab」给自定义 tabBar 组件（时光 = 下标 1）。
+   *
+   * 【为什么必须由页面主动广播】微信给**每个 tab 页各创建一个**自定义 tabBar 实例
+   * （官方文档原话：每个 tab 页下的自定义 tabBar 组件实例是不同的），实例建好后就不随
+   * `switchTab` 重新挂载，React 也不会因路由变化自动重渲染它 —— 选中态只能由 tab 页在
+   * `useDidShow` 时推进来。
+   * 本页下方另有一个自己的 `useDidShow`（刷数据用），两者各挂各的回调、互不影响：
+   * 那个回调里有 `isFirstShowRef` 提前 return，若把广播并进去，首次进入本页就不会广播高亮。
+   *
+   * 位置要求：组件函数体顶层、与其它 hook 同级（无条件调用）。
+   */
+  useTabBarSelected('/pages/timeline/index')
   /** 埋点：日记卡的「分享这篇日记」沿用 diary 页原有的 share_diary 事件，不另造事件名 */
   const { trackEvent } = useAnalytics()
   const currentPet = usePetStore((s) => s.currentPet)

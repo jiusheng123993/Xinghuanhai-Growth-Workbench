@@ -12,6 +12,8 @@ import type { FillIconName } from '../../components/icons-fill'
 import type { GridIllustration } from '../../data/illustrations'
 import { useThemeClass } from '../../hooks/useThemeClass'
 import { formatPetAge } from '../../utils/date'
+// 自定义 tabBar 的选中态广播 hook（本页 = tabBar 第 3 项，路径写错 tsc 直接报错）
+import { useTabBarSelected } from '../../constants/tabBar'
 
 import './index.scss'
 import { PageBackground, Icon, Illustration, PageHero } from '../../components'
@@ -153,6 +155,17 @@ const CreativeHub = () => {
    * 教训：主题相关改动**不能用 H5 渲染验证代替**，H5 的 app-root 会把问题盖住。
    */
   const themeClass = useThemeClass()
+  /**
+   * 广播「当前选中的是第 3 个 tab」给自定义 tabBar 组件（创作 = 下标 2）。
+   *
+   * 【为什么必须由页面主动广播】微信给**每个 tab 页各创建一个**自定义 tabBar 实例
+   * （官方文档原话：每个 tab 页下的自定义 tabBar 组件实例是不同的），实例建好后就不随
+   * `switchTab` 重新挂载，React 也不会因路由变化自动重渲染它 ——
+   * 选中态只能由 tab 页在 `useDidShow` 时推进来，否则「页面切了、底部高亮不动」。
+   *
+   * 位置要求：组件函数体顶层、与其它 hook 同级（无条件调用，不能放进下面那些 useEffect 里）。
+   */
+  useTabBarSelected('/pages/creative/index')
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const isInitialized = useAuthStore((s) => s.isInitialized)

@@ -4,6 +4,13 @@
  * 这个 store 管两件事：① 6 套背景主题（含深色「星空银河」）② 宠物照片壁纸。
  * 关键约定：持久化、原生导航栏同步、以及深色主题标记 —— 任一条坏了都会表现为
  * 「切了背景没反应」或「深色背景下文字看不见」，所以逐条锁住。
+ *
+ * 2026-09-12（IA 第 3 批）变更：底部导航改成**自定义 tabBar**（app.config 的
+ * tabBar.custom: true），微信原生标签栏不再渲染，因此：
+ *  · `Taro.setTabBarStyle` / `Taro.setTabBarItem` 全部失效 → 本文件改为断言
+ *    **它们一次都不许被调用**（防止后人把失效链路又加回来）；
+ *  · 标签栏图标改为「组件按主题选目录渲染」→ 由 `getTabBarIconDir()` 提供根路径，
+ *    原「切主题逐个 setTabBarItem 换 5 个图标」的用例已删除。
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
@@ -46,7 +53,7 @@ vi.mock('zustand', () => ({
 }))
 
 // eslint-disable-next-line import/first
-import { useThemeStore, THEME_LIST, isDarkTheme } from '../themeStore'
+import { useThemeStore, THEME_LIST, isDarkTheme, getThemeMeta, getTabBarIconDir } from '../themeStore'
 
 describe('themeStore', () => {
   beforeEach(() => {
@@ -111,7 +118,10 @@ describe('themeStore', () => {
       expect(storage.get('xhh_theme')).toBe('starry')
       expect(useThemeStore.getState().current).toBe('starry')
       expect(mockSetNavigationBarColor).toHaveBeenCalled()
-      expect(mockSetTabBarStyle).toHaveBeenCalled()
+      // 原生标签栏 API 在自定义 tabBar 下已失效：一次都不该调用，
+      // 调了不会报错、但会让人误以为「标签栏颜色是靠这里同步的」。
+      expect(mockSetTabBarStyle).not.toHaveBeenCalled()
+      expect(mockSetTabBarItem).not.toHaveBeenCalled()
       expect(mockTrigger).toHaveBeenCalledWith('themeChange', 'starry')
     })
 
@@ -121,27 +131,27 @@ describe('themeStore', () => {
       expect(arg.frontColor).toBe('#ffffff')
     })
 
-    it('切主题会同步换掉 tabBar 图标（5 个 tab 一套，颜色跟着主题走）', () => {
-      useThemeStore.getState().setTheme('starry')
-
-      expect(mockSetTabBarItem).toHaveBeenCalledTimes(5)
-      const calls = mockSetTabBarItem.mock.calls.map((c) => c[0] as any)
-      // index 顺序必须与 app.config.ts 的 tabBar.list 一致
-      expect(calls.map((c) => c.index)).toEqual([0, 1, 2, 3, 4])
-      expect(calls[0].iconPath).toBe('assets/icons/tabbar/starry/home.png')
-      expect(calls[0].selectedIconPath).toBe('assets/icons/tabbar/starry/home-active.png')
-      expect(calls[4].iconPath).toBe('assets/icons/tabbar/starry/mine.png')
+    it('getTabBarIconDir 给出**根路径**的图标目录（自定义 tabBar 组件按它渲染 <Image>）', () => {
+      // 默认配色（autumn / grid）复用 app.config.ts 声明的那套 → 图标就在根 assets/icons 下
+      expect(getTabBarIconDir('autumn')).toBe('/assets/icons')
+      expect(getTabBarIconDir('grid')).toBe('/assets/icons')
+      // 其余主题各有专属配色的成套图标
+      expect(getTabBarIconDir('starry')).toBe('/assets/icons/tabbar/starry')
+      expect(getTabBarIconDir('spring')).toBe('/assets/icons/tabbar/spring')
+      // 必须前置 `/`：分包页面里 `<Image src='assets/...'>` 会被按「页面所在包」解析而图裂
+      for (const t of THEME_LIST) {
+        expect(getTabBarIconDir(t.key).startsWith('/')).toBe(true)
+      }
     })
 
-    it('切回默认配色主题时，图标回落到 app.config.ts 声明的路径', () => {
-      useThemeStore.getState().setTheme('starry')
-      mockSetTabBarItem.mockClear()
-
-      useThemeStore.getState().setTheme('autumn')
-
-      const calls = mockSetTabBarItem.mock.calls.map((c) => c[0] as any)
-      expect(calls[0].iconPath).toBe('assets/icons/home.png')
-      expect(calls[0].selectedIconPath).toBe('assets/icons/home-active.png')
+    it('getThemeMeta 暴露标签栏配色（自定义 tabBar 组件靠它上色，不许再写死色值）', () => {
+      const starry = getThemeMeta('starry')
+      expect(starry.tabBarBg).toBe('#232C57')
+      expect(starry.tabBarColor).toBe('rgba(255,255,255,0.55)')
+      expect(starry.tabBarSelectedColor).toBe('#FFD068')
+      expect(starry.dark).toBe(true)
+      // 非法 key 回退第一套（autumn），不能抛
+      expect(getThemeMeta('nope' as any).key).toBe('autumn')
     })
   })
 
