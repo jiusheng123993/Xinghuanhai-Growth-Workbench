@@ -11,10 +11,24 @@
  * 调用方若希望失败后有兜底内容，请自行在父级提供（例如标题与按钮始终在）。
  *
  * 【尺寸】插画是位图且走网络，务必显式给定展示尺寸，避免加载完成瞬间页面跳动。
+ *
+ * 【四季插画】同一个 name 会随主题换图（详见 data/illustrations.ts 的 SEASONAL_SLOT）：
+ * 本组件负责把「当前主题」读出来传给 illustrationUrl()。data 层是纯函数、不读 store，
+ * 所以主题必须由这里注入 —— 这样 data 层不会与 stores 形成循环依赖，也便于单测。
  */
 import { useState } from 'react'
 import { Image } from '@tarojs/components'
 import { illustrationUrl, type IllustrationName } from '../data/illustrations'
+/*
+ * 主题读取复用仓库既有的 useThemeKey()（Taro3 + zustand v3 下 selector 订阅不可靠，
+ * 它内部用 local state + Taro.eventCenter 监听 themeChange）。
+ *
+ * 为什么不用 Icon.tsx 那种「直接 useThemeStore.getState().current」：
+ * Icon 依赖宿主页面用 useThemeClass 订阅主题来触发重渲染，而插画的宿主页面
+ * （如 pages/family）本身没有订阅主题，那样读法会导致切主题后插画不换。
+ * 插画数量少（每页 1~8 张），多几次幂等的 applyNativeBars 换来「切主题必换图」是划算的。
+ */
+import { useThemeKey } from '../hooks/useThemeClass'
 import './Illustration.scss'
 
 interface IllustrationProps {
@@ -49,6 +63,8 @@ export default function Illustration({
   className = '',
 }: IllustrationProps) {
   const [failed, setFailed] = useState(false)
+  // 当前主题：四季主题 → 取对应季节插画；starry 等非四季主题由 illustrationUrl 回退默认季
+  const theme = useThemeKey()
 
   const w = width ?? size
   const h = height ?? w
@@ -59,7 +75,7 @@ export default function Illustration({
   return (
     <Image
       className={`illustration ${fill ? 'illustration--fill' : ''} ${className}`}
-      src={illustrationUrl(name)}
+      src={illustrationUrl(name, theme)}
       mode={mode}
       lazyLoad={!fill}
       style={fill ? undefined : { width: `${w}px`, height: `${h}px` }}
