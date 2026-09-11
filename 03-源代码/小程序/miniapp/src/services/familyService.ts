@@ -466,10 +466,13 @@ export const familyService = {
       const mockPhoto = await mockApi.saveFamilyPhoto(familyId, data.photoUrl, data.memberCount, data.memberNames, data.photoType || 'canvas_fallback')
       return { id: mockPhoto.id }
     }
-    const result = await api.post<{ success: boolean; data: { id: string } }>(
+    // ⚠️【2026-09-11 修复】后端成功时返回 `{ success: true, data: { id } }`，
+    // 而 api 层已把 data 解包出来（返回的就是 `{ id }`）。这里原来读 `result.data`
+    // → 恒 undefined → **上传全家福即使成功，调用方也拿到 undefined 的 id**。
+    const { id } = await api.post<{ id: string }>(
       `/api/families/${familyId}/photos/upload`,
       data,
     )
-    return result.data
+    return { id }
   },
 }

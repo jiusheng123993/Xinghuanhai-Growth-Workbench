@@ -135,7 +135,9 @@ export default function PetAvatar({
       {diary && (
         <View className='pet-avatar__diary'>
           <Text className='pet-avatar__diary-emoji'>{diary.emoji}</Text>
-          <Text className='pet-avatar__diary-text'>"{diary.text}"</Text>
+          {/* 引号用 &quot; 转义：JSX 文本里的裸 " 会触发 react/no-unescaped-entities；
+              编译期即解码回 "，渲染结果与原文完全一致 */}
+          <Text className='pet-avatar__diary-text'>&quot;{diary.text}&quot;</Text>
           <Text className='pet-avatar__diary-author'>—— {petName}</Text>
         </View>
       )}

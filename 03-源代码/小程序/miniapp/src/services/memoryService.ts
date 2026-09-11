@@ -25,8 +25,10 @@ import type {
   MemorySource,
   MemoryStatus,
 } from '../types/memoryTypes';
+import type { FillIconName } from '../components/icons-fill';
 
-const useMock = () => CONFIG.USE_MOCK;
+/** 是否启用 Mock 模式（原名 useMock，以 "use" 开头会被 react-hooks 规则误判为 Hook，2026-09-11 改名） */
+const isMockMode = () => CONFIG.USE_MOCK;
 
 /** 记忆上限（与后端 listUserMemories LIMIT 200 对齐） */
 const MAX_MEMORY_CONTENT_LENGTH = 2000;
@@ -36,7 +38,7 @@ const MAX_MEMORY_CONTENT_LENGTH = 2000;
  * @param petId 可选，指定宠物则只返回该宠物的记忆
  */
 export async function listMemories(petId?: string): Promise<MemoryEntry[]> {
-  if (useMock()) {
+  if (isMockMode()) {
     return mockApi.listMemories?.(petId) ?? [];
   }
   const params: Record<string, string> = {};
@@ -66,7 +68,7 @@ export async function updateMemory(
     throw new Error(`记忆内容过长（最多 ${MAX_MEMORY_CONTENT_LENGTH} 字）`);
   }
 
-  if (useMock()) {
+  if (isMockMode()) {
     return mockApi.updateMemory?.(memoryId, trimmed) ?? { id: memoryId, content: trimmed };
   }
 
@@ -74,28 +76,28 @@ export async function updateMemory(
   return api.put<MemoryUpdateResult>(`/api/memory/${memoryId}`, payload);
 }
 
-/** 记忆分类展示信息 */
-export function getCategoryInfo(category: MemoryCategory): { icon: string; label: string } {
+/** 记忆分类展示信息（icon 存面性图标名，原为 emoji，2026-09-10 统一到图标体系） */
+export function getCategoryInfo(category: MemoryCategory): { icon: FillIconName; label: string } {
   switch (category) {
     case 'health':
-      return { icon: '❤️', label: '健康' };
+      return { icon: 'heart', label: '健康' };
     case 'behavior':
-      return { icon: '🐾', label: '行为' };
+      return { icon: 'paw-print', label: '行为' };
     case 'habit':
-      return { icon: '⏰', label: '习惯' };
+      return { icon: 'clock', label: '习惯' };
     case 'preference':
-      return { icon: '⭐', label: '偏好' };
+      return { icon: 'star', label: '偏好' };
     case 'event':
-      return { icon: '🎉', label: '事件' };
+      return { icon: 'sparkle', label: '事件' };
     case 'feeding':
-      return { icon: '🍽️', label: '喂养' };
+      return { icon: 'bowl-food', label: '喂养' };
     case 'medical':
-      return { icon: '💊', label: '医疗' };
+      return { icon: 'pill', label: '医疗' };
     case 'contradiction':
-      return { icon: '🔄', label: '已修正' };
+      return { icon: 'arrows-clockwise', label: '已修正' };
     case 'general':
     default:
-      return { icon: '📝', label: '其他' };
+      return { icon: 'note-pencil', label: '其他' };
   }
 }
 

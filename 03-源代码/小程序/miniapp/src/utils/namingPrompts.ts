@@ -13,9 +13,37 @@ export interface RecommendParams {
   season: string
   style?: string
   photoUrl?: string
+  /** 照片外貌描述（由视觉模型提取，见 namingService.extractNamingAppearance）：
+   *  取名链路是纯文本模型，传 URL 等于没传——只有这段描述才能真正让 AI"看见"宠物 */
+  appearance?: string
   description?: string
+  /** 物种（cat/dog）：独立取名页由用户手动选择，聊天内取名取当前宠物档案。
+   *  此前只有品种、没有物种，用户选"狗"也不会影响提示词（2026-09-10 修复）。 */
+  species?: string
   /** 已推荐过的名字，需避免重复 */
   excludeNames?: string[]
+}
+
+/**
+ * 物种中文标签（提示词用）
+ * @param species - 'cat' | 'dog' | 其它
+ * @returns 中文标签，未知物种返回空串（不写进提示词，避免出现"undefined"这类噪声）
+ */
+function speciesLabel(species?: string): string {
+  if (species === 'cat') return '猫咪'
+  if (species === 'dog') return '狗狗'
+  return ''
+}
+
+/**
+ * 性别中文标签（提示词用）
+ * 2026-09-10 审查 P3：此前直接把 male/female/unknown 写进中文提示词，读起来是半截英文；
+ * 未知性别写"未知"而不是硬塞一个性别。同时兼容直接传中文"公/母"的调用方。
+ */
+function genderLabel(gender?: string): string {
+  if (gender === 'male' || gender === '公' || gender === '男') return '公'
+  if (gender === 'female' || gender === '母' || gender === '女') return '母'
+  return '未知'
 }
 
 /**
@@ -24,19 +52,29 @@ export interface RecommendParams {
  * 要求 AI 返回结构化 JSON，便于前端解析展示。
  */
 export function buildRecommendPrompt(params: RecommendParams): string {
-  const { breed, birthDate, gender, season, style, photoUrl, description, excludeNames } = params
+  const { breed, birthDate, gender, season, style, photoUrl, appearance, description, species, excludeNames } = params
+
+  // 物种缺失时退化为"宠物"，不写空串，保证句子完整可读
+  const subject = speciesLabel(species) || '宠物'
 
   const parts: string[] = [
-    `为一只${breed}推荐5个中文宠物名字。`,
-    `出生日期：${birthDate}（${season}天），性别：${gender}。`,
+    `为一只${breed}${subject === '宠物' ? subject : `（${subject}）`}推荐5个中文宠物名字。`,
+    // 生日缺失/非法时不写 "（未知天）" 这类半截话术；季节也未知时不再重复写括号
+    // （2026-09-10 审查 P3：此前会输出"出生日期：未知（未知）"）
+    `出生日期：${birthDate || '未知'}${season && season !== '未知' ? `（${season}）` : ''}，性别：${genderLabel(gender)}。`,
   ]
 
   if (style && style !== '不限风格') {
     parts.push(`风格偏好：${style}。`)
   }
 
-  if (photoUrl) {
-    parts.push(`宠物照片URL：${photoUrl}，请根据照片中外貌特征（毛色、体型、眼神、神态等）来推荐名字。`)
+  if (appearance) {
+    // 真正的"看图取名"：描述由视觉模型从真实照片提取（毛色/花纹/体型/眼睛/特殊标记）
+    parts.push(`照片外貌特征（来自真实照片的视觉分析）：${appearance}。请结合这些特征推荐贴合的名字。`)
+  } else if (photoUrl) {
+    // 有照片但未提取出外貌：明确禁止模型"脑补"照片内容（此前提示词写"请根据照片中外貌特征"，
+    // 而取名链路是纯文本模型、根本看不到图，模型只能编造）
+    parts.push('主人上传过照片，但系统未能识别出外貌特征：请不要编造照片内容，仅依据品种与主人描述推荐。')
   }
 
   if (description) {

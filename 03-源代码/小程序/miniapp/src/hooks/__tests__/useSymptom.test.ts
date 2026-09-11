@@ -4,6 +4,9 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { useSymptomStore } from '../../stores/symptomStore'
+import { useSymptom } from '../useSymptom'
+
 const {
   mockFetchCategories,
   mockSelectSymptom,
@@ -52,9 +55,6 @@ const defaultMockStore = {
 vi.mock('../../stores/symptomStore', () => ({
   useSymptomStore: vi.fn(() => ({ ...defaultMockStore }))
 }))
-
-import { useSymptomStore } from '../../stores/symptomStore'
-import { useSymptom } from '../useSymptom'
 
 describe('useSymptom', () => {
   beforeEach(() => {

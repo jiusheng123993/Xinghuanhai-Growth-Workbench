@@ -4,6 +4,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { useTrend } from './useTrend'
+
 const {
   mockFetchWeightTrend,
   mockFetchAppetiteTrend,
@@ -56,8 +58,6 @@ vi.mock('react', () => {
 vi.mock('../stores/trendStore', () => ({
   useTrendStore: mockUseTrendStoreFn
 }))
-
-import { useTrend } from './useTrend'
 
 describe('useTrend', () => {
   beforeEach(() => {

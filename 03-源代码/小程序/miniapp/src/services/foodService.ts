@@ -7,10 +7,11 @@ import { api } from './api'
 import { getStorage, setStorage } from '../utils/storage';
 import { ToxicFoodFilter } from '../engines/petSafety';
 import type { PetFoodQuery } from '../memory-body/types/memoryBodyTypes';
-export type { PetFoodQuery } from '../memory-body/types/memoryBodyTypes';
 import { getQuotaLimit, isMember } from './membershipService';
 import { queueSync } from './syncHelper';
 import { requirePetOwnership } from '../utils/petOwnership';
+
+export type { PetFoodQuery } from '../memory-body/types/memoryBodyTypes';
 
 export interface FoodQueryStats {
   totalQueries: number;

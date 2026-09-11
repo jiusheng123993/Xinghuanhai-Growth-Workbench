@@ -4,6 +4,9 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { useReminderStore } from '../../stores/reminderStore'
+import { useReminder } from '../useReminder'
+
 const {
   mockFetchSubscriptionStatus,
   mockRequestSubscription,
@@ -64,9 +67,6 @@ vi.mock('../../services/reminderService', () => ({
   markReminderTriggered: mockMarkReminderTriggered,
   clearLocalReminders: mockClearLocalReminders,
 }))
-
-import { useReminderStore } from '../../stores/reminderStore'
-import { useReminder } from '../useReminder'
 
 describe('useReminder', () => {
   beforeEach(() => {

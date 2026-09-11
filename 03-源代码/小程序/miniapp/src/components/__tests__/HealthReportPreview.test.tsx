@@ -4,6 +4,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
+import HealthReportPreview from '../HealthReportPreview'
+import type { HealthReportData } from '../../types/reportTypes'
+
 vi.mock('@tarojs/components', () => ({
   View: ({ children, className, style, id }: any) => (
     <div className={className} style={style} id={id}>{children}</div>
@@ -38,9 +41,6 @@ vi.mock('../../utils/reportCanvasRenderer', () => ({
   }),
   saveReportImage: vi.fn().mockResolvedValue(undefined),
 }))
-
-import HealthReportPreview from '../HealthReportPreview'
-import type { HealthReportData } from '../../types/reportTypes'
 
 const mockData: HealthReportData = {
   pet: {

@@ -12,6 +12,8 @@ export const NPS_COOLDOWN_DAYS = 30;
 export const NPS_DAY7_TRIGGER = 7;
 export const NPS_DAY30_TRIGGER = 30;
 export const SHARE_REWARD_INVITES = 3;
+/** 邀请达标后发放的会员天数（须与后端 server/src/routes/invites.ts 的 REWARD_DAYS 一致，改一处要同步另一处） */
+export const SHARE_REWARD_DAYS = 7;
 
 export const AVATAR_STYLES = {
   q_cute: { label: 'Q萌风', key: 'q_cute' as const },

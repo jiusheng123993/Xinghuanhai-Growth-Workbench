@@ -3,6 +3,8 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import { useCloudSyncStore } from '../cloudSyncStore'
+
 const {
   mockGetSyncService,
   mockSyncAll,
@@ -34,8 +36,6 @@ const {
 vi.mock('../../services/syncService', () => ({
   getSyncService: mockGetSyncService,
 }))
-
-import { useCloudSyncStore } from '../cloudSyncStore'
 
 describe('cloudSyncStore', () => {
   beforeEach(() => {

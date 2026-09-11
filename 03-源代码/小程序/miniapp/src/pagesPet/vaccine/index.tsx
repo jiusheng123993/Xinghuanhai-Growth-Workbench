@@ -16,7 +16,7 @@ import VaccineCalendar from '../../components/VaccineCalendar'
 import VaccineRecordCard from '../../components/VaccineRecordCard'
 import VaccineAddModal from '../../components/VaccineAddModal'
 import VaccineShareCard from '../../components/VaccineShareCard'
-import { PageLoading, PageError, PetAvatar } from '../../components'
+import { PageLoading, PageError, PetAvatar, Icon, AchievementCard, AchievementShareCard, EmptyState } from '../../components'
 import { recordShare } from '../../services/shareService'
 import type { ExpressionContext } from '../../engines/petAvatar'
 import type { VaccineRecord } from '../../services/vaccineService'
@@ -25,7 +25,6 @@ import { checkNpsEligibility, submitNpsResponse, dismissNpsSurvey } from '../../
 import NpsSurvey from '../../components/NpsSurvey'
 import type { NpsTriggerEvent } from '../../types/npsTypes'
 import { MedicalDisclaimer } from '../../engines/petSafety/MedicalDisclaimer'
-import { AchievementCard, AchievementShareCard } from '../../components'
 import { useAnalytics, usePageView } from '../../hooks/useAnalytics'
 import { AnalyticsEventName } from '../../types/analyticsTypes'
 import { checkVaccineCompleteAchievement } from '../../services/achievementService'
@@ -34,6 +33,7 @@ import { generateAutoVaccineSchedule, generateDewormingSchedule, getVaccineRemin
 import type { AutoScheduleItem, DewormingScheduleItem } from '../../engines/vaccineScheduler'
 import { checkAndSendVaccineReminders } from '../../services/reminderService'
 import './index.scss'
+import PageBackground from '../../components/PageBackground'
 
 export default function PetVaccine() {
   const themeClass = useThemeClass()
@@ -324,12 +324,7 @@ export default function PetVaccine() {
   return (
     <View className={`pet-vaccine ${themeClass}`}>
       {/* 全屏动态背景光斑层 */}
-      <View className='xhh-bg-layer'>
-        <View className='xhh-blob xhh-blob-a' />
-        <View className='xhh-blob xhh-blob-b' />
-        <View className='xhh-blob xhh-blob-c' />
-        <View className='xhh-blob xhh-blob-d' />
-      </View>
+      <PageBackground />
 
       <PetSwitcher
         pets={pets}
@@ -356,7 +351,7 @@ export default function PetVaccine() {
 
       {!currentPet ? (
         <View className='pet-vaccine__empty'>
-          <Text className='pet-vaccine__empty-icon'>🐾</Text>
+          <Icon name='paw-print' size={48} tone='muted' className='pet-vaccine__empty-icon' />
           <Text className='pet-vaccine__empty-text'>请先添加宠物</Text>
         </View>
       ) : (
@@ -388,7 +383,7 @@ export default function PetVaccine() {
             </View>
           </View>
           <View className='pet-vaccine__progress-foot'>
-            <Text className='pet-vaccine__progress-foot-icon'>💉</Text>
+            <Icon name='syringe' size={14} tone='primary' className='pet-vaccine__progress-foot-icon' />
             <Text className='pet-vaccine__progress-foot-text'>疫苗覆盖完成度 {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%</Text>
           </View>
 
@@ -436,7 +431,10 @@ export default function PetVaccine() {
           {(overdueReminders.length > 0 || upcomingReminders.length > 0) && (
             <View className='pet-vaccine__next-due'>
               <View className='pet-vaccine__next-due-header'>
-                <Text className='pet-vaccine__next-due-title'>📋 待处理事项</Text>
+                <View className='pet-vaccine__next-due-title'>
+            <Icon name='clipboard-text' size={15} tone='primary' />
+            <Text>待处理事项</Text>
+          </View>
                 {overdueReminders.length > 0 && (
                   <Text className='pet-vaccine__next-due-count'>{overdueReminders.length}</Text>
                 )}
@@ -444,7 +442,8 @@ export default function PetVaccine() {
               <View className='pet-vaccine__next-due-list'>
                 {overdueReminders.slice(0, 3).map((r) => (
                   <View key={r.record.id} className='pet-vaccine__next-due-item'>
-                    <Text className='pet-vaccine__next-due-item-icon'>⚠️</Text>
+                    {/* 逾期项：用危险红与 --overdue 的危险底色呼应（正常项见下方 calendar-check） */}
+                    <Icon name='warning' size={14} tone='danger' className='pet-vaccine__next-due-item-icon' />
                     <View className='pet-vaccine__next-due-item-info'>
                       <Text className='pet-vaccine__next-due-item-name'>{r.record.category}</Text>
                       <Text className='pet-vaccine__next-due-item-date'>已于 {r.record.nextDate} 逾期</Text>
@@ -454,7 +453,7 @@ export default function PetVaccine() {
                 ))}
                 {upcomingReminders.slice(0, 3).map((r) => (
                   <View key={r.record.id} className='pet-vaccine__next-due-item'>
-                    <Text className='pet-vaccine__next-due-item-icon'>📅</Text>
+                    <Icon name='calendar-check' size={14} tone='primary' className='pet-vaccine__next-due-item-icon' />
                     <View className='pet-vaccine__next-due-item-info'>
                       <Text className='pet-vaccine__next-due-item-name'>{r.record.category}</Text>
                       <Text className='pet-vaccine__next-due-item-date'>{r.record.nextDate} 到期</Text>
@@ -469,7 +468,10 @@ export default function PetVaccine() {
           {(upcomingReminders.length > 0 || overdueReminders.length > 0) && (
             <View className='pet-vaccine__reminders'>
               <View className='pet-vaccine__reminders-header'>
-                <Text className='pet-vaccine__reminders-title'>🔔 到期提醒</Text>
+                <View className='pet-vaccine__reminders-title'>
+          <Icon name='bell' size={15} tone='primary' />
+          <Text>到期提醒</Text>
+        </View>
                 <View
                   className={`pet-vaccine__reminders-toggle${subscriptionStatus ? ' pet-vaccine__reminders-toggle--on' : ''}`}
                   onClick={handleReminderToggle}
@@ -483,7 +485,7 @@ export default function PetVaccine() {
                 <View className='pet-vaccine__reminder-list'>
                   {overdueReminders.map((r) => (
                     <View key={r.record.id} className='pet-vaccine__reminder-item pet-vaccine__reminder-item--overdue'>
-                      <Text className='pet-vaccine__reminder-icon'>⚠️</Text>
+                      <Icon name='warning' size={16} tone='danger' className='pet-vaccine__reminder-icon' />
                       <View className='pet-vaccine__reminder-content'>
                         <Text className='pet-vaccine__reminder-name'>{r.record.category}</Text>
                         <Text className='pet-vaccine__reminder-date'>已于 {r.record.nextDate} 逾期</Text>
@@ -496,7 +498,7 @@ export default function PetVaccine() {
                 <View className='pet-vaccine__reminder-list'>
                   {upcomingReminders.map((r) => (
                     <View key={r.record.id} className='pet-vaccine__reminder-item pet-vaccine__reminder-item--upcoming'>
-                      <Text className='pet-vaccine__reminder-icon'>📅</Text>
+                      <Icon name='calendar-check' size={16} tone='primary' className='pet-vaccine__reminder-icon' />
                       <View className='pet-vaccine__reminder-content'>
                         <Text className='pet-vaccine__reminder-name'>{r.record.category}</Text>
                         <Text className='pet-vaccine__reminder-date'>{r.record.nextDate} 到期</Text>
@@ -511,7 +513,10 @@ export default function PetVaccine() {
           {autoSchedule.length > 0 && (
             <View className='pet-vaccine__auto-schedule'>
               <View className='pet-vaccine__section-header'>
-                <Text className='pet-vaccine__section-title'>📅 推荐接种计划</Text>
+                <View className='pet-vaccine__section-title'>
+            <Icon name='calendar-check' size={15} tone='primary' />
+            <Text>推荐接种计划</Text>
+          </View>
                 <View
                   className='pet-vaccine__schedule-toggle'
                   onClick={() => setShowSchedulePanel(!showSchedulePanel)}
@@ -548,7 +553,10 @@ export default function PetVaccine() {
           {dewormingSchedule.length > 0 && (
             <View className='pet-vaccine__deworming'>
               <View className='pet-vaccine__section-header'>
-                <Text className='pet-vaccine__section-title'>🐛 驱虫计划</Text>
+                <View className='pet-vaccine__section-title'>
+            <Icon name='pill' size={15} tone='primary' />
+            <Text>驱虫计划</Text>
+          </View>
               </View>
               <View className='pet-vaccine__deworming-list'>
                 {dewormingSchedule.map((item) => (
@@ -557,8 +565,9 @@ export default function PetVaccine() {
                     className={`pet-vaccine__deworming-item pet-vaccine__deworming-item--${item.status}`}
                   >
                     <View className='pet-vaccine__deworming-item-left'>
+                      <Icon name='pill' size={13} tone='primary' />
                       <Text className='pet-vaccine__deworming-item-type'>
-                        {item.type === 'internal' ? '💊 体内驱虫' : '🛡️ 体外驱虫'}
+                        {item.type === 'internal' ? '体内驱虫' : '体外驱虫'}
                       </Text>
                     </View>
                     <View className='pet-vaccine__deworming-item-right'>
@@ -577,15 +586,22 @@ export default function PetVaccine() {
 
           <View className='pet-vaccine__section'>
             <View className='pet-vaccine__section-header'>
-              <Text className='pet-vaccine__section-title'>📋 接种记录</Text>
+              <View className='pet-vaccine__section-title'>
+            <Icon name='clipboard-text' size={15} tone='primary' />
+            <Text>接种记录</Text>
+          </View>
               <Text className='pet-vaccine__section-count'>共 {stats.total} 条</Text>
             </View>
 
             {sortedRecords.length === 0 ? (
-              <View className='pet-vaccine__list-empty'>
-                <Text className='pet-vaccine__list-empty-icon'>📭</Text>
-                <Text className='pet-vaccine__list-empty-text'>暂无记录，点击右下角添加</Text>
-              </View>
+              // 列表内空态：插画尺寸收到 96px，避免在卡片区块里压过上方已有内容
+              <EmptyState
+                illustration='empty-vaccine'
+                illustrationSize={96}
+                title='暂无疫苗记录'
+                desc='点击右下角「＋」添加第一针，之后会自动提醒下一次接种'
+                className='pet-vaccine__list-empty'
+              />
             ) : (
               <View className='pet-vaccine__list'>
                 {sortedRecords.slice(0, displayCount).map((record) => (
@@ -599,7 +615,9 @@ export default function PetVaccine() {
                     />
                     {record.status === 'completed' && (
                       <View className='pet-vaccine__share-item' onClick={() => handleShareVaccine(record)}>
-                        <Text className='pet-vaccine__share-item-text'>🏆 炫耀一下</Text>
+                        {/* 文字是成功绿，图标同色保持一致 */}
+                        <Icon name='trophy' size={14} tone='success' />
+                        <Text className='pet-vaccine__share-item-text'>炫耀一下</Text>
                       </View>
                     )}
                   </>
@@ -621,7 +639,8 @@ export default function PetVaccine() {
           {/* ===== 疫苗小知识卡（原型对齐） ===== */}
           <View className='pet-vaccine__tips'>
             <View className='pet-vaccine__tips-icon'>
-              <Text>💡</Text>
+              {/* 底色是金色浅底，故图标用深金色与之一致 */}
+              <Icon name='lightbulb' size={18} tone='gold-deep' />
             </View>
             <View className='pet-vaccine__tips-body'>
               <Text className='pet-vaccine__tips-title'>疫苗小知识</Text>

@@ -84,14 +84,16 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
 
 /**
  * 刷新 Token（当前后端未提供专用刷新端点，保留接口兼容）
+ * @param token - 旧 refresh token（参数原名 refreshToken 与函数名同名，
+ *  触发 @typescript-eslint/no-shadow，2026-09-11 改名 token）
  */
-export async function refreshToken(refreshToken: string): Promise<{
+export async function refreshToken(token: string): Promise<{
   success: boolean;
   token?: string;
   error?: string;
 }> {
   try {
-    const result = await api.post<{ token: string }>('/api/auth/refresh', { refreshToken });
+    const result = await api.post<{ token: string }>('/api/auth/refresh', { refreshToken: token });
     if (result.token) {
       storage.setToken(result.token);
       return { success: true, token: result.token };
@@ -112,11 +114,13 @@ export async function refreshToken(refreshToken: string): Promise<{
  */
 export async function bindPhone(code: string): Promise<{ success: boolean; phone?: string }> {
   try {
-    const result = await api.post<{ success: boolean; data?: { phone: string } }>(
-      '/api/auth/bind-phone',
-      { code },
-    );
-    return { success: result.success, phone: result.data?.phone };
+    // ⚠️【2026-09-11 修复】后端成功时返回 `{ success: true, data: { phone } }`，
+    // 而 api 层在 body.success 为真时返回的是 **body.data**（即 `{ phone }`），
+    // 不再有 success 字段。这里原来读 `result.success` → 恒为 undefined（假）
+    // → **绑定手机号即使成功也永远返回失败**；phone 也要从同一层取。
+    // 现在：api 层不抛错即视为成功（业务失败时它会 throw，见 services/api.ts 的 request()）。
+    const data = await api.post<{ phone?: string }>('/api/auth/bind-phone', { code });
+    return { success: true, phone: data?.phone };
   } catch {
     return { success: false };
   }

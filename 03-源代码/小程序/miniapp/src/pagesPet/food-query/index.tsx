@@ -16,7 +16,7 @@ import PaywallPopup from '../../components/PaywallPopup'
 import FoodShareCard from '../../components/FoodShareCard'
 import AnxietyIntervention from '../../components/AnxietyIntervention'
 import CrisisReferralCard from '../../components/CrisisReferralCard'
-import { PageLoading, PageError, PetAvatar, EmergencyAlert } from '../../components'
+import { PageLoading, PageError, PetAvatar, EmergencyAlert, Icon } from '../../components'
 import { incrementFoodQueryCount, isNewUser, getRecentFoodQueryCount, getRecentSymptomCheckCount } from '../../utils/usageTracking'
 import { useAnxietyDetection } from '../../hooks/useAnxietyDetection'
 import { useEmotionTracking } from '../../hooks/useEmotionTracking'
@@ -30,6 +30,7 @@ import { checkNpsEligibility, submitNpsResponse, dismissNpsSurvey } from '../../
 import NpsSurvey from '../../components/NpsSurvey'
 import type { NpsTriggerEvent } from '../../types/npsTypes'
 import './index.scss'
+import PageBackground from '../../components/PageBackground'
 
 const SAFETY_LEVEL_LABELS: Record<string, string> = {
   safe: '安全',
@@ -265,12 +266,7 @@ export default function PetFoodQuery() {
   return (
     <View className='pet-food-query'>
       {/* 全屏动态背景光斑层 */}
-      <View className='xhh-bg-layer'>
-        <View className='xhh-blob xhh-blob-a' />
-        <View className='xhh-blob xhh-blob-b' />
-        <View className='xhh-blob xhh-blob-c' />
-        <View className='xhh-blob xhh-blob-d' />
-      </View>
+      <PageBackground />
 
       <PetSwitcher
         pets={pets}
@@ -293,7 +289,7 @@ export default function PetFoodQuery() {
 
       {!currentPet ? (
         <View className='pet-food-query__empty'>
-          <Text className='pet-food-query__empty-icon'>🐾</Text>
+          <Icon name='paw-print' size={40} tone='primary' className='pet-food-query__empty-icon' />
           <Text className='pet-food-query__empty-text'>请先添加宠物</Text>
         </View>
       ) : (
@@ -301,7 +297,7 @@ export default function PetFoodQuery() {
           <View className='pet-food-query__search'>
             <View className='pet-food-query__search-glow'>
               <View className='pet-food-query__search-input-wrapper'>
-                <Text className='pet-food-query__search-icon'>🔍</Text>
+                <Icon name='magnifying-glass' size={16} tone='primary' className='pet-food-query__search-icon' />
                 <Input
                   className='pet-food-query__input'
                   placeholder='搜索食物，如：鸡胸肉、葡萄...'
@@ -335,7 +331,7 @@ export default function PetFoodQuery() {
                         className='pet-food-query__suggestion-item'
                         onClick={() => handleSuggestionClick(food)}
                       >
-                        <Text className='pet-food-query__suggestion-icon'>🍽️</Text>
+                        <Icon name='bowl-food' size={14} tone='primary' className='pet-food-query__suggestion-icon' />
                         <Text className='pet-food-query__suggestion-text'>{food}</Text>
                       </View>
                     ))}
@@ -419,7 +415,10 @@ export default function PetFoodQuery() {
 
               {lastResult.dangerousCompounds && lastResult.dangerousCompounds.length > 0 && (
                 <View className='pet-food-query__result-section'>
-                  <Text className='pet-food-query__result-section-title'>⚠️ 危险成分</Text>
+                  <View className='pet-food-query__result-section-title'>
+                    <Icon name='warning' size={18} tone='danger' />
+                    <Text>危险成分</Text>
+                  </View>
                   <View className='pet-food-query__result-tags'>
                     {lastResult.dangerousCompounds.map((compound, index) => (
                       <Text key={index} className='pet-food-query__result-tag pet-food-query__result-tag--danger'>
@@ -432,7 +431,10 @@ export default function PetFoodQuery() {
 
               {lastResult.toxicDoses && (
                 <View className='pet-food-query__result-section'>
-                  <Text className='pet-food-query__result-section-title'>⚖️ 中毒剂量</Text>
+                  <View className='pet-food-query__result-section-title'>
+                    <Icon name='scales' size={18} tone='gold-deep' />
+                    <Text>中毒剂量</Text>
+                  </View>
                   <Text className='pet-food-query__result-section-text'>{lastResult.toxicDoses}</Text>
                 </View>
               )}
@@ -465,7 +467,10 @@ export default function PetFoodQuery() {
 
               {lastResult.breedWarnings && lastResult.breedWarnings.length > 0 && (
                 <View className='pet-food-query__result-section pet-food-query__result-section--breed'>
-                  <Text className='pet-food-query__result-section-title'>⚠️ 品种特殊禁忌</Text>
+                  <View className='pet-food-query__result-section-title'>
+                    <Icon name='warning' size={18} tone='gold-deep' />
+                    <Text>品种特殊禁忌</Text>
+                  </View>
                   {lastResult.breedWarnings.map((bw: string, index: number) => (
                     <View key={index} className='pet-food-query__breed-warning'>
                       <Text className='pet-food-query__breed-warning-reason'>{bw}</Text>
@@ -522,7 +527,7 @@ export default function PetFoodQuery() {
             </View>
           ) : (
             <View className='pet-food-query__empty'>
-              <Text className='pet-food-query__empty-icon'>🔍</Text>
+              <Icon name='magnifying-glass' size={40} tone='primary' className='pet-food-query__empty-icon' />
               <Text className='pet-food-query__empty-text'>输入食物名称，查询对宠物是否安全</Text>
               <View className='pet-food-query__empty-examples'>
                 <Text className='pet-food-query__empty-examples-title'>试试搜索：</Text>
@@ -595,7 +600,7 @@ export default function PetFoodQuery() {
 
       <PaywallPopup
         visible={paywallVisible}
-        featureName="食物查询"
+        featureName='食物查询'
         remainingFree={stats?.remainingFree ?? 0}
         onUpgrade={() => { setPaywallVisible(false); Taro.navigateTo({ url: '/pagesUser/member/index' }) }}
         onClose={() => setPaywallVisible(false)}

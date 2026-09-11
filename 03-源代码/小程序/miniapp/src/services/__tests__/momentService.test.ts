@@ -3,6 +3,16 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import { api as _api } from '../api'
+import { mockApi } from '../mock'
+import {
+  getFamilyMoments,
+  getNewMoments,
+  formatMomentTime,
+  getMomentTypeInfo,
+} from '../momentService'
+import type { PetMoment } from '../../types/familyTypes'
+
 vi.mock('../api', () => ({
   api: { get: vi.fn() },
 }))
@@ -12,17 +22,7 @@ vi.mock('../mock', () => ({
 vi.mock('../../config', () => ({
   CONFIG: { USE_MOCK: false },
 }))
-
-import { api as _api } from '../api'
 const api = _api as any
-import { mockApi } from '../mock'
-import {
-  getFamilyMoments,
-  getNewMoments,
-  formatMomentTime,
-  getMomentTypeInfo,
-} from '../momentService'
-import type { PetMoment } from '../../types/familyTypes'
 
 function makeMoment(overrides: Partial<PetMoment> = {}): PetMoment {
   return {

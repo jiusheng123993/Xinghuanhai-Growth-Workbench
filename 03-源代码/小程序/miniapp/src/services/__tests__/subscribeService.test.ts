@@ -3,6 +3,28 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import Taro from '@tarojs/taro'
+import { checkFrequency, recordSend } from '../frequencyControlService'
+import {
+  FOLLOWUP_TEMPLATE_ID,
+  CARE_PLAN_REMINDER_TEMPLATE_ID,
+  HEALTH_CHECKIN_TEMPLATE_ID,
+  TEMPLATE_IDS,
+  TEMPLATE_CONFIGS,
+  requestSubscribe,
+  requestFollowupSubscribe,
+  requestCarePlanSubscribe,
+  requestAllSubscribes,
+  updateSubscribeStatus,
+  getSubscribeStatus,
+  hasAcceptedSubscribe,
+  getAllSubscribeStatus,
+  recordTemplateUsage,
+  clearSubscribeStatus,
+  sendSubscribeMessage,
+} from '../subscribeService'
+import type { SubscribeStatus } from '../subscribeService'
+
 const mockStorage: Record<string, string> = {}
 
 vi.mock('../../utils/storage', () => ({
@@ -42,28 +64,6 @@ vi.mock('../frequencyControlService', () => ({
   checkFrequency: vi.fn(() => ({ allowed: true })),
   recordSend: vi.fn(),
 }))
-
-import Taro from '@tarojs/taro'
-import { checkFrequency, recordSend } from '../frequencyControlService'
-import {
-  FOLLOWUP_TEMPLATE_ID,
-  CARE_PLAN_REMINDER_TEMPLATE_ID,
-  HEALTH_CHECKIN_TEMPLATE_ID,
-  TEMPLATE_IDS,
-  TEMPLATE_CONFIGS,
-  requestSubscribe,
-  requestFollowupSubscribe,
-  requestCarePlanSubscribe,
-  requestAllSubscribes,
-  updateSubscribeStatus,
-  getSubscribeStatus,
-  hasAcceptedSubscribe,
-  getAllSubscribeStatus,
-  recordTemplateUsage,
-  clearSubscribeStatus,
-  sendSubscribeMessage,
-} from '../subscribeService'
-import type { SubscribeStatus } from '../subscribeService'
 
 describe('subscribeService', () => {
   beforeEach(() => {

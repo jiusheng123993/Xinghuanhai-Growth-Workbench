@@ -5,6 +5,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 
+import SpeciesAvatar from './SpeciesAvatar'
+
 // Mock Taro 组件（Image 保留 src/onError 供断言）
 vi.mock('@tarojs/components', () => ({
   View: ({ children, className, style, onClick }: any) => (
@@ -14,7 +16,8 @@ vi.mock('@tarojs/components', () => ({
     <span className={className} style={style}>{children}</span>
   ),
   Image: ({ src, className, style, onError, lazyLoad }: any) => (
-    // eslint-disable-next-line jsx-a11y/alt-text
+    // 测试桩：用原生 <img> 替代 Taro Image，故意不写 alt（本项目未安装 eslint-plugin-jsx-a11y，
+    // 原先的 eslint-disable-next-line jsx-a11y/alt-text 指向不存在的规则，反而报"规则未定义"，2026-09-11 移除）
     <img
       src={src}
       className={className}
@@ -36,8 +39,6 @@ vi.mock('../../../data/homeStyleAvatars', () => ({
     return 'other'
   },
 }))
-
-import SpeciesAvatar from './SpeciesAvatar'
 
 describe('SpeciesAvatar', () => {
   beforeEach(() => {

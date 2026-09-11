@@ -3,6 +3,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { loginWithCode, getUserProfile, refreshToken, logout } from '../authService'
+
 const { mockTaroLogin, mockApiPost, mockApiGet } = vi.hoisted(() => ({
   mockTaroLogin: vi.fn(),
   mockApiPost: vi.fn(),
@@ -25,8 +27,6 @@ vi.mock('../api', () => ({
     get: mockApiGet,
   },
 }))
-
-import { loginWithCode, getUserProfile, refreshToken, logout } from '../authService'
 
 const mockUser = {
   id: 'user_123',

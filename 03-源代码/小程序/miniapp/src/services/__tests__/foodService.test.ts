@@ -3,6 +3,16 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import { api } from '../api'
+import { isMember, getQuotaLimit } from '../membershipService'
+import {
+  queryFood,
+  getQueryHistory,
+  getQueryStats,
+  getTodayQueryCount,
+} from '../foodService'
+import type { PetFoodQuery } from '../foodService'
+
 const mockStorage: Record<string, string> = {}
 
 vi.mock('../../utils/storage', () => ({
@@ -39,16 +49,6 @@ vi.mock('../../utils/petOwnership', () => ({
   requirePetOwnership: vi.fn(),
   isPetOwnerLocal: vi.fn(() => true),
 }))
-
-import { api } from '../api'
-import { isMember, getQuotaLimit } from '../membershipService'
-import {
-  queryFood,
-  getQueryHistory,
-  getQueryStats,
-  getTodayQueryCount,
-} from '../foodService'
-import type { PetFoodQuery } from '../foodService'
 
 function makeApiQueryResult(overrides: Partial<PetFoodQuery> = {}): PetFoodQuery {
   return {

@@ -4,6 +4,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { useAuthStore } from '../stores/authStore'
+
 const {
   mockApiLogin,
   mockApiGetUser,
@@ -54,8 +56,6 @@ vi.mock('@tarojs/taro', () => ({
     clearStorageSync: mockTaroClearStorageSync,
   },
 }))
-
-import { useAuthStore } from '../stores/authStore'
 
 describe('useAuthStore', () => {
   beforeEach(() => {

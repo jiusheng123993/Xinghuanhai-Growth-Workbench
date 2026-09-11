@@ -1,0 +1,63 @@
+@import '../styles/_theme';
+
+/**
+ * 空状态组件样式
+ *
+ * 尺寸用 rpx（750 设计稿），与全站一致。
+ * 插画 132px（264rpx）是在 375px 屏上试出来的舒适值：够醒目、又不至于把
+ * 标题和按钮挤出首屏。
+ * 颜色一律走主题变量：空态会出现在深色主题（星空银河）页面上，
+ * 写死深色文字会在深底上看不见。
+ */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 56rpx 60rpx;
+}
+
+.empty-state__illus {
+  margin-bottom: 20rpx;
+}
+
+.empty-state__icon {
+  margin-bottom: 20rpx;
+}
+
+.empty-state__title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+  line-height: 1.4;
+}
+
+.empty-state__desc {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  line-height: 1.6;
+  max-width: 480rpx;
+}
+
+.empty-state__action {
+  margin-top: 32rpx;
+  padding: 20rpx 56rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, $color-primary-light, $color-primary);
+  box-shadow: $shadow-button;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+
+  &:active {
+    transform: scale(0.96);
+    opacity: 0.92;
+  }
+}
+
+.empty-state__action-text {
+  font-size: 28rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-inverse;
+}

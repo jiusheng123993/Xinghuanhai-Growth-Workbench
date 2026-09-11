@@ -3,6 +3,9 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, fireEvent, screen, act } from '@testing-library/react'
+import Taro from '@tarojs/taro'
+
+import EmergencyAlert from '../index'
 
 vi.mock('@tarojs/components', () => ({
   View: ({ children, className, style, onClick }: any) => (
@@ -27,9 +30,6 @@ vi.mock('../../../types/analyticsTypes', () => ({
 }))
 
 vi.mock('../EmergencyAlert.scss', () => ({}))
-
-import EmergencyAlert from '../index'
-import Taro from '@tarojs/taro'
 
 describe('EmergencyAlert', () => {
   const defaultProps = {
@@ -62,12 +62,12 @@ describe('EmergencyAlert', () => {
   })
 
   it('renders custom title when provided', () => {
-    render(<EmergencyAlert {...defaultProps} title="自定义预警标题" />)
+    render(<EmergencyAlert {...defaultProps} title='自定义预警标题' />)
     expect(screen.getByText('自定义预警标题')).toBeDefined()
   })
 
   it('displays the message', () => {
-    render(<EmergencyAlert {...defaultProps} message="测试消息内容" />)
+    render(<EmergencyAlert {...defaultProps} message='测试消息内容' />)
     expect(screen.getByText('测试消息内容')).toBeDefined()
   })
 

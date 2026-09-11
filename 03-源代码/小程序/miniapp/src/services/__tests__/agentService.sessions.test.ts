@@ -6,6 +6,14 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import {
+  listChatSessions,
+  createChatSession,
+  deleteChatSession,
+  loadAgentHistory,
+  agentChat,
+} from '../agentService'
+
 const { mockRequest } = vi.hoisted(() => ({
   mockRequest: vi.fn(),
 }))
@@ -19,14 +27,6 @@ vi.mock('@tarojs/taro', () => ({
 vi.mock('../../config', () => ({ CONFIG: { API_BASE_URL: 'http://test' } }))
 vi.mock('../../utils/storage', () => ({ storage: { getToken: () => 'test-token' } }))
 vi.mock('../../logger', () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() } }))
-
-import {
-  listChatSessions,
-  createChatSession,
-  deleteChatSession,
-  loadAgentHistory,
-  agentChat,
-} from '../agentService'
 
 const SESSION = {
   id: 'session-1',

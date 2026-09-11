@@ -3,6 +3,8 @@ import { View, Text } from '@tarojs/components'
 import { usePetStore } from '../../stores/petStore'
 
 import './index.scss'
+import PageBackground from '../../components/PageBackground'
+import { Icon } from '../../components'
 
 /**
  * 形象工坊页（2026-09-09 对齐高保真原型 creative-hub-prototype.html 屏2）：
@@ -27,6 +29,7 @@ const Studio = () => {
 
   return (
     <View className='stu'>
+      <PageBackground />
       {/* ===== 橙粉 hero（原型 .hero.studio） ===== */}
       <View className='stu-hero'>
         <Text className='stu-hero-face'>🎭</Text>
@@ -85,7 +88,7 @@ const Studio = () => {
           <Text className='stu-mini-desc'>多宠合拍 · 22 场景 · 节日限定</Text>
         </View>
         <View className='stu-mini' onClick={() => go('/pagesPet/avatar-customize/index')}>
-          <Text className='stu-mini-em'>🖼️</Text>
+          <Icon name='image' size={24} tone='primary' className='stu-mini-em' />
           <Text className='stu-mini-title'>我的形象库</Text>
           <Text className='stu-mini-desc'>头像 / 设定图 / 趣味 三类管理</Text>
         </View>

@@ -3,7 +3,8 @@
 
 .onboarding-page {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
   display: flex;
   flex-direction: column;
   padding: 0 24px;
@@ -20,7 +21,7 @@
     left: -60px;
     width: 200px;
     height: 200px;
-    background: radial-gradient(circle, rgba($color-primary, 0.05) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--primary-rgb, 255, 107, 61), 0.05) 0%, transparent 70%);
     border-radius: 50%;
     pointer-events: none;
     animation: warmBreathe 5s ease-in-out infinite;
@@ -33,7 +34,7 @@
     right: -40px;
     width: 180px;
     height: 180px;
-    background: radial-gradient(circle, rgba($color-primary-light, 0.04) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--primary-light-rgb, 255, 160, 130), 0.04) 0%, transparent 70%);
     border-radius: 50%;
     pointer-events: none;
     animation: warmBreathe 5s ease-in-out 1.5s infinite;
@@ -72,7 +73,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 32px rgba($color-primary, 0.08);
+    box-shadow: 0 8px 32px rgba(var(--primary-rgb, 255, 107, 61), 0.08);
     margin-bottom: 32px;
     border: 1px solid $color-border;
     animation: popupBounceIn 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -123,7 +124,7 @@
     &--active {
       width: 24px;
       background: $color-primary;
-      box-shadow: 0 0 8rpx rgba($color-primary, 0.4);
+      box-shadow: 0 0 8rpx rgba(var(--primary-rgb, 255, 107, 61), 0.4);
     }
   }
 
@@ -146,7 +147,7 @@
 
     &--start {
       background: $gradient-warm;
-      box-shadow: 0 4px 12px rgba($color-primary, 0.3);
+      box-shadow: 0 4px 12px rgba(var(--primary-rgb, 255, 107, 61), 0.3);
     }
   }
 

@@ -4,6 +4,10 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import Taro from '@tarojs/taro'
+import { useAuthStore } from '../../stores/authStore'
+import { useAuth } from '../useAuth'
+
 const {
   mockInitialize,
   mockLogin,
@@ -30,10 +34,6 @@ vi.mock('react', () => {
 vi.mock('../../stores/authStore', () => ({
   useAuthStore: vi.fn(),
 }))
-
-import Taro from '@tarojs/taro'
-import { useAuthStore } from '../../stores/authStore'
-import { useAuth } from '../useAuth'
 
 function makeStore(overrides: Record<string, any> = {}) {
   return {

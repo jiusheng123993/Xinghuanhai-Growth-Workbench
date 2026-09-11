@@ -7,6 +7,9 @@
  */
 import { describe, it, expect, vi } from 'vitest'
 
+import Taro from '@tarojs/taro'
+import { agentChat } from '../agentService'
+
 // —— mock 顶层依赖 ——
 vi.mock('@tarojs/taro', () => ({
   default: {
@@ -17,9 +20,6 @@ vi.mock('@tarojs/taro', () => ({
 vi.mock('../../config', () => ({ CONFIG: { API_BASE_URL: 'http://test' } }))
 vi.mock('../../utils/storage', () => ({ storage: { getToken: () => 'test-token' } }))
 vi.mock('../../logger', () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() } }))
-
-import Taro from '@tarojs/taro'
-import { agentChat } from '../agentService'
 
 describe('agentChat 服务端 blocked 兜底（P2-4）', () => {
   /** 投喂单个响应体 chunk，收集 agentChat 产出的全部事件 */

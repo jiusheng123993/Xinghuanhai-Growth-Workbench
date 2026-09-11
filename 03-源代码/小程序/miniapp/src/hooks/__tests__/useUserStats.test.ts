@@ -4,6 +4,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { useUserStats, getUsageDays, getPetCount, getCheckinCount, getVaccineCount, getSymptomCheckCount, getAllStats } from '../useUserStats'
+
 const {
   mockGetStorageArray,
   mockPetStoreSelector,
@@ -41,8 +43,6 @@ vi.mock('../../stores/petStore', () => ({
 vi.mock('../../stores/checkinStore', () => ({
   useCheckinStore: Object.assign(vi.fn(mockCheckinStoreSelector), { getState: mockCheckinStoreGetState }),
 }))
-
-import { useUserStats, getUsageDays, getPetCount, getCheckinCount, getVaccineCount, getSymptomCheckCount, getAllStats } from '../useUserStats'
 
 describe('useUserStats', () => {
   beforeEach(() => {

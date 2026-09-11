@@ -19,6 +19,28 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import Taro from '@tarojs/taro'
 
 // ============================================================
+// 导入真实模块
+// ============================================================
+import { checkInput, sanitizeOutput } from '../utils/ruleGuard'
+import {
+  getAuthenticatedUserId,
+  isAuthenticated,
+  requireAuth,
+  requireAuthAsync,
+  AuthenticationError,
+} from '../utils/authGuard'
+import { isPetOwnerLocal, requirePetOwnership } from '../utils/petOwnership'
+import {
+  checkFrequency,
+  recordSend,
+  setDoNotDisturb,
+  clearSendHistory,
+  resetToDefaultRules,
+  getFrequencyRule,
+  setFrequencyRule,
+} from '../services/frequencyControlService'
+
+// ============================================================
 // 共享 mockStorage — 所有模块共享的存储后端
 // ============================================================
 const mockStorage: Record<string, string> = {}
@@ -132,28 +154,6 @@ vi.mock('../utils/jwt', () => ({
     return token.startsWith('eyJ') && token.split('.').length === 3
   }),
 }))
-
-// ============================================================
-// 导入真实模块
-// ============================================================
-import { checkInput, sanitizeOutput } from '../utils/ruleGuard'
-import {
-  getAuthenticatedUserId,
-  isAuthenticated,
-  requireAuth,
-  requireAuthAsync,
-  AuthenticationError,
-} from '../utils/authGuard'
-import { isPetOwnerLocal, requirePetOwnership } from '../utils/petOwnership'
-import {
-  checkFrequency,
-  recordSend,
-  setDoNotDisturb,
-  clearSendHistory,
-  resetToDefaultRules,
-  getFrequencyRule,
-  setFrequencyRule,
-} from '../services/frequencyControlService'
 
 // ============================================================
 // 辅助函数

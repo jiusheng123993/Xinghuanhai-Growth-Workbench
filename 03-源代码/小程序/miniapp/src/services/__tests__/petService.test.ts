@@ -3,6 +3,19 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import { api } from '../api'
+import {
+  createPet,
+  getPets,
+  getPetById,
+  updatePet,
+  deletePet,
+  markDeceased,
+  getCurrentPet,
+  setCurrentPet,
+} from '../petService'
+import type { PetProfile } from '../petService'
+
 const mockStorage: Record<string, string> = {}
 
 vi.mock('../../utils/storage', () => ({
@@ -31,19 +44,6 @@ vi.mock('../api', () => ({
     delete: vi.fn(),
   },
 }))
-
-import { api } from '../api'
-import {
-  createPet,
-  getPets,
-  getPetById,
-  updatePet,
-  deletePet,
-  markDeceased,
-  getCurrentPet,
-  setCurrentPet,
-} from '../petService'
-import type { PetProfile } from '../petService'
 
 const mockPetData: Omit<PetProfile, 'id' | 'createdAt' | 'updatedAt'> = {
   name: '旺财',

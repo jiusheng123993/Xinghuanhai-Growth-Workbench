@@ -17,6 +17,8 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
+import { api } from '../api'
+
 const {
   mockRequest,
   mockGetCurrentPages,
@@ -53,8 +55,6 @@ vi.mock('../../stores/authStore', () => ({
 
 // USE_MOCK=false 不会走 mock 分支，但顶层 import 仍会加载 mock 模块，置空防副作用
 vi.mock('../mock', () => ({ mockApi: {} }))
-
-import { api } from '../api'
 
 /** 构造 401 响应（Taro.request resolve 形态） */
 function make401() {

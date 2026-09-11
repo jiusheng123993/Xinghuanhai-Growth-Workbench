@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Tests
+// ═══════════════════════════════════════════════════════════════════════════
+
+import { getTrendData } from '../../services/trendService'
+import { queueSync, trySyncAll } from '../../services/syncHelper'
+import { getStorage, setStorage } from '../storage'
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Hoisted variables used in vi.mock factories
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -81,14 +89,6 @@ vi.mock('../../services/syncService', () => ({
     syncAll = mockSyncAll
   },
 }))
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Tests
-// ═══════════════════════════════════════════════════════════════════════════
-
-import { getTrendData } from '../../services/trendService'
-import { queueSync, trySyncAll } from '../../services/syncHelper'
-import { getStorage, setStorage } from '../storage'
 
 describe('网络异常处理', () => {
   beforeEach(() => {

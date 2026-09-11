@@ -1,12 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { encrypt, decrypt, generateId, CryptoJS } from '../crypto'
+
+// 注意：vi.hoisted 工厂内的局部变量不能与解构出的外层同名（会触发 @typescript-eslint/no-shadow），
+// 故内部一律用 xxxFn / utf8Symbol 命名，返回时再映射成对外的 mock 名
 const { mockEncrypt, mockDecrypt, mockSHA256, mockUtf8 } = vi.hoisted(() => {
   const SEP = '|||'
   const PREFIX_LEN = 3 + SEP.length
-  const mockEncrypt = vi.fn((data: string, key: string) => ({
+  const encryptFn = vi.fn((data: string, key: string) => ({
     toString: () => `ENC${SEP}${key}${SEP}${data}`,
   }))
-  const mockDecrypt = vi.fn((data: string, key: string) => {
+  const decryptFn = vi.fn((data: string, key: string) => {
     const result = {
       toString: (enc?: unknown) => {
         if (data.startsWith('ENC' + SEP)) {
@@ -23,11 +27,11 @@ const { mockEncrypt, mockDecrypt, mockSHA256, mockUtf8 } = vi.hoisted(() => {
     }
     return result
   })
-  const mockSHA256 = vi.fn((input: string) => ({
+  const sha256Fn = vi.fn((input: string) => ({
     toString: () => `hash_${input}`,
   }))
-  const mockUtf8 = Symbol('Utf8')
-  return { mockEncrypt, mockDecrypt, mockSHA256, mockUtf8 }
+  const utf8Symbol = Symbol('Utf8')
+  return { mockEncrypt: encryptFn, mockDecrypt: decryptFn, mockSHA256: sha256Fn, mockUtf8: utf8Symbol }
 })
 
 vi.mock('crypto-js/aes', () => ({
@@ -47,8 +51,6 @@ vi.mock('crypto-js/enc-base64', () => ({
 }))
 
 const DEV_SALT = 'xhh-v2-aes-salt-2026-dev'
-
-import { encrypt, decrypt, generateId, CryptoJS } from '../crypto'
 
 describe('crypto', () => {
   beforeEach(() => {

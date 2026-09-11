@@ -1,5 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import {
+  incrementFoodQueryCount,
+  incrementSymptomCheckCount,
+  isNewUser,
+  getRecentFoodQueryCount,
+  getRecentSymptomCheckCount,
+  recordAppOpen,
+  getRecentOpenCount,
+} from '../usageTracking'
+
 let mockStorage: Record<string, string> = {}
 
 const { mockGetStorageSync, mockSetStorageSync } = vi.hoisted(() => ({
@@ -17,16 +27,6 @@ vi.mock('@tarojs/taro', () => ({
     setStorageSync: mockSetStorageSync,
   },
 }))
-
-import {
-  incrementFoodQueryCount,
-  incrementSymptomCheckCount,
-  isNewUser,
-  getRecentFoodQueryCount,
-  getRecentSymptomCheckCount,
-  recordAppOpen,
-  getRecentOpenCount,
-} from '../usageTracking'
 
 describe('usageTracking', () => {
   beforeEach(() => {

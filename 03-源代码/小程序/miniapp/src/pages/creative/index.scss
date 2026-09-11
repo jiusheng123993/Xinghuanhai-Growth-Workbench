@@ -8,7 +8,11 @@
 
 .cve {
   min-height: 100vh;
-  background: #fffaf5;
+  /* 背景统一由 <PageBackground /> 组件渲染（主题渐变/光斑/星轨/照片壁纸），此处必须透明：
+     本页根容器原来写死 #fffaf5（不透明），会把组件背景整层挡住 —— 用户切主题/切壁纸时
+     只有这一页「毫无反应」；另外不透明底色还会让 .xhh-bg 的 z-index:-1 沉到其下方。
+     （2026-09-10 与全站 41 个页面的透明化改造对齐） */
+  background: transparent;
   padding: 28rpx 28rpx calc(80rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
   animation: pageEnter 0.4s ease-out;
@@ -21,176 +25,379 @@
   margin-bottom: 20rpx;
 }
 
-// ==================== 宠物头排 ====================
-.cve-petrow {
-  display: flex;
-  gap: 20rpx;
-  margin-bottom: 28rpx;
-}
-
-.cve-petcard {
-  flex: 1;
-  background: linear-gradient(135deg, #ffd9b8, #ffc4a3);
-  border-radius: 40rpx;
-  padding: 28rpx;
+// ==================== 宠物主卡（顶排） ====================
+// 2026-09-11 改造：原来拆成「宠物卡 + 健康分卡」两张并排 ——
+// 左卡是扁平色块、右卡只有 192rpx 宽，健康分被挤在里面且窄屏上易被挤出可视区。
+// 现合并为一张整宽主卡，顶部终于有了视觉分量。
+.cve-hero {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 24rpx;
-  min-width: 0;
+  padding: 28rpx;
+  border-radius: 44rpx;
+  /* 主色 → 暖金 双向淡底，随主题变；写死 hex 会在深色主题下脱节 */
+  background: linear-gradient(
+    135deg,
+    rgba(var(--primary-rgb, 255, 107, 61), 0.16),
+    rgba(var(--gold-deep-rgb, 232, 146, 10), 0.2)
+  );
+  box-shadow: $shadow-card;
+  overflow: hidden;
+  /* 2026-09-11：本卡从页面顶部移入「今日」区（标题与宫格之间），
+     原来靠父容器间距、自身无下边距，新位置必须补，否则会与下方宫格贴死 */
+  margin-bottom: 20rpx;
 }
 
-.cve-petcard-emoji {
+.cve-hero__avatar-wrap {
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 36rpx;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: $color-bg-card;
+  border: 4rpx solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 6rpx 18rpx rgba(var(--primary-rgb, 255, 107, 61), 0.22);
+}
+
+.cve-hero__avatar {
+  width: 100%;
+  height: 100%;
+}
+
+.cve-hero__avatar-emoji {
   font-size: 60rpx;
-  flex-shrink: 0;
 }
 
-.cve-petcard-avatar {
-  width: 108rpx;
-  height: 108rpx;
-  border-radius: 28rpx;
-  object-fit: cover;
-  flex-shrink: 0;
-  border: 4rpx solid rgba(255, 255, 255, 0.8);
-}
-
-.cve-petcard-info {
+.cve-hero__info {
+  flex: 1;
   min-width: 0;
 }
 
-.cve-petcard-name {
+.cve-hero__name {
   display: block;
-  font-size: 30rpx;
+  font-size: 36rpx;
   font-weight: 800;
-  color: #5a3a20;
+  color: $color-text-primary;
+  line-height: 1.2;
 }
 
-.cve-petcard-sub {
+.cve-hero__sub {
   display: block;
-  font-size: 20rpx;
-  color: #9a6b45;
+  font-size: 22rpx;
+  color: $color-text-secondary;
   margin-top: 6rpx;
 }
 
-// 健康分卡
-.cve-scorecard {
-  width: 192rpx;
-  background: #fff;
-  border-radius: 40rpx;
-  padding: 24rpx;
-  box-shadow: 0 8rpx 28rpx rgba(170, 120, 70, 0.12);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+// 打卡状态小胶囊
+.cve-hero__chip {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 12rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.cve-hero__chip-text {
+  font-size: 19rpx;
+  color: $color-text-tertiary;
+}
+
+// 健康分：竖分割 + 大号数字
+.cve-hero__score {
   flex-shrink: 0;
+  text-align: center;
+  padding-left: 24rpx;
+  border-left: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.2);
 }
 
-.cve-scorecard-label {
-  font-size: 20rpx;
-  color: #a08b76;
-}
-
-.cve-scorecard-value {
+.cve-hero__score-label {
   display: block;
-  font-size: 48rpx;
+  font-size: 19rpx;
+  color: $color-text-tertiary;
+}
+
+.cve-hero__score-value {
+  display: block;
+  font-size: 56rpx;
   font-weight: 800;
-  color: #c9b8a6;
-  margin: 4rpx 0;
+  line-height: 1.1;
+  margin-top: 2rpx;
+  color: $color-text-tertiary;
 
-  &--ok { color: #3fae72; }
-}
-
-.cve-scorecard-state {
-  display: block;
-  font-size: 20rpx;
-  color: #3fae72;
+  &--ok {
+    color: $color-success;
+  }
 }
 
 // ==================== 区块标题 ====================
+// 2026-09-11 改造：原来只是一行小号灰字，三个区块之间没有视觉分隔；
+// 现在加一条渐变色条做锚点，字号提上来，页面节奏更清楚。
 .cve-sectitle {
-  font-size: 28rpx;
-  font-weight: 700;
-  color: #5a4634;
-  margin: 28rpx 4rpx 16rpx;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin: 32rpx 4rpx 16rpx;
 }
 
-// ==================== 创作双卡（主题大卡） ====================
+.cve-sectitle__bar {
+  width: 8rpx;
+  height: 28rpx;
+  border-radius: 4rpx;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, $color-primary-light, $color-primary);
+}
+
+.cve-sectitle__text {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: $color-text-primary;
+}
+
+// ==================== 两列网格（今日 / 更多） ====================
 .cve-grid2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  // 2026-09-11：20rpx → 24rpx。卡片圆角涨到 40rpx 后，10px 的缝显得两张卡贴在一起
+  gap: 24rpx;
+  margin-bottom: 8rpx;
+}
+
+// ==================== 创作区：宽幅插画横幅卡 ====================
+// 原来是 2 列小方块（且渐变写在 JSX 内联 style 里）——3 张卡高度参差、第 3 张孤零零占半行，
+// 而这是全 App 最该有视觉分量的区域。现改为整宽横幅 + 品牌插画当背景。
+.cve-feats {
+  display: flex;
+  flex-direction: column;
   gap: 20rpx;
   margin-bottom: 8rpx;
 }
 
-.cve-ccard {
+.cve-feat {
   position: relative;
+  overflow: hidden;
+  height: 248rpx;
   border-radius: 36rpx;
-  display: flex;
-  flex-direction: column;
+  box-shadow: $shadow-card;
+  transition: transform 0.2s ease;
 
-  &:active {
-    transform: scale(0.98);
-    filter: brightness(0.98);
+  &--hover {
+    transform: scale(0.985);
   }
 }
 
-.cve-ccard-em {
-  font-size: 48rpx;
+.cve-feat__bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
-.cve-ccard-title {
-  display: block;
-  font-size: 28rpx;
-  color: #3d2f24;
-  font-weight: 700;
-  margin: 12rpx 0 6rpx;
+// 插画主体会延伸到画面中段（实测 header-memoir 的猫狗约在 25%~60% 处），
+// 所以文字区需要一层遮罩。但**不能压到全实** —— 上一版渐变终点到 1.0，
+// 结果插画右半部分被整块抹掉，看着像图被裁了一半。
+// 现在改成一条连续渐变，全程都保留透明度（最高仅 0.88），
+// 既保证文字可读，又让插画整幅透出来、只是越往右越朦胧。
+.cve-feat__scrim {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 253, 250, 0) 0%,
+    rgba(255, 253, 250, 0.14) 20%,
+    rgba(255, 253, 250, 0.42) 38%,
+    rgba(255, 253, 250, 0.68) 54%,
+    rgba(255, 253, 250, 0.82) 72%,
+    rgba(255, 253, 250, 0.88) 100%
+  );
 }
 
-.cve-ccard-desc {
-  display: block;
-  font-size: 21rpx;
-  color: #a08b76;
-  line-height: 1.45;
+// 文字块整体右移并收窄，进一步避开插画主体
+.cve-feat__body {
+  position: absolute;
+  top: 0;
+  right: 24rpx;
+  bottom: 0;
+  width: 320rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
 }
 
-.cve-ccard-price {
-  display: inline-block;
+.cve-feat__title {
+  font-size: 34rpx;
+  font-weight: 800;
+  color: $color-text-primary;
+  line-height: 1.2;
+  // 极淡的浅色光晕：遮罩刻意留了透明度，遇到底色偏暗的插画（如 header-memoir 的影院座椅）
+  // 靠它兜住文字对比度，而不必把遮罩再加厚
+  text-shadow: 0 1rpx 8rpx rgba(255, 253, 250, 0.95);
+}
+
+.cve-feat__desc {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  margin-top: 8rpx;
+  line-height: 1.4;
+  text-shadow: 0 1rpx 8rpx rgba(255, 253, 250, 0.95);
+}
+
+.cve-feat__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 12rpx;
+}
+
+.cve-feat__tag {
+  font-size: 19rpx;
+  color: $color-text-tertiary;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.16);
+  border-radius: 999rpx;
+  padding: 4rpx 14rpx;
+}
+
+.cve-feat__price {
   margin-top: 14rpx;
   font-size: 22rpx;
   font-weight: 700;
-  color: #e2582f;
-  background: #ffece2;
-  border-radius: 28rpx;
-  padding: 6rpx 18rpx;
-  align-self: flex-start;
+  color: $color-primary;
 }
 
-// ==================== 今日/更多 mini 卡 ====================
+// ==================== 今日 / 更多：插画卡 ====================
+// 2026-09-11 第四版（用户第三轮反馈：「还是太丑，能不能做成插画」）。
+//
+// 【前三版为什么都不成立】诊断口径是 375px 真机 + H5 真实渲染实测，不是看截图猜：
+//   卡片 167×116pt **横扁**，内容却全挤在左上角（图标牌右边界只到 46pt、文字最宽 147pt），
+//   也就是**右侧约 40% 是空的**，加上 10.5pt 的描述字 —— 整体像"没做完的占位"。
+//   前三版一直在换颜色（纯白卡 → 四色淡底 → 暖白卡+实色图标牌），
+//   但根因是版式：**横扁 + 左对齐，内容撑不满卡片**。换多少种颜色都还是丑。
+//
+// 【本版】换成方形卡 + 品牌插画：
+//   ① 卡片改成纵向居中（插画在上、文字在下、左右对称）→ 留白被摊匀，不再有"空一半"；
+//   ② 主视觉用 600×600 品牌插画（grid-* 六张，2026-09-11 用 Seedream 按同一角色锚点生成），
+//      插画自带画面信息量，卡片被真正填满；也与同页上方「创作区」三张插画横幅统一了语言。
+//
+// ⚠️ 卡片底色走 $glass-bg 而不是写死 #fff：
+//   星空银河是深色主题，它把 --text-primary 改成白色；写死白卡会变成「白底白字」。
+//   $glass-bg 在浅色主题是 0.72 的暖白、在星空主题自动变成 0.12 的浅色玻璃，两边都成立。
+//   但 `.theme-starry` 里那行 `--glass-bg: .12` 属于**并行会话尚未提交**的改动
+//   （HEAD 的 _theme.scss 里连 .theme-starry 都还没有），一旦它没跟上，
+//   `var(--glass-bg, rgba(255,255,255,.72))` 会退回 72% 白的玻璃 → 星空下白底白字。
+//   所以下面补了一条 `.theme-starry .cve-mini` 自保覆盖，让这一页不依赖外部改动。
+//
+// ⚠️ 色相变量只提供「通道 + 实色」两份（--mini-rgb / --mini-solid），
+//   底、边、影、图标牌全部由它们派生。注意 --mini-rgb 必须是**通道**（255,107,61）
+//   而不是完整色值，否则进不了 rgba() 的逗号语法、整条声明会被丢弃。
+//   var() 一律带 fallback：真漏配了某个 hue，退回主色也比整条声明被丢弃（卡片全透明）强。
 .cve-mini {
-  background: #fff;
-  border-radius: 36rpx;
-  padding: 24rpx;
-  box-shadow: 0 8rpx 28rpx rgba(170, 120, 70, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 44rpx;
+  padding: 22rpx 20rpx 26rpx;
+  // 卡片本身只留极淡的一丝色相（0.06）：主视觉已经是彩色插画，
+  // 卡片再上重色就会和外层那圈插画底色打架
+  background: linear-gradient(150deg, rgba(var(--mini-rgb, 255, 107, 61), 0.06), $glass-bg 62%);
+  border: 1rpx solid rgba(var(--mini-rgb, 255, 107, 61), 0.18);
+  box-shadow: 0 12rpx 32rpx -20rpx rgba(61, 33, 18, 0.42);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
 
-  &:active {
-    background: #fff8f2;
+  &--hover {
+    transform: translateY(-4rpx) scale(0.98);
+    box-shadow: 0 18rpx 40rpx -20rpx rgba(61, 33, 18, 0.5);
+  }
+
+  // 四套「分类色」：**写死**而不是取 --primary / --gold-deep，两条理由 ——
+  //   ① 首页快捷宫格用的是同一种**做法**（pages/index/index.tsx 的 PLUS_MENU_ITEMS.bg 同样是
+  //      写死的 rgba 分类色，如 rgba(255,107,61,.12)），创作页与它保持同一套语言
+  //      —— 注意只是「同一套做法」，两处的具体色值并不完全一致；
+  //   ② 主题色板里 --teal 与「夏·海盐蓝 / 冬·冰晶紫」的 --primary 几乎是同一个蓝，
+  //      跟着主题走会出现「健康打卡 / AI 管家 / 健康报告 三块一模一样的蓝牌子」
+  //      （已用 summer 主题实拍验证过）。
+  //   固定的只有**色相**：卡底里的 $glass-bg、文字色、边框仍然跟随主题。
+  &--coral {
+    --mini-rgb: 255, 107, 61;
+    --mini-solid: #FF6B3D;
+  }
+  &--gold {
+    --mini-rgb: 232, 146, 10;
+    --mini-solid: #E8920A;
+  }
+  &--sage {
+    --mini-rgb: 47, 201, 142;
+    --mini-solid: #2FC98E;
+  }
+  &--teal {
+    --mini-rgb: 79, 163, 227;
+    --mini-solid: #4FA3E3;
   }
 }
 
-.cve-mini-em {
-  font-size: 48rpx;
+// 深色主题自保：只在本页生效，且**不使用 $glass-bg**，因此不受外部主题改动影响。
+// （`--mini-rgb` 仍带 fallback，色相链路照旧。）
+.theme-starry .cve-mini {
+  background: linear-gradient(150deg, rgba(var(--mini-rgb, 255, 107, 61), 0.18), rgba(255, 255, 255, 0.1) 62%);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
-.cve-mini-title {
+// 主视觉容器：方形、圆角，**底子是那枚实色图标牌**。
+// 插画以绝对定位铺在它上面；插画加载失败时 <Illustration> 返回 null（不留破图），
+// 露出的就是下面这枚反白图标 —— 所以这里不是"二选一"，是"插画优先、图标保底"。
+.cve-mini__pic {
+  position: relative;
+  width: 196rpx;
+  height: 196rpx;
+  border-radius: 32rpx;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--mini-solid, #FF6B3D);
+  // 顶部一层白色柔光：不需要第二个色值，四种色相共用同一套写法
+  background-image: linear-gradient(150deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 58%);
+  box-shadow: 0 10rpx 24rpx -12rpx rgba(var(--mini-rgb, 255, 107, 61), 0.6);
+}
+
+// 插画铺满主视觉容器（Illustration 的 fill 模式不写内联尺寸，尺寸完全交给这条 CSS）
+.cve-mini__illus {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.cve-mini__title {
   display: block;
-  font-size: 28rpx;
-  color: #3d2f24;
-  font-weight: 600;
-  margin: 12rpx 0 6rpx;
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  line-height: 1.25;
+  text-align: center;
+  margin-top: 18rpx;
 }
 
-.cve-mini-desc {
+.cve-mini__desc {
   display: block;
   font-size: 21rpx;
-  color: #a08b76;
+  // tertiary(#B69B83) 在浅底上只有约 2.6:1，21rpx 的小字读起来发虚；
+  // secondary(#8B6E58) 在**默认（秋·暖阳）**色板下约 4.7:1，已经清楚。
+  // 注意各主题的 secondary 深浅不同：冬 ≈4.9 / 星空 ≈5.5 更高，
+  // 但 春(#6E8B66) ≈3.6、夏(#5E7C91) ≈4.1 仍偏弱 —— 那是这两套主题自身的取值，
+  // 本页修不了（要改得动全局主题令牌，影响 100+ 页面）。
+  color: $color-text-secondary;
   line-height: 1.45;
+  text-align: center;
+  margin-top: 6rpx;
 }

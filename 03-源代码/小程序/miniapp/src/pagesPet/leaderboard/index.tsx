@@ -9,6 +9,7 @@ import { useFamilyStore } from '../../stores/familyStore'
 import { leaderboardService } from '../../services/leaderboardService'
 import type { LeaderboardPeriod, RankingItem, RoleResponse, RankingMetrics } from '../../services/leaderboardService'
 import './index.scss'
+import PageBackground from '../../components/PageBackground'
 
 const PERIODS: { key: LeaderboardPeriod; label: string }[] = [
   { key: 'weekly', label: '本周' },
@@ -94,86 +95,87 @@ export default function Leaderboard() {
 
   if (!currentFamily) {
     return (
-      <View className="leaderboard-container">
-        <View className="lb-empty">
-          <Text className="lb-empty-icon">🏡</Text>
-          <Text className="lb-empty-text">请先创建家庭</Text>
+      <View className='leaderboard-container'>
+        <PageBackground />
+        <View className='lb-empty'>
+          <Text className='lb-empty-icon'>🏡</Text>
+          <Text className='lb-empty-text'>请先创建家庭</Text>
         </View>
       </View>
     )
   }
 
   return (
-    <View className="leaderboard-container">
-      <View className="lb-header">
-        <Text className="lb-header-title">家庭排行榜</Text>
+    <View className='leaderboard-container'>
+      <View className='lb-header'>
+        <Text className='lb-header-title'>家庭排行榜</Text>
         <View
           className={`refresh-btn ${refreshing ? 'refresh-btn--loading' : ''}`}
           onClick={handleRefresh}
         >
-          <Text className="refresh-btn-text">{refreshing ? '⏳' : '🔄'}</Text>
+          <Text className='refresh-btn-text'>{refreshing ? '⏳' : '🔄'}</Text>
         </View>
       </View>
 
-      <View className="period-tabs">
+      <View className='period-tabs'>
         {PERIODS.map(({ key, label }) => (
           <View
             key={key}
             className={`period-tab ${period === key ? 'period-tab--active' : ''}`}
             onClick={() => setPeriod(key)}
           >
-            <Text className="period-tab-text">{label}</Text>
+            <Text className='period-tab-text'>{label}</Text>
           </View>
         ))}
       </View>
 
       {podium.length > 0 && (
-        <View className="podium">
+        <View className='podium'>
           {podium.map((item, idx) => (
             <View key={item.pet_id} className={`podium-item podium-item--${idx + 1}`}>
-              <Text className="podium-rank">{PODIUM_MEDALS[idx]}</Text>
-              <View className="podium-avatar">
+              <Text className='podium-rank'>{PODIUM_MEDALS[idx]}</Text>
+              <View className='podium-avatar'>
                 <Text>{item.pet_avatar_url || '🐾'}</Text>
               </View>
-              <Text className="podium-name">{item.pet_name}</Text>
-              <Text className="podium-score">{item.score}分</Text>
+              <Text className='podium-name'>{item.pet_name}</Text>
+              <Text className='podium-score'>{item.score}分</Text>
             </View>
           ))}
         </View>
       )}
 
-      <ScrollView className="rank-list" scrollY>
+      <ScrollView className='rank-list' scrollY>
         {loading ? (
-          <View className="lb-loading">
-            <Text className="lb-loading-text">加载中...</Text>
+          <View className='lb-loading'>
+            <Text className='lb-loading-text'>加载中...</Text>
           </View>
         ) : restRankings.length === 0 ? (
-          <View className="lb-empty-list">
-            <Text className="lb-empty-list-text">暂无更多排名</Text>
+          <View className='lb-empty-list'>
+            <Text className='lb-empty-list-text'>暂无更多排名</Text>
           </View>
         ) : (
           restRankings.map((item) => (
             <View key={item.pet_id}>
-              <View className="rank-item" onClick={() => toggleExpand(item.pet_id)}>
-                <Text className="rank-number">{item.rank}</Text>
-                <View className="rank-avatar">
+              <View className='rank-item' onClick={() => toggleExpand(item.pet_id)}>
+                <Text className='rank-number'>{item.rank}</Text>
+                <View className='rank-avatar'>
                   <Text>{item.pet_avatar_url || '🐾'}</Text>
                 </View>
-                <View className="rank-info">
-                  <Text className="rank-name">{item.pet_name}</Text>
+                <View className='rank-info'>
+                  <Text className='rank-name'>{item.pet_name}</Text>
                   {item.badges.length > 0 && (
-                    <Text className="rank-badges">{item.badges.join(' ')}</Text>
+                    <Text className='rank-badges'>{item.badges.join(' ')}</Text>
                   )}
                 </View>
-                <Text className="rank-score">{item.score}分</Text>
+                <Text className='rank-score'>{item.score}分</Text>
               </View>
               {expandedId === item.pet_id && (
-                <View className="rank-metrics">
+                <View className='rank-metrics'>
                   {METRIC_ITEMS.map(({ key, label, weight }) => (
-                    <View key={key} className="metric-item">
-                      <Text className="metric-item-label">{label}</Text>
-                      <Text className="metric-item-value">{item.metrics[key]}</Text>
-                      <Text className="metric-item-weight">×{weight}</Text>
+                    <View key={key} className='metric-item'>
+                      <Text className='metric-item-label'>{label}</Text>
+                      <Text className='metric-item-value'>{item.metrics[key]}</Text>
+                      <Text className='metric-item-weight'>×{weight}</Text>
                     </View>
                   ))}
                 </View>
@@ -184,23 +186,23 @@ export default function Leaderboard() {
       </ScrollView>
 
       {roles.length > 0 && (
-        <View className="role-section">
-          <Text className="role-title">🏆 角色分配</Text>
-          <ScrollView className="role-list" scrollX>
+        <View className='role-section'>
+          <Text className='role-title'>🏆 角色分配</Text>
+          <ScrollView className='role-list' scrollX>
             {roles.map((role) => (
               <View
                 key={role.id}
-                className="role-card"
+                className='role-card'
                 style={{ borderColor: ROLE_COLORS[role.role_type as string] || '#D08AA8' }}
               >
                 <View
-                  className="role-icon"
+                  className='role-icon'
                   style={{ backgroundColor: ROLE_COLORS[role.role_type as string] || '#D08AA8' }}
                 >
                   <Text>{role.pet_avatar_url || '🐾'}</Text>
                 </View>
-                <Text className="role-label">{ROLE_LABELS[role.role_type as string] || role.role_label}</Text>
-                <Text className="role-pet-name">{role.pet_name}</Text>
+                <Text className='role-label'>{ROLE_LABELS[role.role_type as string] || role.role_label}</Text>
+                <Text className='role-pet-name'>{role.pet_name}</Text>
               </View>
             ))}
           </ScrollView>

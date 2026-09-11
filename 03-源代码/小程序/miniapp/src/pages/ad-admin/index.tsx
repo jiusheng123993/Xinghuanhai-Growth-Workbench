@@ -149,7 +149,7 @@ export default function AdAdminPage() {
             value={String(adConfig.maxDailyAds)}
             onInput={(e) => {
               const val = parseInt(String(e.detail.value), 10)
-              if (!isNaN(val) && val > 0) {
+              if (!Number.isNaN(val) && val > 0) {
                 updateAdConfig({ maxDailyAds: val })
                 setAdConfig(getCurrentAdConfig())
               }
@@ -164,7 +164,7 @@ export default function AdAdminPage() {
             value={String(adConfig.minIntervalSeconds)}
             onInput={(e) => {
               const val = parseInt(String(e.detail.value), 10)
-              if (!isNaN(val) && val >= 0) {
+              if (!Number.isNaN(val) && val >= 0) {
                 updateAdConfig({ minIntervalSeconds: val })
                 setAdConfig(getCurrentAdConfig())
               }

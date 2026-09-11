@@ -103,7 +103,7 @@ export default function ParticleBackground() {
   return (
     <Canvas
       ref={canvasRef}
-      type="2d"
+      type='2d'
       style={{
         position: 'fixed',
         top: 0,

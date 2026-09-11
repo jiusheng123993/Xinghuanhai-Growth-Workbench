@@ -3,6 +3,9 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import { useAuthStore } from '../authStore'
+import type { User } from '../../types'
+
 const { mockApi, mockStorage, mockIsTokenFormatValid, mockIsWeapp } = vi.hoisted(() => {
   return {
     mockApi: {
@@ -71,9 +74,6 @@ vi.mock('@tarojs/taro', () => ({
     clearStorageSync: mockTaroClearStorageSync,
   },
 }))
-
-import { useAuthStore } from '../authStore'
-import type { User } from '../../types'
 
 function makeUser(overrides: Partial<User> = {}): User {
   return {

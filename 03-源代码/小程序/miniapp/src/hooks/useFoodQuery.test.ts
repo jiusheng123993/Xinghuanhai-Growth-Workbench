@@ -4,6 +4,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { useFoodQuery } from './useFoodQuery'
+
 const {
   mockQueryFood,
   mockFetchHistory,
@@ -34,8 +36,6 @@ vi.mock('../stores/foodQueryStore', () => ({
     clearError: mockClearError,
   }))
 }))
-
-import { useFoodQuery } from './useFoodQuery'
 
 describe('useFoodQuery', () => {
   beforeEach(() => {

@@ -4,6 +4,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, fireEvent, screen } from '@testing-library/react'
 import { createElement } from 'react'
+import Taro from '@tarojs/taro'
+
+import AnxietyIntervention from '../AnxietyIntervention'
+import { getSickAnxietyMessage, getNewOwnerAnxietyMessage, getDisclaimer } from '../../engines/emotion'
 
 vi.mock('@tarojs/components', () => ({
   View: ({ children, className, style, onClick }: any) => (
@@ -55,10 +59,6 @@ vi.mock('../../services/emotionTrackingService', () => ({
   getCrisisSeverity: vi.fn(() => 'moderate' as const),
   recordFollowUp: vi.fn(),
 }))
-
-import AnxietyIntervention from '../AnxietyIntervention'
-import Taro from '@tarojs/taro'
-import { getSickAnxietyMessage, getNewOwnerAnxietyMessage, getDisclaimer } from '../../engines/emotion'
 
 const sickContext = {
   petId: 'pet1',

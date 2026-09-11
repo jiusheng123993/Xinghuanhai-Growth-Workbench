@@ -7,7 +7,7 @@ import { View, Text, Switch } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useAuthStore } from '../../stores/authStore'
 import { useSettingsStore, type NotificationSettings } from '../../stores/settingsStore'
-import { useThemeStore, THEME_LIST, type ThemeKey } from '../../stores/themeStore'
+import { type ThemeKey } from '../../stores/themeStore'
 import { useMembership } from '../../hooks/useMembership'
 import { useAnalytics } from '../../hooks/useAnalytics'
 import { bindPhone } from '../../services/authService'
@@ -22,7 +22,8 @@ import {
 } from '../../services/dataPrivacyService'
 import type { AccountDeletionReason, DataPrivacyStatus, AccountDeletionResult } from '../../types/dataPrivacyTypes'
 import { AccountDeletionConfirm } from '../../components/AccountDeletionConfirm'
-import { useThemeClass, useThemeKey } from '../../hooks/useThemeClass'
+import { useThemeClass } from '../../hooks/useThemeClass'
+import BackgroundPicker from '../../components/BackgroundPicker'
 import './index.scss'
 
 /** Taro 手机号授权 API 类型扩展（微信 Button open-type=getPhoneNumber 对应运行时能力） */
@@ -43,8 +44,6 @@ export default function SettingsPage() {
   const updateNotification = useSettingsStore(s => s.updateNotification)
   const clearCache = useSettingsStore(s => s.clearCache)
   const exportData = useSettingsStore(s => s.exportData)
-  const currentTheme = useThemeKey()
-  const setTheme = useThemeStore.getState().setTheme
   const { trackPageView, trackEvent } = useAnalytics()
   const themeClass = useThemeClass()
 
@@ -227,11 +226,15 @@ export default function SettingsPage() {
     Taro.navigateTo({ url: '/pagesUser/memory/index' })
   }, [trackEvent])
 
-  const handleThemeChange = useCallback((theme: ThemeKey) => {
+  /**
+   * 切换页面背景后的埋点与轻提示
+   * 注意：setTheme 由 BackgroundPicker 内部完成，这里只负责埋点与用户反馈，
+   * 不在外层重复切换，避免同一次操作触发两遍主题变更
+   */
+  const handleBackgroundChange = useCallback((theme: ThemeKey) => {
     trackEvent('change_theme', { theme })
-    setTheme(theme)
-    Taro.showToast({ title: '主题已切换', icon: 'success', duration: 1000 })
-  }, [setTheme, trackEvent])
+    Taro.showToast({ title: '背景已切换', icon: 'success', duration: 1000 })
+  }, [trackEvent])
 
   /** 微信手机号绑定 */
   const handleBindPhone = useCallback(() => {
@@ -318,32 +321,9 @@ export default function SettingsPage() {
       </View>
 
       <View className='settings-page__section'>
-        <Text className='settings-page__section-title'>四季主题</Text>
-        <View className='settings-page__theme-grid'>
-          {THEME_LIST.map((theme) => (
-            <View
-              key={theme.key}
-              className={`settings-page__theme-card ${currentTheme === theme.key ? 'settings-page__theme-card--active' : ''}`}
-                onClick={() => handleThemeChange(theme.key)}
-              >
-              <View
-                className='settings-page__theme-preview'
-                style={{ background: `linear-gradient(135deg, ${theme.primaryColor}, ${theme.primaryColor}88)` }}
-              >
-                <Text className='settings-page__theme-preview-emoji'>{theme.emoji}</Text>
-              </View>
-              <View className='settings-page__theme-info'>
-                <Text className='settings-page__theme-name'>{theme.name}</Text>
-                <Text className='settings-page__theme-desc'>{theme.desc}</Text>
-              </View>
-              {currentTheme === theme.key && (
-                <View className='settings-page__theme-check'>
-                  <Text>✓</Text>
-                </View>
-              )}
-            </View>
-          ))}
-        </View>
+        <Text className='settings-page__section-title'>页面背景</Text>
+        {/* 预设背景（含星空银河/奶油格纹）+ 宠物照片壁纸；切换与持久化均在组件内部完成 */}
+        <BackgroundPicker onChange={handleBackgroundChange} />
       </View>
 
       <View className='settings-page__section'>

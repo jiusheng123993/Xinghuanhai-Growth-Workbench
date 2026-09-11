@@ -4,6 +4,15 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import { api } from '../services/api'
+import { isMember, getQuotaLimit } from '../services/membershipService'
+import {
+  queryFood,
+  getQueryHistory,
+  getQueryStats,
+  getTodayQueryCount,
+} from '../services/foodService'
+
 const mockStorage: Record<string, string> = {}
 vi.mock('../utils/storage', () => ({
   getStorage: vi.fn((key: string) => {
@@ -32,15 +41,6 @@ vi.mock('../utils/petOwnership', () => ({
   requirePetOwnership: vi.fn(),
   isPetOwnerLocal: vi.fn(() => true),
 }))
-
-import { api } from '../services/api'
-import { isMember, getQuotaLimit } from '../services/membershipService'
-import {
-  queryFood,
-  getQueryHistory,
-  getQueryStats,
-  getTodayQueryCount,
-} from '../services/foodService'
 
 const USER_ID = 'user_001'
 const PET_ID = 'pet_001'

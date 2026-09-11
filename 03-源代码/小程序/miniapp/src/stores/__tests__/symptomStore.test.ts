@@ -3,6 +3,9 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import { useSymptomStore } from '../symptomStore'
+import type { SymptomCheckResult, SymptomCategory } from '../../services/symptomService'
+
 const { mockSymptomService } = vi.hoisted(() => {
   return {
     mockSymptomService: {
@@ -16,9 +19,6 @@ const { mockSymptomService } = vi.hoisted(() => {
 })
 
 vi.mock('../../services/symptomService', () => mockSymptomService)
-
-import { useSymptomStore } from '../symptomStore'
-import type { SymptomCheckResult, SymptomCategory } from '../../services/symptomService'
 
 function makeCategory(overrides: Partial<SymptomCategory> = {}): SymptomCategory {
   return {

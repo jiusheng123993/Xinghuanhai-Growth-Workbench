@@ -19,6 +19,8 @@ import { api } from '../../services/api'
 import { chooseImageWithPrivacy } from '../../utils/privacy'
 import { bindSkippedKey } from './guide'
 import './index.scss'
+import { Icon } from '../../components'
+import PageBackground from '../../components/PageBackground'
 
 export default function BindWechat() {
   const { user, updateProfile } = useAuthStore()
@@ -118,17 +120,12 @@ export default function BindWechat() {
   return (
     <View className='bind-page'>
       {/* 全屏背景光斑层（与登录页一致的温馨氛围） */}
-      <View className='xhh-bg-layer'>
-        <View className='xhh-blob xhh-blob-a' />
-        <View className='xhh-blob xhh-blob-b' />
-        <View className='xhh-blob xhh-blob-c' />
-        <View className='xhh-blob xhh-blob-d' />
-      </View>
+      <PageBackground />
 
       <View className='bind-content'>
         {/* ===== 标题区：说明目的 ===== */}
         <View className='bind-header'>
-          <Text className='bind-header__emoji'>🐾</Text>
+          <Icon name='paw-print' size={36} tone='ink' className='bind-header__emoji' />
           <Text className='bind-header__title'>绑定微信头像昵称</Text>
           <Text className='bind-header__sub'>头像昵称跟随微信，一点就位</Text>
         </View>
@@ -160,7 +157,7 @@ export default function BindWechat() {
                   <Image className='bind-avatar-img' src={user.avatar} mode='aspectFill' />
                 ) : (
                   <View className='bind-avatar-placeholder'>
-                    <Text className='bind-avatar-icon'>👤</Text>
+                    <Icon name='user' size={32} tone='primary' className='bind-avatar-icon' />
                   </View>
                 )}
               </Button>

@@ -3,13 +3,13 @@
  * 宠物信息表单输入，支持品种搜索选择、头像上传
  */
 import { View, Text, Input, Picker, Switch, Textarea, Image, ScrollView } from '@tarojs/components'
+import Taro from '@tarojs/taro'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useThemeClass } from '../../hooks/useThemeClass'
 import { usePet } from '../../hooks/usePet'
 import { useVaccine } from '../../hooks/useVaccine'
 import { useAuthStore } from '../../stores/authStore'
 import { getActiveBreeds, UNKNOWN_BREED_ID, UNKNOWN_BREED_NAME, isUnknownBreedKeyword } from '../../data/petKnowledge/breeds'
-import Taro from '@tarojs/taro'
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useAnalytics } from '../../hooks/useAnalytics'
 import { AnalyticsEventName } from '../../types/analyticsTypes'
 import { safeNavigateBack } from '../../utils/navigation'
@@ -18,6 +18,7 @@ import { uploadPetPhoto } from '../../services/avatarService'
 import { recognizeBreed, matchBreedInData, syncBreedKnowledge, type BreedRecognizeResult } from '../../services/breedService'
 import type { BreedItem } from '../../data/petKnowledge/breeds'
 import './index.scss'
+import { PageBackground, Icon  } from '../../components'
 
 /** 草稿存储 key */
 const DRAFT_KEY = 'xhh_add_pet_draft'
@@ -435,6 +436,7 @@ export default function AddPet() {
 
   return (
     <View className={`add-pet ${themeClass}`}>
+      <PageBackground />
       <View className='add-pet__form'>
         <View className='add-pet__form-item'>
           <Text className='add-pet__label add-pet__label--required'>名字</Text>
@@ -455,14 +457,14 @@ export default function AddPet() {
               className={`add-pet__species-btn ${formData.species === 'dog' ? 'add-pet__species-btn--active' : ''}`}
               onClick={() => handleSpeciesChange('dog')}
             >
-              <Text className='add-pet__species-icon'>🐕</Text>
+              <Icon name='dog' size={20} tone='primary' className='add-pet__species-icon' />
               <Text>狗狗</Text>
             </View>
             <View
               className={`add-pet__species-btn ${formData.species === 'cat' ? 'add-pet__species-btn--active' : ''}`}
               onClick={() => handleSpeciesChange('cat')}
             >
-              <Text className='add-pet__species-icon'>🐱</Text>
+              <Icon name='cat' size={20} tone='primary' className='add-pet__species-icon' />
               <Text>猫猫</Text>
             </View>
           </View>
@@ -477,7 +479,7 @@ export default function AddPet() {
             <Text className={formData.breedName ? '' : 'add-pet__picker-placeholder'}>
               {formData.breedName || '请先选择物种，再搜索品种'}
             </Text>
-            <Text className='add-pet__picker-arrow'>🔍</Text>
+            <Icon name='magnifying-glass' size={18} tone='muted' className='add-pet__picker-arrow' />
           </View>
         </View>
 
@@ -513,7 +515,7 @@ export default function AddPet() {
               </View>
 
               <View className='add-pet__breed-panel-search'>
-                <Text className='add-pet__breed-panel-search-icon'>🔍</Text>
+                <Icon name='magnifying-glass' size={18} tone='primary' className='add-pet__breed-panel-search-icon' />
                 <Input
                   className='add-pet__breed-panel-search-input'
                   placeholder='搜索品种名称或别名'
@@ -552,7 +554,8 @@ export default function AddPet() {
                     <View className='add-pet__breed-panel-recognize-result-actions'>
                       {matchedBreed ? (
                         <View className='add-pet__breed-panel-recognize-btn add-pet__breed-panel-recognize-btn--primary' onClick={applyRecognizeResult}>
-                          <Text>✅ 就用这个</Text>
+                          <Icon name='check-circle' size={18} tone='white' />
+                          <Text>就用这个</Text>
                         </View>
                       ) : (
                         <>
@@ -635,12 +638,18 @@ export default function AddPet() {
               </View>
             )}
             <View className='add-pet__breed-info-row'>
-              <Text className='add-pet__breed-info-label'>⚖️ 标准体重</Text>
+              <View className='add-pet__breed-info-label'>
+                <Icon name='scales' size={18} tone='primary' />
+                <Text>标准体重</Text>
+              </View>
               <Text className='add-pet__breed-info-value'>{selectedBreed.weightRange.min} ~ {selectedBreed.weightRange.max} kg</Text>
             </View>
             {selectedBreed.dietRestrictions.length > 0 && (
               <View className='add-pet__breed-info-row'>
-                <Text className='add-pet__breed-info-label'>🚫 饮食禁忌</Text>
+                <View className='add-pet__breed-info-label'>
+                  <Icon name='prohibit' size={18} tone='danger' />
+                  <Text>饮食禁忌</Text>
+                </View>
                 <View className='add-pet__breed-info-tags'>
                   {selectedBreed.dietRestrictions.map((d) => (
                     <Text key={d} className='add-pet__breed-info-tag add-pet__breed-info-tag--danger'>{d}</Text>
@@ -789,7 +798,7 @@ export default function AddPet() {
               <Image className='add-pet__photo-preview' src={formData.avatarUrl} mode='aspectFill' lazyLoad />
             ) : (
               <View className='add-pet__photo-placeholder'>
-                <Text className='add-pet__photo-icon'>📷</Text>
+                <Icon name='camera' size={24} tone='primary' className='add-pet__photo-icon' />
                 <Text>点击选择照片</Text>
               </View>
             )}

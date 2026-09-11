@@ -5,6 +5,10 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 
+import PetAvatar from '../PetAvatar'
+import { calculateExpression, generateDiaryForToday } from '../../engines/petAvatar'
+import type { ExpressionContext } from '../../engines/petAvatar'
+
 vi.mock('@tarojs/components', () => ({
   View: ({ children, className, style, onClick }: any) => (
     <div className={className} style={style} onClick={onClick}>{children}</div>
@@ -44,10 +48,6 @@ vi.mock('../../engines/petAvatar', () => ({
     }
   },
 }))
-
-import PetAvatar from '../PetAvatar'
-import { calculateExpression, generateDiaryForToday } from '../../engines/petAvatar'
-import type { ExpressionContext } from '../../engines/petAvatar'
 
 const defaultContext: ExpressionContext = {
   todayEntry: null,

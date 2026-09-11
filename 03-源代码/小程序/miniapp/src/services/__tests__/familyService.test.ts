@@ -3,6 +3,10 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { api as _api } from '../api'
+import { familyService } from '../familyService'
+import type { PetFamily, PetFamilyMember, PetLineage, FamilyPhoto } from '../../types/familyTypes'
+
 const mockStorage: Record<string, string> = {}
 
 vi.mock('../../utils/storage', () => ({
@@ -47,11 +51,7 @@ vi.mock('../mock', () => ({
 vi.mock('../../config', () => ({
   CONFIG: { USE_MOCK: false },
 }))
-
-import { api as _api } from '../api'
 const api = _api as any
-import { familyService } from '../familyService'
-import type { PetFamily, PetFamilyMember, PetLineage, FamilyPhoto } from '../../types/familyTypes'
 
 function makeFamily(overrides: Partial<PetFamily> = {}): PetFamily {
   return {

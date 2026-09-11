@@ -4,6 +4,10 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { api } from '../services/api'
+import { familyService } from '../services/familyService'
+import type { PetFamily, PetFamilyMember, PetLineage, FamilyPhoto } from '../types/familyTypes'
+
 // ============================================================
 // Happy Path 5: 宠物家庭 → 成员管理 → 家庭动态
 // ============================================================
@@ -27,10 +31,6 @@ vi.mock('../services/api', () => ({
 vi.mock('../config', () => ({
   CONFIG: { USE_MOCK: false },
 }))
-
-import { api } from '../services/api'
-import { familyService } from '../services/familyService'
-import type { PetFamily, PetFamilyMember, PetLineage, FamilyPhoto } from '../types/familyTypes'
 
 // ---- helpers ----
 

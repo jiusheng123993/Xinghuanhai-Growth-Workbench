@@ -4,7 +4,7 @@
  * 封装 AI 对话请求、内容安全审核（输入/输出）的 HTTP 客户端
  */
 import Taro from '@tarojs/taro'
-import type { ChatMessage, ChatResponse } from '../types/chatTypes'
+import type { ChatMessage } from '../types/chatTypes'
 import { CONFIG } from '../config'
 import { storage } from '../utils/storage'
 
@@ -13,6 +13,13 @@ interface ChatRequest {
   messages: ChatMessage[]
   temperature?: number
   max_tokens?: number
+  /**
+   * 思考模式开关（2026-09-10 新增，服务端 chatMessageSchema 已支持并透传）：
+   * Ark/DeepSeek V4 默认开启思考，reasoning_content 会吃满 max_tokens → content 返回空串。
+   * 需要完整结构化正文的调用（AI 取名推荐/命理解读/命理详情）必须传 'disabled'，
+   * 否则前端只会拿到空内容并静默降级为本地兜底文案。
+   */
+  thinking?: 'enabled' | 'disabled'
   petId?: string
   /** 服务端持久化历史时使用的用户消息文本（可选）：发图轮前端把"[图片] 文字｜视觉观察：…"
    *  合并文本传给服务端落库，保证与前端 chatHistory 逐字一致——Agent 链路按精确匹配去重，
@@ -64,10 +71,16 @@ export interface GuardResult {
 
 /**
  * 用户输入安全审核
+ *
+ * 2026-09-10 契约修复：服务端 `/api/ai/guard` 返回的是 `{success, data:{isHarmful,score,isCrisis}}`
+ * （routes/ai.ts:181），而本函数此前直接 `res.data as GuardResult` → isHarmful 恒为 undefined，
+ * namingService/chatService 的 `if (guardResult.isHarmful)` **永远不会触发**，输入安全审核形同虚设。
+ * 现按 `data` 解包（并保留对平铺结构的兼容），同时把字段强制成期望类型，避免脏数据穿透。
  * @param text - 用户输入文本
  */
 export async function guardCheck(text: string): Promise<GuardResult> {
   const token = storage.getToken()
+  const safe: GuardResult = { isHarmful: false, score: 0, isCrisis: false }
   try {
     const res = await Taro.request({
       url: `${CONFIG.API_BASE_URL}/api/ai/guard`,
@@ -79,16 +92,28 @@ export async function guardCheck(text: string): Promise<GuardResult> {
       data: { text },
     })
     if (res.statusCode === 200) {
-      return res.data as GuardResult
+      // 兼容两种结构：`{success,data:{...}}`（当前服务端）与平铺 `{...}`（历史/兜底）
+      const body = res.data as { data?: Partial<GuardResult> } & Partial<GuardResult>
+      const payload = body?.data ?? body
+      const score = Number(payload?.score)
+      return {
+        isHarmful: payload?.isHarmful === true,
+        score: Number.isFinite(score) ? score : 0,
+        isCrisis: payload?.isCrisis === true,
+      }
     }
-    return { isHarmful: false, score: 0, isCrisis: false }
+    return safe
   } catch {
-    return { isHarmful: false, score: 0, isCrisis: false }
+    return safe
   }
 }
 
 /**
  * AI 输出安全审核（医疗建议合规检查）
+ *
+ * 2026-09-10：与 guardCheck 同源契约问题——服务端 `/api/ai/guard/output` 当前是平铺
+ * `{isUnsafeMedicalAdvice}`（routes/ai.ts:198），此处同时兼容包壳结构与平铺结构，
+ * 避免接口风格调整后静默恒返回"安全"。
  * @param text - AI 回复文本
  */
 export async function guardCheckOutput(text: string): Promise<{ isUnsafeMedicalAdvice: boolean }> {
@@ -104,7 +129,9 @@ export async function guardCheckOutput(text: string): Promise<{ isUnsafeMedicalA
       data: { text },
     })
     if (res.statusCode === 200) {
-      return res.data as { isUnsafeMedicalAdvice: boolean }
+      const body = res.data as { data?: { isUnsafeMedicalAdvice?: boolean } } & { isUnsafeMedicalAdvice?: boolean }
+      const payload = body?.data ?? body
+      return { isUnsafeMedicalAdvice: payload?.isUnsafeMedicalAdvice === true }
     }
     return { isUnsafeMedicalAdvice: false }
   } catch {

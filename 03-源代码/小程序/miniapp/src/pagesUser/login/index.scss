@@ -7,7 +7,8 @@
 
 .login-page {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
   position: relative;
   z-index: 1;
   animation: pageEnter 0.4s ease-out;
@@ -142,7 +143,7 @@
   width: 100%;
   padding: 16rpx 24rpx;
   border-radius: 16rpx;
-  background: rgba($color-danger, 0.1);
+  background: rgba(var(--danger-rgb, 255, 90, 95), 0.1);
   color: $color-danger;
   font-size: 24rpx;
   text-align: center;
@@ -211,7 +212,7 @@
 
   &:focus {
     border-color: $color-primary-light;
-    box-shadow: 0 0 0 4px rgba($color-primary, 0.08), 0 0 20rpx rgba($color-primary, 0.15);
+    box-shadow: 0 0 0 4px rgba(var(--primary-rgb, 255, 107, 61), 0.08), 0 0 20rpx rgba(var(--primary-rgb, 255, 107, 61), 0.15);
   }
 }
 
@@ -235,13 +236,13 @@
   text-align: center;
   font-size: $font-size-sm;
   color: $color-primary;
-  background: rgba($color-primary, 0.08);
-  border: 2rpx solid rgba($color-primary, 0.2);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.2);
   border-radius: 48rpx;
   transition: all 0.2s ease;
 
   &:active {
-    background: rgba($color-primary, 0.15);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.15);
   }
 }
 

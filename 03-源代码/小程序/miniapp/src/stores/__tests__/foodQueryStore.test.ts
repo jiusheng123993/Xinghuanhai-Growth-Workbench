@@ -3,6 +3,10 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import { useFoodQueryStore } from '../foodQueryStore'
+import type { PetFoodQuery } from '../../memory-body/types/memoryBodyTypes'
+import type { FoodQueryStats } from '../../services/foodService'
+
 const { mockFoodService } = vi.hoisted(() => {
   return {
     mockFoodService: {
@@ -14,10 +18,6 @@ const { mockFoodService } = vi.hoisted(() => {
 })
 
 vi.mock('../../services/foodService', () => mockFoodService)
-
-import { useFoodQueryStore } from '../foodQueryStore'
-import type { PetFoodQuery } from '../../memory-body/types/memoryBodyTypes'
-import type { FoodQueryStats } from '../../services/foodService'
 
 function makeFoodQuery(overrides: Partial<PetFoodQuery> = {}): PetFoodQuery {
   return {

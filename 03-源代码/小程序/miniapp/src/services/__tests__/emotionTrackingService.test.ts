@@ -3,15 +3,6 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-const mockStorage: Record<string, string> = {}
-
-vi.mock('@tarojs/taro', () => ({
-  default: {
-    getStorageSync: vi.fn((key: string) => mockStorage[key] || ''),
-    setStorageSync: vi.fn((key: string, value: string) => { mockStorage[key] = value }),
-  },
-}))
-
 import {
   trackEmotionEvent,
   getEmotionScore,
@@ -21,6 +12,15 @@ import {
   getCrisisSeverity,
   recordFollowUp,
 } from '../emotionTrackingService'
+
+const mockStorage: Record<string, string> = {}
+
+vi.mock('@tarojs/taro', () => ({
+  default: {
+    getStorageSync: vi.fn((key: string) => mockStorage[key] || ''),
+    setStorageSync: vi.fn((key: string, value: string) => { mockStorage[key] = value }),
+  },
+}))
 
 const DAY_MS = 86400000
 const NOW = new Date('2026-07-25T12:00:00.000Z').getTime()

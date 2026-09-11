@@ -42,8 +42,9 @@ export interface ChurnDetectionResult {
 
 const RECALL_MESSAGES = {
   checkin_7d: (petName: string) => `${petName || '毛孩子'}今天怎么样？3秒打卡记录健康`,
-  app_14d: (petName: string, hasVaccineDue: boolean) =>
-    hasVaccineDue ? `${petName || '咪咪'}的疫苗快到期了，记得预约` : `${petName || '毛孩子'}想你了，回来看看吧`,
+  // 参数改名 isVaccineDue：原名 hasVaccineDue 遮蔽同模块的 hasVaccineDue() 函数（no-shadow）
+  app_14d: (petName: string, isVaccineDue: boolean) =>
+    isVaccineDue ? `${petName || '咪咪'}的疫苗快到期了，记得预约` : `${petName || '毛孩子'}想你了，回来看看吧`,
   app_30d: () => '你的宠物健康月报已生成，点击查看',
   member_expired: () => '会员权益即将失效，续费享专属优惠',
 }

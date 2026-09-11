@@ -4,6 +4,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { createElement } from 'react'
+import Taro from '@tarojs/taro'
+
+import PaywallPopup from '../PaywallPopup'
 
 vi.mock('@tarojs/components', () => ({
   View: ({ children, className, style, onClick }: any) => (
@@ -33,9 +36,6 @@ vi.mock('../../services/membershipService', () => ({
   MEMBERSHIP_BENEFITS: [],
 }))
 
-import PaywallPopup from '../PaywallPopup'
-import Taro from '@tarojs/taro'
-
 describe('PaywallPopup', () => {
   const defaultProps = {
     visible: true,
@@ -60,7 +60,7 @@ describe('PaywallPopup', () => {
   })
 
   it('shows featureName in title', () => {
-    render(<PaywallPopup {...defaultProps} featureName="AI症状初筛" />)
+    render(<PaywallPopup {...defaultProps} featureName='AI症状初筛' />)
     expect(screen.getByText(/AI症状初筛/)).toBeDefined()
   })
 

@@ -7,7 +7,8 @@
 
 .member-page {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
   position: relative;
   z-index: 1;
   animation: pageEnter 0.4s ease-out;
@@ -79,7 +80,7 @@
   flex-shrink: 0;
 
   &--muted {
-    background: rgba($color-text-tertiary, 0.12);
+    background: rgba(var(--text-tertiary-rgb, 182, 155, 131), 0.12);
   }
 }
 
@@ -311,11 +312,11 @@
   @include flex-center;
   flex-shrink: 0;
 
-  &--coral { background: rgba($color-primary, 0.14); }
-  &--gold { background: rgba($color-gold-deep, 0.14); }
-  &--green { background: rgba($color-success, 0.14); }
-  &--blue { background: rgba($color-teal, 0.14); }
-  &--deep { background: rgba($color-primary-light, 0.22); }
+  &--coral { background: rgba(var(--primary-rgb, 255, 107, 61), 0.14); }
+  &--gold { background: rgba(var(--gold-deep-rgb, 232, 146, 10), 0.14); }
+  &--green { background: rgba(var(--success-rgb, 47, 201, 142), 0.14); }
+  &--blue { background: rgba(var(--teal-rgb, 79, 163, 227), 0.14); }
+  &--deep { background: rgba(var(--primary-light-rgb, 255, 160, 130), 0.22); }
 }
 
 .member-benefit__icon-text {

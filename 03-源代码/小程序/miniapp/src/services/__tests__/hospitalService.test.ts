@@ -3,6 +3,16 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import {
+  getNearbyHospitals,
+  searchHospitals,
+  getHospitalDetail,
+  getEmergencyHospitals,
+  getRecommendedHospitals,
+  callHospital,
+  navigateToHospital,
+} from '../hospitalService'
+
 vi.mock('../../data/hospitals', () => ({
   getNearbyHospitals: vi.fn((city?: string, species?: string) => {
     const hospitals = [
@@ -189,16 +199,6 @@ vi.mock('../../data/hospitals', () => ({
     return []
   }),
 }))
-
-import {
-  getNearbyHospitals,
-  searchHospitals,
-  getHospitalDetail,
-  getEmergencyHospitals,
-  getRecommendedHospitals,
-  callHospital,
-  navigateToHospital,
-} from '../hospitalService'
 
 describe('hospitalService', () => {
   beforeEach(() => {

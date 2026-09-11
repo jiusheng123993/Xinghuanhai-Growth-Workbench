@@ -4,6 +4,10 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { api } from '../api'
+import { syncKnowledgeGraph, submitKnowledgeFeedback } from '../knowledgeService'
+import { getActiveGraph, setActiveGraph, MEDICAL_GRAPH } from '../../data/petKnowledge/medicalGraph'
+
 const mockStorage: Record<string, string> = {}
 
 vi.mock('../../utils/storage', () => ({
@@ -24,10 +28,6 @@ vi.mock('../../utils/storage', () => ({
 vi.mock('../api', () => ({
   api: { get: vi.fn(), post: vi.fn() },
 }))
-
-import { api } from '../api'
-import { syncKnowledgeGraph, submitKnowledgeFeedback } from '../knowledgeService'
-import { getActiveGraph, setActiveGraph, MEDICAL_GRAPH } from '../../data/petKnowledge/medicalGraph'
 
 /** 构造合法的"新版本"图谱（复用静态数据仅改版本，条目校验可通过） */
 function hotGraph(version: string) {

@@ -38,6 +38,10 @@ const config = {
       // 微信原生组件（chooseAvatar/nickname 能力，Taro 编译层不支持这两个属性，
       // 用原生 wxml/js 实现并通过 usingComponents 引入，这里显式拷贝进 dist）
       { from: 'src/components/WechatProfile', to: 'dist/components/WechatProfile' },
+      // 分主题 tabBar 图标：themeStore 里是用运行时字符串拼路径（拼给 setTabBarItem），
+      // webpack 静态分析看不到这些文件，不显式拷贝的话真机切主题时图标会 404。
+      // 默认配色那套（autumn/grid）路径写在 app.config.ts 里，会被自动带进去，无需在此声明。
+      { from: 'src/assets/icons/tabbar', to: 'dist/assets/icons/tabbar' },
     ],
     options: {},
   },

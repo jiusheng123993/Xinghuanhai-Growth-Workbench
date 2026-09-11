@@ -1,8 +1,10 @@
 @import '../../styles/_theme';
+@import '../../styles/_animations';
 
 .effect-page {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
   display: flex;
   flex-direction: column;
 }
@@ -67,7 +69,7 @@
   align-items: center;
 
   &--primary {
-    border-color: rgba($color-primary, 0.3);
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.3);
     background: $gradient-card;
   }
 }
@@ -113,19 +115,6 @@
   color: $color-text-primary;
 }
 
-.effect-section-action {
-  padding: 8rpx 16rpx;
-  border-radius: $radius-full;
-  background: $color-primary-bg;
-  border: 1px solid rgba($color-primary, 0.2);
-}
-
-.effect-section-action-text {
-  font-size: 22rpx;
-  color: $color-primary;
-  font-weight: 500;
-}
-
 // ===== 宠物健康分列表 =====
 .effect-pets-list {
   display: flex;
@@ -147,7 +136,7 @@
   width: 72rpx;
   height: 72rpx;
   border-radius: 50%;
-  background: rgba($color-primary-light, 0.15);
+  background: rgba(var(--primary-light-rgb, 255, 160, 130), 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -165,12 +154,24 @@
   font-size: 28rpx;
   font-weight: 600;
   color: $color-text-primary;
+  /* 小程序里 <Text> 默认 inline，不加 block 会与下一行文字挤在同一行
+     （实测"可乐中华田园猫"连成一串） */
+  display: block;
 }
 
 .effect-pet-breed {
   font-size: 22rpx;
   color: $color-text-secondary;
   margin-top: 4rpx;
+  display: block;
+}
+
+// 第三行小字：趋势被换成"连续打卡 N 天 / 还没有打卡记录"这类真实信息后需要的位置
+.effect-pet-meta {
+  font-size: 20rpx;
+  color: $color-text-hint;
+  margin-top: 4rpx;
+  display: block;
 }
 
 .effect-pet-score {
@@ -181,15 +182,13 @@
   &--green .effect-pet-score-value { color: #6BC89D; }
   &--gold .effect-pet-score-value { color: #E8C878; }
   &--red .effect-pet-score-value { color: #E0856B; }
+  /* 无打卡记录：分数显示 -- 并用弱化色，避免看起来像"得了很低的分" */
+  &--none .effect-pet-score-value { color: $color-text-hint; }
 }
 
 .effect-pet-score-value {
   font-size: 32rpx;
   font-weight: 700;
-}
-
-.effect-pet-score-trend {
-  font-size: 24rpx;
 }
 
 // ===== 使用统计 =====
@@ -219,9 +218,6 @@
   font-size: 36rpx;
   font-weight: 700;
   color: $color-text-primary;
-
-  &--green { color: #6BC89D; }
-  &--red { color: #E0856B; }
 }
 
 .effect-stat-unit {
@@ -255,6 +251,22 @@
   color: $color-text-hint;
   text-align: center;
   line-height: 1.6;
+}
+
+/* 加载失败时的重试按钮（失败态与空态分开后需要） */
+.effect-empty-retry {
+  margin-top: 24rpx;
+  padding: 14rpx 40rpx;
+  border-radius: $radius-full;
+  background: linear-gradient(135deg, $color-primary-light, $color-primary);
+  box-shadow: $shadow-button;
+  @include press-feedback;
+}
+
+.effect-empty-retry-text {
+  font-size: 24rpx;
+  color: $color-text-inverse;
+  font-weight: $font-weight-semibold;
 }
 
 // ===== 建议卡片列表 =====
@@ -357,6 +369,9 @@
   border-radius: $radius-sm;
   background: rgba(#6BC89D, 0.1);
   display: inline-flex;
+  align-items: center;
+  /* 图标与文字间距（原来 emoji 内联在文字里） */
+  gap: 6rpx;
 
   Text {
     font-size: 22rpx;
@@ -382,7 +397,7 @@
   }
 
   &--dismiss {
-    background: rgba($color-text-secondary, 0.1);
+    background: rgba(var(--text-secondary-rgb, 139, 110, 88), 0.1);
     color: $color-text-secondary;
   }
 

@@ -1,5 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+import {
+  checkFrequency,
+  recordSend,
+  getFrequencyRule,
+  setFrequencyRule,
+  getSendStats,
+  setDoNotDisturb,
+  getDoNotDisturbSetting,
+  clearSendHistory,
+  resetToDefaultRules,
+} from '../../services/frequencyControlService'
+
 const memoryStore = new Map<string, unknown>()
 
 const { mockGetStorage, mockSetStorage } = vi.hoisted(() => ({
@@ -15,18 +27,6 @@ vi.mock('../../utils/storage', () => ({
   getStorage: mockGetStorage,
   setStorage: mockSetStorage,
 }))
-
-import {
-  checkFrequency,
-  recordSend,
-  getFrequencyRule,
-  setFrequencyRule,
-  getSendStats,
-  setDoNotDisturb,
-  getDoNotDisturbSetting,
-  clearSendHistory,
-  resetToDefaultRules,
-} from '../../services/frequencyControlService'
 
 describe('frequencyControlService', () => {
   beforeEach(() => {

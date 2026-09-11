@@ -6,7 +6,8 @@
 // ============================================
 .memoir {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
   padding: $spacing-xl $spacing-lg $spacing-xxl;
   display: flex;
   flex-direction: column;
@@ -94,13 +95,13 @@
   @include press-feedback;
 
   &--coral {
-    background: linear-gradient(135deg, rgba($color-primary, 0.08), $color-bg-card);
-    border-color: rgba($color-primary, 0.25);
+    background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.08), $color-bg-card);
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.25);
   }
 
   &--gold {
     background: linear-gradient(135deg, $color-gold-bg, $color-bg-card);
-    border-color: rgba($color-gold-deep, 0.3);
+    border-color: rgba(var(--gold-deep-rgb, 232, 146, 10), 0.3);
   }
 }
 

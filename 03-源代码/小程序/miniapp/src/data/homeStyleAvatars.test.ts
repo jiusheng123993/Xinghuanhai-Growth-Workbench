@@ -4,17 +4,17 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// 先 mock api 模块（resolveAvatarUrl 依赖 CONFIG.API_BASE_URL）
-vi.mock('../services/api', () => ({
-  resolveAvatarUrl: (path: string) => `https://mock-api.example.com${path}`,
-}))
-
 import {
   getHomeStyleAvatarKey,
   getHomeStyleAvatarUrl,
   getHomeStyleAvatarUrlByKey,
   resolvePetAvatarUrl,
 } from './homeStyleAvatars'
+
+// 先 mock api 模块（resolveAvatarUrl 依赖 CONFIG.API_BASE_URL）
+vi.mock('../services/api', () => ({
+  resolveAvatarUrl: (path: string) => `https://mock-api.example.com${path}`,
+}))
 
 // 构造最小宠物档案（PetProfile 的 Pick 类型所需字段 + 可选头像字段）
 function makePet(overrides: Partial<{

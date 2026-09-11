@@ -4,6 +4,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 
+import PlanSelector from '../PlanSelector'
+import type { MembershipPlan } from '../../services/membershipService'
+
 vi.mock('@tarojs/components', () => ({
   View: ({ children, className, style, onClick }: any) => (
     <div className={className} style={style} onClick={onClick}>{children}</div>
@@ -23,9 +26,6 @@ vi.mock('../../services/membershipService', () => ({
 
 vi.mock('../PlanSelector.scss', () => ({}))
 
-import PlanSelector from '../PlanSelector'
-import type { MembershipPlan } from '../../services/membershipService'
-
 describe('PlanSelector', () => {
   const defaultProps = {
     selectedPlan: 'monthly' as MembershipPlan,
@@ -43,7 +43,7 @@ describe('PlanSelector', () => {
   })
 
   it('selected plan has --active class', () => {
-    const { container } = render(<PlanSelector {...defaultProps} selectedPlan="quarterly" />)
+    const { container } = render(<PlanSelector {...defaultProps} selectedPlan='quarterly' />)
     const activeCard = container.querySelector('.plan-selector__card--active')
     expect(activeCard).toBeDefined()
     expect(activeCard?.textContent).toContain('季度会员')
@@ -86,14 +86,14 @@ describe('PlanSelector', () => {
   })
 
   it('shows check icon for selected plan', () => {
-    const { container } = render(<PlanSelector {...defaultProps} selectedPlan="monthly" />)
+    const { container } = render(<PlanSelector {...defaultProps} selectedPlan='monthly' />)
     const activeCard = container.querySelector('.plan-selector__card--active')
     expect(activeCard?.querySelector('.plan-selector__check')).toBeDefined()
     expect(screen.getByText('✓')).toBeDefined()
   })
 
   it('does not show check icon for non-selected plan', () => {
-    const { container } = render(<PlanSelector {...defaultProps} selectedPlan="monthly" />)
+    const { container } = render(<PlanSelector {...defaultProps} selectedPlan='monthly' />)
     const cards = container.querySelectorAll('.plan-selector__card')
     const quarterlyCard = cards[1]
     expect(quarterlyCard.querySelector('.plan-selector__check')).toBeNull()
@@ -120,9 +120,9 @@ describe('PlanSelector', () => {
   })
 
   it('switches active class when selectedPlan changes', () => {
-    const { container, rerender } = render(<PlanSelector {...defaultProps} selectedPlan="monthly" />)
+    const { container, rerender } = render(<PlanSelector {...defaultProps} selectedPlan='monthly' />)
     expect(container.querySelector('.plan-selector__card--active')?.textContent).toContain('月度会员')
-    rerender(<PlanSelector {...defaultProps} selectedPlan="yearly" />)
+    rerender(<PlanSelector {...defaultProps} selectedPlan='yearly' />)
     expect(container.querySelector('.plan-selector__card--active')?.textContent).toContain('年度会员')
   })
 })

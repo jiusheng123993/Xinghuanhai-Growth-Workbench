@@ -5,6 +5,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 
+import { useAvatar3DTask } from '../useAvatar3DTask'
+import type { GenerationTask, Avatar3DResult } from '../../types/avatarTypes'
+
 const {
   mockGetTaskProgress,
   mockGetAvatar3DModel,
@@ -30,9 +33,6 @@ vi.mock('../../services/avatarService', () => ({
   increment3DGenerationCount: mockIncrement3DGenerationCount,
   generate3DAvatar: mockGenerate3DAvatar,
 }))
-
-import { useAvatar3DTask } from '../useAvatar3DTask'
-import type { GenerationTask, Avatar3DResult } from '../../types/avatarTypes'
 
 const makeTask = (overrides: Partial<GenerationTask> = {}): GenerationTask => ({
   id: 'task-3d-1',

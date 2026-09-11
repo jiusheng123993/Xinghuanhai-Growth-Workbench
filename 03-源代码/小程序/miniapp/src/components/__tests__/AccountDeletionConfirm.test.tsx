@@ -4,6 +4,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, fireEvent } from '@testing-library/react'
 
+import { AccountDeletionConfirm } from '../AccountDeletionConfirm'
+
 vi.mock('@tarojs/components', () => ({
   View: ({ children, className, style, onClick }: any) => (
     <div className={className} style={style} onClick={onClick}>{children}</div>
@@ -21,13 +23,11 @@ vi.mock('@tarojs/components', () => ({
     <label data-value={value} data-checked={checked} data-color={color}>{children}</label>
   ),
   RadioGroup: ({ children, onChange }: any) => (
-    <div data-testid="radio-group" onClick={() => onChange?.({ detail: { value: 'other' } })}>{children}</div>
+    <div data-testid='radio-group' onClick={() => onChange?.({ detail: { value: 'other' } })}>{children}</div>
   ),
 }))
 
 vi.mock('../types/dataPrivacyTypes', () => ({}))
-
-import { AccountDeletionConfirm } from '../AccountDeletionConfirm'
 
 describe('AccountDeletionConfirm', () => {
   const defaultProps = {
@@ -65,7 +65,7 @@ describe('AccountDeletionConfirm', () => {
   })
 
   it('confirm button is disabled when loading is true', () => {
-    const { getByText } = render(<AccountDeletionConfirm {...defaultProps} loading={true} />)
+    const { getByText } = render(<AccountDeletionConfirm {...defaultProps} loading />)
     const confirmBtn = getByText('确认注销').closest('button')!
     expect(confirmBtn.disabled).toBe(true)
   })
@@ -112,7 +112,7 @@ describe('AccountDeletionConfirm', () => {
 
   it('loading state shows on confirm button', () => {
     const { getByText } = render(
-      <AccountDeletionConfirm {...defaultProps} loading={true} />
+      <AccountDeletionConfirm {...defaultProps} loading />
     )
     const confirmBtn = getByText('确认注销').closest('button')!
     expect(confirmBtn.dataset.loading).toBe('true')
@@ -131,7 +131,7 @@ describe('AccountDeletionConfirm', () => {
 
   it('cancel button is disabled when loading', () => {
     const { getByText } = render(
-      <AccountDeletionConfirm {...defaultProps} loading={true} />
+      <AccountDeletionConfirm {...defaultProps} loading />
     )
     const cancelBtn = getByText('取消').closest('button')!
     expect(cancelBtn.disabled).toBe(true)

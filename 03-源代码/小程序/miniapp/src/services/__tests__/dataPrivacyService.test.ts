@@ -3,6 +3,16 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import {
+  exportAllUserData,
+  deleteUserData,
+  generateDeletionConfirmCode,
+  verifyDeletionConfirmCode,
+  requestAccountDeletion,
+  cancelAccountDeletion,
+  getDataPrivacyStatus,
+} from '../dataPrivacyService'
+
 const memoryStore = new Map<string, unknown>()
 
 const { mockGetStorage, mockSetStorage } = vi.hoisted(() => ({
@@ -61,16 +71,6 @@ vi.mock('../mock', () => ({
     getMembership: vi.fn(() => null),
   },
 }))
-
-import {
-  exportAllUserData,
-  deleteUserData,
-  generateDeletionConfirmCode,
-  verifyDeletionConfirmCode,
-  requestAccountDeletion,
-  cancelAccountDeletion,
-  getDataPrivacyStatus,
-} from '../dataPrivacyService'
 
 describe('dataPrivacyService', () => {
   beforeEach(() => {

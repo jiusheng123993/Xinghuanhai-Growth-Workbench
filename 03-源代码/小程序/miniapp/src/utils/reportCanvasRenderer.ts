@@ -427,9 +427,10 @@ export async function renderReportToCanvas(
             destWidth: canvasWidth * dpr,
             destHeight: canvasHeight * dpr,
             fileType: 'png',
-            success: (res: { tempFilePath: string }) => {
+            // 回调参数改名 result：外层 exec 回调已有同名 res（no-shadow）
+            success: (result: { tempFilePath: string }) => {
               resolve({
-                tempFilePath: res.tempFilePath,
+                tempFilePath: result.tempFilePath,
                 width: canvasWidth,
                 height: canvasHeight,
               })

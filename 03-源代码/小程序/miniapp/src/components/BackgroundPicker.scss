@@ -1,0 +1,153 @@
+/**
+ * 背景选择器样式
+ *
+ * 缩略图用纯 CSS 渐变模拟各主题背景，不额外引入图片资源（省包体积）。
+ * 颜色优先取主题变量，取不到时回退默认主题的色值。
+ */
+
+.bg-picker {
+  padding: 0 4rpx;
+}
+
+.bg-picker__label {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text-secondary, #8B6E58);
+  margin: 24rpx 0 16rpx;
+}
+
+.bg-picker__scroll {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.bg-picker__row {
+  display: flex;
+  gap: 20rpx;
+  padding: 4rpx 2rpx 10rpx;
+}
+
+.bg-picker__item {
+  flex-shrink: 0;
+  width: 148rpx;
+  text-align: center;
+}
+
+.bg-picker__swatch {
+  position: relative;
+  width: 148rpx;
+  height: 148rpx;
+  border-radius: 28rpx;
+  border: 4rpx solid transparent;
+  overflow: hidden;
+  box-shadow: 0 8rpx 24rpx -10rpx rgba(61, 33, 18, 0.24);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.bg-picker__item--active .bg-picker__swatch {
+  border-color: var(--primary, #FF6B3D);
+}
+
+.bg-picker__item:active .bg-picker__swatch {
+  transform: scale(0.94);
+}
+
+/* ---- 各主题缩略图 ---- */
+.bg-picker__swatch--autumn {
+  background: linear-gradient(180deg, #FFFDF9 0%, #FFEDE0 100%);
+}
+
+.bg-picker__swatch--spring {
+  background: linear-gradient(180deg, #FBFEF8 0%, #E7F4DE 100%);
+}
+
+.bg-picker__swatch--summer {
+  background: linear-gradient(180deg, #FAFDFF 0%, #DFEFF8 100%);
+}
+
+.bg-picker__swatch--winter {
+  background: linear-gradient(180deg, #FAFAFE 0%, #E5E9F8 100%);
+}
+
+.bg-picker__swatch--starry {
+  background: linear-gradient(180deg, #171F42 0%, #33406F 100%);
+}
+
+.bg-picker__swatch--grid {
+  background-color: #FFF9F0;
+  background-image:
+    linear-gradient(rgba(255, 107, 61, 0.08) 2rpx, transparent 2rpx),
+    linear-gradient(90deg, rgba(255, 107, 61, 0.08) 2rpx, transparent 2rpx);
+  background-size: 24rpx 24rpx;
+}
+
+/* 「选择照片」占位格 */
+.bg-picker__swatch--add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary, #FFFDF9);
+  border: 2rpx dashed var(--border, #F3E2D2);
+}
+
+.bg-picker__swatch--add .taro-img,
+.bg-picker__swatch--add image {
+  display: block;
+}
+
+/* 星空缩略图里的星点 */
+.bg-picker__star {
+  position: absolute;
+  width: 6rpx;
+  height: 6rpx;
+  border-radius: 50%;
+  background-color: #ffffff;
+  opacity: 0.9;
+}
+
+/* 照片壁纸缩略图 */
+.bg-picker__photo {
+  width: 100%;
+  height: 100%;
+}
+
+.bg-picker__tick {
+  position: absolute;
+  right: 8rpx;
+  top: 8rpx;
+}
+
+.bg-picker__remove {
+  position: absolute;
+  right: 8rpx;
+  bottom: 8rpx;
+  width: 34rpx;
+  height: 34rpx;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bg-picker__name {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  color: var(--text-tertiary, #B69B83);
+  white-space: nowrap;
+}
+
+.bg-picker__item--active .bg-picker__name {
+  color: var(--primary, #FF6B3D);
+  font-weight: 600;
+}
+
+.bg-picker__hint {
+  display: block;
+  margin-top: 20rpx;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: var(--text-tertiary, #B69B83);
+}

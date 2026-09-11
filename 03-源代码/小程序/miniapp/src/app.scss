@@ -1,3 +1,17 @@
+// 【全局样式是"只产出一份"的落点（2026-09-11 分包瘦身）】
+// 主题变量 CSS（page{--primary:...} / .theme-* 类）与全部 @keyframes 都属于
+// "全项目一份就够"的样式：app.wxss 是全局样式，对主包与所有分包页面一律生效
+// （非独立分包；本项目三个分包都没有 independent:true）。
+// 而每个页面的 scss 都会 @import 这两个 partial——Sass 是文本内联，
+// 不加开关就会把主题块（约 12.3KB/份）和 35 个 keyframes（约 4.5KB/份）拷进每一个页面。
+// 实测 pagesPet 分包因此白背了约 321KB 主题 + 92.9KB keyframes 的逐字重复副本。
+// 下面两行开关必须写在 @import **之前**（Sass 变量在同一编译单元内可见），
+// 页面/组件 scss 不置位 → 取 !default 的 false → 一个字节都不产出。
+// ⚠️ 这是静默契约：位置写错或新入口漏置位都不会报错，只会让样式凭空消失；
+//    改动这两个开关后请确认构建产物 dist/app-origin.wxss 里仍有 7 处 `--primary:`。
+$xhh-emit-theme-css: true;
+$xhh-emit-anim-css: true;
+
 @import './styles/_theme';
 @import './styles/_animations';
 

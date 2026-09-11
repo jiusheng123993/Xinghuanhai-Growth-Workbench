@@ -10,6 +10,8 @@ import { familyTreeService } from '../../services/familyTreeService'
 import type { TreeNode, TreeEdge } from '../../services/familyTreeService'
 import type { FamilyUserRelation, FamilyUserRelationType } from '../../types/familyTypes'
 import './index.scss'
+import { Icon } from '../../components'
+import PageBackground from '../../components/PageBackground'
 
 const REL_TYPES = [
   { value: 'parent_child', label: '亲子' },
@@ -240,7 +242,7 @@ export default function FamilyTree() {
     return (
       <View className='family-tree'>
         <View className='family-tree__empty'>
-          <Text className='family-tree__empty-icon'>🏡</Text>
+          <Icon name='house' size={48} tone='primary' className='family-tree__empty-icon' />
           <Text className='family-tree__empty-text'>请先创建或加入一个家庭</Text>
           <View
             className='family-tree__empty-btn'
@@ -256,25 +258,19 @@ export default function FamilyTree() {
   return (
     <View className='family-tree'>
       {/* 全屏动态背景层 */}
-      <View className='xhh-bg-layer'>
-        <View className='xhh-blob xhh-blob-a' />
-        <View className='xhh-blob xhh-blob-b' />
-        <View className='xhh-blob xhh-blob-c' />
-        <View className='xhh-blob xhh-blob-d' />
-        <View className='xhh-bg-glow' />
-      </View>
+      <PageBackground />
 
       <View className='family-tree__content'>
         {/* ===== 图谱头部卡 ===== */}
         <View className='ft-card'>
           <View className='ft-card__head'>
             <View className='ft-card__avatar'>
-              <Text className='ft-card__avatar-icon'>🐾</Text>
+              <Icon name='paw-print' size={20} tone='primary' className='ft-card__avatar-icon' />
             </View>
             <View className='ft-card__info'>
               <Text className='ft-card__name'>{currentFamily.name}</Text>
               <View className='ft-card__meta'>
-                <Text className='ft-card__meta-icon'>🐾</Text>
+                <Icon name='paw-print' size={12} tone='primary' className='ft-card__meta-icon' />
                 <Text className='ft-card__meta-text'>{nodes.length} 位成员</Text>
               </View>
             </View>
@@ -282,7 +278,7 @@ export default function FamilyTree() {
               className='ft-card__edit'
               onClick={() => Taro.navigateTo({ url: '/pagesPet/family/dashboard/index' })}
             >
-              <Text className='ft-card__edit-icon'>✏️</Text>
+              <Icon name='pencil-simple' size={12} tone='primary' className='ft-card__edit-icon' />
               <Text className='ft-card__edit-text'>编辑</Text>
             </View>
           </View>
@@ -298,7 +294,7 @@ export default function FamilyTree() {
             </View>
           ) : nodes.length === 0 ? (
             <View className='family-tree__empty'>
-              <Text className='family-tree__empty-icon'>🧬</Text>
+              <Icon name='dna' size={48} tone='primary' className='family-tree__empty-icon' />
               <Text className='family-tree__empty-text'>暂无成员数据，添加宠物后可生成图谱</Text>
             </View>
           ) : (
@@ -377,7 +373,10 @@ export default function FamilyTree() {
 
         {/* ===== 家庭成员列表卡 ===== */}
         <View className='ft-card'>
-          <Text className='ft-card__section-title'>❤️ 家庭成员</Text>
+          <View className='ft-card__section-title'>
+            <Icon name='heart' size={18} tone='primary' />
+            <Text>家庭成员</Text>
+          </View>
           {nodes.length === 0 ? (
             <View className='family-tree__empty'>
               <Text className='family-tree__empty-text'>暂无成员</Text>
@@ -415,7 +414,8 @@ export default function FamilyTree() {
           {/* 关系管理入口 */}
           <View className='ft-actions'>
             <View className='ft-action ft-action--primary' onClick={() => setShowRel(true)}>
-              <Text className='ft-action__text'>➕ 添加关系</Text>
+              <Icon name='plus' size={18} tone='primary' />
+            <Text className='ft-action__text'>添加关系</Text>
             </View>
             <View className='ft-action ft-action--outline' onClick={doSaveSnapshot}>
               <Text className='ft-action__text'>💾 保存快照</Text>
@@ -473,7 +473,8 @@ export default function FamilyTree() {
               {isFamilyOwner && (
                 <View className='ft-actions'>
                   <View className='ft-action ft-action--primary' onClick={() => setShowUserRel(true)}>
-                    <Text className='ft-action__text'>➕ 添加成员关系</Text>
+                    <Icon name='plus' size={18} tone='primary' />
+            <Text className='ft-action__text'>添加成员关系</Text>
                   </View>
                 </View>
               )}

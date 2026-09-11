@@ -55,37 +55,37 @@ export default function AnomalyMarker({
   return (
     <>
       {expanded && (
-        <View className="anomaly-marker__overlay" onClick={handleOverlayClick} />
+        <View className='anomaly-marker__overlay' onClick={handleOverlayClick} />
       )}
       <View
         className={`anomaly-marker anomaly-marker--${riskLevel}`}
         style={{ left: `${position.x}%`, top: `${position.y}%` }}
       >
-        <View className="anomaly-marker__dot-wrapper" onClick={handleMarkerClick}>
+        <View className='anomaly-marker__dot-wrapper' onClick={handleMarkerClick}>
           <View
-            className="anomaly-marker__dot"
+            className='anomaly-marker__dot'
             style={{ backgroundColor: color }}
           />
           {riskLevel === 'emergency' && (
             <View
-              className="anomaly-marker__pulse"
+              className='anomaly-marker__pulse'
               style={{ borderColor: color }}
             />
           )}
         </View>
 
         {expanded && (
-          <View className="anomaly-marker__bubble">
-            <View className="anomaly-marker__arrow" />
-            <View className="anomaly-marker__bubble-content">
-              <View className="anomaly-marker__header">
-                <Text className="anomaly-marker__date">{date}</Text>
+          <View className='anomaly-marker__bubble'>
+            <View className='anomaly-marker__arrow' />
+            <View className='anomaly-marker__bubble-content'>
+              <View className='anomaly-marker__header'>
+                <Text className='anomaly-marker__date'>{date}</Text>
                 <View
                   className={`anomaly-marker__badge anomaly-marker__badge--${riskLevel}`}
                   style={{ backgroundColor: `${color}1A`, borderColor: `${color}40` }}
                 >
                   <Text
-                    className="anomaly-marker__badge-text"
+                    className='anomaly-marker__badge-text'
                     style={{ color }}
                   >
                     {label}
@@ -94,22 +94,22 @@ export default function AnomalyMarker({
               </View>
 
               {description && (
-                <Text className="anomaly-marker__description">{description}</Text>
+                <Text className='anomaly-marker__description'>{description}</Text>
               )}
 
               {items.length > 0 && (
-                <View className="anomaly-marker__items">
+                <View className='anomaly-marker__items'>
                   {items.map((item) => (
                     <View
-                      className="anomaly-marker__item"
+                      className='anomaly-marker__item'
                       key={item}
                       style={{ backgroundColor: `${color}0D` }}
                     >
                       <View
-                        className="anomaly-marker__item-dot"
+                        className='anomaly-marker__item-dot'
                         style={{ backgroundColor: color }}
                       />
-                      <Text className="anomaly-marker__item-text">{item}</Text>
+                      <Text className='anomaly-marker__item-text'>{item}</Text>
                     </View>
                   ))}
                 </View>

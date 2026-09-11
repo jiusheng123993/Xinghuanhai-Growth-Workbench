@@ -1,0 +1,100 @@
+@import '../styles/_theme';
+
+/**
+ * 页面头图样式
+ *
+ * 布局：插画在左、文字在右（插画按原始 16:9 完整显示，不裁切）。
+ *
+ * 【尺寸】2026-09-11 用户反馈「所有页面的头部有点太大了，顶部这个信息栏应该要扁一点」，
+ * 原来 232rpx（116px）占掉首屏一大块 → 现压到 156rpx（78px，降 33%）。
+ * ⚠️ 高度与插画宽度是一组联动的数：16:9 的插画要正好塞满这个高度，
+ *    宽度必须 = 高度 × 16/9 ≈ 277rpx，而卡片内容宽 694rpx → 277/694 ≈ 40%。
+ *    所以 art 宽度同步从 54% 改成 40%，**改高度必须同步改宽度**，
+ *    否则插画要么被压小、要么两侧留空。
+ *    同理，下方渐变的拐点也定在插画右边界，必须跟着从 54% 挪到 40%，不然会裂出一条硬缝。
+ *
+ * 文字与底色一律走主题变量 —— 头图会出现在深色主题（星空银河）页面上。
+ */
+.page-hero {
+  display: flex;
+  align-items: center;
+  height: 156rpx;
+  border-radius: 28rpx;
+  overflow: hidden;
+  margin-bottom: 20rpx;
+  /*
+   * 底色必须与插画右边缘衔接，否则插画块与右侧文字区之间会出现一条硬缝
+   * （用户反馈「这一块看起来很奇怪」就是这个）。
+   * 实测全部 page-* / header-* 插画的右边缘色都在 #F8C69F ~ #FDD1AE（暖橙），
+   * 所以这里在**插画右边界**处取同一个色，再向右过渡到浅奶油。
+   * ⚠️ 不能像首版那样用主色淡粉打底 —— 插画是奶油+暖橙，粉色打底会明显撞色。
+   */
+  background: linear-gradient(
+    90deg,
+    #f2c9a6 0%,
+    #fbcba4 40%,
+    #fddcc2 66%,
+    #fff4e9 100%
+  );
+  box-shadow: $shadow-card;
+}
+
+// 插画：占左侧 40%，aspectFit 保证 16:9 完整不裁切（40% 是按 156rpx 高度反推出来的）
+.page-hero__art {
+  width: 40%;
+  height: 100%;
+  flex-shrink: 0;
+}
+
+.page-hero__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0 18rpx 0 6rpx;
+}
+
+.page-hero__title {
+  font-size: 32rpx;
+  font-weight: 800;
+  color: $color-text-primary;
+  line-height: 1.2;
+}
+
+.page-hero__subtitle {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 20rpx;
+  color: $color-text-secondary;
+  line-height: 1.4;
+}
+
+// 行动按钮：渐变胶囊 + 投影 + 按压缩放（与全站按钮一致）
+// 用途：让页头同时承担"标题 + 主操作"（如时光页的「记录」），
+// 避免页面里再叠一个只放标题+按钮的 bar（那样会出现两套标题，用户反馈「冲突了」）
+.page-hero__action {
+  margin-top: 14rpx;
+  height: 54rpx;
+  padding: 0 28rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, $color-primary-light, $color-primary);
+  box-shadow: $shadow-button;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+
+  &--hover {
+    transform: scale(0.94);
+    opacity: 0.92;
+  }
+}
+
+.page-hero__action-text {
+  font-size: 23rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-inverse;
+  line-height: 1;
+}

@@ -1,0 +1,19 @@
+/**
+ * 品牌插画展示样式
+ *
+ * display:block —— 小程序 <Image> 默认是 inline，会在下方留出基线间隙，
+ *   导致紧随其后的标题多出几像素空隙（空态里尤其明显）。
+ * 圆角：插画本身是奶油底方图，轻微圆角让它更像一张手账贴纸，融入页面暖色背景。
+ */
+.illustration {
+  display: block;
+  flex-shrink: 0;
+  border-radius: 16rpx;
+}
+
+// 铺满模式（当卡片背景图）：尺寸交给使用方用 CSS 决定，这里只保证撑满
+.illustration--fill {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}

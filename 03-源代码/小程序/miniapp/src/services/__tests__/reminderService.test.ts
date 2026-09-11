@@ -3,6 +3,22 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import Taro from '@tarojs/taro'
+import {
+  checkUpcomingReminders,
+  requestSubscribeMessage,
+  saveSubscriptionStatus,
+  getSubscriptionStatus,
+  scheduleLocalReminder,
+  getOverdueReminders,
+  getUpcomingReminders,
+  getLocalReminders,
+  markReminderTriggered,
+  clearLocalReminders,
+  VACCINE_REMINDER_TEMPLATE_ID,
+} from '../reminderService'
+import type { VaccineRecord } from '../vaccineService'
+
 const mockStorage: Record<string, string> = {}
 
 vi.mock('../../utils/storage', () => ({
@@ -27,22 +43,6 @@ vi.mock('@tarojs/taro', () => ({
     setStorageSync: vi.fn(),
   },
 }))
-
-import Taro from '@tarojs/taro'
-import {
-  checkUpcomingReminders,
-  requestSubscribeMessage,
-  saveSubscriptionStatus,
-  getSubscriptionStatus,
-  scheduleLocalReminder,
-  getOverdueReminders,
-  getUpcomingReminders,
-  getLocalReminders,
-  markReminderTriggered,
-  clearLocalReminders,
-  VACCINE_REMINDER_TEMPLATE_ID,
-} from '../reminderService'
-import type { VaccineRecord } from '../vaccineService'
 
 const today = new Date().toISOString().split('T')[0]
 

@@ -2,6 +2,25 @@
 // 星河宠记 · 温馨家庭动效系统
 // 爪印、星光、光晕、气泡弹性入场等丰富动效
 // ============================================
+//
+// 【本文件同样分两半】
+//   · 出 CSS：下面全部 @keyframes（35 个）——《小程序里 @keyframes 是「全局可见」的》，
+//     定义在 app.wxss 里，任何主包/分包页面的 `animation: xxx` 都能用到；
+//   · 不出 CSS：底部所有 @mixin（page-enter / press-feedback / breathe-glow …），
+//     它们只往调用处写 `animation:` 属性，编译期起作用，不占包体。
+//
+// 【为什么加开关（2026-09-11 分包瘦身）】
+//   Sass @import 是文本内联：每个页面的 scss 都 `@import '../../styles/_animations'`，
+//   于是这 35 个 @keyframes 被原样拷进**每个页面**的 WXSS。实测（改前基线）pagesPet 分包
+//   页面 WXSS 里的 @keyframes 合计 99.3 KB，其中 92.9 KB 是逐字重复的副本。
+//   app.wxss 早已定义了同一批 keyframes，所以页面里那份是纯冗余。
+//
+// 【开关用法】同 _theme.scss：只有 src/app.scss 在 @import **之前**置 true。
+//   ⚠️ 静默契约：置位写到 @import 之后 = 不生效 = 全站动画消失且编译不报错。
+$xhh-emit-anim-css: false !default;
+
+// —— 以下到「全局 keyframes 结束」为止，只在全局 app.wxss 产出一次 ——
+@if $xhh-emit-anim-css {
 
 // —— 消息弹性入场 ——
 @keyframes msgBounceIn {
@@ -233,6 +252,8 @@
 @keyframes btnRipple {
   0%   { transform: scale(0); opacity: 0.6; }
   100% { transform: scale(4); opacity: 0; }
+}
+// —— 全局 keyframes 结束 ——
 }
 
 // ============================================

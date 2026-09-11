@@ -12,6 +12,24 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 // ============================================================
+// 导入真实模块
+// ============================================================
+import { api as _api } from '../services/api'
+import {
+  getVaccineRecords,
+  createVaccineRecord,
+  updateVaccineRecord,
+  deleteVaccineRecord,
+  markAsCompleted,
+  getUpcomingRecords,
+  getOverdueRecords,
+  generateInitialPlan,
+  calculateNextDate,
+  getRecordsByMonth,
+} from '../services/vaccineService'
+import type { VaccineRecord, CreateVaccineData } from '../services/vaccineService'
+
+// ============================================================
 // Mock 层：共享的 mock storage 和 api
 // ============================================================
 const mockStorage: Record<string, string> = {}
@@ -60,24 +78,6 @@ vi.mock('@tarojs/taro', () => ({
     removeStorageSync: vi.fn(),
   },
 }))
-
-// ============================================================
-// 导入真实模块
-// ============================================================
-import { api as _api } from '../services/api'
-import {
-  getVaccineRecords,
-  createVaccineRecord,
-  updateVaccineRecord,
-  deleteVaccineRecord,
-  markAsCompleted,
-  getUpcomingRecords,
-  getOverdueRecords,
-  generateInitialPlan,
-  calculateNextDate,
-  getRecordsByMonth,
-} from '../services/vaccineService'
-import type { VaccineRecord, CreateVaccineData } from '../services/vaccineService'
 
 const api = _api as unknown as {
   get: ReturnType<typeof vi.fn>

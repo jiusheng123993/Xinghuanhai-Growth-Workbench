@@ -8,8 +8,8 @@ import Taro from '@tarojs/taro'
 import { useFamilyStore } from '../../../stores/familyStore'
 import { usePetStore } from '../../../stores/petStore'
 import { useAuthStore } from '../../../stores/authStore'
-import { getCheckinStats } from '../../../services/checkinService'
-import { getTodayCheckin } from '../../../services/checkinService'
+import { getCheckinStats , getTodayCheckin } from '../../../services/checkinService'
+
 import { useThemeClass } from '../../../hooks/useThemeClass'
 import {
   buildFamilyPhotoData,
@@ -791,7 +791,7 @@ export default function FamilyDashboard() {
               </View>
             </View>
             <Text className='fd-album-empty-title'>珍藏每一刻</Text>
-            <Text className='fd-album-empty-text'>生成全家福后点击"保存到相册"<br />或点击上方"上传照片"分享精彩瞬间</Text>
+            <Text className='fd-album-empty-text'>生成全家福后点击&quot;保存到相册&quot;<br />或点击上方&quot;上传照片&quot;分享精彩瞬间</Text>
           </View>
         ) : (
           <View className={`fd-album-list ${albumHighlight ? 'fd-album-list--highlight' : ''}`}>
@@ -845,7 +845,8 @@ export default function FamilyDashboard() {
                               confirmColor: '#E0856B',
                               success: (res) => { if (res.confirm) deletePhoto(photo.id) },
                             })
-                          }}>
+                          }}
+                          >
                             <Text className='fd-album-item-del-text'>删除</Text>
                           </View>
                         </View>

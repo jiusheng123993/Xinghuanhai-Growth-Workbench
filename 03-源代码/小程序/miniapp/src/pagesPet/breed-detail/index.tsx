@@ -13,6 +13,7 @@ import { useAnalytics, usePageView } from '../../hooks/useAnalytics'
 import { usePet } from '../../hooks/usePet'
 import { EVENT } from '../../constants/analyticsEvents'
 import './index.scss'
+import { PageBackground, Icon  } from '../../components'
 
 const disclaimerText = new MedicalDisclaimer().getDisclaimer('green', 'breed')
 
@@ -135,6 +136,7 @@ export default function BreedDetail() {
   if (!breed) {
     return (
       <View className={`breed-detail ${themeClass}`}>
+        <PageBackground />
         <View className='breed-detail__loading'>
           <Text className='breed-detail__loading-text'>加载中...</Text>
         </View>
@@ -245,7 +247,7 @@ export default function BreedDetail() {
             <View className='breed-detail__warning-list'>
               {breed.commonDiseases.map((disease) => (
                 <View key={disease} className='breed-detail__warning-card'>
-                  <Text className='breed-detail__warning-icon'>💡</Text>
+                  <Icon name='lightbulb' size={18} tone='primary' className='breed-detail__warning-icon' />
                   <Text className='breed-detail__warning-text'>{disease}</Text>
                 </View>
               ))}

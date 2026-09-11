@@ -4,10 +4,11 @@
  */
 import create from 'zustand'
 import type { PetFoodQuery } from '../memory-body/types/memoryBodyTypes'
-export type { PetFoodQuery }
 import type { FoodQueryStats } from '../services/foodService'
-export type { FoodQueryStats }
 import { queryFood, getQueryHistory, getQueryStats } from '../services/foodService'
+
+export type { PetFoodQuery }
+export type { FoodQueryStats }
 
 /** 食物查询状态定义 */
 interface FoodQueryStoreState {

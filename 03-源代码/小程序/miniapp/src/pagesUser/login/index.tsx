@@ -15,9 +15,10 @@ import { shouldGuideWechatBind, bindSkippedKey } from '../bind-wechat/guide'
 // 原为 webp，微信安卓真机对 webp（尤其 VP8X+ALPH 带透明通道）解码兼容性差，
 // 真机/体验版不显示（模拟器正常），已统一转 PNG 保证全端稳定显示。
 import loginHero from './assets/login-hero.png'
-// 品牌 logo：猫狗大头像（定稿方案 1，圆角图标版），原 webp 转 PNG（同上兼容性原因）
-import brandLogo from '../../assets/logo-catdog-01.png'
+// 品牌 logo：猫狗大头像，2026-09-11 换毛毡质感版（与全站插画质感统一）
+import brandLogo from '../../assets/logo-catdog-felt.jpg'
 import './index.scss'
+import PageBackground from '../../components/PageBackground'
 
 const FEATURES = [
   { icon: '✅', label: '健康打卡' },
@@ -138,13 +139,7 @@ export default function Login() {
   return (
     <View className='login-page'>
       {/* 全屏动态背景层 */}
-      <View className='xhh-bg-layer'>
-        <View className='xhh-blob xhh-blob-a' />
-        <View className='xhh-blob xhh-blob-b' />
-        <View className='xhh-blob xhh-blob-c' />
-        <View className='xhh-blob xhh-blob-d' />
-        <View className='xhh-bg-glow' />
-      </View>
+      <PageBackground />
 
       <View className='login-page__content'>
         {/* ===== 品牌区 ===== */}

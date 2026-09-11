@@ -3,6 +3,18 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+import {
+  getFrequencyRule,
+  setFrequencyRule,
+  recordSend,
+  checkFrequency,
+  getSendStats,
+  setDoNotDisturb,
+  getDoNotDisturbSetting,
+  clearSendHistory,
+  resetToDefaultRules,
+} from '../frequencyControlService'
+
 const mockStorage: Record<string, string> = {}
 
 vi.mock('../../utils/storage', () => ({
@@ -25,18 +37,6 @@ vi.mock('../../constants/templateIds', () => ({
   CARE_PLAN_REMINDER_TEMPLATE_ID: 'tmpl_care_plan',
   HEALTH_CHECKIN_TEMPLATE_ID: 'tmpl_health_checkin',
 }))
-
-import {
-  getFrequencyRule,
-  setFrequencyRule,
-  recordSend,
-  checkFrequency,
-  getSendStats,
-  setDoNotDisturb,
-  getDoNotDisturbSetting,
-  clearSendHistory,
-  resetToDefaultRules,
-} from '../frequencyControlService'
 
 const FOLLOWUP = 'tmpl_followup'
 const CARE_PLAN = 'tmpl_care_plan'

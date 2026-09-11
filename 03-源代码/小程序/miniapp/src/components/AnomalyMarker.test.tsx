@@ -4,6 +4,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 
+import AnomalyMarker from './AnomalyMarker'
+
 vi.mock('@tarojs/components', () => ({
   View: ({ children, className, style, onClick }: any) => (
     <div className={className} style={style} onClick={onClick}>{children}</div>
@@ -12,8 +14,6 @@ vi.mock('@tarojs/components', () => ({
     <span className={className} style={style}>{children}</span>
   ),
 }))
-
-import AnomalyMarker from './AnomalyMarker'
 
 describe('AnomalyMarker', () => {
   const baseProps = {
@@ -51,14 +51,14 @@ describe('AnomalyMarker', () => {
   })
 
   it('emergency 级别有脉冲动画', () => {
-    render(<AnomalyMarker {...baseProps} riskLevel="emergency" />)
+    render(<AnomalyMarker {...baseProps} riskLevel='emergency' />)
 
     const pulse = document.querySelector('.anomaly-marker__pulse')
     expect(pulse).toBeDefined()
   })
 
   it('非 emergency 级别无脉冲动画', () => {
-    render(<AnomalyMarker {...baseProps} riskLevel="warning" />)
+    render(<AnomalyMarker {...baseProps} riskLevel='warning' />)
 
     const pulse = document.querySelector('.anomaly-marker__pulse')
     expect(pulse).toBeNull()

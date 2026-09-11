@@ -5,6 +5,15 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
+import {
+  checkBirthdayAchievement,
+  checkStreakAchievement,
+  checkVaccineCompleteAchievement,
+  checkRainbowBridgeAchievement,
+  checkHolidayAchievement,
+  checkAllAchievements,
+} from '../achievementService'
+
 const mockStorage: Record<string, string> = {}
 
 vi.mock('../../utils/storage', () => ({
@@ -29,15 +38,6 @@ vi.mock('../../components/AchievementCard', () => ({
     holiday: { type: 'holiday', title: '节日快乐', icon: '🎊' },
   },
 }))
-
-import {
-  checkBirthdayAchievement,
-  checkStreakAchievement,
-  checkVaccineCompleteAchievement,
-  checkRainbowBridgeAchievement,
-  checkHolidayAchievement,
-  checkAllAchievements,
-} from '../achievementService'
 
 const PET_ID = 'pet-001'
 

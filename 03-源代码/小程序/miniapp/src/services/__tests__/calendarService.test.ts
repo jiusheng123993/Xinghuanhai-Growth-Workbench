@@ -4,6 +4,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getFamilyCalendarEvents, getEventsByDay, hasEventsOnDay, type CalendarEvent } from '../calendarService'
 
+import { getRecordsByMonth } from '../vaccineService'
+import { getCheckinsByDateRange } from '../checkinService'
+import { getAuthenticatedUserId, isAuthenticated } from '../../utils/authGuard'
+
 // Mock 依赖
 vi.mock('../vaccineService', () => ({
   getRecordsByMonth: vi.fn(),
@@ -17,10 +21,6 @@ vi.mock('../../utils/authGuard', () => ({
   getAuthenticatedUserId: vi.fn(() => 'test-user-id'),
   isAuthenticated: vi.fn(() => true),
 }))
-
-import { getRecordsByMonth } from '../vaccineService'
-import { getCheckinsByDateRange } from '../checkinService'
-import { getAuthenticatedUserId, isAuthenticated } from '../../utils/authGuard'
 
 const mockGetRecordsByMonth = getRecordsByMonth as ReturnType<typeof vi.fn>
 const mockGetCheckinsByDateRange = getCheckinsByDateRange as ReturnType<typeof vi.fn>

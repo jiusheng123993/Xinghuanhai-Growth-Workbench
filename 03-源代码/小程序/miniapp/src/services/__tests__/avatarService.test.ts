@@ -3,10 +3,26 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import {
+  getGenerationCount,
+  incrementGenerationCount,
+  canGenerateAvatar,
+  getAvatarCustomization,
+  saveAvatarCustomization,
+  generateAvatarImage,
+  generateAvatarOptions,
+  saveAvatarToLibrary,
+  getAvatarLibrary,
+  deleteAvatarLibraryItem,
+  setMultiviewAsCurrent,
+  getPetDiary,
+} from '../avatarService'
+
+// 工厂内局部变量改名 store：与解构出的外层 memoryStore 同名会触发 no-shadow
 const { memoryStore, mockGeneratePetImage, mockApiPut, mockApiPost, mockApiGet, mockApiDelete } = vi.hoisted(() => {
-  const memoryStore = new Map<string, unknown>()
+  const store = new Map<string, unknown>()
   return {
-    memoryStore,
+    memoryStore: store,
     mockGeneratePetImage: vi.fn(),
     mockApiPut: vi.fn(),
     mockApiPost: vi.fn(),
@@ -45,21 +61,6 @@ vi.mock('../../constants', () => ({
   AVATAR_FREE_GENERATIONS: 1,
   AVATAR_MEMBER_GENERATIONS: -1,
 }))
-
-import {
-  getGenerationCount,
-  incrementGenerationCount,
-  canGenerateAvatar,
-  getAvatarCustomization,
-  saveAvatarCustomization,
-  generateAvatarImage,
-  generateAvatarOptions,
-  saveAvatarToLibrary,
-  getAvatarLibrary,
-  deleteAvatarLibraryItem,
-  setMultiviewAsCurrent,
-  getPetDiary,
-} from '../avatarService'
 
 describe('avatarService', () => {
   beforeEach(() => {

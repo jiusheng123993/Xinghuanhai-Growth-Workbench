@@ -4,6 +4,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { resolveAvatarUrl } from '../api'
+
 // 固定 API 前缀，用于断言相对路径拼接结果。
 // 必须放进 vi.hoisted：vi.mock 的工厂会被提升到文件顶部执行，普通 const 此时还没初始化。
 const { BASE } = vi.hoisted(() => ({ BASE: 'https://api.xinghuanhai.com' }))
@@ -13,8 +15,6 @@ vi.mock('@tarojs/taro', () => ({ default: {} }))
 vi.mock('../../config', () => ({
   CONFIG: { API_BASE_URL: BASE, USE_MOCK: false },
 }))
-
-import { resolveAvatarUrl } from '../api'
 
 describe('resolveAvatarUrl', () => {
   // 每测前清理，保证无状态污染

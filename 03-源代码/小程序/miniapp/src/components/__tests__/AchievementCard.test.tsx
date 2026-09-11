@@ -4,6 +4,9 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 
+import AchievementCard, { ACHIEVEMENT_DEFS } from '../AchievementCard'
+import type { AchievementConfig } from '../AchievementCard'
+
 vi.mock('@tarojs/components', () => ({
   View: ({ children, className, style, onClick }: any) => (
     <div className={className} style={style} onClick={onClick}>{children}</div>
@@ -15,9 +18,6 @@ vi.mock('@tarojs/components', () => ({
     <img src={src} className={className} style={style} data-mode={mode} />
   ),
 }))
-
-import AchievementCard, { ACHIEVEMENT_DEFS } from '../AchievementCard'
-import type { AchievementConfig } from '../AchievementCard'
 
 const birthdayAchievement: AchievementConfig = {
   type: 'birthday',

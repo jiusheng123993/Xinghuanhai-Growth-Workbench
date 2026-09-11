@@ -26,6 +26,7 @@ import { DietMemoryAdapter } from '../../memory-body/adapters/dietMemoryAdapter'
 import MemberGate from '../../components/MemberGate'
 import { useMemberGate } from '../../hooks/useMemberGate'
 import './index.scss'
+import { PageBackground, Icon  } from '../../components'
 
 const ADVICE_PRIORITY_CONFIG = {
   high: { bg: 'rgba(245, 34, 45, 0.08)', border: 'rgba(245, 34, 45, 0.2)' },
@@ -168,6 +169,7 @@ export default function FeedingAdvicePage() {
   if (!pet) {
     return (
       <View className='feeding-empty'>
+        <PageBackground />
         <Text className='feeding-empty-text'>请先添加宠物</Text>
       </View>
     )
@@ -252,7 +254,7 @@ export default function FeedingAdvicePage() {
 
           {advice.length === 0 && (
             <View className='feeding-empty-state'>
-              <Text className='feeding-empty-icon'>💡</Text>
+              <Icon name='lightbulb' size={48} tone='primary' className='feeding-empty-icon' />
               <Text className='feeding-empty-title'>暂无建议</Text>
               <Text className='feeding-empty-hint'>完善宠物信息并记录饮食后将生成个性化建议</Text>
             </View>
@@ -336,7 +338,7 @@ export default function FeedingAdvicePage() {
         <View className='feeding-content'>
           {records.length === 0 && (
             <View className='feeding-empty-state'>
-              <Text className='feeding-empty-icon'>🍽️</Text>
+              <Icon name='bowl-food' size={48} tone='primary' className='feeding-empty-icon' />
               <Text className='feeding-empty-title'>暂无饮食记录</Text>
               <Text className='feeding-empty-hint'>点击上方按钮记录今日饮食</Text>
             </View>

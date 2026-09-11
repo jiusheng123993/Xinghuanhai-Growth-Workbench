@@ -5,6 +5,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { PetHealthEntry } from '../../memory-body/types/memoryBodyTypes'
 
+import { useCheckinStore } from '../../stores/checkinStore'
+import { useCheckin } from '../useCheckin'
+
 const {
   mockInitUser,
   mockFetchCheckins,
@@ -33,9 +36,6 @@ const defaultMockStore = {
 vi.mock('../../stores/checkinStore', () => ({
   useCheckinStore: vi.fn(() => ({ ...defaultMockStore }))
 }))
-
-import { useCheckinStore } from '../../stores/checkinStore'
-import { useCheckin } from '../useCheckin'
 
 function createMockEntry(overrides: Partial<PetHealthEntry> = {}): PetHealthEntry {
   return {

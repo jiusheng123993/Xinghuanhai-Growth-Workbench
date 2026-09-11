@@ -20,6 +20,7 @@ import { usePet } from '../../hooks/usePet'
 import { useAuthStore } from '../../stores/authStore'
 import { useAnalytics } from '../../hooks/useAnalytics'
 import { useThemeClass } from '../../hooks/useThemeClass'
+import { Icon, type FillIconName } from '../../components'
 import PageLoading from '../../components/PageLoading'
 import PageError from '../../components/PageError'
 import {
@@ -32,21 +33,22 @@ import {
 } from '../../services/memoryService'
 import type { MemoryEntry, MemoryCategory } from '../../types/memoryTypes'
 import './index.scss'
+import PageBackground from '../../components/PageBackground'
 
 /** 单次加载上限提示阈值 */
 const LOAD_LIMIT_HINT = 200
 
-/** 可筛选的分类列表 */
-const CATEGORY_FILTERS: { key: MemoryCategory | ''; label: string; icon: string }[] = [
-  { key: '', label: '全部', icon: '📋' },
-  { key: 'health', label: '健康', icon: '❤️' },
-  { key: 'behavior', label: '行为', icon: '🐾' },
-  { key: 'habit', label: '习惯', icon: '⏰' },
-  { key: 'preference', label: '偏好', icon: '⭐' },
-  { key: 'event', label: '事件', icon: '🎉' },
-  { key: 'feeding', label: '喂养', icon: '🍽️' },
-  { key: 'medical', label: '医疗', icon: '💊' },
-  { key: 'general', label: '其他', icon: '📝' },
+/** 可筛选的分类列表（icon 存面性图标名，原为 emoji） */
+const CATEGORY_FILTERS: { key: MemoryCategory | ''; label: string; icon: FillIconName }[] = [
+  { key: '', label: '全部', icon: 'clipboard-text' },
+  { key: 'health', label: '健康', icon: 'heart' },
+  { key: 'behavior', label: '行为', icon: 'paw-print' },
+  { key: 'habit', label: '习惯', icon: 'clock' },
+  { key: 'preference', label: '偏好', icon: 'star' },
+  { key: 'event', label: '事件', icon: 'sparkle' },
+  { key: 'feeding', label: '喂养', icon: 'bowl-food' },
+  { key: 'medical', label: '医疗', icon: 'pill' },
+  { key: 'general', label: '其他', icon: 'note-pencil' },
 ]
 
 export default function MemoryPage() {
@@ -190,6 +192,7 @@ export default function MemoryPage() {
 
   return (
     <View className={'memory-page ' + themeClass}>
+      <PageBackground />
       {/* 顶部说明 */}
       <View className='memory-page__header'>
         <Text className='memory-page__header-title'>AI 记忆管理</Text>
@@ -232,7 +235,9 @@ export default function MemoryPage() {
               className={`memory-page__filter-tab ${activeCategory === cat.key ? 'memory-page__filter-tab--active' : ''}`}
               onClick={() => setActiveCategory(cat.key)}
             >
-              <Text>{cat.icon} {cat.label}{cat.key ? ` ${categoryCounts[cat.key] || 0}` : ` ${memories.length}`}</Text>
+              {/* 选中态标签是主色底 + 白字，图标也要跟着转白，否则同色不可见 */}
+              <Icon name={cat.icon} size={14} tone={activeCategory === cat.key ? 'white' : 'primary'} />
+              <Text>{cat.label}{cat.key ? ` ${categoryCounts[cat.key] || 0}` : ` ${memories.length}`}</Text>
             </View>
           ))}
         </View>
@@ -245,7 +250,12 @@ export default function MemoryPage() {
         <PageError message={error} onRetry={handleRetry} />
       ) : filteredMemories.length === 0 ? (
         <View className='memory-page__empty'>
-          <Text className='memory-page__empty-emoji'>{activeCategory ? '🔍' : '💭'}</Text>
+          <Icon
+            name={activeCategory ? 'magnifying-glass' : 'chat-circle'}
+            size={18}
+            tone='muted'
+            className='memory-page__empty-emoji'
+          />
           <Text className='memory-page__empty-title'>
             {activeCategory ? '该分类暂无记忆' : '暂无 AI 记忆'}
           </Text>
@@ -279,7 +289,7 @@ export default function MemoryPage() {
                 {/* 卡片头部 */}
                 <View className='memory-page__card-header'>
                   <View className='memory-page__card-tag'>
-                    <Text className='memory-page__card-icon'>{catInfo.icon}</Text>
+                    <Icon name={catInfo.icon} size={14} tone='primary' className='memory-page__card-icon' />
                     <Text className='memory-page__card-category'>{catInfo.label}</Text>
                   </View>
                   <Text className='memory-page__card-pet'>{getPetName(memory.petId)}</Text>

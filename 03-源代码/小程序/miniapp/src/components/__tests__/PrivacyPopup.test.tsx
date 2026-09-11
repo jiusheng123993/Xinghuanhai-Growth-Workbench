@@ -4,6 +4,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, fireEvent } from '@testing-library/react'
 
+import PrivacyPopup from '../PrivacyPopup'
+
 vi.mock('@tarojs/components', () => ({
   View: ({ children, className, style, onClick }: any) => (
     <div className={className} style={style} onClick={onClick}>{children}</div>
@@ -36,11 +38,9 @@ vi.mock('@tarojs/components', () => ({
     <label data-value={value} data-checked={checked} data-color={color}>{children}</label>
   ),
   RadioGroup: ({ children, onChange }: any) => (
-    <div data-testid="radio-group" onChange={(e: any) => onChange?.({ detail: { value: 'privacy_concern' } })}>{children}</div>
+    <div data-testid='radio-group' onChange={(e: any) => onChange?.({ detail: { value: 'privacy_concern' } })}>{children}</div>
   ),
 }))
-
-import PrivacyPopup from '../PrivacyPopup'
 
 describe('PrivacyPopup', () => {
   it('returns null when visible is false', () => {
@@ -52,14 +52,14 @@ describe('PrivacyPopup', () => {
 
   it('renders when visible is true', () => {
     const { container } = render(
-      <PrivacyPopup visible={true} onAgree={vi.fn()} onReject={vi.fn()} />
+      <PrivacyPopup visible onAgree={vi.fn()} onReject={vi.fn()} />
     )
     expect(container.querySelector('.privacy-popup')).not.toBeNull()
   })
 
   it('shows title 隐私保护提示', () => {
     const { getByText } = render(
-      <PrivacyPopup visible={true} onAgree={vi.fn()} onReject={vi.fn()} />
+      <PrivacyPopup visible onAgree={vi.fn()} onReject={vi.fn()} />
     )
     expect(getByText('隐私保护提示')).toBeDefined()
   })
@@ -67,7 +67,7 @@ describe('PrivacyPopup', () => {
   it('agree button calls onAgree', () => {
     const onAgree = vi.fn()
     const { getByText } = render(
-      <PrivacyPopup visible={true} onAgree={onAgree} onReject={vi.fn()} />
+      <PrivacyPopup visible onAgree={onAgree} onReject={vi.fn()} />
     )
     fireEvent.click(getByText('同意'))
     expect(onAgree).toHaveBeenCalledTimes(1)
@@ -76,7 +76,7 @@ describe('PrivacyPopup', () => {
   it('reject button calls onReject', () => {
     const onReject = vi.fn()
     const { getByText } = render(
-      <PrivacyPopup visible={true} onAgree={vi.fn()} onReject={onReject} />
+      <PrivacyPopup visible onAgree={vi.fn()} onReject={onReject} />
     )
     fireEvent.click(getByText('拒绝'))
     expect(onReject).toHaveBeenCalledTimes(1)
@@ -84,14 +84,14 @@ describe('PrivacyPopup', () => {
 
   it('shows privacy text with link', () => {
     const { getByText } = render(
-      <PrivacyPopup visible={true} onAgree={vi.fn()} onReject={vi.fn()} />
+      <PrivacyPopup visible onAgree={vi.fn()} onReject={vi.fn()} />
     )
     expect(getByText('《用户隐私保护指引》')).toBeDefined()
   })
 
   it('re-render with visible=false hides popup', () => {
     const { container, rerender } = render(
-      <PrivacyPopup visible={true} onAgree={vi.fn()} onReject={vi.fn()} />
+      <PrivacyPopup visible onAgree={vi.fn()} onReject={vi.fn()} />
     )
     expect(container.querySelector('.privacy-popup')).not.toBeNull()
     rerender(<PrivacyPopup visible={false} onAgree={vi.fn()} onReject={vi.fn()} />)
@@ -100,7 +100,7 @@ describe('PrivacyPopup', () => {
 
   it('renders overlay element', () => {
     const { container } = render(
-      <PrivacyPopup visible={true} onAgree={vi.fn()} onReject={vi.fn()} />
+      <PrivacyPopup visible onAgree={vi.fn()} onReject={vi.fn()} />
     )
     expect(container.querySelector('.privacy-popup__overlay')).not.toBeNull()
   })

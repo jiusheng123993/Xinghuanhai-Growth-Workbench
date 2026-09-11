@@ -15,7 +15,7 @@ import PetSwitcher from '../../components/PetSwitcher'
 import PaywallPopup from '../../components/PaywallPopup'
 import AnxietyIntervention from '../../components/AnxietyIntervention'
 import CrisisReferralCard from '../../components/CrisisReferralCard'
-import { PageLoading, PageError, EmergencyAlert } from '../../components'
+import { PageLoading, PageError, EmergencyAlert, Icon } from '../../components'
 import { incrementSymptomCheckCount } from '../../utils/usageTracking'
 import { useAnxietyDetection } from '../../hooks/useAnxietyDetection'
 import { useEmotionTracking } from '../../hooks/useEmotionTracking'
@@ -33,6 +33,7 @@ import {
 import { MEDICAL_GRAPH } from '../../data/petKnowledge/medicalGraph'
 import { syncKnowledgeGraph, submitKnowledgeFeedback } from '../../services/knowledgeService'
 import './index.scss'
+import PageBackground from '../../components/PageBackground'
 
 /** 原型常见症状（从后端症状库中按名称匹配展示） */
 const COMMON_SYMPTOM_NAMES = ['呕吐', '腹泻', '食欲不振', '精神萎靡', '咳嗽', '打喷嚏', '体温升高', '便血', '抽搐', '呼吸困难']
@@ -372,13 +373,7 @@ export default function PetSymptomCheck() {
   return (
     <View className='pet-symptom-check'>
       {/* 全小程序统一动态背景层 */}
-      <View className='xhh-bg-layer'>
-        <View className='xhh-blob xhh-blob-a' />
-        <View className='xhh-blob xhh-blob-b' />
-        <View className='xhh-blob xhh-blob-c' />
-        <View className='xhh-blob xhh-blob-d' />
-        <View className='xhh-bg-glow' />
-      </View>
+      <PageBackground />
 
       <PetSwitcher
         pets={pets}
@@ -388,7 +383,7 @@ export default function PetSymptomCheck() {
 
       {!currentPet ? (
         <View className='pet-symptom-check__empty'>
-          <Text className='pet-symptom-check__empty-icon'>🐾</Text>
+          <Icon name='paw-print' size={48} tone='primary' className='pet-symptom-check__empty-icon' />
           <Text className='pet-symptom-check__empty-text'>请先添加宠物</Text>
         </View>
       ) : (
@@ -396,7 +391,7 @@ export default function PetSymptomCheck() {
           {/* ===== 宠物信息条 ===== */}
           <View className='pet-symptom-check__pet-bar'>
             <View className='pet-symptom-check__pet-bar-avatar'>
-              <Text className='pet-symptom-check__pet-bar-icon'>🐾</Text>
+              <Icon name='paw-print' size={24} tone='primary' className='pet-symptom-check__pet-bar-icon' />
             </View>
             <View className='pet-symptom-check__pet-bar-info'>
               <Text className='pet-symptom-check__pet-bar-name'>
@@ -649,7 +644,7 @@ export default function PetSymptomCheck() {
           <View className='pet-symptom-check__card'>
             <View className='pet-symptom-check__subhead'>
               <View className='pet-symptom-check__subhead-icon pet-symptom-check__subhead-icon--coral'>
-                <Text className='pet-symptom-check__subhead-icon-text'>🩺</Text>
+                <Icon name='stethoscope' size={20} tone='primary' className='pet-symptom-check__subhead-icon-text' />
               </View>
               <View className='pet-symptom-check__subhead-info'>
                 <Text className='pet-symptom-check__subhead-title'>就医建议</Text>
@@ -664,7 +659,7 @@ export default function PetSymptomCheck() {
                   Taro.navigateTo({ url: '/pagesPet/hospital/index' })
                 }}
               >
-                <Text className='pet-symptom-check__tip-icon pet-symptom-check__tip-icon--coral'>📍</Text>
+                <Icon name='map-pin' size={20} tone='primary' className='pet-symptom-check__tip-icon pet-symptom-check__tip-icon--coral' />
                 <Text className='pet-symptom-check__tip-label'>医院导航</Text>
               </View>
               <View className='pet-symptom-check__tip-item'>
@@ -672,12 +667,12 @@ export default function PetSymptomCheck() {
                 <Text className='pet-symptom-check__tip-label'>电话咨询</Text>
               </View>
               <View className='pet-symptom-check__tip-item'>
-                <Text className='pet-symptom-check__tip-icon pet-symptom-check__tip-icon--green'>📄</Text>
+                <Icon name='clipboard-text' size={20} tone='primary' className='pet-symptom-check__tip-icon pet-symptom-check__tip-icon--green' />
                 <Text className='pet-symptom-check__tip-label'>带记录见医生</Text>
               </View>
             </View>
             <View className='pet-symptom-check__tip-note'>
-              <Text className='pet-symptom-check__tip-note-icon'>💡</Text>
+              <Icon name='lightbulb' size={14} tone='primary' className='pet-symptom-check__tip-note-icon' />
               <Text className='pet-symptom-check__tip-note-text'>就诊时带上近14天打卡记录与症状描述</Text>
             </View>
           </View>
@@ -693,7 +688,7 @@ export default function PetSymptomCheck() {
           <View className='pet-symptom-check__analyzing-pulse'>
             <View className='pet-symptom-check__analyzing-ring' />
             <View className='pet-symptom-check__analyzing-ring pet-symptom-check__analyzing-ring--inner' />
-            <Text className='pet-symptom-check__analyzing-icon'>🔍</Text>
+            <Icon name='magnifying-glass' size={28} tone='primary' className='pet-symptom-check__analyzing-icon' />
           </View>
           <Text className='pet-symptom-check__analyzing-title'>AI正在分析中...</Text>
           <Text className='pet-symptom-check__analyzing-desc'>
@@ -709,7 +704,7 @@ export default function PetSymptomCheck() {
 
       <PaywallPopup
         visible={paywallVisible}
-        featureName="AI症状初筛"
+        featureName='AI症状初筛'
         remainingFree={0}
         onUpgrade={() => { setPaywallVisible(false); Taro.navigateTo({ url: '/pagesUser/member/index' }) }}
         onClose={() => setPaywallVisible(false)}

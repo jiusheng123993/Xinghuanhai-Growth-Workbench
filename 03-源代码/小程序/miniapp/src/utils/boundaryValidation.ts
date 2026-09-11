@@ -36,7 +36,9 @@ export function validatePetName(name: string): string | null {
  */
 export function validateWeight(weight: string | number): string | null {
   const numWeight = typeof weight === 'string' ? parseFloat(weight) : weight;
-  if (isNaN(numWeight) || numWeight <= 0) {
+  // 用 Number.isNaN 而非全局 isNaN：numWeight 必经 parseFloat 或本身即 number，两者语义等价，
+  // 且 Number.isNaN 不会对非数字入参做隐式类型转换（避免 "abc" 被误判成 NaN 的歧义）
+  if (Number.isNaN(numWeight) || numWeight <= 0) {
     return '请输入有效体重';
   }
   if (numWeight > WEIGHT_MAX) {
@@ -55,7 +57,8 @@ export function validateBirthDate(dateStr: string): string | null {
     return '请选择出生日期';
   }
   const date = new Date(dateStr + 'T00:00:00.000Z');
-  if (isNaN(date.getTime())) {
+  // getTime() 返回 number（非法日期为 NaN），Number.isNaN 与原生 isNaN 在此完全等价
+  if (Number.isNaN(date.getTime())) {
     return '出生日期格式不正确';
   }
   const today = new Date();

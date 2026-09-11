@@ -3,6 +3,14 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import {
+  checkNpsEligibility,
+  getTriggerEvent,
+  submitNpsResponse,
+  dismissNpsSurvey,
+  getNpsStatus,
+} from '../npsService'
+
 const memoryStore = new Map<string, unknown>()
 
 const { mockGetStorage, mockSetStorage, mockRemoveStorage } = vi.hoisted(() => ({
@@ -46,14 +54,6 @@ vi.mock('../../config/supabase', () => ({
     NPS_DISMISSED: 'xhh_nps_dismissed_at',
   },
 }))
-
-import {
-  checkNpsEligibility,
-  getTriggerEvent,
-  submitNpsResponse,
-  dismissNpsSurvey,
-  getNpsStatus,
-} from '../npsService'
 
 function daysAgo(days: number): string {
   const date = new Date()

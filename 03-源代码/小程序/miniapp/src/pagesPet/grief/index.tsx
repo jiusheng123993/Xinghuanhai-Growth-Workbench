@@ -12,6 +12,7 @@ import GriefCompanion from '../../components/GriefCompanion'
 import { safeNavigateBack } from '../../utils/navigation'
 import type { PetSpecies } from '../../types/avatarTypes'
 import './index.scss'
+import PageBackground from '../../components/PageBackground'
 
 /** 陪伴话术 */
 const COMFORT_MESSAGES = [
@@ -58,6 +59,7 @@ export default function GriefPage() {
 
   return (
     <View className={`grief ${themeClass}`}>
+      <PageBackground />
       {/* 1. 主视觉 hero */}
       <View className='grief__hero'>
         <View className='grief__hero-bg'>

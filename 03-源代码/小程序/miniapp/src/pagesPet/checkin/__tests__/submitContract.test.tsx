@@ -145,8 +145,31 @@ vi.mock('../../../constants/analyticsEvents', () => ({ EVENT: {} }))
 // ============================================================
 const USER_ID = 'user_1'
 const PET_ID = 'pet_1'
-/** 服务端回包用的固定建档时间：与后端 created_at 同形（UTC ISO），保证断言可复现 */
-const CREATED_AT = '2026-09-11T02:00:00.000Z'
+/**
+ * 服务端回包用的建档时间：**必须落在「本地日历日的今天」**，且与后端 created_at 同形（UTC ISO）。
+ *
+ * 【为什么不能写死一个常量（2026-09-12 修）】
+ *   原实现写死 `'2026-09-11T02:00:00.000Z'`，注释理由是"保证断言可复现"——实际效果正相反。
+ *   `checkinStore.fetchCheckins` 是按**本地日历日**找"今天那条"：
+ *   `const todayStr = localDateString(parseLocalDate(new Date()))`，再 `checkins.find(c => c.date === todayStr)`。
+ *   而写死的 `02:00Z` = 东八区 10:00，**本地日被钉死在 2026-09-11**：
+ *   只要真实日期不是 09-11，这条记录就永远 find 不到 → `todayCheckin` 被覆写成 null →
+ *   本用例第 ⑤ 步（"store 立即反映为今日已打卡"）必红。
+ *   即这是一个**"过了当天就自爆"的测试**：2026-09-12 01:40 实测单跑 3/3 全红，
+ *   而前一日运行时是绿的——不是回归，是时间炸弹。
+ *
+ * 【现在的做法】取**当天本地正午**再转成 ISO：
+ *   · 正午离本地日两端各有 12 小时余量，任何时区偏移都不会让它跨日 → "本地日 = 今天"恒成立；
+ *   · 同一运行日内取值确定（不像 Date.now() 每次都变），断言依旧可复现。
+ *
+ * ⚠️ 别把本文件里那个把回包钉在 `'2026-09-10T17:30:00.000Z'`（东八区 09-11 01:30）的用例一起改：
+ *    它是**故意**钉住东八区清晨边界来验归一化的，属于被测行为本身。
+ */
+const CREATED_AT = (() => {
+  const noon = new Date()
+  noon.setHours(12, 0, 0, 0)
+  return noon.toISOString()
+})()
 const API_BASE = 'https://api.xinghuanhai.com'
 /** 服务端 createCheckinSchema 允许的 risk_level 值域（含 legacy 值） */
 const VALID_RISK_LEVELS = ['low', 'medium', 'high', 'emergency', 'normal', 'caution', 'warning']

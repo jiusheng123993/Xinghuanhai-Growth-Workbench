@@ -46,7 +46,7 @@ export default function PrivacyPopup({ visible, onAgree, onReject }: PrivacyPopu
         <Text className='privacy-popup__text'>
           在使用该功能前，请仔细阅读
           <Text className='privacy-popup__link' onClick={openPrivacyContract}>《用户隐私保护指引》</Text>
-          。如你同意，请点击"同意"开始使用。
+          。如你同意，请点击&quot;同意&quot;开始使用。
         </Text>
         <View className='privacy-popup__actions'>
           {/* 同意按钮：必须用 openType="agreePrivacyAuthorization" 才能完成微信隐私授权；

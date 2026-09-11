@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
+import PetFoodQuery from '../index'
+
 // vi.mock 工厂函数内使用 require，此处补充类型声明
 declare const require: (id: string) => any
 
@@ -156,6 +158,9 @@ vi.mock('@tarojs/taro', () => {
 
 vi.mock('../../../hooks/useThemeClass', () => ({
   useThemeClass: () => 'theme-default',
+  // PageBackground 组件内部会用到这两个导出，mock 必须一并提供
+  useThemeKey: () => 'autumn',
+  usePetWallpaper: () => null,
 }))
 
 vi.mock('../../../hooks/usePet', () => ({
@@ -206,7 +211,7 @@ vi.mock('../../../hooks/useAnalytics', () => ({
 
 vi.mock('../../../components/PetSwitcher', () => ({
   default: ({ pets, currentPetId, onSwitch }: any) => (
-    <div data-testid="pet-switcher" data-pets={pets?.length} data-current={currentPetId} onClick={() => onSwitch?.('pet-1')}>
+    <div data-testid='pet-switcher' data-pets={pets?.length} data-current={currentPetId} onClick={() => onSwitch?.('pet-1')}>
       PetSwitcher
     </div>
   ),
@@ -214,12 +219,12 @@ vi.mock('../../../components/PetSwitcher', () => ({
 
 vi.mock('../../../components/PaywallPopup', () => ({
   default: ({ visible, onClose }: any) =>
-    visible ? <div data-testid="paywall-popup" onClick={onClose}>PaywallPopup</div> : null,
+    visible ? <div data-testid='paywall-popup' onClick={onClose}>PaywallPopup</div> : null,
 }))
 
 vi.mock('../../../components/FoodShareCard', () => ({
   default: ({ foodName, safetyLevel, onShare }: any) => (
-    <div data-testid="food-share-card" data-food={foodName} data-level={safetyLevel}>
+    <div data-testid='food-share-card' data-food={foodName} data-level={safetyLevel}>
       FoodShareCard
       <button onClick={onShare}>Share</button>
     </div>
@@ -227,30 +232,31 @@ vi.mock('../../../components/FoodShareCard', () => ({
 }))
 
 vi.mock('../../../components/AnxietyIntervention', () => ({
-  default: () => <div data-testid="anxiety-intervention">AnxietyIntervention</div>,
+  default: () => <div data-testid='anxiety-intervention'>AnxietyIntervention</div>,
 }))
 
 vi.mock('../../../components/CrisisReferralCard', () => ({
-  default: () => <div data-testid="crisis-referral-card">CrisisReferralCard</div>,
+  default: () => <div data-testid='crisis-referral-card'>CrisisReferralCard</div>,
 }))
 
 vi.mock('../../../components', () => ({
-  PageLoading: () => <div data-testid="page-loading">PageLoading</div>,
+  Icon: ({ name, className }: any) => <span className={className} data-icon={name} />,
+  PageLoading: () => <div data-testid='page-loading'>PageLoading</div>,
   PageError: ({ message, onRetry }: any) => (
-    <div data-testid="page-error">
+    <div data-testid='page-error'>
       <span>{message}</span>
       <button onClick={onRetry}>Retry</button>
     </div>
   ),
   PetAvatar: ({ species, petName }: any) => (
-    <div data-testid="pet-avatar" data-species={species} data-name={petName}>PetAvatar</div>
+    <div data-testid='pet-avatar' data-species={species} data-name={petName}>PetAvatar</div>
   ),
   EmergencyAlert: ({ visible, title, message, onClose }: any) =>
-    visible ? <div data-testid="emergency-alert" data-title={title} onClick={onClose}>EmergencyAlert: {message}</div> : null,
+    visible ? <div data-testid='emergency-alert' data-title={title} onClick={onClose}>EmergencyAlert: {message}</div> : null,
 }))
 
 vi.mock('../../../components/NpsSurvey', () => ({
-  default: () => <div data-testid="nps-survey">NpsSurvey</div>,
+  default: () => <div data-testid='nps-survey'>NpsSurvey</div>,
 }))
 
 vi.mock('../../../utils/usageTracking', () => ({
@@ -267,8 +273,6 @@ vi.mock('../../../services/npsService', () => ({
 }))
 
 vi.mock('../index.scss', () => ({}))
-
-import PetFoodQuery from '../index'
 
 function makePet(overrides: Record<string, unknown> = {}) {
   return {
@@ -423,7 +427,8 @@ describe('FoodQueryPage', () => {
       render(<PetFoodQuery />)
 
       expect(screen.getByText('请先添加宠物')).toBeDefined()
-      expect(screen.getByText('🐾')).toBeDefined()
+      // 空态图标已从 🐾 emoji 改为面性图标（paw-print），故改为断言图标元素
+      expect(document.querySelector('[data-icon="paw-print"]')).not.toBeNull()
     })
 
     it('renders search interface when currentPet exists', () => {

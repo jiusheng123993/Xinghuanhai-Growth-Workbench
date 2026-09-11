@@ -4,20 +4,6 @@
  */
 
 /** 食物安全条目 */
-export interface FoodSafetyItem {
-  id: string
-  name: string
-  aliases: string[]
-  safetyLevel: 'safe' | 'caution' | 'dangerous' | 'toxic'
-  speciesApplicable: ('dog' | 'cat')[]
-  dangerousCompounds?: string[]
-  toxicDoses?: string
-  symptoms?: string[]
-  breedWarnings?: string[]
-  detail: string
-  firstAid?: string
-}
-
 import { FOOD_SAFETY_ORIGINAL_A } from './foodSafetyOriginalA'
 import { FOOD_SAFETY_ORIGINAL_B } from './foodSafetyOriginalB'
 import { FOOD_SAFETY_TOXIC_A } from './foodSafetyToxicA'
@@ -32,6 +18,20 @@ import { FOOD_SAFETY_SAFE_MEAT } from './foodSafetySafeMeat'
 import { FOOD_SAFETY_SAFE_GRAIN } from './foodSafetySafeGrain'
 import { FOOD_SAFETY_SUPPLEMENT_A } from './foodSafetySupplementA'
 import { FOOD_SAFETY_SUPPLEMENT_B } from './foodSafetySupplementB'
+
+export interface FoodSafetyItem {
+  id: string
+  name: string
+  aliases: string[]
+  safetyLevel: 'safe' | 'caution' | 'dangerous' | 'toxic'
+  speciesApplicable: ('dog' | 'cat')[]
+  dangerousCompounds?: string[]
+  toxicDoses?: string
+  symptoms?: string[]
+  breedWarnings?: string[]
+  detail: string
+  firstAid?: string
+}
 
 export const FOOD_SAFETY_DATA: FoodSafetyItem[] = [
   ...FOOD_SAFETY_ORIGINAL_A,

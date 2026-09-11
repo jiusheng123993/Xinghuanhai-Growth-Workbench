@@ -76,25 +76,25 @@ export default function HealthReportPreview({ data, onSave, onShare }: HealthRep
   }, [data, onShare])
 
   return (
-    <View className="report-preview">
-      <View className="report-preview__canvas-wrap">
+    <View className='report-preview'>
+      <View className='report-preview__canvas-wrap'>
         <Canvas
-          type="2d"
+          type='2d'
           id={CANVAS_ID}
-          className="report-preview__canvas"
+          className='report-preview__canvas'
           style={{ width: '100%', height: 'auto' }}
         />
       </View>
-      <View className="report-preview__actions">
-        <Button className="report-preview__btn report-preview__btn--save" onClick={handleSave}>
+      <View className='report-preview__actions'>
+        <Button className='report-preview__btn report-preview__btn--save' onClick={handleSave}>
           保存到相册
         </Button>
-        <Button className="report-preview__btn report-preview__btn--share" onClick={handleShareToVet}>
+        <Button className='report-preview__btn report-preview__btn--share' onClick={handleShareToVet}>
           分享给兽医
         </Button>
         <Button
-          className="report-preview__btn report-preview__btn--wechat"
-          openType="share"
+          className='report-preview__btn report-preview__btn--wechat'
+          openType='share'
         >
           微信分享
         </Button>

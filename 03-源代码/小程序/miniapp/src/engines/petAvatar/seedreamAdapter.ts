@@ -5,10 +5,10 @@
 import Taro from '@tarojs/taro'
 import type { ExpressionConfig, PetSpecies, SeedreamGenerateParams, SeedreamGenerateResult, PetImageParams } from '../../types/avatarTypes'
 
-export type { SeedreamGenerateParams, SeedreamGenerateResult, PetImageParams }
-
 import { CONFIG } from '../../config'
 import { storage } from '../../utils/storage'
+
+export type { SeedreamGenerateParams, SeedreamGenerateResult, PetImageParams }
 
 /**
  * Seedream AI 图像生成适配器

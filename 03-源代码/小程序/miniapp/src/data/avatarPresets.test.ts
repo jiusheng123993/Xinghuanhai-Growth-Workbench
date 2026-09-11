@@ -4,14 +4,14 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+// 头像数据已随资源移到 pagesPet 分包内（主包体积优化），测试改为引用新路径
+import { AVATAR_PRESETS, getPresetsBySpecies } from '../pagesPet/avatar-customize/data/avatarPresets'
+import { HOME_STYLE_AVATARS } from './homeStyleAvatars'
+
 // mock api 模块（resolveAvatarUrl 依赖 CONFIG.API_BASE_URL），与 homeStyleAvatars.test.ts 同一套约定
 vi.mock('../services/api', () => ({
   resolveAvatarUrl: (path: string) => `https://mock-api.example.com${path}`,
 }))
-
-// 头像数据已随资源移到 pagesPet 分包内（主包体积优化），测试改为引用新路径
-import { AVATAR_PRESETS, getPresetsBySpecies } from '../pagesPet/avatar-customize/data/avatarPresets'
-import { HOME_STYLE_AVATARS } from './homeStyleAvatars'
 
 describe('预设形象库', () => {
   beforeEach(() => {

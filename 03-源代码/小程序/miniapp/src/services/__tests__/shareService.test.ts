@@ -3,6 +3,16 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import {
+  getOrCreateInviteCode,
+  recordShare,
+  getShareStats,
+  processReferral,
+  processPendingReferral,
+  getLocalShareHistory,
+  clearLocalShareHistory,
+} from '../shareService'
+
 const memoryStore = new Map<string, unknown>()
 
 const { mockApiGet, mockApiPost } = vi.hoisted(() => ({
@@ -31,16 +41,6 @@ vi.mock('../constants', () => ({
   INVITE_CODE_MAX_USE: 50,
   SHARE_REWARD_INVITES: 3,
 }))
-
-import {
-  getOrCreateInviteCode,
-  recordShare,
-  getShareStats,
-  processReferral,
-  processPendingReferral,
-  getLocalShareHistory,
-  clearLocalShareHistory,
-} from '../shareService'
 
 describe('shareService', () => {
   beforeEach(() => {

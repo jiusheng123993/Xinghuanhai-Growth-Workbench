@@ -5,6 +5,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
+import AchievementShareCard from '../AchievementShareCard'
+
 const { mockShowShareMenu, mockShowToast } = vi.hoisted(() => ({
   mockShowShareMenu: vi.fn(),
   mockShowToast: vi.fn(),
@@ -30,8 +32,6 @@ vi.mock('../../utils/shareCanvasRenderer', () => ({
   renderShareCardToCanvas: vi.fn().mockRejectedValue(new Error('no canvas')),
   saveShareImage: vi.fn(),
 }))
-
-import AchievementShareCard from '../AchievementShareCard'
 
 describe('AchievementShareCard', () => {
   const defaultProps = {

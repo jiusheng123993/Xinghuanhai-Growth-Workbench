@@ -3,7 +3,8 @@
 
 .profile-page {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
   padding-bottom: 140rpx;
   position: relative;
   overflow: hidden;
@@ -22,7 +23,7 @@
   .ink-bg-1 {
     width: 300rpx;
     height: 300rpx;
-    background: radial-gradient(circle, rgba($color-primary, 0.06) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--primary-rgb, 255, 107, 61), 0.06) 0%, transparent 70%);
     top: -50rpx;
     right: -80rpx;
     animation-delay: 0.3s;
@@ -31,7 +32,7 @@
   .ink-bg-2 {
     width: 250rpx;
     height: 250rpx;
-    background: radial-gradient(circle, rgba($color-primary-light, 0.04) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--primary-light-rgb, 255, 160, 130), 0.04) 0%, transparent 70%);
     bottom: 200rpx;
     left: -60rpx;
     animation-delay: 0.6s;
@@ -86,7 +87,7 @@
     right: -20%;
     width: 300rpx;
     height: 300rpx;
-    background: rgba($color-primary, 0.04);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.04);
     border-radius: 50%;
     pointer-events: none;
   }
@@ -102,7 +103,7 @@
   width: 128rpx;
   height: 128rpx;
   border-radius: 50%;
-  border: 4rpx solid rgba($color-primary, 0.15);
+  border: 4rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.15);
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.3);
 }
 
@@ -110,7 +111,7 @@
   width: 128rpx;
   height: 128rpx;
   border-radius: 50%;
-  background: rgba($color-primary, 0.1);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -177,7 +178,7 @@
   @include press-feedback;
 
   &:active {
-    background: rgba($color-primary, 0.12);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
   }
 }
 
@@ -230,7 +231,7 @@
   width: 64rpx;
   height: 64rpx;
   border-radius: 12rpx;
-  background: rgba($color-primary, 0.1);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
 }
 
 .menu-text {

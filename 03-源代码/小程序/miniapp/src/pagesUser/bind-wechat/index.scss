@@ -4,7 +4,8 @@
 // 绑定微信头像昵称引导页样式（登录后引导，与登录页同一套温馨氛围）
 .bind-page {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
   position: relative;
   overflow: hidden;
   animation: pageEnter 0.4s ease-out;

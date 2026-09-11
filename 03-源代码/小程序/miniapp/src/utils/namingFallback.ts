@@ -134,14 +134,69 @@ export function generateFallbackNames(style: string, excludeNames?: string[]): N
   return shuffle(filtered).slice(0, 5)
 }
 
+/**
+ * 名字位置上的停用词（2026-09-10 审查 P2）
+ *
+ * 行解析会把散文切成"名字"：服务端 `/api/ai/chat` 命中越界词表时返回的固定话术
+ * （"…咱们还是聊你家毛孩子吧：给它打个卡…"）就曾被切成 `你家毛孩子吧` 渲染成候选卡。
+ * 这些词出现在 name 位置即说明解析错了。
+ */
+const NAME_STOPWORDS = /推荐|名字|名称|以下|如下|建议|候选|寓意|专注|毛孩子|宝贝|宠物|你好|欢迎/
+
+/**
+ * 归一化 AI 返回的单个名字项
+ *
+ * 2026-09-10 加固：此前 json 分支直接 `JSON.parse(...) as NamingResult[]` 不做字段校验，
+ * AI 返回空 name／把说明文字当 name（截断的 JSON 尤其容易）时会渲染出空白卡片。
+ * 这里统一清洗名字（去引号/括号/空白）并丢弃无效项。
+ * @returns 合法名字项；name 缺失或明显不是名字（>6 字）时返回 null
+ */
+function normalizeNameItem(raw: Partial<NamingResult> | null | undefined): NamingResult | null {
+  const name = String(raw?.name ?? '')
+    // 剥离编号前缀（"1. 布丁" / "2、团子" / "3) 汤圆"）：编号不是名字的一部分
+    .replace(/^[\d０-９]+\s*[.、)）:：]\s*/, '')
+    .replace(/[「」【】《》"“”'‘’\s]/g, '')
+    // 剥离名字两侧的分隔符残渣（"云栖 - 云深不知处" 这类行会把 " -" 带进名字）
+    .replace(/^[-–—~～·]+|[-–—~～·]+$/g, '')
+    .trim()
+  // 名字应为 2-6 字：空/单字基本是解析残渣（语气词、标点剥离后的碎片）；
+  // 过长说明解析到了正文/说明文字
+  if (!name || name.length < 2 || name.length > 6) return null
+  // 含标点的候选基本是引导语/正文碎片（"推荐如下"、"名字如下"这类靠长度拦不住）
+  if (/[，,。！!？?；;：:、（）()【】《》]/.test(name)) return null
+  // 停用词与语气词结尾：服务端越界拒绝话术（"…咱们还是聊你家毛孩子吧：给它打个卡…"）
+  // 与各类引导语被行解析切出来时都会命中（2026-09-10 审查 P2）
+  if (NAME_STOPWORDS.test(name) || /[吧呢哦啊啦嘛呀]$/.test(name)) return null
+
+  const scoreNum = Number(raw?.score)
+  return {
+    name,
+    source: String(raw?.source ?? '').trim(),
+    wuxing: String(raw?.wuxing ?? '').trim(),
+    starMansion: String(raw?.starMansion ?? '').trim(),
+    meaning: String(raw?.meaning ?? '').trim(),
+    // 评分缺失/非法时给中性分，避免卡片星级渲染成 NaN 个星
+    score: Number.isFinite(scoreNum) ? Math.min(100, Math.max(1, Math.round(scoreNum))) : 85,
+  }
+}
+
 /** 解析 AI 返回的推荐 JSON（兼容数组与文本兜底） */
 export function parseRecommendResult(text: string): NamingResult[] {
+  // 越界拒绝话术 / 空内容：直接判定"没有名字"，让调用方走本地名字库兜底
+  // （2026-09-10 审查 P2：此前行解析会把话术句尾切成假名字并渲染成候选卡）
+  if (!text || text.includes('只专注养宠')) return []
+
   try {
     const jsonMatch = text.match(/\[[\s\S]*\]/)
     if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]) as NamingResult[]
+      const parsed = JSON.parse(jsonMatch[0]) as Partial<NamingResult>[]
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.slice(0, 5)
+        const cleaned = parsed
+          .map(normalizeNameItem)
+          .filter((n): n is NamingResult => n !== null)
+        if (cleaned.length > 0) {
+          return cleaned.slice(0, 5)
+        }
       }
     }
   } catch {
@@ -149,18 +204,24 @@ export function parseRecommendResult(text: string): NamingResult[] {
   }
 
   const results: NamingResult[] = []
-  const lines = text.split('\n').filter(l => l.trim())
+  // JSON 残片行（截断输出常见）不是名字行，先剔除，避免把 '{"name"' 当成名字
+  const lines = text
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l && !l.startsWith('{') && !l.startsWith('[') && !l.startsWith('"name"'))
   for (const line of lines) {
     const nameMatch = line.match(/[「【《]?\s*(.{1,8})\s*[」】》]?[:：\s]+(.+)/)
     if (nameMatch) {
-      results.push({
-        name: nameMatch[1].replace(/[「」【】《》]/g, '').trim(),
-        source: '',
-        wuxing: '',
-        starMansion: '',
-        meaning: nameMatch[2].trim(),
-        score: 85,
+      // 编号列表（"1. 布丁 甜甜软软"）：编号是**排名**，映射为高分而非低分
+      // （2026-09-10 审查 P2：此前 rank1 → 10 分 → 卡片只显示 1 星，左侧却挂"推荐"徽章）
+      const numbered = line.match(/^\s*(\d+)\s*[.、)）]\s*/)
+      const rank = numbered ? parseInt(numbered[1], 10) : 0
+      const item = normalizeNameItem({
+        name: nameMatch[1],
+        meaning: nameMatch[2],
+        score: rank > 0 ? Math.max(60, 100 - (rank - 1) * 5) : undefined,
       })
+      if (item) results.push(item)
     }
   }
 
@@ -168,14 +229,14 @@ export function parseRecommendResult(text: string): NamingResult[] {
     const numRegex = /(\d+)[.、]\s*[「【《]?\s*(.{1,8})\s*[」】》]?\s*[:：\s-]+(.+)/g
     let match: RegExpExecArray | null
     while ((match = numRegex.exec(text)) !== null) {
-      results.push({
-        name: match[2].replace(/[「」【】《》]/g, '').trim(),
-        source: '',
-        wuxing: '',
-        starMansion: '',
-        meaning: match[3].trim(),
-        score: parseInt(match[1]) * 10,
+      // 同编号列表口径：编号是排名 → 高分（rank1=100，每名递减 5，最低 60）
+      const rank = parseInt(match[1], 10)
+      const item = normalizeNameItem({
+        name: match[2],
+        meaning: match[3],
+        score: Math.max(60, 100 - (rank - 1) * 5),
       })
+      if (item) results.push(item)
     }
   }
 

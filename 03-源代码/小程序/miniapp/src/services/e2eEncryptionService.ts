@@ -3,8 +3,8 @@
  *
  * 健康数据的加密同步/解密、字段级加密工具，确保用户数据隐私
  */
-import { encrypt, decrypt } from '../utils/crypto'
 import Taro from '@tarojs/taro'
+import { encrypt, decrypt } from '../utils/crypto'
 import type { PetHealthEntry } from '../memory-body/types/memoryBodyTypes'
 
 export interface EncryptedData<T> {

@@ -185,3 +185,129 @@
   color: #a08b76;
   line-height: 1.45;
 }
+
+// ==================== 年度回顾图集弹窗 ====================
+// 自「时光」页迁入（2026-09-10 回忆录入口收口）：原页面的年度回忆弹窗整体搬来，
+// 配色沿用本页自成一套的暖色语言，动画改用全局 fadeInScale（不重复定义 keyframes）。
+.mhall-mini--loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.mhall-review-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(61, 33, 18, 0.55);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.mhall-review-modal {
+  width: 92%;
+  max-width: 680rpx;
+  max-height: 90vh;
+  border-radius: 40rpx;
+  background: #fff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: fadeInScale 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.mhall-review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 28rpx;
+  border-bottom: 1rpx solid #f2e6da;
+}
+
+.mhall-review-header-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #3d2f24;
+}
+
+.mhall-review-header-close {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: #fdf6ef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  color: #a08b76;
+
+  &:active {
+    background: #ffece2;
+  }
+}
+
+.mhall-review-image-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16rpx;
+}
+
+.mhall-review-image {
+  width: 100%;
+  // 年度图集是 750x1334 竖版，用 padding-top 撑出等比高度（宽高比 1:1.778）
+  padding-top: 177.8%;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 24rpx;
+}
+
+.mhall-review-actions {
+  display: flex;
+  gap: 20rpx;
+  padding: 20rpx 28rpx 28rpx;
+  border-top: 1rpx solid #f2e6da;
+}
+
+.mhall-review-btn {
+  flex: 1;
+  padding: 20rpx 0;
+  border-radius: 999rpx;
+  text-align: center;
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.97);
+    opacity: 0.9;
+  }
+
+  &--primary {
+    background: linear-gradient(135deg, #ff8a5c, #ff6b3d);
+    box-shadow: 0 8rpx 20rpx rgba(255, 107, 61, 0.3);
+  }
+
+  &--outline {
+    border: 2rpx solid #f2e6da;
+  }
+}
+
+.mhall-review-btn-text {
+  font-size: 26rpx;
+  font-weight: 600;
+
+  .mhall-review-btn--primary & {
+    color: #fff;
+  }
+  .mhall-review-btn--outline & {
+    color: #8b7355;
+  }
+}
+
+.mhall-review-canvas {
+  pointer-events: none;
+  opacity: 0;
+}

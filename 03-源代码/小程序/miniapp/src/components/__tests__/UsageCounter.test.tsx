@@ -4,6 +4,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
+import UsageCounter from '../UsageCounter'
+
 vi.mock('@tarojs/components', () => ({
   View: ({ children, className, style, onClick }: any) => (
     <div className={className} style={style} onClick={onClick}>{children}</div>
@@ -23,8 +25,6 @@ vi.mock('../../services/membershipService', () => ({
 
 vi.mock('../UsageCounter.scss', () => ({}))
 
-import UsageCounter from '../UsageCounter'
-
 describe('UsageCounter', () => {
   it('renders header row with 功能/免费/会员', () => {
     render(<UsageCounter isMember={false} />)
@@ -40,7 +40,7 @@ describe('UsageCounter', () => {
   })
 
   it('shows member badge when isMember=true', () => {
-    const { container } = render(<UsageCounter isMember={true} />)
+    const { container } = render(<UsageCounter isMember />)
     expect(container.querySelector('.usage-counter__member-badge')).toBeDefined()
     expect(screen.getByText('当前为会员')).toBeDefined()
   })

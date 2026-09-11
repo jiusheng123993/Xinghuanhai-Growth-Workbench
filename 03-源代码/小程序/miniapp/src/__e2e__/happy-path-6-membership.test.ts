@@ -4,6 +4,24 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { api } from '../services/api'
+import {
+  getMembershipStatus,
+  isMember,
+  getQuotaLimit,
+  getPetCountLimit,
+  createPaymentOrder,
+  confirmPayment,
+  checkFeatureAccess,
+  getOrders,
+  MEMBERSHIP_PLANS,
+  MEMBERSHIP_BENEFITS,
+} from '../services/membershipService'
+import type {
+  MembershipInfo,
+  PaymentOrder,
+} from '../services/membershipService'
+
 // ============================================================
 // Happy Path 6: 会员订阅 → 权益验证
 // ============================================================
@@ -32,24 +50,6 @@ vi.mock('@tarojs/taro', () => ({
     setStorageSync: vi.fn(),
   },
 }))
-
-import { api } from '../services/api'
-import {
-  getMembershipStatus,
-  isMember,
-  getQuotaLimit,
-  getPetCountLimit,
-  createPaymentOrder,
-  confirmPayment,
-  checkFeatureAccess,
-  getOrders,
-  MEMBERSHIP_PLANS,
-  MEMBERSHIP_BENEFITS,
-} from '../services/membershipService'
-import type {
-  MembershipInfo,
-  PaymentOrder,
-} from '../services/membershipService'
 
 const userId = 'user-001'
 

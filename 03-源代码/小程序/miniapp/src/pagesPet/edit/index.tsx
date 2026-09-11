@@ -3,12 +3,12 @@
  * 修改宠物信息表单，预填已有数据
  */
 import { View, Text, Input, Picker, Switch, Textarea, Image } from '@tarojs/components'
+import Taro from '@tarojs/taro'
+import { useState, useMemo, useEffect } from 'react'
 import { useThemeClass } from '../../hooks/useThemeClass'
 import { usePet } from '../../hooks/usePet'
 import { useAuthStore } from '../../stores/authStore'
 import { getActiveBreeds, UNKNOWN_BREED_ID, UNKNOWN_BREED_NAME } from '../../data/petKnowledge/breeds'
-import Taro from '@tarojs/taro'
-import { useState, useMemo, useEffect } from 'react'
 import { useAnalytics } from '../../hooks/useAnalytics'
 import { safeNavigateBack } from '../../utils/navigation'
 import { chooseImageWithPrivacy } from '../../utils/privacy'
@@ -16,6 +16,7 @@ import { uploadPetPhoto } from '../../services/avatarService'
 import type { PetProfile } from '../../services/petService'
 import type { BreedItem } from '../../data/petKnowledge/breeds'
 import '../add/index.scss'
+import { PageBackground, Icon  } from '../../components'
 
 interface FormData {
   name: string
@@ -308,6 +309,7 @@ export default function EditPet() {
 
   return (
     <View className={`add-pet ${themeClass}`}>
+      <PageBackground />
       <View className='add-pet__form'>
         <View className='add-pet__form-item'>
           <Text className='add-pet__label add-pet__label--required'>名字</Text>
@@ -328,14 +330,14 @@ export default function EditPet() {
               className={`add-pet__species-btn ${formData.species === 'dog' ? 'add-pet__species-btn--active' : ''}`}
               onClick={() => handleSpeciesChange('dog')}
             >
-              <Text className='add-pet__species-icon'>🐕</Text>
+              <Icon name='dog' size={18} tone='primary' className='add-pet__species-icon' />
               <Text>狗狗</Text>
             </View>
             <View
               className={`add-pet__species-btn ${formData.species === 'cat' ? 'add-pet__species-btn--active' : ''}`}
               onClick={() => handleSpeciesChange('cat')}
             >
-              <Text className='add-pet__species-icon'>🐱</Text>
+              <Icon name='cat' size={18} tone='primary' className='add-pet__species-icon' />
               <Text>猫猫</Text>
             </View>
           </View>
@@ -527,7 +529,7 @@ export default function EditPet() {
               <Image className='add-pet__photo-preview' src={avatarDraft || formData.avatarUrl} mode='aspectFill' lazyLoad />
             ) : (
               <View className='add-pet__photo-placeholder'>
-                <Text className='add-pet__photo-icon'>📷</Text>
+                <Icon name='camera' size={18} tone='primary' className='add-pet__photo-icon' />
                 <Text>{uploadingAvatar ? '上传中...' : '点击选择照片'}</Text>
               </View>
             )}

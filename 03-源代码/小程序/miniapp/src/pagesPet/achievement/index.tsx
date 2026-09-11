@@ -12,6 +12,7 @@ import AchievementCard, { ACHIEVEMENT_DEFS, type AchievementConfig } from '../..
 import { useThemeClass } from '../../hooks/useThemeClass'
 import PageLoading from '../../components/PageLoading'
 import './index.scss'
+import { PageBackground, EmptyState } from '../../components'
 
 interface AchievementRecord {
   achievement: AchievementConfig
@@ -100,6 +101,7 @@ export default function AchievementPage() {
 
   return (
     <ScrollView className={`achievement-page ${themeClass}`} scrollY>
+      <PageBackground />
       <View className='achievement-header'>
         <Text className='achievement-header__title'>成就墙</Text>
         <Text className='achievement-header__desc'>
@@ -133,16 +135,13 @@ export default function AchievementPage() {
           ))}
         </View>
       ) : (
-        <View className='achievement-empty'>
-          <Text className='achievement-empty__icon'>🏆</Text>
-          <Text className='achievement-empty__title'>还没有成就</Text>
-          <Text className='achievement-empty__desc'>
-            坚持每天打卡，记录毛孩子的健康数据，就能解锁各种成就
-          </Text>
-          <View className='achievement-empty__btn' onClick={() => Taro.switchTab({ url: '/pages/pet-profile/index' })}>
-            <Text>去打卡</Text>
-          </View>
-        </View>
+        <EmptyState
+          illustration='empty-achievement'
+          title='还没有成就'
+          desc='坚持每天打卡，记录毛孩子的健康数据，就能解锁各种成就'
+          actionText='去打卡'
+          onAction={() => Taro.switchTab({ url: '/pages/pet-profile/index' })}
+        />
       )}
     </ScrollView>
   )

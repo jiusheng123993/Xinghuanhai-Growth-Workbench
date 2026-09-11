@@ -373,8 +373,9 @@ export async function renderShareCardToCanvas(
             destWidth: canvasWidth * dpr,
             destHeight: canvasHeight * dpr,
             fileType: 'png',
-            success: (res: { tempFilePath: string }) => {
-              resolve({ tempFilePath: res.tempFilePath, width: canvasWidth, height: canvasHeight })
+            // 回调参数改名 result：外层 exec 回调已有同名 res（no-shadow）
+            success: (result: { tempFilePath: string }) => {
+              resolve({ tempFilePath: result.tempFilePath, width: canvasWidth, height: canvasHeight })
             },
             fail: (err: { errMsg: string }) => {
               reject(new Error(`Canvas export failed: ${err.errMsg}`))

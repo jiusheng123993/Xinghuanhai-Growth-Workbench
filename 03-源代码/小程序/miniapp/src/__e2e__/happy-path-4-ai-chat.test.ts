@@ -4,6 +4,9 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import Taro from '@tarojs/taro'
+import { chat, guardCheck, guardCheckOutput } from '../services/aiProvider'
+
 const mockStorage: Record<string, string> = {}
 vi.mock('../utils/storage', () => ({
   getStorage: vi.fn((key: string) => {
@@ -29,9 +32,10 @@ vi.mock('../utils/storage', () => ({
   },
 }))
 
+// 工厂内局部变量改名 requestStub：与解构出的外层 mockTaroRequest 同名会触发 no-shadow
 const { mockTaroRequest } = vi.hoisted(() => {
-  const mockTaroRequest = vi.fn()
-  return { mockTaroRequest }
+  const requestStub = vi.fn()
+  return { mockTaroRequest: requestStub }
 })
 
 vi.mock('@tarojs/taro', () => ({
@@ -48,9 +52,6 @@ vi.mock('../config', () => ({
     USE_MOCK: false,
   },
 }))
-
-import Taro from '@tarojs/taro'
-import { chat, guardCheck, guardCheckOutput } from '../services/aiProvider'
 
 describe('Happy Path 4: AI对话交互 → 智能回复', () => {
   beforeEach(() => {

@@ -3,6 +3,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { useSettingsStore } from '../settingsStore'
+
 const {
   mockGetStorageSync,
   mockSetStorageSync,
@@ -60,8 +62,6 @@ vi.mock('../../memory-body/store/miniProgramMemoryBodyStore', () => {
 vi.mock('../../utils/storage', () => ({
   getStorageArray: mockGetStorageArray,
 }))
-
-import { useSettingsStore } from '../settingsStore'
 
 describe('settingsStore', () => {
   beforeEach(() => {

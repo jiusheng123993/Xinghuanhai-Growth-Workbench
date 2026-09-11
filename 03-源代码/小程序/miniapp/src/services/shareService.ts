@@ -10,6 +10,7 @@ import {
   INVITE_CODE_LENGTH,
   INVITE_CODE_MAX_USE,
   SHARE_REWARD_INVITES,
+  SHARE_REWARD_DAYS,
 } from '../constants';
 import type {
   ShareCardType,
@@ -154,36 +155,39 @@ export function clearLocalShareHistory(): void {
   Taro.removeStorageSync(SHARE_HISTORY_KEY);
 }
 
+/**
+ * 领取邀请奖励
+ *
+ * ⚠️【2026-09-11 修复】后端 `/api/shares/grant-reward` 成功时返回的是**扁平结构**
+ * `{ success: true, rewardType: 'membership_days', rewardValue: REWARD_DAYS }` —— **没有 data 包裹**；
+ * 而 api 层在 `body.success` 为真时返回的是 `body.data`（即 undefined）。
+ * 这里原来读 `result.success` → 读 undefined 的属性抛 TypeError → 被 catch 吞掉
+ * → 恒返回「网络异常，请稍后重试」。
+ * 危害不止是文案错：服务端在 res.json **之前**就已经 `UPDATE memberships` 真发了会员天数，
+ * 所以用户会看到"发放失败"，实际奖励已到账（也可能因此重复领取）。
+ *
+ * 现在以"api 层没有抛错"为成功判据：业务失败（未达标）时后端返回 success:false，
+ * api 层会 throw Error(message)，这里把该文案如实透出。
+ */
 export async function grantShareReward(userId: string): Promise<ShareRewardResult> {
   try {
-    const result = await api.post<{
-      success?: boolean;
-      rewardType?: string;
-      rewardValue?: number;
-      error?: string;
-    }>('/api/shares/grant-reward')
-
-    if (result.success) {
-      return {
-        rewardGranted: true,
-        rewardType: (result.rewardType as 'membership_days' | 'feature_unlock' | 'none') || 'membership_days',
-        rewardValue: result.rewardValue || 7,
-        message: `邀请${SHARE_REWARD_INVITES}位好友，奖励7天会员`,
-      };
-    }
-
+    await api.post('/api/shares/grant-reward')
     return {
-      rewardGranted: false,
-      rewardType: 'none',
-      rewardValue: 0,
-      message: (result as { error?: string }).error || '奖励发放失败',
+      rewardGranted: true,
+      rewardType: 'membership_days',
+      rewardValue: SHARE_REWARD_DAYS,
+      message: `邀请${SHARE_REWARD_INVITES}位好友，奖励${SHARE_REWARD_DAYS}天会员`,
     };
-  } catch {
+  } catch (err) {
+    // 未达标时后端给的是「还需邀请 N 位好友即可获得奖励」，不要一律说成网络异常
+    const message = err instanceof Error && err.message && err.message !== '请求失败'
+      ? err.message
+      : '奖励发放失败';
     return {
       rewardGranted: false,
       rewardType: 'none',
       rewardValue: 0,
-      message: '网络异常，请稍后重试',
+      message,
     };
   }
 }

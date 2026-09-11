@@ -107,7 +107,7 @@ describe('ImageGallery 组件', () => {
   describe('操作按钮', () => {
     it('默认（show3DEntry 缺省）应隐藏 3D 入口——2026-08-22 决定上线首版关闭 3D', () => {
       const images = makeImages([{ key: 'happy', angle: 'front' }]);
-      render(<ImageGallery images={images} canGenerate3D={true} />);
+      render(<ImageGallery images={images} canGenerate3D />);
 
       expect(screen.getByText('保存为头像')).toBeTruthy();
       expect(screen.queryByText('生成 3D 模型')).toBeNull();
@@ -116,7 +116,7 @@ describe('ImageGallery 组件', () => {
 
     it('show3DEntry=true 时应显示"保存为头像"和"生成 3D 模型"按钮', () => {
       const images = makeImages([{ key: 'happy', angle: 'front' }]);
-      render(<ImageGallery images={images} show3DEntry={true} canGenerate3D={true} />);
+      render(<ImageGallery images={images} show3DEntry canGenerate3D />);
 
       expect(screen.getByText('保存为头像')).toBeTruthy();
       expect(screen.getByText('生成 3D 模型')).toBeTruthy();
@@ -132,7 +132,7 @@ describe('ImageGallery 组件', () => {
 
     it('canGenerate3D=false 时按钮应显示"会员专享"', () => {
       const images = makeImages([{ key: 'happy', angle: 'front' }]);
-      render(<ImageGallery images={images} show3DEntry={true} canGenerate3D={false} />);
+      render(<ImageGallery images={images} show3DEntry canGenerate3D={false} />);
 
       expect(screen.getByText('会员专享')).toBeTruthy();
     });
@@ -142,9 +142,9 @@ describe('ImageGallery 组件', () => {
       render(
         <ImageGallery
           images={images}
-          show3DEntry={true}
-          isGenerating3D={true}
-          canGenerate3D={true}
+          show3DEntry
+          isGenerating3D
+          canGenerate3D
         />,
       );
 
@@ -168,7 +168,7 @@ describe('ImageGallery 组件', () => {
       render(
         <ImageGallery
           images={images}
-          show3DEntry={true}
+          show3DEntry
           onGenerate3D={onGenerate3D}
           canGenerate3D={false}
         />
@@ -184,10 +184,10 @@ describe('ImageGallery 组件', () => {
       render(
         <ImageGallery
           images={images}
-          show3DEntry={true}
+          show3DEntry
           onGenerate3D={onGenerate3D}
-          isGenerating3D={true}
-          canGenerate3D={true}
+          isGenerating3D
+          canGenerate3D
         />
       );
 

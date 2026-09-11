@@ -8,18 +8,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-vi.mock('../api', () => ({
-  api: { get: vi.fn(), put: vi.fn() },
-}))
-vi.mock('../mock', () => ({
-  mockApi: { listMemories: vi.fn(), updateMemory: vi.fn() },
-}))
-vi.mock('../../config', () => ({
-  CONFIG: { USE_MOCK: false },
-}))
-
 import { api as _api } from '../api'
-const api = _api as any
 import {
   listMemories,
   updateMemory,
@@ -29,6 +18,17 @@ import {
   getImportanceStars,
 } from '../memoryService'
 import type { MemoryEntry, MemoryListResponse } from '../../types/memoryTypes'
+
+vi.mock('../api', () => ({
+  api: { get: vi.fn(), put: vi.fn() },
+}))
+vi.mock('../mock', () => ({
+  mockApi: { listMemories: vi.fn(), updateMemory: vi.fn() },
+}))
+vi.mock('../../config', () => ({
+  CONFIG: { USE_MOCK: false },
+}))
+const api = _api as any
 
 function makeMemory(overrides: Partial<MemoryEntry> = {}): MemoryEntry {
   return {
@@ -170,31 +170,31 @@ describe('memoryService', () => {
   // ============ getCategoryInfo ============
   describe('getCategoryInfo', () => {
     it('health 返回健康', () => {
-      expect(getCategoryInfo('health')).toEqual({ icon: '❤️', label: '健康' })
+      expect(getCategoryInfo('health')).toEqual({ icon: 'heart', label: '健康' })
     })
     it('behavior 返回行为', () => {
-      expect(getCategoryInfo('behavior')).toEqual({ icon: '🐾', label: '行为' })
+      expect(getCategoryInfo('behavior')).toEqual({ icon: 'paw-print', label: '行为' })
     })
     it('habit 返回习惯', () => {
-      expect(getCategoryInfo('habit')).toEqual({ icon: '⏰', label: '习惯' })
+      expect(getCategoryInfo('habit')).toEqual({ icon: 'clock', label: '习惯' })
     })
     it('preference 返回偏好', () => {
-      expect(getCategoryInfo('preference')).toEqual({ icon: '⭐', label: '偏好' })
+      expect(getCategoryInfo('preference')).toEqual({ icon: 'star', label: '偏好' })
     })
     it('event 返回事件', () => {
-      expect(getCategoryInfo('event')).toEqual({ icon: '🎉', label: '事件' })
+      expect(getCategoryInfo('event')).toEqual({ icon: 'sparkle', label: '事件' })
     })
     it('feeding 返回喂养', () => {
-      expect(getCategoryInfo('feeding')).toEqual({ icon: '🍽️', label: '喂养' })
+      expect(getCategoryInfo('feeding')).toEqual({ icon: 'bowl-food', label: '喂养' })
     })
     it('medical 返回医疗', () => {
-      expect(getCategoryInfo('medical')).toEqual({ icon: '💊', label: '医疗' })
+      expect(getCategoryInfo('medical')).toEqual({ icon: 'pill', label: '医疗' })
     })
     it('contradiction 返回已修正', () => {
-      expect(getCategoryInfo('contradiction')).toEqual({ icon: '🔄', label: '已修正' })
+      expect(getCategoryInfo('contradiction')).toEqual({ icon: 'arrows-clockwise', label: '已修正' })
     })
     it('general 返回其他', () => {
-      expect(getCategoryInfo('general')).toEqual({ icon: '📝', label: '其他' })
+      expect(getCategoryInfo('general')).toEqual({ icon: 'note-pencil', label: '其他' })
     })
   })
 

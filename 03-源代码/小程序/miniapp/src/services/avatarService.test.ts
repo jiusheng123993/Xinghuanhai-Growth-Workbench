@@ -3,10 +3,28 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import {
+  getPhotoGenerationCount,
+  canGeneratePhoto,
+  incrementPhotoGenerationCount,
+  getPhotoOptionsCount,
+  canGeneratePhotoOptions,
+  incrementPhotoOptionsCount,
+  get3DGenerationCount,
+  canGenerate3D,
+  increment3DGenerationCount,
+  getAvatarCustomization,
+  saveAvatarCustomization,
+  setPetPhotoAsAvatar,
+} from './avatarService';
+import { api } from './api';
+import { AVATAR_PHOTO_FREE_COUNT, AVATAR_PHOTO_MEMBER_MONTHLY_LIMIT, AVATAR_3D_MONTHLY_LIMIT } from '../constants';
+
 // 使用 vi.hoisted 确保 mock 对象在 vi.mock 工厂执行时可用
+// 工厂内局部变量改名（eventCenterStub / taroStub）：与解构出的外层同名会触发 no-shadow
 const { mockTaro, eventCenter } = vi.hoisted(() => {
-  const eventCenter = { on: vi.fn(), off: vi.fn(), trigger: vi.fn() };
-  const mockTaro = {
+  const eventCenterStub = { on: vi.fn(), off: vi.fn(), trigger: vi.fn() };
+  const taroStub = {
     getStorageSync: vi.fn(),
     setStorageSync: vi.fn(),
     showToast: vi.fn(),
@@ -14,9 +32,9 @@ const { mockTaro, eventCenter } = vi.hoisted(() => {
     navigateTo: vi.fn(),
     navigateBack: vi.fn(),
     switchTab: vi.fn(),
-    eventCenter,
+    eventCenter: eventCenterStub,
   };
-  return { mockTaro, eventCenter };
+  return { mockTaro: taroStub, eventCenter: eventCenterStub };
 });
 
 vi.mock('@tarojs/taro', () => ({
@@ -60,23 +78,6 @@ vi.mock('../config', () => ({
     API_BASE_URL: 'https://mock-api.example.com',
   },
 }));
-
-import {
-  getPhotoGenerationCount,
-  canGeneratePhoto,
-  incrementPhotoGenerationCount,
-  getPhotoOptionsCount,
-  canGeneratePhotoOptions,
-  incrementPhotoOptionsCount,
-  get3DGenerationCount,
-  canGenerate3D,
-  increment3DGenerationCount,
-  getAvatarCustomization,
-  saveAvatarCustomization,
-  setPetPhotoAsAvatar,
-} from './avatarService';
-import { api } from './api';
-import { AVATAR_PHOTO_FREE_COUNT, AVATAR_PHOTO_MEMBER_MONTHLY_LIMIT, AVATAR_3D_MONTHLY_LIMIT } from '../constants';
 
 beforeEach(() => {
   vi.clearAllMocks();

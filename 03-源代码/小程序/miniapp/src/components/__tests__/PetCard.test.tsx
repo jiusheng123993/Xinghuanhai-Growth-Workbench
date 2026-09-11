@@ -4,6 +4,9 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, fireEvent } from '@testing-library/react'
 
+import PetCard from '../PetCard'
+import type { PetProfile } from '../../services/petService'
+
 vi.mock('@tarojs/components', () => ({
   View: ({ children, className, style, onClick, onLongPress }: any) => (
     <div className={className} style={style} onClick={onClick} onContextMenu={onLongPress}>{children}</div>
@@ -23,9 +26,6 @@ vi.mock('@tarojs/components', () => ({
 }))
 
 vi.mock('./PetCard.scss', () => ({}))
-
-import PetCard from '../PetCard'
-import type { PetProfile } from '../../services/petService'
 
 const basePet: PetProfile = {
   id: 'pet-1',
@@ -92,7 +92,7 @@ describe('PetCard', () => {
   })
 
   it('shows current tag when isCurrent=true', () => {
-    const { getByText } = render(<PetCard pet={basePet} isCurrent={true} />)
+    const { getByText } = render(<PetCard pet={basePet} isCurrent />)
     expect(getByText('当前')).toBeDefined()
   })
 
@@ -136,7 +136,7 @@ describe('PetCard', () => {
   })
 
   it('applies current class when isCurrent=true', () => {
-    const { container } = render(<PetCard pet={basePet} isCurrent={true} />)
+    const { container } = render(<PetCard pet={basePet} isCurrent />)
     const card = container.querySelector('.pet-card--current')
     expect(card).not.toBeNull()
   })

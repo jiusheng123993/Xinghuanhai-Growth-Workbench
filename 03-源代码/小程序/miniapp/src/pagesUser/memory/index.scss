@@ -42,7 +42,10 @@
     }
 
     &-tab {
-      display: inline-block;
+      /* inline-flex：图标与文字水平排列（原来 emoji 内联在文字串里） */
+      display: inline-flex;
+      align-items: center;
+      gap: 8rpx;
       padding: 12rpx 28rpx;
       margin-right: 16rpx;
       border-radius: 32rpx;

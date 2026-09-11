@@ -4,6 +4,23 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 // ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
+import {
+  getChronicRecords,
+  addChronicRecord,
+  updateChronicRecord,
+  deleteChronicRecord,
+  getChronicStats,
+  getUpcomingCheckups,
+  getChronicTrendData,
+  generateChronicReminderPayload,
+} from '../chronicService'
+import { getSyncService } from '../syncService'
+import type { ChronicRecord } from '../../types/chronicTypes'
+
+// ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
 
@@ -31,23 +48,6 @@ vi.mock('../syncService', () => ({
     queueForSync: mockQueueForSync,
   })),
 }))
-
-// ---------------------------------------------------------------------------
-// Imports
-// ---------------------------------------------------------------------------
-
-import {
-  getChronicRecords,
-  addChronicRecord,
-  updateChronicRecord,
-  deleteChronicRecord,
-  getChronicStats,
-  getUpcomingCheckups,
-  getChronicTrendData,
-  generateChronicReminderPayload,
-} from '../chronicService'
-import { getSyncService } from '../syncService'
-import type { ChronicRecord } from '../../types/chronicTypes'
 
 // ---------------------------------------------------------------------------
 // Helpers

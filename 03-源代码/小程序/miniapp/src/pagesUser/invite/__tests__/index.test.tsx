@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 
+import InvitePage from '../index'
+
 const { mockFetchInviteCode, mockFetchShareStats, mockCheckAndGrantReward, mockSetClipboardData, mockShowToast } = vi.hoisted(() => ({
   mockFetchInviteCode: vi.fn(),
   mockFetchShareStats: vi.fn(),
@@ -55,6 +57,8 @@ vi.mock('@tarojs/taro', () => ({
     getStorageInfoSync: vi.fn(() => ({ keys: [] })),
     setNavigationBarColor: vi.fn(() => ({ catch: vi.fn() })),
     setTabBarStyle: vi.fn(() => ({ catch: vi.fn() })),
+    // 主题切换会顺带换 tabBar 图标（themeStore.applyTabBarIcons），mock 需一并提供
+    setTabBarItem: vi.fn(() => ({ catch: vi.fn() })),
     eventCenter: { on: vi.fn(), off: vi.fn(), trigger: vi.fn() },
   },
   useDidShow: vi.fn(),
@@ -67,8 +71,6 @@ vi.mock('../../../components', () => ({
   PageLoading: () => <div>Loading</div>,
   PageError: ({ message, onRetry }: any) => <div>Error: {message}<button onClick={onRetry}>Retry</button></div>,
 }))
-
-import InvitePage from '../index'
 
 describe('InvitePage', () => {
   beforeEach(() => {

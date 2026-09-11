@@ -4,6 +4,9 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { useMembershipStore } from '../stores/membershipStore'
+import { useMembership } from './useMembership'
+
 const {
   mockSubscribePlan,
   mockCheckAccess,
@@ -50,9 +53,6 @@ vi.mock('../stores/membershipStore', () => ({
 vi.mock('../stores/authStore', () => ({
   useAuthStore: vi.fn(() => ''),
 }))
-
-import { useMembershipStore } from '../stores/membershipStore'
-import { useMembership } from './useMembership'
 
 describe('useMembership', () => {
   beforeEach(() => {

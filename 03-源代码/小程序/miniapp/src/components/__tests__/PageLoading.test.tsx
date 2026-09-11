@@ -4,6 +4,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render } from '@testing-library/react'
 
+import PageLoading from '../PageLoading'
+
 vi.mock('@tarojs/components', () => ({
   View: ({ children, className, style, onClick }: any) => (
     <div className={className} style={style} onClick={onClick}>{children}</div>
@@ -21,11 +23,9 @@ vi.mock('@tarojs/components', () => ({
     <label data-value={value} data-checked={checked} data-color={color}>{children}</label>
   ),
   RadioGroup: ({ children, onChange }: any) => (
-    <div data-testid="radio-group" onChange={(e: any) => onChange?.({ detail: { value: 'privacy_concern' } })}>{children}</div>
+    <div data-testid='radio-group' onChange={(e: any) => onChange?.({ detail: { value: 'privacy_concern' } })}>{children}</div>
   ),
 }))
-
-import PageLoading from '../PageLoading'
 
 describe('PageLoading', () => {
   it('renders default text 加载中...', () => {
@@ -34,7 +34,7 @@ describe('PageLoading', () => {
   })
 
   it('renders custom text when provided', () => {
-    const { getByText } = render(<PageLoading text="请稍候" />)
+    const { getByText } = render(<PageLoading text='请稍候' />)
     expect(getByText('请稍候')).toBeDefined()
   })
 
@@ -49,7 +49,7 @@ describe('PageLoading', () => {
   })
 
   it('does not render default text when custom text is provided', () => {
-    const { queryByText } = render(<PageLoading text="自定义" />)
+    const { queryByText } = render(<PageLoading text='自定义' />)
     expect(queryByText('加载中...')).toBeNull()
   })
 })

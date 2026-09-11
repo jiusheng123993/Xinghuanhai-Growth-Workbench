@@ -14,6 +14,17 @@ import type { ChronicRecord } from '../types/chronicTypes'
 import type { PetProfile } from '../services/petService'
 
 // ============================================================
+// 导入真实模块
+// ============================================================
+import { buildFeedingProfile, generatePersonalizedAdvice, getMealPlan } from '../services/feedingService'
+import { generateWeeklyReport, generateFamilyWeeklySummary, getMoodEmoji, getMoodLabel, getOverallMood } from '../services/weeklyReportService'
+import { checkAllAchievements, checkBirthdayAchievement, checkStreakAchievement } from '../services/achievementService'
+import { formatMomentTime, getMomentTypeInfo } from '../services/momentService'
+import { generateChronicReminderPayload, getChronicStats } from '../services/chronicService'
+import { checkInput, sanitizeOutput } from '../utils/ruleGuard'
+import { MEMBERSHIP_PLANS, MEMBERSHIP_BENEFITS } from '../services/membershipService'
+
+// ============================================================
 // Mock 层：共享的 mock storage 和 api
 // ============================================================
 const mockStorage: Record<string, string> = {}
@@ -81,17 +92,6 @@ vi.mock('../services/chronicService', async () => {
   const actual = await vi.importActual('../services/chronicService')
   return actual
 })
-
-// ============================================================
-// 导入真实模块
-// ============================================================
-import { buildFeedingProfile, generatePersonalizedAdvice, getMealPlan } from '../services/feedingService'
-import { generateWeeklyReport, generateFamilyWeeklySummary, getMoodEmoji, getMoodLabel, getOverallMood } from '../services/weeklyReportService'
-import { checkAllAchievements, checkBirthdayAchievement, checkStreakAchievement } from '../services/achievementService'
-import { formatMomentTime, getMomentTypeInfo } from '../services/momentService'
-import { generateChronicReminderPayload, getChronicStats } from '../services/chronicService'
-import { checkInput, sanitizeOutput } from '../utils/ruleGuard'
-import { MEMBERSHIP_PLANS, MEMBERSHIP_BENEFITS } from '../services/membershipService'
 
 // ============================================================
 // 辅助工厂函数

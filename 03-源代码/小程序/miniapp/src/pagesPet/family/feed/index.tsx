@@ -147,7 +147,8 @@ export default function FamilyFeed() {
       </View>
 
       <ScrollView className='feed-list' scrollY refresherEnabled refresherTriggered={refreshing}
-        onRefresherRefresh={handleRefresh} onScrollToLower={handleLoadMore}>
+        onRefresherRefresh={handleRefresh} onScrollToLower={handleLoadMore}
+      >
         {feeds.map(feed => {
           // 按 pet_id 匹配家庭宠物档案；动态自带宠物照片优先（跨用户动态也能显示）
           const feedPet = feed.pet_id ? pets.find(p => p.id === feed.pet_id) : undefined
@@ -207,14 +208,16 @@ export default function FamilyFeed() {
                 <View className='publish-type-options'>
                   {FEED_TYPES.map(t => (
                     <View key={t} className={`publish-type-btn ${publishType === t ? 'publish-type-btn--active' : ''}`}
-                      style={{ borderColor: publishType === t ? FEED_TYPE_COLORS[t] : undefined }} onClick={() => setPublishType(t)}>
+                      style={{ borderColor: publishType === t ? FEED_TYPE_COLORS[t] : undefined }} onClick={() => setPublishType(t)}
+                    >
                       <Text className='publish-type-btn-text'>{FEED_TYPE_LABELS[t]}</Text>
                     </View>
                   ))}
                 </View>
               </View>
               <Textarea className='publish-textarea' placeholder='分享家庭的美好时刻...' value={publishContent}
-                onInput={e => setPublishContent(e.detail.value)} />
+                onInput={e => setPublishContent(e.detail.value)}
+              />
               {familyPets.length > 0 && (
                 <View className='publish-select-row'>
                   <Text className='publish-label'>关联宠物</Text>
@@ -224,7 +227,8 @@ export default function FamilyFeed() {
                     </View>
                     {familyPets.map(p => (
                       <View key={p.id} className={`publish-pet-btn ${publishPetId === p.id ? 'publish-pet-btn--active' : ''}`}
-                        onClick={() => setPublishPetId(p.id)}>
+                        onClick={() => setPublishPetId(p.id)}
+                      >
                         <Text className='publish-pet-btn-text'>{p.name}</Text>
                       </View>
                     ))}

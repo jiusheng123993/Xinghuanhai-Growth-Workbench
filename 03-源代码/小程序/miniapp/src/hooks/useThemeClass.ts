@@ -48,3 +48,27 @@ export function useThemeClass(): string {
   const theme = useThemeKey()
   return `theme-${theme}`
 }
+
+/**
+ * 返回当前的宠物照片壁纸地址（未设置时为 null）
+ *
+ * 与 useThemeKey 同理：用 local state + eventCenter 监听，绕开 zustand selector
+ * 在 Taro3 + zustand v3 下订阅不可靠的问题。
+ */
+export function usePetWallpaper(): string | null {
+  const [url, setUrl] = useState<string | null>(() => useThemeStore.getState().petWallpaper)
+
+  useEffect(() => {
+    // 同步一次 store 最新值（可能在其他页面被改过）
+    setUrl(useThemeStore.getState().petWallpaper)
+    const handler = (next: string | null) => {
+      setUrl(next)
+    }
+    Taro.eventCenter.on('wallpaperChange', handler)
+    return () => {
+      Taro.eventCenter.off('wallpaperChange', handler)
+    }
+  }, [])
+
+  return url
+}

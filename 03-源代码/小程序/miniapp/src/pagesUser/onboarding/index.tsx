@@ -8,6 +8,7 @@ import Taro from '@tarojs/taro'
 import { useAnalytics } from '../../hooks/useAnalytics'
 import { useThemeClass } from '../../hooks/useThemeClass'
 import './index.scss'
+import PageBackground from '../../components/PageBackground'
 
 interface OnboardingSlide {
   key: string
@@ -70,6 +71,7 @@ export default function OnboardingPage() {
 
   return (
     <View className={'onboarding-page ' + themeClass}>
+      <PageBackground />
       <View className='onboarding-page__skip' onClick={handleSkip}>
         <Text className='onboarding-page__skip-text'>跳过</Text>
       </View>

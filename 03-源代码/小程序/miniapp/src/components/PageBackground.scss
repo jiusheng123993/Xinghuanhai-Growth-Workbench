@@ -1,0 +1,120 @@
+/**
+ * 页面背景组件样式
+ *
+ * 颜色全部取主题 CSS 变量（var(--xxx)），所以换主题时背景自动跟随，
+ * 组件本身不需要感知具体是哪套主题。
+ *
+ * 兼容性说明：
+ *  光斑用 radial-gradient 而不是 filter: blur()——微信小程序对 CSS filter
+ *  的支持因机型而异，径向渐变同样能得到柔和边缘且更稳。
+ */
+
+/*
+ * ⚠️ z-index 必须是 -1（负数），不能是 0 —— 2026-09-10 线上事故修复：
+ * 本层是「不透明」的全屏渐变（.xhh-bg__base），而按 CSS 绘制顺序，
+ * z-index: 0 的定位元素会画在所有「没有定位、也没有 transform」的静态内容之上，
+ * 于是静态内容被整块盖住（表现为：页面顶部一片空白、只剩个别卡片）。
+ * 又因为旧实现 .xhh-bg-layer 里只有 rgba 半透明光斑、压在上面看不出问题，
+ * 换成不透明渐变后这个隐藏已久的问题才集中爆发。
+ * 改成 -1 后：背景永远在内容之下、在任何祖先背景之上（含 body 底色），
+ * 页面根容器保持 background: transparent 即可看到背景。
+ */
+.xhh-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* ---- 1. 主题渐变底 ---- */
+.xhh-bg__base {
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-page, linear-gradient(180deg, #FFFDF9 0%, #FFF6EE 40%, #FFEDE0 100%));
+}
+
+/* ---- 2a. 四季光斑（暖色主题用） ---- */
+.xhh-bg__blob {
+  position: absolute;
+  border-radius: 9999px;
+  will-change: transform;
+}
+
+.xhh-bg__blob--a {
+  width: 620rpx;
+  height: 620rpx;
+  top: -180rpx;
+  left: -200rpx;
+  background: radial-gradient(circle, rgba(var(--primary-rgb, 255, 107, 61), 0.34) 0%, rgba(var(--primary-rgb, 255, 107, 61), 0) 68%);
+  animation: xhh-bg-blob-a 24s ease-in-out infinite alternate;
+}
+
+.xhh-bg__blob--b {
+  width: 520rpx;
+  height: 520rpx;
+  top: 300rpx;
+  right: -220rpx;
+  background: radial-gradient(circle, rgba(var(--gold-rgb, 255, 176, 32), 0.26) 0%, rgba(var(--gold-rgb, 255, 176, 32), 0) 68%);
+  animation: xhh-bg-blob-b 28s ease-in-out infinite alternate;
+}
+
+.xhh-bg__blob--c {
+  width: 460rpx;
+  height: 460rpx;
+  bottom: 120rpx;
+  left: -160rpx;
+  background: radial-gradient(circle, rgba(var(--primary-rgb, 255, 107, 61), 0.18) 0%, rgba(var(--primary-rgb, 255, 107, 61), 0) 68%);
+  animation: xhh-bg-blob-c 32s ease-in-out infinite alternate;
+}
+
+/* ---- 2b. 星空星点（星空银河主题用） ---- */
+.xhh-bg__stars {
+  position: absolute;
+  inset: 0;
+}
+
+.xhh-bg__star {
+  position: absolute;
+  border-radius: 50%;
+  background-color: #ffffff;
+  opacity: 0.75;
+}
+
+.xhh-bg__star--twinkle {
+  animation: xhh-bg-twinkle 2.6s ease-in-out infinite;
+}
+
+/* ---- 2c. 奶油格纹（奶油格纹主题用） ---- */
+.xhh-bg__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 107, 61, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 107, 61, 0.045) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+
+/* ---- 动画 ---- */
+@keyframes xhh-bg-blob-a {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(124rpx, 96rpx) scale(1.14); }
+  100% { transform: translate(40rpx, 168rpx) scale(0.95); }
+}
+
+@keyframes xhh-bg-blob-b {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-116rpx, -76rpx) scale(1.1); }
+  100% { transform: translate(-64rpx, 68rpx) scale(0.93); }
+}
+
+@keyframes xhh-bg-blob-c {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(96rpx, -88rpx) scale(1.16); }
+  100% { transform: translate(148rpx, 24rpx) scale(1); }
+}
+
+@keyframes xhh-bg-twinkle {
+  0%, 100% { opacity: 0.22; }
+  50% { opacity: 0.95; }
+}

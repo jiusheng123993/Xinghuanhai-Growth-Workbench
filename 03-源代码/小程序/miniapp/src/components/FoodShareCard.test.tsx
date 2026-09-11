@@ -4,6 +4,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 
+import FoodShareCard from './FoodShareCard'
+
 const mockShowShareMenu = vi.hoisted(() => vi.fn())
 const mockShowToast = vi.hoisted(() => vi.fn())
 
@@ -15,7 +17,7 @@ vi.mock('@tarojs/components', () => ({
     <span className={className} style={style}>{children}</span>
   ),
   Image: ({ src, className, mode }: any) => (
-    <img className={className} src={src} alt="" data-mode={mode} />
+    <img className={className} src={src} alt='' data-mode={mode} />
   ),
   Canvas: (props: any) => <canvas {...props} />,
 }))
@@ -34,8 +36,6 @@ vi.mock('../utils/shareCanvasRenderer', () => ({
   renderShareCardToCanvas: vi.fn().mockRejectedValue(new Error('no canvas')),
   saveShareImage: vi.fn(),
 }))
-
-import FoodShareCard from './FoodShareCard'
 
 describe('FoodShareCard', () => {
   const baseProps = {

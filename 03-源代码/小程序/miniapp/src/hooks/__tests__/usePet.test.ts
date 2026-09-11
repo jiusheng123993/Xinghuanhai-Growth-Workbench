@@ -4,6 +4,9 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { usePetStore } from '../../stores/petStore'
+import { usePet } from '../usePet'
+
 const {
   mockInitUser,
   mockFetchPets,
@@ -59,9 +62,6 @@ vi.mock('../../stores/petStore', () => ({
 vi.mock('../../stores/authStore', () => ({
   useAuthStore: vi.fn(() => ''),
 }))
-
-import { usePetStore } from '../../stores/petStore'
-import { usePet } from '../usePet'
 
 describe('usePet', () => {
   beforeEach(() => {

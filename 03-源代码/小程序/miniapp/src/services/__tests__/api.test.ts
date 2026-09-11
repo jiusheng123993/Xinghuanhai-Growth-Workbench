@@ -3,6 +3,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { api as _api } from '../api'
+
 const {
   mockRequest,
   mockGetStorage,
@@ -119,8 +121,6 @@ vi.mock('../api', () => {
     }
   }
 })
-
-import { api as _api } from '../api'
 const api = _api as any
 
 function makeResponse(statusCode: number, data: unknown = {}) {

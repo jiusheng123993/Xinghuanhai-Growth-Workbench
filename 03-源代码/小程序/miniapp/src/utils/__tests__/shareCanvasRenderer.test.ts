@@ -1,14 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const mockTaro = vi.hoisted(() => ({
-  createSelectorQuery: vi.fn(),
-  canvasToTempFilePath: vi.fn(),
-  saveImageToPhotosAlbum: vi.fn(),
-  showToast: vi.fn(),
-}))
-
-vi.mock('@tarojs/taro', () => ({ default: mockTaro, ...mockTaro }))
-
 import {
   drawFoodShareImage,
   drawHealthTrendShareImage,
@@ -17,6 +8,15 @@ import {
   renderShareCardToCanvas,
   saveShareImage,
 } from '../shareCanvasRenderer'
+
+const mockTaro = vi.hoisted(() => ({
+  createSelectorQuery: vi.fn(),
+  canvasToTempFilePath: vi.fn(),
+  saveImageToPhotosAlbum: vi.fn(),
+  showToast: vi.fn(),
+}))
+
+vi.mock('@tarojs/taro', () => ({ default: mockTaro, ...mockTaro }))
 
 interface MockContext {
   fillStyle: string

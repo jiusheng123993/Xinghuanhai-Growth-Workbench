@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Tests
+// ═══════════════════════════════════════════════════════════════════════════
+
+import { sendChatMessage } from '../../services/chatService'
+import { SyncService } from '../../services/syncService'
+import type { ChatContext } from '../../services/chatService'
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Hoisted variables used in vi.mock factories
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -130,14 +138,6 @@ vi.mock('../../engines/petAvatar/expressionEngine', () => ({
     sad: { label: '难过', mood: 'sad' },
   },
 }))
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Tests
-// ═══════════════════════════════════════════════════════════════════════════
-
-import { sendChatMessage } from '../../services/chatService'
-import { SyncService } from '../../services/syncService'
-import type { ChatContext } from '../../services/chatService'
 
 describe('第三方服务异常处理', () => {
   beforeEach(() => {

@@ -6,6 +6,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { AnomalyItem } from '../memory-body/types/memoryBodyTypes'
 
 // ============================================================
+// 导入真实模块
+// ============================================================
+import { useAuthStore } from '../stores/authStore'
+import { usePetStore } from '../stores/petStore'
+import { api as _api } from '../services/api'
+import type { User } from '../types'
+import type { PetProfile } from '../services/petService'
+
+// ============================================================
 // Mock 层：共享的 mock storage 和 api
 // ============================================================
 const mockStorage: Record<string, string> = {}
@@ -112,15 +121,6 @@ vi.mock('../services/syncHelper', () => ({
   trySyncAll: vi.fn(),
   trySyncTable: vi.fn(),
 }))
-
-// ============================================================
-// 导入真实模块
-// ============================================================
-import { useAuthStore } from '../stores/authStore'
-import { usePetStore } from '../stores/petStore'
-import { api as _api } from '../services/api'
-import type { User } from '../types'
-import type { PetProfile } from '../services/petService'
 
 const api = _api as unknown as {
   get: ReturnType<typeof vi.fn>

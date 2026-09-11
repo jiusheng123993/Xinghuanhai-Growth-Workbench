@@ -3,6 +3,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { interpretName, recommendNames } from '../namingService'
+
 const { mockChat, mockGuardCheck, mockRequireAuth, mockCheckInput, mockBuildInterpretPrompt, mockBuildRecommendPrompt } =
   vi.hoisted(() => ({
     mockChat: vi.fn(),
@@ -30,8 +32,6 @@ vi.mock('../../utils/namingPrompts', () => ({
   buildInterpretPrompt: mockBuildInterpretPrompt,
   buildRecommendPrompt: mockBuildRecommendPrompt,
 }))
-
-import { interpretName, recommendNames } from '../namingService'
 
 const AI_REPLY = '根据生辰八字和五行分析，此名大吉，寓意福寿安康。'
 const AI_RECOMMEND_REPLY = '推荐：福宝、旺财、来福、吉祥、如意、安康、富贵、金宝、玉如意、长寿。'
@@ -84,6 +84,9 @@ describe('namingService', () => {
           { role: 'user', content: 'built interpret prompt' },
         ],
         temperature: 0.8,
+        // 必须关闭思考模式（2026-09-10）：开思考时 reasoning 会吃满 max_tokens，
+        // 服务端 content 返回空串 → 解读永远降级成本地套话
+        thinking: 'disabled',
       })
     })
 
@@ -163,6 +166,9 @@ describe('namingService', () => {
         ],
         temperature: 0.9,
         max_tokens: 2048,
+        // 必须关闭思考模式（2026-09-10）：实测开思考时 2048 tokens 全被 reasoning 吃掉、
+        // content 长度 0，"AI 推荐"实际全部走本地名字库
+        thinking: 'disabled',
       })
     })
 

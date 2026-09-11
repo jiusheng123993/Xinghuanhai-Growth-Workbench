@@ -14,6 +14,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // ============================================================
+// 导入真实模块
+// ============================================================
+import { buildFeedingProfile, generatePersonalizedAdvice, getMealPlan } from '../services/feedingService'
+import { getEmotionScore, getEmotionTrend, trackEmotionEvent } from '../services/emotionTrackingService'
+import { checkAllAchievements } from '../services/achievementService'
+import { checkFrequency, resetToDefaultRules } from '../services/frequencyControlService'
+import { formatMomentTime, getMomentTypeInfo } from '../services/momentService'
+import { generateChronicReminderPayload } from '../services/chronicService'
+import { generateWeeklyReport, getMoodEmoji, getMoodLabel } from '../services/weeklyReportService'
+import { checkInput, sanitizeOutput } from '../utils/ruleGuard'
+import { calculateConsecutiveAnomalyDays } from '../services/checkinService'
+import { generateDiaryFromEntries } from '../services/diaryService'
+import { getStorage, setStorage } from '../utils/storage'
+import type { PetProfile } from '../services/petService'
+import type { ChronicRecord } from '../types/chronicTypes'
+import type { PetMoment } from '../types/familyTypes'
+import type { PetHealthEntry } from '../memory-body/types/memoryBodyTypes'
+
+// ============================================================
 // Mock 层：共享的 mock storage
 // ============================================================
 const mockStorage: Record<string, string> = {}
@@ -106,25 +125,6 @@ vi.mock('../engines/petAvatar/diaryEngine', () => ({
     emoji: '😊',
   })),
 }))
-
-// ============================================================
-// 导入真实模块
-// ============================================================
-import { buildFeedingProfile, generatePersonalizedAdvice, getMealPlan } from '../services/feedingService'
-import { getEmotionScore, getEmotionTrend, trackEmotionEvent } from '../services/emotionTrackingService'
-import { checkAllAchievements } from '../services/achievementService'
-import { checkFrequency, resetToDefaultRules } from '../services/frequencyControlService'
-import { formatMomentTime, getMomentTypeInfo } from '../services/momentService'
-import { generateChronicReminderPayload } from '../services/chronicService'
-import { generateWeeklyReport, getMoodEmoji, getMoodLabel } from '../services/weeklyReportService'
-import { checkInput, sanitizeOutput } from '../utils/ruleGuard'
-import { calculateConsecutiveAnomalyDays } from '../services/checkinService'
-import { generateDiaryFromEntries } from '../services/diaryService'
-import { getStorage, setStorage } from '../utils/storage'
-import type { PetProfile } from '../services/petService'
-import type { ChronicRecord } from '../types/chronicTypes'
-import type { PetMoment } from '../types/familyTypes'
-import type { PetHealthEntry } from '../memory-body/types/memoryBodyTypes'
 
 // ============================================================
 // 测试辅助函数

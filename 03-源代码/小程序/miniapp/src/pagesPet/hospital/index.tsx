@@ -19,6 +19,7 @@ import {
   HospitalInfo,
 } from '../../services/hospitalService'
 import './index.scss'
+import { PageBackground, Icon  } from '../../components'
 
 const FILTER_TABS = [
   { key: 'all', label: '全部' },
@@ -154,9 +155,10 @@ export default function HospitalPage() {
 
   return (
     <View className='hospital-page'>
+      <PageBackground />
       <View className='hospital-page__search'>
         <View className='hospital-page__search-input-wrap'>
-          <Text className='hospital-page__search-icon'>🔍</Text>
+          <Icon name='magnifying-glass' size={14} tone='muted' className='hospital-page__search-icon' />
           <Input
             className='hospital-page__search-input'
             placeholder='搜索医院名称、地址或服务'
@@ -203,7 +205,7 @@ export default function HospitalPage() {
         <PageLoading text='正在加载医院信息...' />
       ) : filteredHospitals.length === 0 ? (
         <View className='hospital-page__empty'>
-          <Text className='hospital-page__empty-icon'>🏥</Text>
+          <Icon name='hospital' size={48} tone='primary' className='hospital-page__empty-icon' />
           <Text className='hospital-page__empty-text'>暂无符合条件的医院</Text>
           <Text className='hospital-page__empty-hint'>尝试更换筛选条件或搜索关键词</Text>
         </View>
@@ -235,7 +237,7 @@ export default function HospitalPage() {
 
               <View className='hospital-page__card-info'>
                 <View className='hospital-page__card-info-item'>
-                  <Text className='hospital-page__card-info-icon'>📍</Text>
+                  <Icon name='map-pin' size={12} tone='muted' className='hospital-page__card-info-icon' />
                   <Text className='hospital-page__card-info-text'>{hospital.address}</Text>
                 </View>
                 <View className='hospital-page__card-info-item'>

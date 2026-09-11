@@ -4,6 +4,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, fireEvent } from '@testing-library/react'
 
+import PetDeceasedModal from '../PetDeceasedModal'
+
 vi.mock('@tarojs/components', () => ({
   View: ({ children, className, style, onClick, onLongPress }: any) => (
     <div className={className} style={style} onClick={onClick} onContextMenu={onLongPress}>{children}</div>
@@ -23,8 +25,6 @@ vi.mock('@tarojs/components', () => ({
 }))
 
 vi.mock('../PetDeceasedModal.scss', () => ({}))
-
-import PetDeceasedModal from '../PetDeceasedModal'
 
 describe('PetDeceasedModal', () => {
   const defaultProps = {
@@ -85,7 +85,7 @@ describe('PetDeceasedModal', () => {
   })
 
   it('re-render with visible=false hides modal', () => {
-    const { container, rerender } = render(<PetDeceasedModal {...defaultProps} visible={true} />)
+    const { container, rerender } = render(<PetDeceasedModal {...defaultProps} visible />)
     expect(container.querySelector('.deceased-modal__overlay')).not.toBeNull()
     rerender(<PetDeceasedModal {...defaultProps} visible={false} />)
     expect(container.innerHTML).toBe('')

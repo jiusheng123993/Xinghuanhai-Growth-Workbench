@@ -3,6 +3,24 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import { api } from '../api'
+import {
+  getMembershipStatus,
+  isMember,
+  getQuotaLimit,
+  createPaymentOrder,
+  requestWechatPayment,
+  pollOrderStatus,
+  confirmPayment,
+  cancelMembership,
+  shouldShowPaywall,
+  markPaywallShown,
+  checkFeatureAccess,
+  restorePurchase,
+  getOrders,
+} from '../membershipService'
+import type { MembershipInfo, PaymentOrder } from '../membershipService'
+
 const mockStorage: Record<string, string> = {}
 
 vi.mock('../../utils/storage', () => ({
@@ -34,24 +52,6 @@ vi.mock('@tarojs/taro', () => ({
     requestPayment: vi.fn(),
   },
 }))
-
-import { api } from '../api'
-import {
-  getMembershipStatus,
-  isMember,
-  getQuotaLimit,
-  createPaymentOrder,
-  requestWechatPayment,
-  pollOrderStatus,
-  confirmPayment,
-  cancelMembership,
-  shouldShowPaywall,
-  markPaywallShown,
-  checkFeatureAccess,
-  restorePurchase,
-  getOrders,
-} from '../membershipService'
-import type { MembershipInfo, PaymentOrder } from '../membershipService'
 
 const userId = 'user-001'
 

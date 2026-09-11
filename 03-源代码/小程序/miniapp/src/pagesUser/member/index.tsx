@@ -12,6 +12,8 @@ import { api } from '../../services/api'
 import { redirectToLoginIfNeeded } from '../../utils/authGuard'
 import PageLoading from '../../components/PageLoading'
 import './index.scss'
+import { Icon } from '../../components'
+import PageBackground from '../../components/PageBackground'
 
 /**
  * 套餐价格展示。⚠️ 必须与服务端 routes/membership.ts 的 getPlanPrice 保持一致：
@@ -55,7 +57,7 @@ function formatDate(dateStr: string): string {
 function remainingDays(endDate: string): number {
   if (!endDate) return 0
   const end = new Date(endDate)
-  if (isNaN(end.getTime())) return 0
+  if (Number.isNaN(end.getTime())) return 0
   return Math.max(0, Math.ceil((end.getTime() - Date.now()) / 86400000))
 }
 
@@ -157,20 +159,14 @@ export default function Member() {
   return (
     <View className='member-page'>
       {/* 全屏动态背景层 */}
-      <View className='xhh-bg-layer'>
-        <View className='xhh-blob xhh-blob-a' />
-        <View className='xhh-blob xhh-blob-b' />
-        <View className='xhh-blob xhh-blob-c' />
-        <View className='xhh-blob xhh-blob-d' />
-        <View className='xhh-bg-glow' />
-      </View>
+      <PageBackground />
 
       <ScrollView className='member-page__content' scrollY>
         {/* ===== 会员状态卡 ===== */}
         <View className='member-status'>
           <View className='member-status__head'>
             <View className='member-status__icon'>
-              <Text className='member-status__icon-text'>👑</Text>
+              <Icon name='crown' size={20} tone='primary' className='member-status__icon-text' />
             </View>
             <View className='member-status__info'>
               <Text className='member-status__label'>当前状态</Text>
@@ -178,7 +174,7 @@ export default function Member() {
             </View>
             {isVip && days > 0 ? (
               <View className='member-status__badge'>
-                <Text className='member-status__badge-icon'>⭐</Text>
+                <Icon name='star' size={11} tone='primary' className='member-status__badge-icon' />
                 <Text className='member-status__badge-text'>剩余 {days} 天</Text>
               </View>
             ) : (
@@ -200,7 +196,7 @@ export default function Member() {
           </View>
 
           <View className='member-status__btn' onClick={handleSubscribe}>
-            <Text className='member-status__btn-icon'>👑</Text>
+            <Icon name='crown' size={14} tone='primary' className='member-status__btn-icon' />
             <Text className='member-status__btn-text'>{subscribing ? '开通中...' : '立即开通'}</Text>
           </View>
         </View>

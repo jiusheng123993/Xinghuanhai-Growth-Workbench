@@ -3,6 +3,22 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import { api } from '../api'
+import {
+  getVaccineRecords,
+  createVaccineRecord,
+  updateVaccineRecord,
+  deleteVaccineRecord,
+  getUpcomingRecords,
+  getOverdueRecords,
+  markAsCompleted,
+  getRecordsByMonth,
+  generateInitialPlan,
+  VACCINE_INTERVAL_RULES,
+  calculateNextDate,
+} from '../vaccineService'
+import type { VaccineRecord, CreateVaccineData } from '../vaccineService'
+
 const mockStorage: Record<string, string> = {}
 
 vi.mock('../../utils/storage', () => ({
@@ -233,22 +249,6 @@ vi.mock('../../data/petKnowledge/breeds', () => {
   ]
   return { BREED_DATA, getActiveBreeds: () => BREED_DATA }
 })
-
-import { api } from '../api'
-import {
-  getVaccineRecords,
-  createVaccineRecord,
-  updateVaccineRecord,
-  deleteVaccineRecord,
-  getUpcomingRecords,
-  getOverdueRecords,
-  markAsCompleted,
-  getRecordsByMonth,
-  generateInitialPlan,
-  VACCINE_INTERVAL_RULES,
-  calculateNextDate,
-} from '../vaccineService'
-import type { VaccineRecord, CreateVaccineData } from '../vaccineService'
 
 function makeVaccineRecord(overrides: Partial<VaccineRecord> = {}): VaccineRecord {
   return {

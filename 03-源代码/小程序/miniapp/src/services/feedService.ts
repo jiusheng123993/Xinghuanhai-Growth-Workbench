@@ -107,9 +107,15 @@ export const feedService = {
     await api.delete(`/api/families/${familyId}/feeds/${feedId}`)
   },
 
-  /** 获取精选动态 */
+  /**
+   * 获取精选动态
+   *
+   * ⚠️【2026-09-11 修复】后端 `routes/feeds.ts` 返回 `{ success: true, data: items }`，
+   * api 层已经把 data 解包出来（这里拿到的就是数组）。原来又读一层 `data?.data`
+   * → 恒 undefined → `|| []` → **家庭动态的「精选动态」永远是空的**。
+   */
   async getHighlightFeeds(familyId: string): Promise<FeedWithPet[]> {
-    const data = await api.get<{ data: FeedWithPet[] }>(`/api/families/${familyId}/feeds/highlight`)
-    return data?.data || []
+    const rows = await api.get<FeedWithPet[]>(`/api/families/${familyId}/feeds/highlight`)
+    return rows || []
   },
 }

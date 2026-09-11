@@ -8,6 +8,7 @@ import Taro from '@tarojs/taro'
 import { shareCardService } from '../../services/shareCardService'
 import type { ShareCardRow } from '../../services/shareCardService'
 import './index.scss'
+import { PageBackground, Icon  } from '../../components'
 
 const CARD_TYPES = ['全部', '健康报告', '周报', '回忆录', '里程碑', '家族图谱', '取名', '生日', '成就', '日常动态', '年度回顾']
 const CARD_TYPE_MAP: Record<string, string> = {
@@ -148,6 +149,7 @@ export default function ShareCardPage() {
 
   return (
     <View className='card-container'>
+      <PageBackground />
       {/* ===== 分享 hero 卡 ===== */}
       <View className='share-hero'>
         <View className='share-hero__icon'>
@@ -218,7 +220,7 @@ export default function ShareCardPage() {
           ))}
           {cards.length === 0 && (
             <View className='card-grid__empty'>
-              <Text className='card-grid__empty-icon'>📋</Text>
+              <Icon name='clipboard-text' size={40} tone='primary' className='card-grid__empty-icon' />
               <Text className='card-grid__empty-text'>暂无分享卡片</Text>
               <Text className='card-grid__empty-desc'>点击下方按钮生成第一张卡片</Text>
             </View>

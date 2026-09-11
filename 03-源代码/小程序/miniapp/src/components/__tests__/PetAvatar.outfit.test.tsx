@@ -5,6 +5,9 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
+import PetAvatar from '../PetAvatar'
+import type { ExpressionContext } from '../../engines/petAvatar'
+
 vi.mock('@tarojs/components', () => ({
   View: ({ children, className, style, onClick }: any) => (
     <div className={className} style={style} onClick={onClick}>{children}</div>
@@ -32,9 +35,6 @@ vi.mock('../../engines/petAvatar', () => ({
   generateDiaryForToday: vi.fn(),
   EXPRESSION_MAP: {},
 }))
-
-import PetAvatar from '../PetAvatar'
-import type { ExpressionContext } from '../../engines/petAvatar'
 
 const defaultContext: ExpressionContext = {
   todayEntry: null,

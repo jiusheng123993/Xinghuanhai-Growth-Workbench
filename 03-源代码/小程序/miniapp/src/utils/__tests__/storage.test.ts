@@ -1,5 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import {
+  getStorage,
+  getStorageArray,
+  setStorage,
+  removeStorage,
+  clearAllStorage,
+  setStorageUserId,
+} from '../storage'
+
 const mockStore: Record<string, string> = {}
 
 vi.mock('@tarojs/taro', () => {
@@ -11,15 +20,6 @@ vi.mock('@tarojs/taro', () => {
   }
   return { default: taroMock, ...taroMock }
 })
-
-import {
-  getStorage,
-  getStorageArray,
-  setStorage,
-  removeStorage,
-  clearAllStorage,
-  setStorageUserId,
-} from '../storage'
 
 describe('storage', () => {
   beforeEach(() => {

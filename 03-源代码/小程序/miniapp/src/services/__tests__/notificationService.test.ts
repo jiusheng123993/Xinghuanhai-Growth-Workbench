@@ -2,6 +2,23 @@
  * 通知跟进服务测试
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import Taro from '@tarojs/taro'
+
+import {
+  scheduleFollowup,
+  cancelFollowup,
+  getPendingFollowups,
+  getFollowupBySessionId,
+  checkAndSendFollowups,
+  sendCarePlanReminder,
+  updateFollowupStatus,
+  clearExpiredFollowups,
+  getFollowupStats,
+} from '../notificationService'
+import type { PendingFollowup } from '../notificationService'
+import { hasAcceptedSubscribe, requestFollowupSubscribe, sendSubscribeMessage } from '../subscribeService'
+import { checkFrequency, recordSend } from '../frequencyControlService'
+import { getStorage, setStorage } from '../../utils/storage'
 
 const mockStorage: Record<string, string> = {}
 
@@ -42,23 +59,6 @@ vi.mock('../frequencyControlService', () => ({
   checkFrequency: vi.fn(() => ({ allowed: true, remainingToday: 2, remainingThisWeek: 5 })),
   recordSend: vi.fn(),
 }))
-
-import {
-  scheduleFollowup,
-  cancelFollowup,
-  getPendingFollowups,
-  getFollowupBySessionId,
-  checkAndSendFollowups,
-  sendCarePlanReminder,
-  updateFollowupStatus,
-  clearExpiredFollowups,
-  getFollowupStats,
-} from '../notificationService'
-import type { PendingFollowup } from '../notificationService'
-import { hasAcceptedSubscribe, requestFollowupSubscribe, sendSubscribeMessage } from '../subscribeService'
-import { checkFrequency, recordSend } from '../frequencyControlService'
-import { getStorage, setStorage } from '../../utils/storage'
-import Taro from '@tarojs/taro'
 
 function makeFollowup(overrides: Partial<PendingFollowup> = {}): PendingFollowup {
   return {

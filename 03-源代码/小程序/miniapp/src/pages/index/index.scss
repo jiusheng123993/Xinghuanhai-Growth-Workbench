@@ -8,7 +8,8 @@
 // ===== 页面容器 =====
 .chat-home-page {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -71,7 +72,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 24rpx 32rpx;
-  background: rgba($color-bg-page, 0.94);
+  background: rgba(var(--bg-page-rgb, 255, 246, 238), 0.94);
   backdrop-filter: blur(24rpx);
   border-bottom: 1rpx solid $color-border-light;
   position: sticky;
@@ -90,7 +91,7 @@
   padding: 20rpx 24rpx;
   border-radius: 20rpx;
   background: $gradient-card;
-  border: 1rpx solid rgba($color-primary, 0.25);
+  border: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.25);
   animation: fadeInUp 0.3s ease-out;
 }
 
@@ -131,7 +132,7 @@
   align-items: center;
   justify-content: center;
   font-size: 38rpx;
-  box-shadow: 0 0 20rpx rgba($color-primary, 0.3);
+  box-shadow: 0 0 20rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
   @include breathe-glow;
 }
 
@@ -157,10 +158,36 @@
   margin-top: 2rpx;
 }
 
-// 顶部右侧：记忆纠错入口
+// 顶部右侧：新建对话 + 历史 + 记忆纠错入口
 .chat-top-right {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
+}
+
+/* 新建对话主入口：顶部常驻渐变胶囊（用户反馈「放历史里找不到」，
+   对齐豆包式一屏可见），与「历史/记忆」次级描边入口形成层级对比 */
+.chat-top-new-btn {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 12rpx 22rpx;
+  margin-right: 12rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, #ff8a5c, #ff6b3d);
+  box-shadow: 0 4rpx 12rpx rgba(255, 107, 61, 0.26);
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.95);
+    box-shadow: 0 2rpx 6rpx rgba(255, 107, 61, 0.2);
+  }
+}
+
+.chat-top-new-text {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #fff;
 }
 
 .chat-top-memory-btn {
@@ -169,12 +196,12 @@
   gap: 6rpx;
   padding: 10rpx 20rpx;
   border-radius: 20rpx;
-  background: rgba($color-primary, 0.08);
-  border: 1rpx solid rgba($color-primary, 0.15);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
+  border: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.15);
   transition: all 0.2s ease;
 
   &:active {
-    background: rgba($color-primary, 0.15);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.15);
     transform: scale(0.95);
   }
 }
@@ -246,7 +273,7 @@
 
 .msg-row.ai .msg-avatar {
   background: $gradient-warm;
-  box-shadow: 0 0 16rpx rgba($color-primary, 0.3);
+  box-shadow: 0 0 16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
   overflow: hidden;
 }
 
@@ -265,7 +292,7 @@
 
 .msg-row.user .msg-avatar {
   background: $gradient-warm;
-  box-shadow: 0 0 16rpx rgba($color-primary, 0.3);
+  box-shadow: 0 0 16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
 }
 
 // ===== 气泡 =====
@@ -364,6 +391,10 @@
 }
 
 .msg-quick-btn {
+  /* 图标与文字水平排列（原来 emoji 是内联在文字串里的，改用 Icon 组件后需要 flex） */
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
   background: $color-bg-card;
   border: 1rpx solid $color-primary;
   color: $color-primary;
@@ -377,7 +408,7 @@
   &:active {
     background: $color-primary-bg;
     border-color: $color-primary;
-    box-shadow: 0 0 16rpx rgba($color-primary, 0.2);
+    box-shadow: 0 0 16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.2);
   }
 }
 
@@ -391,7 +422,7 @@
   display: block;
   width: 100%;
   text-align: left;
-  background: rgba($color-bg-card, 0.8);
+  background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.8);
   border: 1rpx solid $color-border;
   color: $color-text-primary;
   padding: 26rpx 32rpx;
@@ -404,7 +435,7 @@
     background: $color-primary-bg;
     border-color: $color-primary;
     transform: scale(0.98);
-    box-shadow: 0 0 16rpx rgba($color-primary, 0.15);
+    box-shadow: 0 0 16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.15);
   }
 
   &:last-child {
@@ -439,8 +470,8 @@
 // ===== Agent 工具调用状态 =====
 .agent-status-bubble {
   padding: 14rpx 28rpx;
-  background: rgba($color-primary-light, 0.08);
-  border: 1rpx solid rgba($color-primary-light, 0.15);
+  background: rgba(var(--primary-light-rgb, 255, 160, 130), 0.08);
+  border: 1rpx solid rgba(var(--primary-light-rgb, 255, 160, 130), 0.15);
   border-radius: 20rpx;
   animation: statusPulse 2s ease-in-out infinite;
 }
@@ -472,10 +503,60 @@
   padding: 0 60rpx;
   animation: fadeInUp 0.6s ease-out;
 
-  .chat-empty-icon {
-    font-size: 120rpx;
-    margin-bottom: 24rpx;
-    animation: pulse 3s ease-in-out infinite;
+  /* 猫狗 IP 主视觉：空态最需要情感锚点（原来是 120rpx 的浅色爪印，太弱） */
+  .chat-empty-mascot {
+    position: relative;
+    width: 280rpx;
+    height: 280rpx;
+    margin-bottom: 12rpx;
+    animation: floaty 4.5s ease-in-out infinite;
+  }
+
+  .chat-empty-mascot__halo {
+    position: absolute;
+    inset: -30rpx;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(var(--primary-rgb, 255, 107, 61), 0.22) 0%, rgba(var(--gold-rgb, 255, 176, 32), 0.1) 55%, transparent 72%);
+  }
+
+  .chat-empty-mascot__ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 4rpx solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 20rpx 48rpx -18rpx rgba(240, 78, 29, 0.45);
+  }
+
+  .chat-empty-mascot__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+  }
+
+  /* 品牌 slogan：两侧小星星点缀 */
+  .chat-empty-slogan {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+    margin: 24rpx 0 28rpx;
+  }
+
+  .chat-empty-slogan__star {
+    flex-shrink: 0;
+    opacity: 0.9;
+  }
+
+  .chat-empty-slogan__text {
+    font-size: 26rpx;
+    font-weight: $font-weight-semibold;
+    color: $color-text-secondary;
+    letter-spacing: 0.02em;
+  }
+
+  .chat-empty-slogan__accent {
+    color: $color-primary;
   }
 
   .chat-empty-title {
@@ -495,6 +576,11 @@
   }
 
   .chat-empty-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* 图标与文字间距（原按钮是「+ 添加宠物」的纯文字） */
+    gap: 8rpx;
     padding: 24rpx 80rpx;
     border-radius: $radius-full;
     background: $gradient-gold;
@@ -516,7 +602,7 @@
   position: sticky;
   bottom: 0;
   padding: 20rpx 32rpx 0;
-  background: rgba($color-bg-page, 0.96);
+  background: rgba(var(--bg-page-rgb, 255, 246, 238), 0.96);
   backdrop-filter: blur(24rpx);
   z-index: 99;
 }
@@ -557,7 +643,7 @@
   height: 120rpx;
   border-radius: 16rpx;
   border: 1rpx solid $color-border;
-  background: rgba($color-border, 0.4);
+  background: rgba(var(--border-rgb, 243, 226, 210), 0.4);
 }
 
 .chat-attach-remove {
@@ -616,11 +702,11 @@
   transition: all 0.2s;
 
   &:active {
-    background: rgba($color-primary, 0.15);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.15);
   }
 
   &--active {
-    background: rgba($color-primary, 0.12);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
   }
 }
 
@@ -654,7 +740,7 @@
   transition: all 0.2s;
 
   &:active {
-    background: rgba($color-primary, 0.15);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.15);
   }
 
   &--recording {
@@ -664,7 +750,7 @@
   }
 
   &--processing {
-    background: rgba($color-primary, 0.1);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
     border-color: $color-primary;
     opacity: 0.7;
   }
@@ -726,7 +812,7 @@
   transition: all 0.15s;
 
   &:active {
-    background: rgba($color-primary, 0.15);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.15);
     transform: scale(0.9);
   }
 }
@@ -748,12 +834,12 @@
   transition: all 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
 
   &:active {
-    background: rgba($color-primary, 0.15);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.15);
     transform: rotate(90deg) scale(0.9);
   }
 
   &--active {
-    background: rgba($color-primary, 0.12);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
     transform: rotate(45deg);
   }
 }
@@ -776,7 +862,7 @@
   justify-content: center;
   flex-shrink: 0;
   transition: all 0.15s;
-  box-shadow: 0 2rpx 12rpx rgba($color-primary, 0.3);
+  box-shadow: 0 2rpx 12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
 
   &:active {
     transform: scale(0.88);
@@ -1002,13 +1088,13 @@
 
   &--danger {
     background: $color-danger-light;
-    border: 1rpx solid rgba($color-danger, 0.3);
+    border: 1rpx solid rgba(var(--danger-rgb, 255, 90, 95), 0.3);
     color: $color-danger;
   }
 
   &--safe {
-    background: rgba($color-sage, 0.1);
-    border: 1rpx solid rgba($color-sage, 0.3);
+    background: rgba(var(--sage-rgb, 47, 201, 142), 0.1);
+    border: 1rpx solid rgba(var(--sage-rgb, 47, 201, 142), 0.3);
     color: $color-sage;
   }
 }
@@ -1017,8 +1103,8 @@
 .msg-card-hospital {
   margin-top: 16rpx;
   padding: 20rpx;
-  background: rgba($color-danger, 0.08);
-  border: 1rpx solid rgba($color-danger, 0.25);
+  background: rgba(var(--danger-rgb, 255, 90, 95), 0.08);
+  border: 1rpx solid rgba(var(--danger-rgb, 255, 90, 95), 0.25);
   border-radius: 24rpx;
   text-align: center;
 }
@@ -1118,7 +1204,7 @@
   font-size: 20rpx;
   font-weight: 600;
   border-radius: 14rpx;
-  box-shadow: 0 2rpx 8rpx rgba($color-primary, 0.3);
+  box-shadow: 0 2rpx 8rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
 }
 
 // 可点击样式
@@ -1129,21 +1215,21 @@
   &:active {
     transform: scale(0.98);
     background: rgba(255, 215, 176, 0.5);
-    border-color: rgba($color-primary, 0.4);
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.4);
   }
 }
 
 .msg-naming-card--hover {
   transform: scale(0.98);
   background: rgba(255, 215, 176, 0.45);
-  border-color: rgba($color-primary, 0.35);
+  border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.35);
 }
 
 // 点击查看详情提示
 .msg-naming-detail-hint {
   margin-top: 12rpx;
   padding-top: 10rpx;
-  border-top: 1rpx dashed rgba($color-primary, 0.2);
+  border-top: 1rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.2);
   text-align: right;
 
   text {
@@ -1160,14 +1246,14 @@
   justify-content: center;
   margin-top: 20rpx;
   padding: 20rpx;
-  background: linear-gradient(135deg, rgba($color-primary, 0.06), rgba($color-primary, 0.12));
-  border: 1rpx dashed rgba($color-primary, 0.3);
+  background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.06), rgba(var(--primary-rgb, 255, 107, 61), 0.12));
+  border: 1rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.3);
   border-radius: 16rpx;
   transition: all 0.2s;
 
   &--hover {
-    background: linear-gradient(135deg, rgba($color-primary, 0.12), rgba($color-primary, 0.2));
-    border-color: rgba($color-primary, 0.5);
+    background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.12), rgba(var(--primary-rgb, 255, 107, 61), 0.2));
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.5);
     transform: scale(0.98);
   }
 }
@@ -1190,9 +1276,9 @@
   align-items: center;
   justify-content: center;
   padding: 48rpx 32rpx;
-  background: linear-gradient(135deg, rgba($color-primary, 0.04), rgba($color-primary, 0.08));
+  background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.04), rgba(var(--primary-rgb, 255, 107, 61), 0.08));
   border-radius: 20rpx;
-  border: 1rpx dashed rgba($color-primary, 0.2);
+  border: 1rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.2);
 }
 
 .msg-naming-refreshing-text {
@@ -1382,7 +1468,7 @@
 .msg-naming-action-btn--upload {
   background: $gradient-gold;
   color: $color-text-inverse;
-  box-shadow: 0 4rpx 12rpx rgba($color-primary, 0.25);
+  box-shadow: 0 4rpx 12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.25);
 }
 
 .msg-naming-action-btn--upload:active {
@@ -1553,12 +1639,12 @@
 
 .naming-popup-card .msg-naming-detail-section--fortune {
   background: linear-gradient(135deg, rgba(255, 215, 176, 0.25), rgba(255, 255, 255, 0.5));
-  border-color: rgba($color-primary, 0.2);
+  border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.2);
 }
 
 .naming-popup-card .msg-naming-detail-section--summary {
   background: linear-gradient(135deg, rgba(255, 215, 176, 0.3), rgba(255, 240, 220, 0.5));
-  border-color: rgba($color-primary, 0.25);
+  border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.25);
   margin-bottom: 0;
   padding-bottom: 28rpx;
 }
@@ -1651,6 +1737,35 @@
 }
 
 // ============================================
+// 命理详情弹窗 · 「就用这个名字」按钮（2026-09-10 结果闭环）
+// 主色渐变，与站内主按钮语言一致；卡片内吸底留白
+// ============================================
+
+.naming-popup-apply {
+  margin: 8rpx 0 16rpx;
+  padding: 24rpx 0;
+  border-radius: $radius-lg;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  box-shadow: 0 8rpx 20rpx rgba(198, 138, 74, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  @include press-feedback;
+}
+
+.naming-popup-apply--hover {
+  opacity: 0.9;
+  transform: scale(0.985);
+}
+
+.naming-popup-apply-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 1rpx;
+}
+
+// ============================================
 // 首页顶部区块（对齐设计稿 home.html）
 // 健康摘要卡 / 宠物的话 / 3秒打卡按钮
 // ============================================
@@ -1685,7 +1800,7 @@
   font-size: 56rpx;
   flex-shrink: 0;
   overflow: hidden;
-  box-shadow: 0 0 24rpx rgba($color-primary, 0.3), 0 0 60rpx rgba($color-primary, 0.18), 0 0 110rpx rgba($color-gold, 0.12);
+  box-shadow: 0 0 24rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3), 0 0 60rpx rgba(var(--primary-rgb, 255, 107, 61), 0.18), 0 0 110rpx rgba(var(--gold-rgb, 255, 176, 32), 0.12);
 }
 
 /* 宠物真实头像（与档案页一致）：圆角裁切 */
@@ -1791,7 +1906,7 @@
   padding: 28rpx 32rpx;
   margin-bottom: 28rpx;
   position: relative;
-  box-shadow: $shadow-button, 0 0 30rpx rgba($color-primary, 0.35), 0 0 80rpx rgba($color-gold, 0.2);
+  box-shadow: $shadow-button, 0 0 30rpx rgba(var(--primary-rgb, 255, 107, 61), 0.35), 0 0 80rpx rgba(var(--gold-rgb, 255, 176, 32), 0.2);
   transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease, box-shadow 0.3s ease;
 
   &--hover {
@@ -1891,7 +2006,7 @@
 
   &--hover {
     transform: translateY(-4rpx) scale(0.98);
-    border-color: rgba($color-primary, 0.35);
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.35);
     box-shadow: $shadow-md;
   }
 }
@@ -1907,10 +2022,10 @@
   font-size: 36rpx;
   margin-bottom: 16rpx;
 
-  &--coral { background: rgba($color-primary, 0.12); }
-  &--gold { background: rgba($color-gold-deep, 0.14); }
-  &--sage { background: rgba($color-sage, 0.14); }
-  &--teal { background: rgba($color-teal, 0.14); }
+  &--coral { background: rgba(var(--primary-rgb, 255, 107, 61), 0.12); }
+  &--gold { background: rgba(var(--gold-deep-rgb, 232, 146, 10), 0.14); }
+  &--sage { background: rgba(var(--sage-rgb, 47, 201, 142), 0.14); }
+  &--teal { background: rgba(var(--teal-rgb, 79, 163, 227), 0.14); }
 }
 
 /* 慢性病风险角标（红色数字徽标，右上角） */
@@ -1958,93 +2073,6 @@
   .chat-empty {
     animation: fadeIn 0.2s ease both;
   }
-}
-
-// ============================================
-// 回忆录入口卡（2026-09-09：回忆录独立板块首页直达）
-// ============================================
-.home-memoir-card {
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  gap: 22rpx;
-  margin: 20rpx 24rpx;
-  padding: 30rpx 28rpx;
-  border-radius: 28rpx;
-  background: linear-gradient(150deg, #f0ecff, #ffe0f0);
-  border: 2rpx solid rgba(167, 139, 250, 0.2);
-  transition: all 0.25s ease;
-
-  &:active {
-    transform: scale(0.98);
-    background: #f7effa;
-  }
-}
-
-.home-memoir-card__glow {
-  position: absolute;
-  top: -36rpx;
-  right: -36rpx;
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 50%;
-  background: rgba(124, 108, 240, 0.18);
-  filter: blur(46rpx);
-  opacity: 0.6;
-}
-
-.home-memoir-card__icon {
-  width: 88rpx;
-  height: 88rpx;
-  border-radius: 24rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 44rpx;
-  background: linear-gradient(135deg, rgba(232, 200, 160, 0.25), rgba(216, 184, 160, 0.1));
-  flex-shrink: 0;
-}
-
-.home-memoir-card__body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6rpx;
-}
-
-.home-memoir-card__titlerow {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-}
-
-.home-memoir-card__title {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: #3d2f24;
-  letter-spacing: 2rpx;
-}
-
-.home-memoir-card__tag {
-  padding: 2rpx 14rpx;
-  border-radius: 999rpx;
-  background: rgba(232, 130, 100, 0.2);
-  font-size: 18rpx;
-  color: #FF9B7A;
-  letter-spacing: 2rpx;
-}
-
-.home-memoir-card__desc {
-  font-size: 24rpx;
-  color: #a08b76;
-}
-
-.home-memoir-card__arrow {
-  font-size: 38rpx;
-  color: #b08968;
-  flex-shrink: 0;
 }
 
 /* ===== 长对话软提示（多会话：满 30 轮建议新建，不强制） ===== */
@@ -2174,4 +2202,86 @@
   padding: 4rpx 14rpx;
   background: #ffedd5;
   border-radius: 999rpx;
+}
+
+/* ============================================
+   品牌 Hero：情绪 slogan + 猫狗 IP 主视觉
+   首页主体是对话流，Hero 刻意做得克制 ——
+   只负责在首屏建立品牌感与「这是谁的家」的情感锚点，不抢占消息列表的空间
+   ============================================ */
+.home-hero {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24rpx 48rpx 8rpx;
+}
+
+/* 散落星点：绝对定位铺在 Hero 内，用闪烁动画呼应「星河」，同时填掉大片留白 */
+.home-hero__spark {
+  position: absolute;
+  animation: home-hero-twinkle 3.2s ease-in-out infinite;
+}
+
+.home-hero__spark--1 { top: 26rpx; left: 11%; animation-delay: 0s; }
+.home-hero__spark--2 { top: 128rpx; left: 5%; animation-delay: 0.6s; }
+.home-hero__spark--3 { top: 56rpx; right: 9%; animation-delay: 1.2s; }
+.home-hero__spark--4 { top: 196rpx; right: 4%; animation-delay: 0.3s; }
+.home-hero__spark--5 { top: 262rpx; left: 8%; animation-delay: 0.9s; }
+.home-hero__spark--6 { top: 312rpx; right: 13%; animation-delay: 1.5s; }
+
+@keyframes home-hero-twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.88); }
+  50% { opacity: 1; transform: scale(1.12); }
+}
+
+.home-hero__slogan {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+  font-size: 40rpx;
+  font-weight: $font-weight-bold;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: $color-text-primary;
+  text-align: center;
+}
+
+/* 每行：文字与星星用 flex 排列（Icon 是 Image 组件，不能塞进 <Text>） */
+.home-hero__line {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.home-hero__star {
+  flex-shrink: 0;
+}
+
+/* 行末补缀的那颗略靠外一点，避免贴着文字 */
+.home-hero__star--end {
+  margin-left: 6rpx;
+}
+
+.home-hero__line-text {
+  display: block;
+}
+
+/* 「星河」二字用主色点出，呼应品牌名 */
+.home-hero__accent {
+  color: $color-primary;
+}
+
+.home-hero__mascot {
+  position: relative;
+  z-index: 1;
+  /* 280rpx：原来 168/220rpx 在 375px 屏上只有 84/110px，Hero 显得空；
+     放大后吉祥物成为真正的视觉主角，同时把上下留白压下去 */
+  width: 280rpx;
+  height: 280rpx;
+  margin-top: 10rpx;
 }

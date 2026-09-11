@@ -3,6 +3,9 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import { usePetStore } from '../petStore'
+import type { PetProfile } from '../../services/petService'
+
 const { mockPetService } = vi.hoisted(() => {
   return {
     mockPetService: {
@@ -18,9 +21,6 @@ const { mockPetService } = vi.hoisted(() => {
 })
 
 vi.mock('../../services/petService', () => mockPetService)
-
-import { usePetStore } from '../petStore'
-import type { PetProfile } from '../../services/petService'
 
 function makePet(overrides: Partial<PetProfile> = {}): PetProfile {
   return {

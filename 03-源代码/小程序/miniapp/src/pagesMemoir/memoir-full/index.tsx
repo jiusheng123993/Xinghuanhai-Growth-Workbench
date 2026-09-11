@@ -51,9 +51,11 @@ import {
   pickTierPrice,
   formatYuan,
   tierUnavailableReason,
+  tierFromRoutePath,
   type MemoirTier,
 } from '../../utils/memoirTier'
 import './index.scss'
+import { PageBackground, Icon  } from '../../components'
 
 // ==================== 类型定义 ====================
 
@@ -110,10 +112,13 @@ const STEP_LABELS = ['盘点', '选照片', '选记忆', '叙事', 'BGM', '确�
 
 const LOADING_STEPS = ['提交成功', '处理中', 'AI编排中', '生成视频中']
 
-// 本页为「标准回忆录」档流程：照片按 standard 边界（5-7）限制 + 挑选指引
-// （轻纪念=memoir-daily 页、完整=memoir-full 页；照片边界唯一事实源 MEMOIR_TIER_BOUNDS）
-const PHOTO_LIMIT = MEMOIR_TIER_BOUNDS.standard.maxPhotos
-const PHOTO_MIN = MEMOIR_TIER_BOUNDS.standard.minPhotos
+// 本页服务的档位由**路由**推导（memoir-full → 完整档 8-15 张；memoir-vlog → 标准档 5-7 张），
+// 照片边界一律从 MEMOIR_TIER_BOUNDS 派生，边界值见下方组件内 pageTier / PHOTO_LIMIT / PHOTO_MIN。
+//
+// 2026-09-11 修复存量 P0：此前这里把边界硬编码成 standard（5-7），而 memoir-full 与 memoir-vlog
+// 又是两份逐字节相同的实现，于是**完整档页面的选照片上限被死锁在 7 张**，
+// isTierAvailable('full', n≤7) 恒为 false —— 最贵的完整档（8-15 张）在任何入口都选不出来。
+// 根因是"复制页面时连档位边界一起复制"，故本次改为按路由分档，禁止再在页面里硬编码档位边界。
 const MAX_MOMENTS = 10
 const NARRATIVE_MAX_LENGTH = 500
 
@@ -134,7 +139,13 @@ type PhotoTab = 'local' | 'pool'
 // ==================== 组件 ====================
 
 export default function MemoirVlog() {
-  const routerParams = Taro.getCurrentInstance().router?.params as Record<string, string> | undefined
+  const router = Taro.getCurrentInstance().router
+  const routerParams = router?.params as Record<string, string> | undefined
+  // 本页服务的档位（按路由分档）与照片边界（唯一事实源 MEMOIR_TIER_BOUNDS）
+  const pageTier = tierFromRoutePath(router?.path)
+  const pageTierName = TIER_META[pageTier].name
+  const PHOTO_LIMIT = MEMOIR_TIER_BOUNDS[pageTier].maxPhotos
+  const PHOTO_MIN = MEMOIR_TIER_BOUNDS[pageTier].minPhotos
   const petId = routerParams?.petId || ''
   // 回忆录馆（memoir-center）档位卡直达：?tier=standard/full 预选档位（确认页 effect 会自动纠正不可用档）
   const presetTier = routerParams?.tier === 'standard' || routerParams?.tier === 'full'
@@ -369,7 +380,7 @@ export default function MemoirVlog() {
   const handleAddPhoto = useCallback(() => {
     const remain = PHOTO_LIMIT - photos.length
     if (remain <= 0) {
-      Taro.showToast({ title: `标准档最多 ${PHOTO_LIMIT} 张照片`, icon: 'none' })
+      Taro.showToast({ title: `${pageTierName}最多 ${PHOTO_LIMIT} 张照片`, icon: 'none' })
       return
     }
 
@@ -390,7 +401,7 @@ export default function MemoirVlog() {
       .catch(() => {
         // 用户取消选择/拒绝授权等已在 privacy 层反馈，此处静默
       })
-  }, [photos, uploadPhotoItem])
+  }, [photos, uploadPhotoItem, PHOTO_LIMIT, pageTierName])
 
   /** 点击上传失败的照片重试上传（按 key 找回本地临时路径） */
   const handleRetryUpload = useCallback((itemKey: string) => {
@@ -417,13 +428,14 @@ export default function MemoirVlog() {
       const existed = prev.find(p => p.remoteUrl === rawUrl)
       if (existed) return prev.filter(p => p.remoteUrl !== rawUrl)
       if (prev.length >= PHOTO_LIMIT) {
-        Taro.showToast({ title: '最多选择15张照片', icon: 'none' })
+        // 文案与实际上限必须同源（此前后端上限是 7 却写死"最多选择15张照片"，自相矛盾）
+        Taro.showToast({ title: `最多选择 ${PHOTO_LIMIT} 张照片`, icon: 'none' })
         return prev
       }
       // 库内照片无需上传，直接带服务端原始路径
       return [...prev, { key: `pool_${rawUrl}`, path: displayUrl, size: 0, remoteUrl: rawUrl }]
     })
-  }, [])
+  }, [PHOTO_LIMIT])
 
   // ==================== 步骤2：选记忆 ====================
 
@@ -1007,6 +1019,7 @@ export default function MemoirVlog() {
       }}
     >
       <View className='memoir-vlog__sample-glow' />
+        <PageBackground />
       <View className='memoir-vlog__sample-fallback'>
         <Text className='memoir-vlog__sample-emoji'>🎞️</Text>
         <Text className='memoir-vlog__sample-label'>参考样例 · AI 时光电影</Text>
@@ -1043,7 +1056,7 @@ export default function MemoirVlog() {
         <View className='memoir-vlog__step-enter'>
           <Text className='memoir-vlog__title'>素材盘点中...</Text>
           <View className='memoir-vlog__material-loading'>
-            <Text className='memoir-vlog__material-loading-icon'>🔍</Text>
+            <Icon name='magnifying-glass' size={36} tone='primary' className='memoir-vlog__material-loading-icon' />
             <Text className='memoir-vlog__material-loading-text'>正在盘点你们的回忆素材</Text>
           </View>
         </View>
@@ -1105,7 +1118,7 @@ export default function MemoirVlog() {
       <View className='memoir-vlog__step-enter'>
         <View className='memoir-vlog__photo-header'>
           <Text className='memoir-vlog__title'>
-            选择照片·<Text className='gold-accent'>标准档 {PHOTO_MIN}-{PHOTO_LIMIT} 张</Text>
+            选择照片·<Text className='gold-accent'>{pageTierName} {PHOTO_MIN}-{PHOTO_LIMIT} 张</Text>
           </Text>
           <Text className='memoir-vlog__photo-count'>已选 {photos.length}/{PHOTO_LIMIT} 张</Text>
         </View>
@@ -1115,10 +1128,10 @@ export default function MemoirVlog() {
             : `照片数量需 ${PHOTO_MIN}-${PHOTO_LIMIT} 张，请补充后再继续`}
         </Text>
 
-        {/* 标准档精选指引：告诉用户挑什么样的照片最出片（审查 P1：照片限制不再共用，按档位区分） */}
+        {/* 档位精选指引：告诉用户挑什么样的照片最出片（张数按本页档位取，不再写死标准档 5-7） */}
         <View className='memoir-vlog__pick-guide'>
           <Text className='memoir-vlog__pick-guide-title'>📌 这样挑最出片</Text>
-          <Text className='memoir-vlog__pick-guide-item'>· 5-7 张**成长节点**：到家、生日、学会新技能的瞬间</Text>
+          <Text className='memoir-vlog__pick-guide-item'>· {PHOTO_MIN}-{PHOTO_LIMIT} 张**成长节点**：到家、生日、学会新技能的瞬间</Text>
           <Text className='memoir-vlog__pick-guide-item'>· 混搭**生活日常**：吃饭、发呆、玩耍——越真实越动人</Text>
           <Text className='memoir-vlog__pick-guide-item'>· 选**清晰正面**、光线好的；模糊背影尽量不选</Text>
         </View>
@@ -1268,7 +1281,7 @@ export default function MemoirVlog() {
 
         {materialFailed ? (
           <View className='memoir-vlog__moments-empty'>
-            <Text className='memoir-vlog__moments-empty-icon'>⚠️</Text>
+            <Icon name='warning' size={36} tone='primary' className='memoir-vlog__moments-empty-icon' />
             <Text className='memoir-vlog__moments-empty-text'>回忆列表加载失败</Text>
             <View className='memoir-vlog__pool-retry' style={{ marginTop: '24rpx' }} onClick={handleRetryMaterial}>
               <Text className='memoir-vlog__pool-retry-text'>点击重试</Text>
@@ -1276,7 +1289,7 @@ export default function MemoirVlog() {
           </View>
         ) : moments.length === 0 ? (
           <View className='memoir-vlog__moments-empty'>
-            <Text className='memoir-vlog__moments-empty-icon'>📖</Text>
+            <Icon name='book-open' size={36} tone='primary' className='memoir-vlog__moments-empty-icon' />
             <Text className='memoir-vlog__moments-empty-text'>
               还没有写过回忆。去「时光线」补写几条，回忆录的旁白就能讲你们真实的故事
             </Text>
@@ -1503,7 +1516,7 @@ export default function MemoirVlog() {
 
         <View className='memoir-vlog__confirm-summary'>
           <View className='memoir-vlog__confirm-item'>
-            <Text className='memoir-vlog__confirm-item-icon'>📸</Text>
+            <Icon name='camera' size={16} tone='primary' className='memoir-vlog__confirm-item-icon' />
             <View style={{ flex: 1 }}>
               <Text className='memoir-vlog__confirm-item-text'>{photos.length}张照片</Text>
               <Text className='memoir-vlog__confirm-item-label'>本地与库内照片将按顺序编排</Text>
@@ -1511,7 +1524,7 @@ export default function MemoirVlog() {
           </View>
 
           <View className='memoir-vlog__confirm-item'>
-            <Text className='memoir-vlog__confirm-item-icon'>📖</Text>
+            <Icon name='book-open' size={16} tone='primary' className='memoir-vlog__confirm-item-icon' />
             <View style={{ flex: 1 }}>
               <Text className='memoir-vlog__confirm-item-text'>
                 {selectedMomentIds.length > 0 ? `已勾选 ${selectedMomentIds.length} 条回忆` : '未勾选回忆'}
@@ -1634,7 +1647,7 @@ export default function MemoirVlog() {
           </>
         ) : (
           <View className='memoir-vlog__result-placeholder'>
-            <Text className='memoir-vlog__result-placeholder-icon'>🎬</Text>
+            <Icon name='film-strip' size={36} tone='primary' className='memoir-vlog__result-placeholder-icon' />
             <Text className='memoir-vlog__result-placeholder-text'>纪念Vlog已生成</Text>
           </View>
         )}

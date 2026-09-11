@@ -68,6 +68,23 @@ export function trackEmotionEvent(petId: string, eventType: EmotionEventType, se
   saveEvents(petId, events)
 }
 
+/**
+ * 取某宠物在追踪窗口内的情绪事件条数
+ *
+ * 【为什么需要】getEmotionScore 的语义是「情绪异常强度」：分数越高代表近期异常事件越多越重，
+ *   它同时也是危机干预的触发依据（shouldShowCrisisReferral 以 ≥70 触发、getCrisisSeverity
+ *   以 ≥90 判定 severe）。而"没有事件"与"事件已随时间衰减到 0"都会返回 0，
+ *   调用方无法区分"没有数据"和"分数就是 0"，只能在页面上写死一个 50 分兜底 —— 那就是假数据。
+ *   暴露条数后，页面才能对有事件/无事件分别如实显示。
+ */
+export function getEmotionEventCount(petId: string): number {
+  // ⚠️ 必须自己按窗口过滤：getEvents 只负责解析、不做时间裁剪
+  // （裁剪发生在写入时 saveEvents，所以"最后一次事件在 7 天前、此后没再写入"的记录会留在存储里）。
+  // 与 getTimeDecay 的 7 天衰减窗口保持一致，否则会出现"条数 > 0 但分数为 0"的错位。
+  const cutoff = Date.now() - 7 * DAY_MS
+  return getEvents(petId).filter(e => e.timestamp > cutoff).length
+}
+
 export function getEmotionScore(petId: string): number {
   const events = getEvents(petId)
   if (events.length === 0) return 0

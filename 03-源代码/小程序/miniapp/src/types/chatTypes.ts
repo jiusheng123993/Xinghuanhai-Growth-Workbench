@@ -21,7 +21,9 @@ export interface ChatResponse {
 
 /** 聊天消息卡片数据，用于在消息流中渲染结构化卡片 */
 export interface CardData {
-  type: 'checkin_result' | 'food_result' | 'symptom_result' | 'naming_result' | 'naming_cards' | 'naming_detail'
+  // 2026-09-10 清理：移除 'naming_result' 与 'naming_detail'——全仓无任何生产者
+  // （naming_detail 的内联卡片渲染分支也一并删除，命理详情现由悬浮弹窗承载）
+  type: 'checkin_result' | 'food_result' | 'symptom_result' | 'naming_cards'
   data: Record<string, unknown>
   title?: string
   score?: number
@@ -37,7 +39,6 @@ export interface CardData {
   riskLevel?: string
   symptomInfo?: { label: string; value: string }[]
   hospitalList?: string[]
-  detail?: NamingDetail
 }
 
 /** 首页聊天消息 */

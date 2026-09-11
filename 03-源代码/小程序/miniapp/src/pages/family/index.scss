@@ -7,7 +7,8 @@
 
 .family-page {
   min-height: 100vh;
-  background: $gradient-page;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
   position: relative;
   z-index: 1;
   animation: pageEnter 0.4s ease-out;
@@ -40,8 +41,8 @@
   padding: 120rpx 48rpx 80rpx;
 }
 
-.family-empty-icon {
-  font-size: 96rpx;
+// 空态主视觉：品牌插画（原来是一个 96rpx 的 house 图标，太素）
+.family-empty-illus {
   margin-bottom: 24rpx;
 }
 
@@ -107,7 +108,7 @@
   margin-top: 20rpx;
   border-radius: 44rpx;
   background: transparent;
-  border: 2rpx solid rgba($color-primary, 0.45);
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.45);
   @include flex-center;
   font-size: $font-size-md;
   color: $color-primary;
@@ -483,7 +484,7 @@
 }
 
 .family-summary__chip--uncheck {
-  background: rgba($color-warning, 0.12);
+  background: rgba(var(--warning-rgb, 255, 176, 32), 0.12);
 }
 
 .family-summary__chip-label {
@@ -576,7 +577,7 @@
 }
 
 .family-graph__btn:active {
-  background: rgba($color-primary, 0.06);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
 }
 
 .family-graph__btn-text {
@@ -676,7 +677,7 @@
 }
 
 .family-report-entry:active {
-  background: rgba($color-primary, 0.04);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.04);
 }
 
 .family-report-entry__icon {
@@ -738,7 +739,7 @@
   gap: 12rpx;
   padding: 16rpx 20rpx;
   border-radius: 16rpx;
-  background: rgba($color-primary, 0.08);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
   margin-bottom: 20rpx;
 }
 

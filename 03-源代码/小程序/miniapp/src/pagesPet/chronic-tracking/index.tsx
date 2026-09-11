@@ -29,6 +29,7 @@ import { CHRONIC_COMMON_CONDITIONS, CHRONIC_SEVERITY_MAP, CHRONIC_STATUS_MAP } f
 import MemberGate from '../../components/MemberGate'
 import { useMemberGate } from '../../hooks/useMemberGate'
 import './index.scss'
+import { PageBackground, Icon  } from '../../components'
 
 export default function ChronicTrackingPage() {
   const themeClass = useThemeClass()
@@ -206,6 +207,7 @@ export default function ChronicTrackingPage() {
   if (!pet) {
     return (
       <View className='chronic-empty'>
+        <PageBackground />
         <Text className='chronic-empty-text'>请先添加宠物</Text>
       </View>
     )
@@ -248,7 +250,7 @@ export default function ChronicTrackingPage() {
 
       {stats.overdueCheckups > 0 && (
         <View className='chronic-alert'>
-          <Text className='chronic-alert-icon'>⚠️</Text>
+          <Icon name='warning' size={18} tone='primary' className='chronic-alert-icon' />
           <Text className='chronic-alert-text'>
             有 {stats.overdueCheckups} 项复查已逾期，请尽快安排
           </Text>
@@ -364,7 +366,7 @@ export default function ChronicTrackingPage() {
         <View className='chronic-content'>
           {records.length === 0 && (
             <View className='chronic-empty-state'>
-              <Text className='chronic-empty-icon'>🩺</Text>
+              <Icon name='stethoscope' size={48} tone='primary' className='chronic-empty-icon' />
               <Text className='chronic-empty-title'>暂无慢性病记录</Text>
               <Text className='chronic-empty-hint'>点击上方按钮添加宠物的慢性病信息</Text>
             </View>
@@ -531,7 +533,7 @@ function ChronicTrendChart({
   if (records.length === 0) {
     return (
       <View className='chronic-empty-state'>
-        <Text className='chronic-empty-icon'>📊</Text>
+        <Icon name='chart-line' size={48} tone='primary' className='chronic-empty-icon' />
         <Text className='chronic-empty-title'>暂无趋势数据</Text>
         <Text className='chronic-empty-hint'>添加慢性病记录后将展示健康趋势</Text>
       </View>
@@ -634,7 +636,7 @@ function ChronicReminders({
   if (upcoming.length === 0) {
     return (
       <View className='chronic-empty-state'>
-        <Text className='chronic-empty-icon'>📅</Text>
+        <Icon name='calendar-check' size={48} tone='primary' className='chronic-empty-icon' />
         <Text className='chronic-empty-title'>暂无提醒</Text>
         <Text className='chronic-empty-hint'>未来7天没有待复查项目，太棒了！</Text>
       </View>
@@ -649,7 +651,7 @@ function ChronicReminders({
       {overdue.length > 0 && (
         <View className='chronic-reminders-section'>
           <View className='chronic-reminders-section-header'>
-            <Text className='chronic-reminders-section-icon'>⚠️</Text>
+            <Icon name='warning' size={16} tone='primary' className='chronic-reminders-section-icon' />
             <Text className='chronic-reminders-section-title'>已逾期 ({overdue.length})</Text>
           </View>
           {overdue.map(item => {
@@ -675,7 +677,7 @@ function ChronicReminders({
       {upcomingList.length > 0 && (
         <View className='chronic-reminders-section'>
           <View className='chronic-reminders-section-header'>
-            <Text className='chronic-reminders-section-icon'>📅</Text>
+            <Icon name='calendar-check' size={16} tone='primary' className='chronic-reminders-section-icon' />
             <Text className='chronic-reminders-section-title'>即将到期 ({upcomingList.length})</Text>
           </View>
           {upcomingList.map(item => {

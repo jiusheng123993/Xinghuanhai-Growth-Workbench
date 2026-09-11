@@ -3,6 +3,9 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import { useTrendStore } from '../trendStore'
+import type { TrendDataPoint, TrendSummary, MonthlyReport } from '../../services/trendService'
+
 const { mockTrendService } = vi.hoisted(() => {
   return {
     mockTrendService: {
@@ -18,9 +21,6 @@ const { mockTrendService } = vi.hoisted(() => {
 })
 
 vi.mock('../../services/trendService', () => mockTrendService)
-
-import { useTrendStore } from '../trendStore'
-import type { TrendDataPoint, TrendSummary, MonthlyReport } from '../../services/trendService'
 
 const today = new Date().toISOString().split('T')[0]
 

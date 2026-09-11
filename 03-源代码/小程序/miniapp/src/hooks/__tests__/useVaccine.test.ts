@@ -4,6 +4,9 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { useVaccineStore } from '../../stores/vaccineStore'
+import { useVaccine } from '../useVaccine'
+
 const {
   mockFetchRecords,
   mockAddRecord,
@@ -54,9 +57,6 @@ const defaultMockStore = {
 vi.mock('../../stores/vaccineStore', () => ({
   useVaccineStore: vi.fn(() => ({ ...defaultMockStore }))
 }))
-
-import { useVaccineStore } from '../../stores/vaccineStore'
-import { useVaccine } from '../useVaccine'
 
 describe('useVaccine', () => {
   beforeEach(() => {

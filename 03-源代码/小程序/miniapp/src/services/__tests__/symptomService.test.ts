@@ -3,6 +3,18 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import { api } from '../api'
+import {
+  analyzeSymptoms,
+  getCheckHistory,
+  getCheckResult,
+  getSymptomCategories,
+  getSymptomsByCategory,
+  searchSymptoms,
+} from '../symptomService'
+import type { SymptomCheckResult } from '../symptomService'
+import type { PetProfile } from '../petService'
+
 const mockStorage: Record<string, string> = {}
 
 vi.mock('../../utils/storage', () => ({
@@ -31,18 +43,6 @@ vi.mock('../api', () => ({
     delete: vi.fn(),
   },
 }))
-
-import { api } from '../api'
-import {
-  analyzeSymptoms,
-  getCheckHistory,
-  getCheckResult,
-  getSymptomCategories,
-  getSymptomsByCategory,
-  searchSymptoms,
-} from '../symptomService'
-import type { SymptomCheckResult } from '../symptomService'
-import type { PetProfile } from '../petService'
 
 function makeSymptomCheckResult(overrides: Partial<SymptomCheckResult> = {}): SymptomCheckResult {
   return {

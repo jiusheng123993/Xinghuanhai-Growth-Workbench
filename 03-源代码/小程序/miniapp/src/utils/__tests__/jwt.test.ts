@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+import { parseJwt, isTokenExpired, getTokenExpiry, isTokenExpiringSoon, verifyToken } from '../jwt'
+
 vi.mock('../../crypto', () => ({
   CryptoJS: {
     enc: {
@@ -19,8 +21,6 @@ vi.mock('../../crypto', () => ({
     },
   },
 }))
-
-import { parseJwt, isTokenExpired, getTokenExpiry, isTokenExpiringSoon, verifyToken } from '../jwt'
 
 function createTestToken(payload: Record<string, unknown>): string {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).replace(/=/g, '')

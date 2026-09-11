@@ -27,6 +27,8 @@ import {
 } from '../../services/memoirService'
 import { pickTierPrice, formatYuan } from '../../utils/memoirTier'
 import './index.scss'
+import PageBackground from '../../components/PageBackground'
+import { Icon } from '../../components'
 
 // ==================== 类型定义 ====================
 
@@ -723,6 +725,7 @@ export default function MemoirDaily() {
     const activeIdx = step === 0 ? 0 : (step <= 2 ? 1 : 2)
     return (
       <View className='memoir__steps'>
+        <PageBackground />
         {STEP_LABELS.map((label, i) => (
           <View key={label} className='memoir__step-wrap'>
             <View className='memoir__step'>
@@ -784,7 +787,7 @@ export default function MemoirDaily() {
 
         {photos.length < 3 && (
           <View className='memoir__photo-slot memoir__photo-slot--add' onClick={handleAddPhoto}>
-            <Text className='memoir__photo-add-icon'>📷</Text>
+            <Icon name='camera' size={22} tone='primary' className='memoir__photo-add-icon' />
             <Text className='memoir__photo-add-text'>添加</Text>
           </View>
         )}
@@ -954,7 +957,7 @@ export default function MemoirDaily() {
           <Image className='memoir__cover-image' src={outputUrl} mode='aspectFill' />
         ) : (
           <View className='memoir__cover-placeholder'>
-            <Text className='memoir__cover-placeholder-icon'>📸</Text>
+            <Icon name='camera' size={36} tone='primary' className='memoir__cover-placeholder-icon' />
             <Text className='memoir__cover-placeholder-text'>回忆录已生成</Text>
           </View>
         )}
@@ -1036,7 +1039,7 @@ export default function MemoirDaily() {
       {/* hero 横幅 */}
       <View className='memoir__hero'>
         <View className='memoir__hero-bg'>
-          <Text className='memoir__hero-emoji'>🐱</Text>
+          <Icon name='cat' size={80} tone='primary' className='memoir__hero-emoji' />
         </View>
         <View className='memoir__hero-badge'>
           <Text className='memoir__hero-badge-text'>✨ AI 时光电影</Text>

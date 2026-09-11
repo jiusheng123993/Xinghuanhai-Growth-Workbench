@@ -3,6 +3,19 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+import {
+  detectChurn,
+  executeRecall,
+  checkAndRecall,
+  updateLastActiveTime,
+  updateLastCheckinDate,
+  setMembershipExpiryDate,
+  getChurnState,
+  getRecallStats,
+  clearRecallHistory,
+  type ChurnDetectionState,
+} from '../churnDetectionService'
+
 const memoryStore: Record<string, string> = {}
 
 const { mockGetStorage, mockSetStorage } = vi.hoisted(() => ({
@@ -65,19 +78,6 @@ vi.mock('../../constants/templateIds', () => ({
   FOLLOWUP_TEMPLATE_ID: 'FOLLOWUP_TEMPLATE_ID_PLACEHOLDER',
   CARE_PLAN_REMINDER_TEMPLATE_ID: 'CARE_PLAN_REMINDER_TEMPLATE_ID_PLACEHOLDER',
 }))
-
-import {
-  detectChurn,
-  executeRecall,
-  checkAndRecall,
-  updateLastActiveTime,
-  updateLastCheckinDate,
-  setMembershipExpiryDate,
-  getChurnState,
-  getRecallStats,
-  clearRecallHistory,
-  type ChurnDetectionState,
-} from '../churnDetectionService'
 
 function seedChurnState(state: Partial<ChurnDetectionState>): void {
   const full: ChurnDetectionState = {

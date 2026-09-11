@@ -3,6 +3,8 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import { useShareStore } from '../shareStore'
+
 const {
   mockGetOrCreateInviteCode,
   mockGetShareStats,
@@ -21,8 +23,6 @@ vi.mock('../../services/shareService', () => ({
   recordShare: mockRecordShare,
   grantShareReward: mockGrantShareReward,
 }))
-
-import { useShareStore } from '../shareStore'
 
 describe('shareStore', () => {
   beforeEach(() => {

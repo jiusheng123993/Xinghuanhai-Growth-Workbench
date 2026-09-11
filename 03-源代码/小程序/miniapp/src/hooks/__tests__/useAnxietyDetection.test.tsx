@@ -7,6 +7,8 @@ import React, { useEffect, useRef } from 'react'
 import { render, act } from '@testing-library/react'
 import type { UseAnxietyDetectionReturn } from '../useAnxietyDetection'
 
+import { useAnxietyDetection } from '../useAnxietyDetection'
+
 const {
   mockGetStorageSync,
   mockSetStorageSync,
@@ -59,8 +61,6 @@ vi.mock('../../stores/symptomStore', () => ({
 vi.mock('../../stores/foodQueryStore', () => ({
   useFoodQueryStore: () => mockFoodQueryStore,
 }))
-
-import { useAnxietyDetection } from '../useAnxietyDetection'
 
 /** 生成距今 days 天的 ISO 日期（YYYY-MM-DD），与 hook 的 7 天窗口逻辑保持一致 */
 function daysAgoISO(days: number): string {

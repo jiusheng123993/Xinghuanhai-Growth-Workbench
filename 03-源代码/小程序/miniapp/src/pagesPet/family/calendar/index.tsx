@@ -103,9 +103,9 @@ export default function FamilyCalendar() {
   if (error) {
     return (
       <View className={`calendar-page ${themeClass}`}>
-        <View className="calendar-error">
-          <Text className="calendar-error__text">{error}</Text>
-          <View className="calendar-error__btn" onClick={handleRetry}>
+        <View className='calendar-error'>
+          <Text className='calendar-error__text'>{error}</Text>
+          <View className='calendar-error__btn' onClick={handleRetry}>
             <Text>重试</Text>
           </View>
         </View>
@@ -116,39 +116,39 @@ export default function FamilyCalendar() {
   return (
     <View className={`calendar-page ${themeClass}`}>
       {/* 月份切换 */}
-      <View className="calendar-header">
-        <View className="calendar-header__nav" onClick={handlePrevMonth}>
+      <View className='calendar-header'>
+        <View className='calendar-header__nav' onClick={handlePrevMonth}>
           <Text>◀</Text>
         </View>
-        <Text className="calendar-header__title">
+        <Text className='calendar-header__title'>
           {year}年{month}月
         </Text>
-        <View className="calendar-header__nav" onClick={handleNextMonth}>
+        <View className='calendar-header__nav' onClick={handleNextMonth}>
           <Text>▶</Text>
         </View>
       </View>
 
       {/* 星期头 */}
-      <View className="calendar-weekdays">
+      <View className='calendar-weekdays'>
         {WEEK_DAYS.map((w) => (
-          <Text key={w} className="calendar-weekdays__item">{w}</Text>
+          <Text key={w} className='calendar-weekdays__item'>{w}</Text>
         ))}
       </View>
 
       {/* 日历网格 */}
       {loading && events.length === 0 ? (
-        <View className="calendar-loading">
-          <Text className="calendar-loading__text">加载中...</Text>
+        <View className='calendar-loading'>
+          <Text className='calendar-loading__text'>加载中...</Text>
         </View>
       ) : (
-        <View className="calendar-grid">
+        <View className='calendar-grid'>
           {days.map((d, idx) => {
             const isToday = isCurrentMonth && d === todayDate
             const hasEvent = d !== null && hasEventsOnDay(events, d)
             const isSelected = d === selectedDay
 
             if (d === null) {
-              return <View key={idx} className="calendar-grid__cell calendar-grid__cell--empty" />
+              return <View key={idx} className='calendar-grid__cell calendar-grid__cell--empty' />
             }
 
             const dayEvents = getEventsByDay(events, d)
@@ -160,7 +160,7 @@ export default function FamilyCalendar() {
                 className={`calendar-grid__cell ${isToday ? 'calendar-grid__cell--today' : ''} ${isSelected ? 'calendar-grid__cell--selected' : ''}`}
                 onClick={() => handleDayClick(d)}
               >
-                <Text className="calendar-grid__day">{d}</Text>
+                <Text className='calendar-grid__day'>{d}</Text>
                 {hasEvent && (
                   <View className={`calendar-grid__dot ${hasEmergency ? 'calendar-grid__dot--danger' : ''}`} />
                 )}
@@ -171,35 +171,35 @@ export default function FamilyCalendar() {
       )}
 
       {/* 事件列表 */}
-      <ScrollView className="calendar-events" scrollY>
+      <ScrollView className='calendar-events' scrollY>
         {selectedDay ? (
           <>
-            <Text className="calendar-events__date">
+            <Text className='calendar-events__date'>
               {month}月{selectedDay}日 · 事件
             </Text>
 
             {loading ? (
-              <Text className="calendar-events__loading">加载中...</Text>
+              <Text className='calendar-events__loading'>加载中...</Text>
             ) : selectedEvents.length === 0 ? (
-              <Text className="calendar-events__empty">暂无事件</Text>
+              <Text className='calendar-events__empty'>暂无事件</Text>
             ) : (
               selectedEvents.map((ev, idx) => {
                 const config = EVENT_TYPE_CONFIG[ev.type]
                 return (
                   <View
                     key={idx}
-                    className="calendar-events__item"
+                    className='calendar-events__item'
                     style={{ borderLeftColor: config.color }}
                   >
-                    <Text className="calendar-events__item-emoji">{config.emoji}</Text>
-                    <View className="calendar-events__item-body">
-                      <Text className="calendar-events__item-title">
+                    <Text className='calendar-events__item-emoji'>{config.emoji}</Text>
+                    <View className='calendar-events__item-body'>
+                      <Text className='calendar-events__item-title'>
                         {ev.title}
                       </Text>
-                      <View className="calendar-events__item-meta">
-                        <Text className="calendar-events__item-pet">{ev.petName}</Text>
+                      <View className='calendar-events__item-meta'>
+                        <Text className='calendar-events__item-pet'>{ev.petName}</Text>
                         <Text
-                          className="calendar-events__item-type"
+                          className='calendar-events__item-type'
                           style={{ color: config.color }}
                         >
                           {config.label}
@@ -212,7 +212,7 @@ export default function FamilyCalendar() {
             )}
           </>
         ) : (
-          <Text className="calendar-events__placeholder">
+          <Text className='calendar-events__placeholder'>
             {members.length === 0
               ? '暂无家庭成员，请先添加宠物'
               : '点击日期查看事件'}
@@ -221,18 +221,18 @@ export default function FamilyCalendar() {
       </ScrollView>
 
       {/* 底部导航 */}
-      <View className="calendar-footer">
+      <View className='calendar-footer'>
         <View
-          className="calendar-footer__btn"
+          className='calendar-footer__btn'
           onClick={() => Taro.navigateTo({ url: '/pagesPet/vaccine/index' })}
         >
-          <Text className="calendar-footer__btn-text">疫苗管理</Text>
+          <Text className='calendar-footer__btn-text'>疫苗管理</Text>
         </View>
         <View
-          className="calendar-footer__btn"
+          className='calendar-footer__btn'
           onClick={() => Taro.navigateTo({ url: '/pagesPet/checkin/index' })}
         >
-          <Text className="calendar-footer__btn-text">健康打卡</Text>
+          <Text className='calendar-footer__btn-text'>健康打卡</Text>
         </View>
       </View>
     </View>

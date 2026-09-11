@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import Taro from '@tarojs/taro'
+import { getAuthenticatedUserId, requireAuth, requireAuthAsync, isAuthenticated, redirectToLoginIfNeeded, AuthenticationError } from '../authGuard'
+
 const { mockIsTokenFormatValid } = vi.hoisted(() => ({
   mockIsTokenFormatValid: vi.fn(),
 }))
@@ -27,9 +30,6 @@ vi.mock('../../config', () => ({
     },
   },
 }))
-
-import Taro from '@tarojs/taro'
-import { getAuthenticatedUserId, requireAuth, requireAuthAsync, isAuthenticated, redirectToLoginIfNeeded, AuthenticationError } from '../authGuard'
 
 const mockGetStorageSync = Taro.getStorageSync as ReturnType<typeof vi.fn>
 const mockRemoveStorageSync = Taro.removeStorageSync as ReturnType<typeof vi.fn>
