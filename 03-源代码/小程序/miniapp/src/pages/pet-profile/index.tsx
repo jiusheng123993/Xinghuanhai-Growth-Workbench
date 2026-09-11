@@ -698,7 +698,8 @@ export default function PetProfile() {
           <Icon name='chart-line' size={15} tone='gold-deep' />
           <Text className='pf-link-text'>健康趋势</Text>
         </View>
-        <View className='pf-link' onClick={() => navigateTo('/pagesPet/health-report/index')}>
+        {/* 2026-09-12 IA 第 2b 批：health-report 页已并入 trends，这里的入口跟着改指，避免死链 */}
+        <View className='pf-link' onClick={() => navigateTo('/pagesPet/trends/index')}>
           <Icon name='clipboard-text' size={15} tone='teal' />
           <Text className='pf-link-text'>健康报告</Text>
         </View>

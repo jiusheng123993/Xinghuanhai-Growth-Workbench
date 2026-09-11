@@ -89,6 +89,27 @@ export const RISK_COLORS: Record<string, string> = {
   emergency: '#FF4D4F'
 }
 
+/**
+ * 疫苗/用药状态 → 中文标签
+ *
+ * 【为什么不用原页的写死文案】原 pagesPet/health-report 的「用药史」把每一行都标成
+ * 「已完成」、卡片右上角写死「均已按时完成」，但 HealthReportData.vaccines 里其实带
+ * `status`（done / pending / overdue）——待接种、已逾期的记录都会被写成「已完成」，是
+ * 一眼可见的错。2026-09-12 迁入本页时改为按 status 显示，数据源不变。
+ */
+const MED_STATUS_LABELS: Record<string, string> = {
+  done: '已完成',
+  pending: '待接种',
+  overdue: '已逾期'
+}
+
+/** 疫苗/用药状态 → 贴纸样式后缀（对应 .trends-report-item__tag--* 的三个变体） */
+const MED_STATUS_TONES: Record<string, string> = {
+  done: 'ok',
+  pending: 'warn',
+  overdue: 'danger'
+}
+
 /** 便便评分映射（照原型「平均X.X分」展示） */
 const STOOL_SCORES: Record<string, number> = {
   normal: 5,
@@ -157,6 +178,14 @@ export default function PetTrendsPage() {
   const [trendShareData, setTrendShareData] = useState<HealthTrendShareData | null>(null)
   const [showNpsSurvey, setShowNpsSurvey] = useState(false)
   const [npsTriggerEvent, setNpsTriggerEvent] = useState<NpsTriggerEvent>('manual')
+
+  /**
+   * 健康报告明细（异常记录 / 用药史）的数据与加载态
+   * 2026-09-12 IA 第 2b 批：pagesPet/health-report 并入本页后，这两段内容改由本页承载。
+   */
+  const [healthReport, setHealthReport] = useState<HealthReportData | null>(null)
+  const [reportDetailLoading, setReportDetailLoading] = useState(false)
+
   const { trackPageView, trackEvent } = useAnalytics()
 
   /** 三张图表各自的独立数据源（同一接口共用 trendData 槽位，逐项快照） */
@@ -208,6 +237,69 @@ export default function PetTrendsPage() {
       // 错误统一由 store error 呈现
     }
   }, [currentPet?.id, timeRange, trendData, clearError, fetchWeightTrend, fetchAppetiteTrend, fetchStoolTrend, fetchSummary, fetchMonthlyReport])
+
+  /**
+   * 报告明细的会员门槛（2026-09-12 判断依据，**勿随手改成人人可见**）
+   *
+   * 原 pagesPet/health-report 对**非会员只渲染会员门禁**（`useMemberGate('health_report')`，
+   * featureKey `health_report` 即会员权益「健康报告导出」，免费档 freeValue ❌）。
+   * 也就是说「异常记录 / 用药史」这两段在合并前就是会员内容 —— 迁进本页必须继续拦住，
+   * 否则等于顺手把付费内容开放出去（任务书明确要求该保留就保留）。
+   *
+   * 实现口径与本页既有的「近1月 / 近3月」锁一致，统一用 useMembership().isMember：
+   * 不引入第二套门禁实现（useMemberGate），也不额外多打一次 checkAccess 网络请求。
+   * 代价：membership 还没加载完时 isMember 为 false → 先显示开通引导卡，会员会有极短的一瞬
+   * 看到引导（与本页时间范围锁的既有表现相同，不是本次新引入的问题）。
+   */
+  const canViewReportDetail = isMember
+
+  /**
+   * 拉取报告明细数据（异常记录 / 用药史）
+   *
+   * 与导出/预览走同一个服务 generateHealthReportData —— 这正是两页服务同源的证据，
+   * 只是这里只取 symptoms / vaccines 两个字段渲染成区块。
+   * 非会员不请求：既省一次四连查（宠物 / 打卡 / 疫苗 / 症状），也不让明细落到内存里被绕过。
+   */
+  useEffect(() => {
+    // 先取出基础值：闭包里直接用 user?.id 会被 TS 判为可能为空（窄化进不了回调）
+    const petId = currentPet?.id
+    const userId = user?.id
+    if (!canViewReportDetail || !userId || !petId) {
+      // 非会员 / 未登录 / 未选宠物：清空，避免换账号或删宠物后残留上一份明细
+      setHealthReport(null)
+      return
+    }
+    let cancelled = false
+    // 切宠物时先清空，避免新宠物的页面上短暂显示上一只宠物的异常记录
+    setHealthReport(null)
+    setReportDetailLoading(true)
+    ;(async () => {
+      try {
+        const detail = await generateHealthReportData(userId, petId)
+        if (!cancelled) setHealthReport(detail || null)
+      } catch (err) {
+        // 明细失败不打断整页：区块退化成空态，趋势图与导出入口照常可用
+        logger.error('Trends', 'Failed to load health report detail', err)
+        if (!cancelled) setHealthReport(null)
+      } finally {
+        if (!cancelled) setReportDetailLoading(false)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [canViewReportDetail, user?.id, currentPet?.id])
+
+  /** 非会员点「开通会员」：复用本页支付墙（与时间范围锁同一套交互，不另做引导页） */
+  const handleOpenReportDetail = useCallback(() => {
+    // 埋点 feature 用 health_report 而不是 trends：这个引导来自报告明细，不是趋势图本身
+    trackEvent('show_paywall', { feature: 'health_report' })
+    setPaywallVisible(true)
+  }, [trackEvent])
+
+  /** 异常记录（原 health-report 区块 4）：近 30 天症状检查，服务端最多返回 5 条 */
+  const reportAnomalies = useMemo(() => healthReport?.symptoms || [], [healthReport])
+
+  /** 用药史（原 health-report 区块 5）：疫苗 / 驱虫等接种记录 */
+  const reportMeds = useMemo(() => healthReport?.vaccines || [], [healthReport])
 
   /**
    * 切换宠物
@@ -877,6 +969,122 @@ export default function PetTrendsPage() {
               <Text className='trends-note__icon'>ℹ️</Text>
               <Text className='trends-note__text'>打卡异常天数已在图表中以橙色圆点标记</Text>
             </View>
+
+            {/* ===== 健康报告明细：异常记录 + 用药史 =====
+                2026-09-12 IA 第 2b 批：pagesPet/health-report 整页并入本页，这两段是它独有的内容
+                （它的「健康总览 / 食欲趋势」与本页既有区块重复，未迁；理由见第 2b 批自述）。 */}
+            {canViewReportDetail ? (
+              <>
+                {/* 异常记录：原 health-report 区块 4（近 30 天症状检查，服务端已截到 5 条） */}
+                <View className='trends-chart-card'>
+                  <View className='trends-chart-card__head'>
+                    <View className='trends-chart-card__title-wrap'>
+                      <Icon name='warning' size={16} tone='primary' className='trends-chart-card__icon' />
+                      <Text className='trends-chart-card__title'>异常记录</Text>
+                    </View>
+                    <View className='trends-chart-card__metric'>
+                      <Text className='trends-chart-card__metric-text'>近30天 {reportAnomalies.length} 条</Text>
+                    </View>
+                  </View>
+                  {reportDetailLoading && !healthReport ? (
+                    <View className='trend-chart__empty'>
+                      <Text className='trend-chart__empty-text'>正在读取异常记录…</Text>
+                    </View>
+                  ) : reportAnomalies.length === 0 ? (
+                    <View className='trend-chart__empty'>
+                      <Text className='trend-chart__empty-text'>近30天没有异常记录</Text>
+                      <Text className='trend-chart__empty-hint'>症状检查判为异常时会汇总到这里</Text>
+                    </View>
+                  ) : (
+                    reportAnomalies.map((item, index) => {
+                      // 高风险记录用红贴纸，其余用金贴纸（沿用原 health-report 的「较紧急 / 观察中」二分）
+                      const urgent = item.urgencyLevel === 'high' || item.urgencyLevel === 'emergency'
+                      return (
+                        <View key={item.date + '-' + index} className='trends-report-item'>
+                          <View className='trends-report-item__head'>
+                            <Text className='trends-report-item__date'>{formatDateLabel(item.date)}</Text>
+                            <View className={urgent ? 'trends-report-item__tag trends-report-item__tag--danger' : 'trends-report-item__tag trends-report-item__tag--warn'}>
+                              <Text className='trends-report-item__tag-text'>{urgent ? '较紧急' : '观察中'}</Text>
+                            </View>
+                          </View>
+                          <Text className='trends-report-item__title'>{item.symptoms.join('、')}</Text>
+                          {item.aiAssessment ? (
+                            <Text className='trends-report-item__desc'>{item.aiAssessment}</Text>
+                          ) : null}
+                        </View>
+                      )
+                    })
+                  )}
+                </View>
+
+                {/* 用药史：原 health-report 区块 5（疫苗 / 驱虫等接种记录） */}
+                <View className='trends-chart-card'>
+                  <View className='trends-chart-card__head'>
+                    <View className='trends-chart-card__title-wrap'>
+                      <Icon name='syringe' size={16} tone='primary' className='trends-chart-card__icon' />
+                      <Text className='trends-chart-card__title'>用药史</Text>
+                    </View>
+                    <View className='trends-chart-card__metric'>
+                      <Text className='trends-chart-card__metric-text'>共 {reportMeds.length} 次</Text>
+                    </View>
+                  </View>
+                  {reportDetailLoading && !healthReport ? (
+                    <View className='trend-chart__empty'>
+                      <Text className='trend-chart__empty-text'>正在读取用药史…</Text>
+                    </View>
+                  ) : reportMeds.length === 0 ? (
+                    <View className='trend-chart__empty'>
+                      <Text className='trend-chart__empty-text'>暂无用药记录</Text>
+                      <Text className='trend-chart__empty-hint'>疫苗 / 驱虫记录会汇总到这里</Text>
+                    </View>
+                  ) : (
+                    reportMeds.map((item, index) => {
+                      // 状态贴纸按 status 取色（done 绿 / pending 金 / overdue 红），未知状态走中性虚线贴纸
+                      const tone = MED_STATUS_TONES[item.status]
+                      const toneClass = tone
+                        ? 'trends-report-item__tag trends-report-item__tag--' + tone
+                        : 'trends-report-item__tag'
+                      const dateText = item.dateGiven
+                        ? formatDateLabel(item.dateGiven) + ' 接种'
+                        : item.dateDue
+                          ? '计划 ' + formatDateLabel(item.dateDue)
+                          : '日期未记录'
+                      return (
+                        <View key={item.name + '-' + index} className='trends-report-item'>
+                          <View className='trends-report-item__head'>
+                            <Text className='trends-report-item__date'>{item.name}</Text>
+                            <View className={toneClass}>
+                              <Text className='trends-report-item__tag-text'>{MED_STATUS_LABELS[item.status] || '已记录'}</Text>
+                            </View>
+                          </View>
+                          <Text className='trends-report-item__desc'>{dateText}</Text>
+                        </View>
+                      )
+                    })
+                  )}
+                </View>
+              </>
+            ) : (
+              /* 非会员：一张开通引导卡（明细既不渲染也不请求）。
+                 不用整页 MemberGate 组件：它是 60vh 的整页引导，塞进本页滚动流会把内容顶开一大截。 */
+              <View className='trends-chart-card trends-report-locked'>
+                <View className='trends-chart-card__head'>
+                  <View className='trends-chart-card__title-wrap'>
+                    <Icon name='crown' size={16} tone='primary' className='trends-chart-card__icon' />
+                    <Text className='trends-chart-card__title'>异常记录 · 用药史</Text>
+                  </View>
+                  <View className='trends-chart-card__metric'>
+                    <Text className='trends-chart-card__metric-text'>会员专属</Text>
+                  </View>
+                </View>
+                <Text className='trends-report-locked__desc'>
+                  近30天的异常记录与用药史是会员权益，开通后可在本页查看
+                </Text>
+                <View className='trends-report-locked__btn' onClick={handleOpenReportDetail}>
+                  <Text className='trends-report-locked__btn-text'>开通会员</Text>
+                </View>
+              </View>
+            )}
 
             {/* ===== 健康报告导出（业务保留） ===== */}
             <View className='export-section'>

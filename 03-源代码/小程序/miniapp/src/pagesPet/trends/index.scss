@@ -259,6 +259,57 @@
   color: $color-text-tertiary;
 }
 
+// ==================== 报告明细（异常记录 / 用药史） ====================
+// 2026-09-12 IA 第 2b 批：随 pagesPet/health-report 整页并入；列表行沿用本页纸卡 + 虚线分隔的语言。
+.trends-report-item {
+  padding: 20rpx 0;
+  border-bottom: 2rpx dashed $color-border;
+
+  // 最后一行不画分隔线：否则会和卡片底边凑成双线
+  &:last-child {
+    border-bottom: 0;
+    padding-bottom: 2rpx;
+  }
+}
+
+.trends-report-item__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.trends-report-item__date {
+  font-size: 24rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  @include text-ellipsis;
+}
+
+.trends-report-item__title {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 26rpx;
+  color: $color-text-primary;
+  line-height: 1.6;
+}
+
+.trends-report-item__desc {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  line-height: 1.6;
+}
+
+// 非会员的明细引导卡（明细内容既不渲染也不请求，只给一张开通卡）
+.trends-report-locked__desc {
+  display: block;
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  line-height: 1.7;
+}
+
 // ==================== 图表内部容器（置于图表卡内，不再自带卡片样式） ====================
 .trend-chart__container {
   padding: 0;
@@ -1213,6 +1264,70 @@
   .trends-note__text {
     font-size: 22rpx;
     line-height: 1.6;
+  }
+
+  // —— 报告明细（异常记录 / 用药史）：日期走衬线、状态做成贴纸，与 AI 小结卡同一套语言 ——
+  .trends-report-item {
+    border-bottom-color: rgba(var(--border-rgb, 243, 226, 210), 0.95);
+  }
+
+  .trends-report-item__date {
+    @include journal-serif(24rpx);
+  }
+
+  // 状态贴纸：中性虚线贴纸打底，只按状态换描边与淡底（底纹用通道写法，见 _journal.scss 的说明）
+  .trends-report-item__tag {
+    @include journal-status;
+    flex-shrink: 0;
+
+    &--ok {
+      border-color: rgba(var(--sage-rgb, 47, 201, 142), 0.55);
+      background: rgba(var(--sage-rgb, 47, 201, 142), 0.12);
+    }
+
+    &--warn {
+      border-color: rgba(var(--gold-rgb, 255, 176, 32), 0.55);
+      background: rgba(var(--gold-rgb, 255, 176, 32), 0.14);
+    }
+
+    &--danger {
+      border-color: rgba(var(--danger-rgb, 255, 90, 95), 0.55);
+      background: rgba(var(--danger-rgb, 255, 90, 95), 0.12);
+    }
+  }
+
+  .trends-report-item__tag-text {
+    font-size: 20rpx;
+    font-weight: $font-weight-bold;
+    // 【为什么文字色写深色而不是 $color-sage/$color-gold/$color-danger】贴纸坐在恒为浅底的
+    // 纸卡上，而这三个通道在深色主题（.theme-starry）下是浅色值 —— 直接用就是浅字压浅纸
+    // （_journal.scss 头部注释里的同一类坑）。这里取各强调色的深色版，五套主题下都读得清。
+    color: $color-text-secondary;
+  }
+
+  .trends-report-item__tag--ok .trends-report-item__tag-text {
+    color: #1F8F63;
+  }
+
+  .trends-report-item__tag--warn .trends-report-item__tag-text {
+    color: #A96200;
+  }
+
+  .trends-report-item__tag--danger .trends-report-item__tag-text {
+    color: #C0392B;
+  }
+
+  // 非会员引导卡：卡面复用图表卡纸面（tsx 已带 .trends-chart-card），这里只补主按钮
+  .trends-report-locked__btn {
+    @include journal-button;
+    margin-top: 24rpx;
+    height: 88rpx;
+  }
+
+  .trends-report-locked__btn-text {
+    font-size: 28rpx;
+    font-weight: $font-weight-bold;
+    color: #FFFFFF;
   }
 
   // —— 图表内层容器：让出纸面（原规则已是 transparent，这里只保证不再叠一层白底） ——

@@ -88,7 +88,8 @@ const TODAY_FEATURES: MiniFeature[] = [
 
 const MORE_FEATURES: MiniFeature[] = [
   { key: 'vaccine', illustration: 'grid-vaccine', icon: 'syringe', hue: 'sage', title: '疫苗日历', desc: '接种计划 · 提醒', url: '/pagesPet/vaccine/index', requirePet: true },
-  { key: 'report', illustration: 'grid-report', icon: 'clipboard-text', hue: 'coral', title: '健康报告', desc: '体检 · 疫苗 · 检查记录', url: '/pagesPet/health-report/index', requirePet: true },
+  // 2026-09-12 IA 第 2b 批：health-report 页已并入 trends（健康趋势），入口统一改指本页
+  { key: 'report', illustration: 'grid-report', icon: 'clipboard-text', hue: 'coral', title: '健康报告', desc: '体检 · 疫苗 · 检查记录', url: '/pagesPet/trends/index', requirePet: true },
 ]
 
 /**
@@ -341,7 +342,8 @@ const CreativeHub = () => {
           </View>
         </View>
 
-        <View className='cve-hero__score' onClick={() => goWithPet('/pagesPet/health-report/index')}>
+        {/* 2026-09-12 IA 第 2b 批：今日健康分改指并合后的健康趋势页（health-report 已并入） */}
+        <View className='cve-hero__score' onClick={() => goWithPet('/pagesPet/trends/index')}>
           <Text className='cve-hero__score-label'>今日健康分</Text>
           <Text
             className={`cve-hero__score-value${healthScore !== null ? ' cve-hero__score-value--ok' : ''}`}

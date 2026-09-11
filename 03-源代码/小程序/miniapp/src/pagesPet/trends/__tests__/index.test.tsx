@@ -1,7 +1,7 @@
 /** 健康趋势页面单元测试 */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import React from 'react'
-import { render, fireEvent } from '@testing-library/react'
+import { render, fireEvent, waitFor } from '@testing-library/react'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Import the mocked modules and the component
@@ -9,6 +9,8 @@ import { render, fireEvent } from '@testing-library/react'
 
 import { useTrend } from '../../../hooks/useTrend'
 import { useMembership } from '../../../hooks/useMembership'
+// 报告明细服务：下方 vi.mock 之后拿到的就是被 mock 的函数，用来给两个区块喂数据
+import { generateHealthReportData } from '../../services/healthReportPdfService'
 import PetTrendsPage, {
   APPETITE_LABELS,
   STOOL_LABELS,
@@ -1106,8 +1108,12 @@ describe('健康趋势页 - 切换标签页', () => {
   it('应同时渲染体重/食欲/便便三张图表卡', () => {
     const { container } = render(React.createElement(PetTrendsPage))
 
-    const cards = container.querySelectorAll('.trends-chart-card')
-    expect(cards.length).toBe(3)
+    // 2026-09-12 IA 第 2b 批：本页新增「异常记录 / 用药史」两张卡（同样是 .trends-chart-card），
+    // 卡片总数固定值不再成立；用例意图（三张图表都要在）不变，改为按标题断言。
+    const titles = Array.from(container.querySelectorAll('.trends-chart-card__title')).map((el) => el.textContent)
+    expect(titles).toContain('体重曲线')
+    expect(titles).toContain('食欲趋势')
+    expect(titles).toContain('便便评分')
   })
 
   it('应显示 AI 月度小结卡', () => {
@@ -1255,5 +1261,106 @@ describe('健康趋势页 - 导出按钮', () => {
     const buttons = exportSection?.querySelectorAll('button')
     expect(buttons).toBeTruthy()
     expect(buttons!.length).toBeGreaterThanOrEqual(5)
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 13. 健康报告明细（2026-09-12 IA 第 2b 批：pagesPet/health-report 并入本页）
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('健康趋势页 - 健康报告明细（异常记录 / 用药史）', () => {
+  const mockedGenerate = vi.mocked(generateHealthReportData)
+
+  /** 造一份最小可用的报告数据：只填两个区块真正用到的字段 */
+  function makeReport(overrides: Record<string, unknown> = {}) {
+    return {
+      pet: {
+        id: 'pet-1', name: '豆豆', species: 'dog', breed: '金毛', birthDate: '2020-01-01',
+        gender: 'male', neutered: true, weight: 30, allergies: [], medications: [], chronicConditions: [],
+      },
+      entries: [],
+      symptoms: [
+        { date: '2024-01-15', symptoms: ['呕吐', '食欲下降'], urgencyLevel: 'high', aiAssessment: '建议 24 小时内就医' },
+      ],
+      vaccines: [
+        { name: '狂犬疫苗', dateGiven: '2024-01-10', dateDue: '2025-01-10', status: 'done' },
+        { name: '体内驱虫', dateGiven: '', dateDue: '2024-03-01', status: 'pending' },
+      ],
+      generatedAt: '2024-01-20',
+      period: '2023-12-21 至 2024-01-20',
+      ...overrides,
+    }
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockUseTrendFn.mockReturnValue({
+      trendData: [],
+      summary: null,
+      monthlyReport: null,
+      isLoading: false,
+      error: null,
+      fetchWeightTrend: mockFetchWeightTrend,
+      fetchAppetiteTrend: mockFetchAppetiteTrend,
+      fetchStoolTrend: mockFetchStoolTrend,
+      fetchSummary: mockFetchSummary,
+      fetchMonthlyReport: mockFetchMonthlyReport,
+      clearError: mockClearError,
+    })
+    mockUseMembershipFn.mockReturnValue({
+      isMember: true,
+      checkAccess: mockCheckAccess,
+      shouldShowPaywall: false,
+      markPaywallShown: vi.fn(),
+    })
+  })
+
+  it('会员：异常记录与用药史都应渲染（含 AI 建议与高风险标签）', async () => {
+    mockedGenerate.mockResolvedValue(makeReport() as never)
+
+    const { container } = render(React.createElement(PetTrendsPage))
+
+    await waitFor(() => expect(container.querySelectorAll('.trends-report-item').length).toBe(3))
+    expect(container.textContent).toContain('呕吐、食欲下降')
+    expect(container.textContent).toContain('建议 24 小时内就医')
+    expect(container.textContent).toContain('狂犬疫苗')
+    expect(container.textContent).toContain('较紧急')
+  })
+
+  it('用药史按 status 显示状态（不再把待接种写成已完成）', async () => {
+    mockedGenerate.mockResolvedValue(makeReport() as never)
+
+    const { container } = render(React.createElement(PetTrendsPage))
+
+    await waitFor(() => expect(container.querySelectorAll('.trends-report-item').length).toBe(3))
+    expect(container.textContent).toContain('已完成')
+    expect(container.textContent).toContain('待接种')
+    expect(container.querySelector('.trends-report-item__tag--ok')?.textContent).toContain('已完成')
+    expect(container.querySelector('.trends-report-item__tag--warn')?.textContent).toContain('待接种')
+  })
+
+  it('会员但近30天没有记录：两个区块走空态', async () => {
+    mockedGenerate.mockResolvedValue(makeReport({ symptoms: [], vaccines: [] }) as never)
+
+    const { container } = render(React.createElement(PetTrendsPage))
+
+    await waitFor(() => expect(container.textContent).toContain('近30天没有异常记录'))
+    expect(container.textContent).toContain('暂无用药记录')
+  })
+
+  it('非会员：只给开通引导卡，不渲染明细、也不请求报告数据', () => {
+    mockUseMembershipFn.mockReturnValue({
+      isMember: false,
+      checkAccess: mockCheckAccess,
+      shouldShowPaywall: false,
+      markPaywallShown: vi.fn(),
+    })
+    mockedGenerate.mockResolvedValue(makeReport() as never)
+
+    const { container } = render(React.createElement(PetTrendsPage))
+
+    expect(container.querySelector('.trends-report-locked')).toBeTruthy()
+    expect(container.querySelectorAll('.trends-report-item').length).toBe(0)
+    expect(mockedGenerate).not.toHaveBeenCalled()
   })
 })

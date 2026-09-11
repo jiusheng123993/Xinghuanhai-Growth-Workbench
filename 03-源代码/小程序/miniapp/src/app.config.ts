@@ -69,7 +69,6 @@ export default defineAppConfig({
         'trends/index',
         'vaccine/index',
         'avatar-customize/index',
-        'health-report/index',
         'grief/index',
         'hospital/index',
         'chronic-tracking/index',
