@@ -140,6 +140,8 @@ const STYLE_OPTIONS: Array<{ key: string; emoji: string; name: string; desc: str
 /**
  * 顶部参考样例视频（2026-09-09；2026-09-13 改为顶部内联播放）
  * 与轻纪念页用的是同一个公网文件（memoir-sample/sample-light-1.mp4，实测 960×720 / 4:3）。
+ * ⚠️ 2026-09-19：播放盒口径已按**成片**统一为 16:9（见 index.scss .memoir-vlog__sample-frame 的 padding-top 换算）；
+ *   样例片自身若未重出 16:9，4:3 的它进 16:9 框会左右各留约 12.5% 宽的黑边（已上报队长裁决）。
  * 为空时比例盒只剩深色底（不再有占位横幅），点「全屏播放」提示制作中。
  */
 const SAMPLE_VIDEO_URL = 'https://api.xinghuanhai.com/uploads/memoir-sample/sample-light-1.mp4'
@@ -1088,8 +1090,9 @@ export default function MemoirVlog() {
         </View>
       </View>
 
-      {/* 比例盒：高度由宽度按片源比例撑出（padding-top: 75% 即 4:3），视频绝对定位铺满它。
-          换 4:3 以外的片源，必须同步改 index.scss 里 .memoir-vlog__sample-frame 的 padding-top（那里有换算口径）。 */}
+      {/* 比例盒：高度由宽度撑出，**口径 = 16:9（padding-top: 56.25%）**，视频绝对定位铺满它。
+          换片源比例就改 index.scss 里 .memoir-vlog__sample-frame 的 padding-top（换算口径：16:9→56.25%、4:3→75%）。
+          ⚠️ 样例片 sample-light-1.mp4 实测仍是 4:3 → 进这个 16:9 框会左右留约 12.5% 黑边（已上报队长）。 */}
       <View className='memoir-vlog__sample-frame'>
         <Video
           className='memoir-vlog__sample-video'

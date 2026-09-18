@@ -15,6 +15,8 @@
  */
 import { config, MEMOIR_TIER_CONFIG, MEMOIR_TIER_LABELS, type MemoirTier } from '../config.js';
 import { sanitizeError } from '../utils/sanitize.js';
+// 宠物档案查询（关键帧需要"四视图设定图 + 品种/物种"，链路里只传了 taskId，故此处按键查一次）
+import { pool } from '../db.js';
 import {
   createVideoGenerationTask,
   queryVideoTask,
@@ -32,6 +34,9 @@ import { fileURLToPath } from 'node:url';
 import { buildFinalSegmentPrompt } from './promptTemplates.js';
 import { buildAssContent, type SubtitleItem } from './subtitles.js';
 import { synthNarration, type NarrationSegment } from './ttsService.js';
+// 模式 C（先专用关键帧再视频）+ 主体外貌指代（petSubjectText：品种兜底，绝不拼宠物名字）
+import { generateMemoirKeyframe } from './memoirKeyframeService.js';
+import { petSubjectText } from './petPrompt.js';
 import type { MemoirScript } from '../schemas/memoirScript.js';
 
 const execFileAsync = promisify(execFile);
@@ -134,6 +139,19 @@ export function validateTierDuration(tier: MemoirTier, duration: number | null):
 
 /** Seedance 单段视频最大时长（秒） */
 const SEEDANCE_MAX_SEGMENT_DURATION = 8;
+
+/**
+ * 回忆录每段视频的画幅（Seedance `ratio`）—— 固定 16:9
+ *
+ * 为什么固定画幅（不再用 'adaptive'）：
+ *   adaptive 表示"跟随首帧图片比例"，而回忆录每镜的首帧来源不同（16:9 关键帧、
+ *   竖版手机照、方图、横版老照片），逐镜画幅不一致 → xfade 拼接时要么出现黑边、
+ *   要么被迫逐镜裁切，成片观感参差。用户已拍板全片统一 16:9。
+ *   关键帧生成侧（memoirKeyframeService）用同一画幅，保证「首帧画幅 = 段画幅」，
+ *   不再靠 Seedance 二次裁切去凑；静态照片段（generateStaticSegment）本就按 16:9
+ *   缩放加黑边补边，三方一致。
+ */
+export const MEMOIR_SEGMENT_RATIO = '16:9';
 
 /** 任务轮询间隔（毫秒） */
 const POLL_INTERVAL_MS = 10_000;
@@ -343,6 +361,60 @@ async function generateStaticSegment(
   return `${baseUrl}/uploads/memoir/${taskId}/${path.basename(outPath)}`;
 }
 
+/** 回忆录关键帧所需的宠物参考档案（只取关键帧真正用到的最小字段集） */
+interface MemoirPetProfile {
+  /** 宠物名字 —— **仅用于日志**，绝不进任何提示词（名字红线：名字只入库不入 prompt） */
+  name: string | null;
+  /** 品种（喂 petSubjectText；可为空串，兜底逻辑在 petSubjectText 内） */
+  breed: string;
+  /** 物种（cat / dog / 其他；petSubjectText 据此决定"猫咪/狗狗"） */
+  species: string;
+  /** 四视图全身设定图 URL（迁移 030 字段 avatar_multiview_url）；null = 档案里没有 */
+  multiviewUrl: string | null;
+}
+
+/**
+ * 取该回忆录任务对应宠物的参考档案（关键帧用）
+ *
+ * 为什么在这里查库而不是让调用方传进来：回忆录链路的调用方（memoirProcessor）目前
+ * 只传 taskId 与照片，链路里没有宠物档案；而关键帧必需「四视图设定图 + 品种/物种」，
+ * 故按 task_id → pet_id → pet_profiles 一次 JOIN 取回，整条任务只调用一次（不在逐镜循环里）。
+ * 字段口径对齐 familyPhotoService.collectMemberPhotos。
+ *
+ * 失败（无记录 / 库异常）一律返回 null，由调用方降级——档案只是"锦上添花"，绝不阻断成片。
+ *
+ * @param taskId - 回忆录任务 ID（pet_memoir_records.id）
+ * @returns 宠物参考档案；查不到或查询异常时 null
+ */
+async function loadMemoirPetProfile(taskId: string): Promise<MemoirPetProfile | null> {
+  try {
+    const result = await pool.query(
+      `SELECT p.name, p.breed, p.species, p.avatar_multiview_url AS "multiviewUrl"
+         FROM pet_memoir_records r
+         JOIN pet_profiles p ON p.id = r.pet_id
+        WHERE r.id = $1
+        LIMIT 1`,
+      [taskId],
+    );
+    const row = result.rows?.[0];
+    if (!row) return null;
+    const multiviewRaw = typeof row.multiviewUrl === 'string' ? row.multiviewUrl.trim() : '';
+    return {
+      name: typeof row.name === 'string' ? row.name : null,
+      breed: typeof row.breed === 'string' ? row.breed : '',
+      species: typeof row.species === 'string' ? row.species : '',
+      // 空串/纯空白归一为 null：关键帧侧靠 null 判定"要不要带第二张参考图"
+      multiviewUrl: multiviewRaw || null,
+    };
+  } catch (error) {
+    // 只告警不抛出：关键帧拿不到设定图时会退化为"只有真实照片参考"
+    console.warn(
+      `[VideoGen] Task ${taskId}: 宠物档案查询失败，关键帧将只有真实照片参考: ${sanitizeError(error)}`,
+    );
+    return null;
+  }
+}
+
 /**
  * 分镜驱动生成（回忆录 2.0 新管线）
  * 逐镜用分镜脚本的提示词（经 M2 十段组装 + Locks）与时长生成，
@@ -370,6 +442,16 @@ async function generateFromScript(
     const segmentUrls: string[] = [];
     const timeline: ScriptTimeline[] = [];
     let cursor = 0;
+
+    // 1.1 取本任务宠物的参考档案（关键帧用）：整条任务只查一次，避免逐镜重复打库。
+    //     取不到时返回 null → 关键帧退化为"只有真实照片参考"，绝不因档案缺失阻断成片。
+    const petProfile = await loadMemoirPetProfile(taskId);
+    // 主体外貌指代：复用 petSubjectText（品种缺失自动兜底"毛茸茸的"，未知品种标记词走兜底）。
+    // ⚠️ 名字红线：只有外貌指代能进提示词，petProfile.name 一律不参与拼接（此处也没用到）。
+    const petSubject = petProfile
+      ? petSubjectText(petProfile.breed, petProfile.species)
+      : '照片中的这只宠物';
+
     for (let i = 0; i < script.segments.length; i++) {
       const seg = script.segments[i];
       const photoUrl = photos[seg.photo_index] ?? photos[0];
@@ -387,7 +469,26 @@ async function generateFromScript(
           // 保持每张首帧照片的真实朝向，避免统一强制朝右导致图像镜像或姿态跳变。
           screenDirection: undefined,
         });
-        url = await generateSegmentWithRetry(taskId, photoUrl, prompt, seg.duration_sec);
+
+        // 模式 C 落地：先出该镜专用关键帧（Seedream 图生图，电影质感静帧，16:9），
+        // 成功则用它当 Seedance 首帧；失败或为 null 时**回落原照片**，保持既有行为。
+        // 关键帧是"尽力项"：generateMemoirKeyframe 内部已吞掉全部异常并返回 null，
+        // 因此这里不需要 try/catch，也绝不让关键帧失败升级成整片失败。
+        const keyframeUrl = await generateMemoirKeyframe({
+          photoUrl,
+          multiviewUrl: petProfile?.multiviewUrl ?? null,
+          segmentPrompt: prompt,
+          petSubject,
+          durationSec: seg.duration_sec,
+        });
+        // 逐镜标注走了哪条路径，线上排查"这一镜为什么看着像原图"时一眼可辨
+        if (keyframeUrl) {
+          console.log(`[VideoGen] Task ${taskId}: 镜 ${i} 首帧=关键帧（模式 C）`);
+        } else {
+          console.warn(`[VideoGen] Task ${taskId}: 镜 ${i} 首帧=回落原照片（关键帧不可用）`);
+        }
+
+        url = await generateSegmentWithRetry(taskId, keyframeUrl ?? photoUrl, prompt, seg.duration_sec);
       }
 
       if (!url) {
@@ -831,7 +932,8 @@ async function generateSegmentWithRetry(
     imageUrl: photoUrl,
     prompt,
     duration,
-    ratio: 'adaptive',
+    // 画幅固定 16:9（见 MEMOIR_SEGMENT_RATIO 注释：adaptive 会逐镜跟随首帧比例，拼接观感参差）
+    ratio: MEMOIR_SEGMENT_RATIO,
     watermark: false,
     resolution: '720p',
   });

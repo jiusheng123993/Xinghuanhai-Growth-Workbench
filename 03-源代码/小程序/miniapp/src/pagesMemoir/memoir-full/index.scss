@@ -1415,18 +1415,24 @@
 }
 
 // 样例视频的画面盒：**比例盒**（高度由宽度按片源比例撑出）+ 视频绝对定位铺满 → 两端零黑边。
-// 【片源比例 = 4:3（960×720）】2026-09-13 实测来源：本页样例与轻纪念页的 sample-light-1.mp4 是**同一个文件**
-//   （api.xinghuanhai.com/uploads/memoir-sample/sample-light-1.mp4）。24 号跑 H5 验收时浏览器把它落盘到
-//   …\.work-tmp\ui-b4\h5\.edge-cdp-profile\Default\Cache\Cache_Data\f_000004，ffprobe 读出 960×720 / h264 / 24fps / 10.04s。
+// 【画幅口径 = 16:9（2026-09-19 用户拍板：回忆录成片固定 16:9，不再跟随照片自适应）】
+//   本框按**成片**口径取值（与轻纪念页同一口径），故 padding-top = 9 ÷ 16 = 56.25%。
+// ⚠️ 历史实测（2026-09-13，24 号 H5 验收时 ffprobe 读缓存体）：本框当前播放的**样例片**
+//   sample-light-1.mp4 是 960×720（**4:3**）——api.xinghuanhai.com/uploads/memoir-sample/sample-light-1.mp4，
+//   与轻纪念页是**同一个文件**（落盘 …\.work-tmp\ui-b4\h5\.edge-cdp-profile\Default\Cache\Cache_Data\f_000004，
+//   960×720 / h264 / 24fps / 10.04s）。
+//   ⇒ 4:3 样例片进 16:9 框 + objectFit='contain' = 按高度适配、**左右各留约 12.5% 宽的黑边**（不裁主体）。
+//   样例片若未同步重出 16:9，这一版的样例预览就会看到左右黑边（“重出 16:9 样例片”还是“样例框暂留 4:3”
+//   属产品可见取舍）—— 已上报队长裁决；本工作包只按 16:9 口径改数值，不擅自保留旧值、也不改其它文件。
 // 【换片源必改这里】padding-top 的百分比按**包含块宽度**解析，取值 = 高 ÷ 宽 × 100%：
-//   4:3 → 75%（现值）；16:9 → 56.25%；1:1 → 100%（写法与 pages/index/index.scss 的 .today-hero 同款）。
+//   16:9 → 56.25%（现值）；4:3 → 75%；1:1 → 100%（写法与 pages/index/index.scss 的 .today-hero 同款）。
 //   片源比例变了却不改这一行，就会退回「宽扁框里塞方片、左右各留大半屏黑边」的老毛病。
 // objectFit 用 contain（见 index.tsx）：宁可留黑边，也不把毛孩子的头裁掉。
 // 深色底与轻纪念页同色；封面直接用视频自身首帧，不额外引入封面图。
 .memoir-vlog__sample-frame {
   position: relative;
   height: 0;
-  padding-top: 75%;
+  padding-top: 56.25%;
   overflow: hidden;
   border-radius: $radius-sm;
   background: #1A1410;

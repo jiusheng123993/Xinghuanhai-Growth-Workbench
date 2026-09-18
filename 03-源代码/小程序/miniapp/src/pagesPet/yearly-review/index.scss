@@ -298,9 +298,22 @@
   animation: fadeInUp 0.35s ease-out;
 }
 
+// 播放器盒子：高度按「容器宽 × 9 ÷ 16」推出 —— 成片口径 16:9（2026-09-19 用户拍板：回忆录成片固定 16:9，
+// 不再跟随照片自适应；年度回顾走的就是同一个 generateMemoirVideo，所以本页成片同样是 16:9）。
+// 【换算】`.review-page__content` 内容宽 = 750rpx − 左右各 24rpx = **702rpx**（`.annual-video` 是它的直接子块、
+//   自身无内边距）→ 播放器 width: 100% = 702rpx → 16:9 高 = 702 × 9 ÷ 16 = 394.875rpx，取整 **395rpx**
+//   （差 0.125rpx ≈ 0.06pt，肉眼不可见；口径与 pages/mine/index.scss 那条「686rpx 宽 → 386rpx 高」同源）。
+// 【为什么这里不用 padding-top 比例盒？】另两个回忆录播放盒（memoir-full 的 .memoir-vlog__sample-frame、
+//   轻纪念页的 .memoir__hero-frame）用的是比例盒：外层 View 撑高 + **内部元素绝对定位铺满**。
+//   但本页的类名是**直接挂在 `<Video>` 自己身上**的单标签原生组件（见 index.tsx），**没有内部子元素**可绝对定位；
+//   把 height: 0 + padding-top: 56.25% 写在 video 元素上会让元素自身内容高度归零，而原生 video 的画面铺在
+//   content box 还是 border box **本轮无法实测**（沙箱禁起浏览器）→ 有「播放器整块消失」的风险，故保留定高。
+//   ⚠️ 定高 ≠ 会变形：rpx 随屏宽等比缩放，容器宽也是 rpx 口径（750 − 48），所以 702 : 395 = 16:9 在任何机型都成立。
+//   ⚠️ 但 **H5 预览里 rpx 不随窗口宽度缩放**（项目记忆/progress.md 记过这条）→ 量尺请在 375px 宽视口 / 真机上做。
+//   （若要三处口径完全统一，需在 tsx 给 `<Video>` 包一层 `.annual-video__frame` —— 超出本工作包范围，已上报队长。）
 .annual-video__player {
   width: 100%;
-  height: 360rpx;
+  height: 395rpx;
   border-radius: 24rpx;
   overflow: hidden;
   background: $color-text-primary;
@@ -666,12 +679,15 @@
 // ============================================
 // 年度视频：播放器贴纸 + 三态状态便签 + 手账主按钮
 // ============================================
+// 【块高口径 = 16:9，与上方基础规则同一组数】702rpx 宽 → 395rpx 高（换算见上面 .annual-video__player 基础规则）。
+// ⚠️ 本层只覆盖外观，但 `height` 在两处重复声明 —— **要改必须两处一起改**，
+//   否则哪天皮肤层被摘掉，基础规则会按旧高度渲染，成片又会露出黑边。
 // 【看不见的状态】播放器只在 video_status = 'completed' 且 video_url 非空时渲染；
 // 预览里拿不到数据，所以这里按类名推断为 16:9 视频块，用图钉（胶带）把它"钉"在纸上。
 .annual-video__player {
   display: block;
   width: 100%;
-  height: 360rpx;
+  height: 395rpx;
   border-radius: 28rpx;
   background: #2a1a12;
   box-shadow:

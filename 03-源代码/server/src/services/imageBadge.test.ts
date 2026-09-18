@@ -104,6 +104,50 @@ describe('addAiBadge 成功链路', () => {
   });
 });
 
+/**
+ * 【2026-09-19 新增】中间产物路径：`{ visible: false }`
+ * 背景：回忆录关键帧是**中间产物**（只作视频首帧、不直接给用户看）。
+ * 可见角标会被 Seedance 动起来（可能扭曲成渲染缺陷），且等于给成片凭空加一个用户可见元素，
+ * 故关键帧传 `visible:false` —— **只跳过合成，不跳过合规**：隐式 AIGC 元数据照旧写入。
+ */
+describe('addAiBadge { visible: false }（中间产物：不合成可见角标，但仍落盘）', () => {
+  it('不读取角标素材、不 composite，但照旧落盘并返回本站 URL', async () => {
+    const base = makeFakeImage(1000, 1000);
+    mockJimp.read.mockResolvedValueOnce(base); // 只应有这一次 read（角标素材不该被读）
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: async () => new ArrayBuffer(8),
+    }));
+
+    const result = await addAiBadge('https://seedream.example.com/out.png', { visible: false });
+
+    // ① 只 read 了一次 —— 即只读了原图，没有读角标素材
+    expect(mockJimp.read).toHaveBeenCalledTimes(1);
+    // ② 没有做任何合成
+    expect(base.composite).not.toHaveBeenCalled();
+    // ③ 但落盘与返回 URL 一切照旧（合规元数据走 appendAigcPngMetadata，在落盘那步）
+    expect(mockFs.writeFile).toHaveBeenCalledTimes(1);
+    expect(result).toMatch(/^\/uploads\/ai-generated\/[0-9a-f-]{36}\.png$/);
+  });
+
+  it('默认（不传 options）仍然合成角标 —— 保证既有 4 处调用点行为不变', async () => {
+    // ⚠️ 本用例**只断言 composite 被调用**，不再排队 mockResolvedValueOnce：
+    //    `badgeCache` 是模块级缓存，跨用例存活；若在此排队"角标素材"的返回值而缓存已命中，
+    //    那个排队值不会被消费，会**泄漏到下一个用例**（曾让"失败降级"用例误判）。
+    //    默认路径的"缩放 + 右下角定位"细节已由本文件第一条用例覆盖，这里只守行为不变量。
+    const base = makeFakeImage(1000, 1000);
+    mockJimp.read.mockImplementation(async () => base);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: async () => new ArrayBuffer(8),
+    }));
+
+    await addAiBadge('https://seedream.example.com/out.png');
+
+    expect(base.composite).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('addAiBadge 失败降级', () => {
   it('CDN 图片下载失败时返回原始 URL，不写盘不抛错', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404 }));

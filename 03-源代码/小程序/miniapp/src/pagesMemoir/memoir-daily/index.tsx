@@ -1255,11 +1255,14 @@ export default function MemoirDaily() {
           - 主位放真实样例视频，封面用视频自身首帧（不设 poster，不新增图片资源）
           - 右上角「✨ AI 时光电影」角标是本档卖点标识，用户没让删，保留
           - 角标与说明放在视频之外的行里：少数未开同层渲染的机型上，原生 video 也不会把它盖住
-          - 2026-09-13（24号）：视频收进 .memoir__hero-frame 比例盒（4:3）。原来 <Video> 直接当 hero 的一行、
+          - 2026-09-13（24号）：视频收进 .memoir__hero-frame 比例盒（当时按片源 4:3 取）。原来 <Video> 直接当 hero 的一行、
             靠 height: 340rpx 定高，而片源是 4:3 → 框比画面扁得多，objectFit='contain' 按高度适配后左右各留一半黑边；
             更要命的是 H5 构建里 Taro 的 video 宿主元素自带 position: absolute，hero 没有定位祖先时它以视口为包含块
             （width:100% = 整屏宽），把页内标题盖住。套一层 position: relative 的比例盒后，两个问题一起解决，
-            而且 H5 与小程序两端都成立（小程序那条是纯防御，原生 video 没有那套 absolute 样式）。 */}
+            而且 H5 与小程序两端都成立（小程序那条是纯防御，原生 video 没有那套 absolute 样式）。
+          - 2026-09-19：比例盒口径改为 **16:9 成片口径**（用户拍板：回忆录成片固定 16:9，不再跟随照片；
+            index.scss 里 padding-top 由 75% → 56.25%）。⚠️ 本框当前播的**样例片** sample-light-1.mp4 实测是
+            960×720（4:3）—— 样例片若不同步重出 16:9，样例预览会出现左右各约 12.5% 宽的黑边（已上报队长裁决）。 */}
       <View className='memoir__hero'>
         <View className='memoir__hero-head'>
           <Text className='memoir__hero-label'>🎬 样例预览</Text>
@@ -1268,8 +1271,9 @@ export default function MemoirDaily() {
           </View>
         </View>
 
-        {/* 比例盒：高度由宽度按片源比例撑出（padding-top: 75% 即 4:3），视频绝对定位铺满它。
-            换 4:3 以外的片源，必须同步改 index.scss 里 .memoir__hero-frame 的 padding-top（那里有换算口径）。 */}
+        {/* 比例盒：高度由宽度撑出，**口径 = 16:9（padding-top: 56.25%）**，视频绝对定位铺满它。
+            换片源比例就改 index.scss 里 .memoir__hero-frame 的 padding-top（换算口径：16:9→56.25%、4:3→75%）。
+            ⚠️ 样例片 sample-light-1.mp4 实测仍是 4:3 → 进这个 16:9 框会左右各留约 12.5% 黑边（已上报队长）。 */}
         <View className='memoir__hero-frame'>
           {/* key 绑 url：切样例时重建播放器，避免上一支的进度/暂停态残留到下一支 */}
           <Video

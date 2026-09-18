@@ -9,6 +9,10 @@
  *
  * 全家福（familyPhotoService）/ 表情包（image2DService）/ 形象（avatarService）
  * 三个生图服务共用本模块；任何环节失败都降级返回原图 URL（只记日志，不阻断生成主流程）。
+ *
+ * 中间产物例外（2026-09-19 新增）：回忆录**关键帧**是本模块第 4 个调用方，但它是"只作视频首帧、
+ * 不直接给用户看"的中间产物，故传 `{ visible: false }` 只跳过**可见角标合成**，
+ * 隐式 AIGC 元数据（PNG tEXt 块）照旧写入 —— 见 `addAiBadge` 的 options 注释。
  */
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -52,11 +56,22 @@ if (!config.publicBaseUrl) {
 /**
  * 给 AI 生成图合成品牌角标并落盘
  * @param imageUrl - Seedream 返回的 CDN 图片 URL（有时效，须立刻取回内容）
+ * @param options.visible - 是否合成**可见**角标，默认 `true`。
+ *   - `true`（默认）：既有 4 处调用点（全家福 / 表情包 / 形象 / 头像候选）都是**直接给用户看的成品图**，
+ *     保持原行为不变。
+ *   - `false`：用于**中间产物**（回忆录关键帧）。它只作为视频首帧、不直接给用户看，理由有二：
+ *     ① 可见角标会被 Seedance **动起来**，可能扭曲成渲染缺陷；
+ *     ② 烙进去等于给成片**凭空增加一个用户可见元素**，属未经确认的可见变化。
+ *     ⚠️ 传 `false` **不等于放弃合规**：隐式标识（PNG AIGC tEXt 块）照旧写入（《标识办法》第十条），
+ *     成片自身的标识口径与改造前完全一致。
  * @returns 加角标后的本站图片 URL（{publicBaseUrl}/uploads/ai-generated/{uuid}.png，
  *          与回忆录视频 share-cards 的 publicBaseUrl 口径一致）；
  *          任一环节失败降级返回原始 URL，保证"能出图"优先于"有角标"
  */
-export async function addAiBadge(imageUrl: string): Promise<string> {
+export async function addAiBadge(
+  imageUrl: string,
+  options: { visible?: boolean } = {},
+): Promise<string> {
   try {
     // 1. 下载生成图内容（CDN 临时链接过期即失效，不能只存 URL；限时 15s 防挂起）
     const resp = await fetch(imageUrl, { signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS) });
@@ -64,13 +79,16 @@ export async function addAiBadge(imageUrl: string): Promise<string> {
     const base = await Jimp.read(Buffer.from(await resp.arrayBuffer()));
 
     // 2. 角标按原图宽度等比缩放后贴到右下角（小图自动缩小、大图自动放大）
-    if (!badgeCache) badgeCache = await Jimp.read(BADGE_ASSET_PATH);
-    const badge = badgeCache.clone();
-    badge.resize(Math.round(base.getWidth() * BADGE_WIDTH_RATIO), Jimp.AUTO);
-    const margin = Math.round(base.getWidth() * MARGIN_RATIO);
-    const x = base.getWidth() - badge.getWidth() - margin;
-    const y = base.getHeight() - badge.getHeight() - margin;
-    base.composite(badge, x, y);
+    //    ⚠️ 只有 visible !== false 时才合成；中间产物（关键帧）跳过这一步，但下面的隐式标识照写
+    if (options.visible !== false) {
+      if (!badgeCache) badgeCache = await Jimp.read(BADGE_ASSET_PATH);
+      const badge = badgeCache.clone();
+      badge.resize(Math.round(base.getWidth() * BADGE_WIDTH_RATIO), Jimp.AUTO);
+      const margin = Math.round(base.getWidth() * MARGIN_RATIO);
+      const x = base.getWidth() - badge.getWidth() - margin;
+      const y = base.getHeight() - badge.getHeight() - margin;
+      base.composite(badge, x, y);
+    }
 
     // 3. 落盘 uploads/ai-generated/{uuid}.png
     //    立项 v0.2 P0-3：《标识办法》第十条隐式标识——落盘前在 PNG 元数据写入 AIGC tEXt 块

@@ -74,7 +74,21 @@
   ⚠️ 只用**视觉事实词**（如「耳廓向后压低」），**不写情绪词**（Anti-Subjective）；且**只能小幅低缓连续**，不得越出静图安全边界
 - **Locks 连续性锁**：COUNT LOCK / SCREEN DIRECTION（默认保持首帧原始朝向）/ IDENTITY LOCK / ANATOMY LOCK / QUALITY LOCK
 - **多角色锚点**：每在场角色一个 CharacterAnchor（id/type/desc 3-6 特征全片逐字重复）；历史脚本和 LLM 输出也必须在进入 Seedance 前清除宠物名字
-- **首帧契约**：Seedance 图片输入显式 `role: first_frame`；无参考图绝不写身份锁定说谎
+- **首帧契约（2026-09-19 升级）**：Seedance 图片输入显式 `role: first_frame`；无参考图绝不写身份锁定说谎
+  ⚠️ **首帧现在默认是「关键帧」而不是用户原照片** —— 见下条「模式 C 已落地」。
+- **模式 C 已落地（2026-09-19，每镜先出关键帧）**：`memoirKeyframeService.generateMemoirKeyframe()`
+  逐镜先用 Seedream 出一张 **16:9 电影质感静帧**，再把它当 Seedance 首帧。
+  - 参考图职责两份：**参考图1 = 该镜真实照片**（画面依据：姿态取静/构图取准/场景取真）；
+    **参考图2 = 宠物四视图设定图**（`pet_profiles.avatar_multiview_url`，可空）——**只核对毛色花纹体型五官**，
+    并**显式禁止复制它的分格版式**（设定图是四宫格，不写禁令模型会照抄成拼图）。
+  - 关键帧是**静帧**：提示词排除运动模糊/拖影，且**不得引入奔跑跳跃**（守住「静图安全」）。
+  - **失败一律回落**：关键帧返回 null 时首帧回落到原照片（尽力项，不拖垮整片）。
+  - ⚠️ 关键帧是**中间产物**，故走 `addAiBadge(url, { visible: false })`：**只跳过可见角标合成，不跳过合规**
+    （隐式 AIGC 元数据照写）。理由：角标会被 Seedance 动起来（可能扭曲成渲染缺陷），且等于给成片凭空加用户可见元素。
+- **画幅固定 16:9（2026-09-19）**：常量 `MEMOIR_SEGMENT_RATIO`（`videoGenerationService.ts`）。
+  原来是 `'adaptive'`（跟随用户照片 ⇒ 每段画幅不一致、拼接观感参差）。关键帧尺寸 `1920x1080` 与它成对，
+  三方（关键帧尺寸 / 提示词画幅声明 / Seedance ratio）必须一致。
+  前端播放盒同步为 16:9（`memoir-daily` / `memoir-full` 用 `padding-top:56.25%`；年度回顾用定高，见其注释）。
 - **记忆锚定（防编造，2026-09-01 新增）**：分镜叙事只能以三类真实素材为事实来源——记忆引擎摘要（`agent_memories` 核心层 + 时光线 `pet_moments` 回忆文本，`memoryService.getPetMomentsSummary`）、用户亲述文案（`source_text`）、逐张照片视觉摘要。素材里的具体回忆优先写进旁白；三类素材全空时必须触发【无记忆约束】：禁止虚构具体事件/日期/对话/关系，只许照片事实与中性氛围。照片事实与记忆冲突时以照片为准
 - **音频边界**：Seedance 段要求无人物对白、无模型字幕、无模型 BGM；旁白与字幕由后期 TTS/ASS 统一完成
 
@@ -116,13 +130,18 @@ Q版萌系(q) / 日系治愈(japanese) / 美式卡通(american) / 水彩手绘(w
 | 数量不明确 | 明确"共 N 只"，防只画一只/多画 |
 | 文字生成占照片配额 | style 区分（文字 `-text-*` 不计入照片额度） |
 | 品牌默认头像当参考图 | `isBrandPresetUrl` 拦截 + 引导生成真实形象 |
+| **画幅不一致**（每段自适应） | 段画幅由 `MEMOIR_SEGMENT_RATIO` 统一为 `16:9`；关键帧尺寸与提示词画幅声明必须同步，否则"提示词写 16:9、出图却是别的比例" |
+| **关键帧把四视图设定图当版式抄** | 参考图2 必须显式写「只核对毛色/花纹/体型/五官，**不要复制分格版式**」，否则模型可能照抄成四宫格拼图 |
+| **可见角标被烙进成片** | 关键帧走 `addAiBadge(url, { visible: false })`：中间产物不合成可见角标（会被 Seedance 动起来、且凭空增加用户可见元素）；**隐式 AIGC 元数据仍要写** |
 | **LLM 自己编造名字**（如写出「一只叫小橘的猫」） | 白名单 `translatePetNames` **拦不住**（名字不在档案里）→ 必须叠 `stripNamingPhrases` 句式级清洗。⚠️ 它是**纯删除式**：名字后**无标点**时会吃掉后文（如「名字是旺财今天很乖」→「这只狗」），已知边界 |
 
 ## 九、修改提示词的正确姿势
 
 1. **改画风/表情/外貌提取** → `server/src/services/avatarService.ts`（AVATAR_STYLE_OPTIONS / EXPRESSION_PROMPTS / extractPetAppearance）+ 前端 `avatar-customize/index.tsx`（GEN_STYLES / GEN_STYLE_ATMOS / 模板），两处 key 必须一致
 2. **改全家福** → `server/src/services/familyPhotoService.ts`（STYLE_PROMPTS / buildPrompt / isBrandPresetUrl）
-3. **改回忆录** → `server/src/services/promptTemplates.ts`（十段默认值 / Locks / 角色锚点）
+3. **改回忆录** → `server/src/services/promptTemplates.ts`（十段默认值 / Locks / 角色锚点）；
+   **关键帧（模式 C）** → `server/src/services/memoirKeyframeService.ts`（提示词组装 + 尺寸 + 参考图职责）；
+   **段画幅 / 首帧选择** → `server/src/services/videoGenerationService.ts`（`MEMOIR_SEGMENT_RATIO` 与关键帧回落）
 4. **改公共约束** → `server/src/services/petPrompt.ts`（petSubjectText / PET_IDENTITY_KEEP / PET_ONLY_ONE / translatePetNames / stripNamingPhrases）
 5. **改提示词库原文** → `01-产品文档/宠物回忆录-提示词库.md`，然后回填本技能与代码
 6. **必须同步测试**：相关 .test.ts 断言（名字不进提示词 / 数量 / 兜底 / 清洗 / 白名单），跑 `npm test`（前后端）+ `tsc --noEmit`
