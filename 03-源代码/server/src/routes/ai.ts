@@ -7,7 +7,7 @@ import multer from 'multer';
 import { authMiddleware } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { uploadLimiter, aiRecognizeLimiter, chatLimiter, namingLimiter } from '../middleware/rateLimit.js';
-import { chatMessageSchema } from '../schemas/index.js';
+import { chatMessageSchema, namingRecommendSchema, namingInterpretSchema } from '../schemas/index.js';
 import { chat, guardCheck, guardCheckOutput, bailianChat, bailianASR } from '../services/aiService.js';
 import { detectOffTopic, OFFTOPIC_REPLY } from '../services/agentRuleIntent.js';
 import { saveConversation } from '../services/memoryService.js';
@@ -43,7 +43,7 @@ const upload = multer({
 // 限流：chatLimiter 30次/分钟（2026-09 审查修复：此前未挂载，付费 LLM 入口仅剩全局兜底）
 router.post('/chat', authMiddleware, chatLimiter, validate({ body: chatMessageSchema }), async (req: Request, res: Response) => {
   try {
-    const { messages, temperature, max_tokens, petId, persistUserContent, sessionId } = req.body;
+    const { messages, temperature, max_tokens, thinking, petId, persistUserContent, sessionId } = req.body;
 
     // 边界守卫（2026-09 越界收敛）：与 /api/agent/chat 同口径。旧版链路前端 chatService
     // 已有同款确定性拦截，此处补服务端纵深兜底——直连本接口时对与宠物无关的越界话题
@@ -56,7 +56,9 @@ router.post('/chat', authMiddleware, chatLimiter, validate({ body: chatMessageSc
       return;
     }
 
-    const result = await chat(messages, { temperature, max_tokens });
+    // thinking 透传（2026-09-10）：结构化调用（AI 取名等）传 'disabled' 关闭思考，
+    // 否则 max_tokens 被 reasoning_content 吃满、content 为空（实测 2048 tokens 全被吃掉）
+    const result = await chat(messages, { temperature, max_tokens, thinking });
     res.json({ success: true, data: { content: result } });
 
     // 异步写入 Agent 持久化历史（2026-09-10）：旧版链路此前不落库，发图轮/降级轮的对话
@@ -203,16 +205,18 @@ router.post('/guard/output', authMiddleware, async (req: Request, res: Response)
 });
 
 // 限流：namingLimiter 10次/分钟（2026-09 审查修复：此前取名引擎无限流，属免费 LLM 烧钱面）
-router.post('/naming/interpret', authMiddleware, namingLimiter, async (req: Request, res: Response) => {
+// 入参：namingInterpretSchema 强校验（name 限长 20，2026-09-10 补挂——此前只判断 name 非空，
+// 10MB body 可直喂付费 LLM）
+router.post('/naming/interpret', authMiddleware, namingLimiter, validate({ body: namingInterpretSchema }), async (req: Request, res: Response) => {
   try {
     const { name, species, breed, gender } = req.body;
 
-    if (!name || typeof name !== 'string') {
-      res.status(400).json({ success: false, message: 'name 参数不能为空' });
-      return;
-    }
+    // species 缺省用中性"宠物"（2026-09-10 审查 P2）：schema 中 species 为可选，
+    // 而此前 `species === 'cat' ? '猫咪' : '狗狗'` 会把缺省一律当成"狗"
+    const speciesLabel = species === 'cat' ? '猫咪' : species === 'dog' ? '狗狗' : '宠物';
+    const speciesShort = species === 'cat' ? '猫' : species === 'dog' ? '狗' : '宠物';
 
-    const systemPrompt = `你是一位专业的宠物取名大师，擅长为${species === 'cat' ? '猫咪' : '狗狗'}取名并解读名字的含义。
+    const systemPrompt = `你是一位专业的宠物取名大师，擅长为${speciesLabel}取名并解读名字的含义。
 请根据用户提供的宠物名字，从字义、寓意、五行、音律、文化内涵等角度进行专业解读。
 回复要求：结构化、有深度、语气温暖，控制在 300 字以内。`;
 
@@ -220,15 +224,17 @@ router.post('/naming/interpret', authMiddleware, namingLimiter, async (req: Requ
       { role: 'system' as const, content: systemPrompt },
       {
         role: 'user' as const,
-        content: `请解读宠物名字"${name}"，这是一只${breed || ''}${gender === 'male' ? '公' : gender === 'female' ? '母' : ''}${species === 'cat' ? '猫' : '狗'}`,
+        content: `请解读宠物名字"${name}"，这是一只${breed || ''}${gender === 'male' ? '公' : gender === 'female' ? '母' : ''}${speciesShort}`,
       },
     ];
 
-    const result = await chat(messages, { temperature: 0.7, max_tokens: 600 });
+    // thinking:'disabled'（2026-09-10）：不关思考时 max_tokens 会被 reasoning_content 吃空，
+    // 本接口直接拿到空 content；同时补空值防御，避免把空串当解读结果返回
+    const result = await chat(messages, { temperature: 0.7, max_tokens: 600, thinking: 'disabled' });
 
-    let safeResult = result;
+    let safeResult = result || '';
     try {
-      const guardResult = await guardCheckOutput(result);
+      const guardResult = await guardCheckOutput(safeResult);
       if (guardResult.isUnsafeMedicalAdvice) {
         safeResult = '名字解读生成完成，但部分内容因安全策略已过滤。';
       }
@@ -236,23 +242,25 @@ router.post('/naming/interpret', authMiddleware, namingLimiter, async (req: Requ
       // guard check failed, return original result
     }
 
-    res.json({ success: true, data: { interpretation: safeResult } });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : '取名解读异常';
-    res.status(500).json({ success: false, message });
-  }
-});
-
-router.post('/naming/recommend', authMiddleware, namingLimiter, async (req: Request, res: Response) => {
-  try {
-    const { species, breed, gender, style, count } = req.body;
-
-    if (!species) {
-      res.status(400).json({ success: false, message: 'species 参数不能为空' });
+    if (!safeResult) {
+      res.status(502).json({ success: false, message: '取名解读暂时不可用，请稍后再试' });
       return;
     }
 
-    const countNum = Math.min(Math.max(count || 5, 1), 10);
+    res.json({ success: true, data: { interpretation: safeResult } });
+  } catch (error) {
+    // 脱敏（2026-09-10）：此前把原始异常（含上游响应体）直接回传前端
+    console.error('[Naming/Interpret] 异常:', error instanceof Error ? error.message.split('\n')[0]?.slice(0, 200) : String(error));
+    res.status(500).json({ success: false, message: '取名解读异常，请稍后再试' });
+  }
+});
+
+router.post('/naming/recommend', authMiddleware, namingLimiter, validate({ body: namingRecommendSchema }), async (req: Request, res: Response) => {
+  try {
+    const { species, breed, gender, style, count } = req.body;
+
+    // schema 已保证 count 为 1-10 整数（可选），这里只做默认值兜底
+    const countNum = count || 5;
     const styleText = style || '可爱温馨';
 
     const systemPrompt = `你是一位专业的宠物取名大师，擅长为${species === 'cat' ? '猫咪' : '狗狗'}取名字。
@@ -268,23 +276,35 @@ router.post('/naming/recommend', authMiddleware, namingLimiter, async (req: Requ
       },
     ];
 
-    const result = await chat(messages, { temperature: 0.9, max_tokens: 800 });
+    // thinking:'disabled'（2026-09-10）：本接口要的是完整 JSON 正文，开思考会被 reasoning 吃空
+    const result = await chat(messages, { temperature: 0.9, max_tokens: 800, thinking: 'disabled' });
 
     try {
-      const jsonMatch = result.match(/\[[\s\S]*\]/);
+      const jsonMatch = (result || '').match(/\[[\s\S]*\]/);
       if (jsonMatch) {
-        const names = JSON.parse(jsonMatch[0]);
-        res.json({ success: true, data: { names } });
-        return;
+        const parsed = JSON.parse(jsonMatch[0]) as Array<{ name?: unknown }>;
+        if (Array.isArray(parsed)) {
+          // 元素形状校验 + 按请求数量截断（2026-09-10 审查 P2：模型可能返回 30 条或残缺元素）
+          const names = parsed
+            .filter((n) => n && typeof n.name === 'string' && (n.name as string).trim().length > 0)
+            .slice(0, countNum);
+          if (names.length > 0) {
+            res.json({ success: true, data: { names } });
+            return;
+          }
+        }
       }
     } catch {
-      // parse failed, return raw text
+      // 落入下方统一失败分支
     }
 
-    res.json({ success: true, data: { names: [], raw: result } });
+    // 解析失败/空结果：502（2026-09-10 审查 P2 修正）——此前返回 200 + success:true + names:[]，
+    // 调用方无法区分"上游解析失败"与"正常空结果"，且 raw 会把未清洗的上游文本回传
+    console.warn('[Naming/Recommend] JSON 解析失败或结果为空，返回 502');
+    res.status(502).json({ success: false, message: '取名推荐生成失败，请稍后再试' });
   } catch (error) {
-    const message = error instanceof Error ? error.message : '取名推荐异常';
-    res.status(500).json({ success: false, message });
+    console.error('[Naming/Recommend] 异常:', error instanceof Error ? error.message.split('\n')[0]?.slice(0, 200) : String(error));
+    res.status(500).json({ success: false, message: '取名推荐异常，请稍后再试' });
   }
 });
 

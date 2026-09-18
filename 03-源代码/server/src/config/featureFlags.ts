@@ -43,13 +43,9 @@ const DEFAULT_FLAGS: FeatureFlag[] = [
     expiresAt: '2026-11-01',
     description: '宠物回忆录模块（灰度中）',
   },
-  {
-    key: 'naming_engine',
-    enabled: true,
-    rolloutPercentage: 100,
-    expiresAt: '2026-09-01',
-    description: '取名引擎模块',
-  },
+  // naming_engine（取名引擎）开关已于 2026-09-10 移除：全仓零消费（无任何 isFeatureEnabled
+  // 调用点），且 expiresAt 已过期——isFeatureEnabled 对过期开关直接 return true，
+  // 等于永久失效的"假开关"，保留只会误导后续维护者以为取名链路有灰度控制。
   {
     key: 'share_card',
     enabled: true,

@@ -9,7 +9,7 @@ import {
   type ToolCall,
 } from './toolRegistry.js';
 import { pool } from '../db.js';
-import { detectBreedQuestion, OFFTOPIC_REPLY } from './agentRuleIntent.js';
+import { detectBreedQuestion, detectMemoryRecordIntent, OFFTOPIC_REPLY } from './agentRuleIntent.js';
 import {
   buildMemoryContext,
   ingestMemories,
@@ -760,9 +760,15 @@ export async function* agentLoop(
     yield { type: 'thinking', data: { iteration: 0, label: '理解意图中...' } };
     // 确定性品种提问预筛：命中则跳过 LLM 意图分类——既省一次付费分类调用，
     // 又消除「LLM 把"这是什么猫"误判为 chat 导致不调 search_breed_info、不跳品种详情页」的不确定性
+    // 同理（2026-09-11）：明确的"记录回忆/写日记"请求若被误判成 chat，chat 意图会走
+    // tool_choice='none' 禁用全部工具，record_memory 根本调不到，AI 只能用文字回"记下了"——
+    // 用户以为记了、时光里却没有。这里改用规则预筛锁定 memory 意图。
     if (detectBreedQuestion(userMessage)) {
       intentResult = { intent: 'breed', confidence: 1.0, reason: '规则预筛：品种提问', usage: undefined };
       console.log('[Agent] 意图预筛命中: breed（规则，跳过 LLM 分类）');
+    } else if (detectMemoryRecordIntent(userMessage)) {
+      intentResult = { intent: 'memory', confidence: 1.0, reason: '规则预筛：明确记录回忆请求', usage: undefined };
+      console.log('[Agent] 意图预筛命中: memory（规则，跳过 LLM 分类）');
     } else {
       intentResult = await classifyIntent(userMessage, history);
       console.log(`[Agent] 意图分类: ${intentResult.intent} (置信度: ${intentResult.confidence}) - ${intentResult.reason}`);

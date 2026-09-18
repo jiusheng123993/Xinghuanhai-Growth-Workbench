@@ -180,8 +180,12 @@ router.post('/shares/grant-reward', authMiddleware, async (req: Request, res: Re
       [userId],
     );
     if (ungranted.rows.length < SHARE_REWARD_INVITES) {
+      // message 与 error 同时给：客户端 api 层用 `body.message` 构造 Error
+      // （见 miniapp/src/services/api.ts 的 request()），只给 error 的话
+      // 前端只能拿到兜底的"请求失败"，"还需邀请 N 位"这句唯一的可读文案会丢
       res.json({
         success: false,
+        message: `还需邀请 ${SHARE_REWARD_INVITES - ungranted.rows.length} 位好友即可获得奖励`,
         error: `还需邀请 ${SHARE_REWARD_INVITES - ungranted.rows.length} 位好友即可获得奖励`,
       });
       return;

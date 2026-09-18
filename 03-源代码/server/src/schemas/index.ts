@@ -17,7 +17,7 @@ export const uuidSchema = z.string().uuid('ID格式错误');
  * 内网地址（http://169.254.169.254/ 等）可被用作内网探测 + 落盘回读外泄通道。
  * 现仅放行：①本站相对路径 /uploads/...；②https(s) 且主机名为 PUBLIC_BASE_URL 主机或本地回环。
  */
-export const memoirPhotoUrlSchema = z.string().superRefine((url, ctx) => {
+export const memoirPhotoUrlSchema = z.string().max(500, '照片地址过长').superRefine((url, ctx) => {
   // 本站相对路径：由服务端拼 publicBaseUrl 后下载，天然可信
   if (url.startsWith('/uploads/')) return;
   try {
@@ -202,6 +202,12 @@ export const chatMessageSchema = z.object({
     .max(20, '对话轮数超限（最多 20 条）'),
   temperature: z.number().min(0).max(2).optional(),
   max_tokens: z.number().int().min(1).max(4096).optional(),
+  // 思考模式开关（2026-09-10 取名事故修复）：Ark/DeepSeek V4 默认**开启思考**，
+  // max_tokens 会被 reasoning_content 吃满 → content 返回空串。需要完整 JSON 正文的
+  // 结构化调用（AI 取名推荐/命理解读等）必须显式传 'disabled'，否则调用方只能拿到
+  // 空内容、静默降级为本地兜底文案（实测：2048 tokens 全被思考吃掉，content 长度 0）。
+  // 路由层透传给 aiService.chat 的 options.thinking（aiService.ts:105 转成 {thinking:{type}}）。
+  thinking: z.enum(['enabled', 'disabled']).optional(),
   // .min(1) 对齐 agentChatSchema（2026-09-10 审查 P3：空串 petId 此前在路由内被静默跳过，
   // 提前到 schema 层拒绝，防御纵深）
   petId: z.string().min(1).optional(),
@@ -217,11 +223,43 @@ export const chatMessageSchema = z.object({
 
 // ===== 取名模块 =====
 
-/** 生成名字 */
-export const generateNameSchema = z.object({
+/**
+ * 取名推荐（POST /api/ai/naming/recommend）
+ *
+ * 2026-09-10 补挂：此接口此前**无任何请求体校验**（只有一个 `if (!species)`），
+ * 而 express.json 的 body 上限是 10MB —— 单次请求可把近 10MB 文本灌进付费 LLM，
+ * 构成成本 DoS 面。这里对齐同类接口的口径：所有自由文本限长、枚举强校验。
+ * 同时删除旧 `generateNameSchema`（字段为 petId/style 英文枚举，与实际接口完全不符、
+ * 全仓零引用，属死代码）。
+ */
+export const namingRecommendSchema = z.object({
+  species: z.enum(['cat', 'dog'], { error: 'species 必须是 cat 或 dog' }),
+  breed: z.string().max(50, 'breed 最长 50 字符').optional(),
+  gender: z.enum(['male', 'female', 'unknown']).optional(),
+  style: z.string().max(30, 'style 最长 30 字符').optional(),
+  count: z.coerce.number().int().min(1).max(10).optional(),
+});
+
+/** 取名解读（POST /api/ai/naming/interpret）：name 为用户输入，必须限长 */
+export const namingInterpretSchema = z.object({
+  name: z.string({ error: 'name 参数不能为空' }).trim().min(1, 'name 参数不能为空').max(20, 'name 最长 20 字符'),
+  species: z.enum(['cat', 'dog']).optional(),
+  breed: z.string().max(50, 'breed 最长 50 字符').optional(),
+  gender: z.enum(['male', 'female', 'unknown']).optional(),
+});
+
+/**
+ * 取名参考照片外貌提取（POST /api/naming/photo/appearance）
+ *
+ * photoUrl 复用回忆录照片同源的 SSRF 白名单（仅本站相对路径 /uploads/ 或本站域名），
+ * 避免用户传入内网地址让视觉链路变成探测通道。
+ * petId（2026-09-10 审查 P1 补）：本接口是**付费视觉调用**，必须做归属校验——
+ * 否则任何登录用户都能拿已知站内图片路径（如品牌预设头像）循环刷模型，与体检报告
+ * 识别/发图分析共用同一个视觉 key，滥用会外溢成其他付费视觉能力不可用。
+ */
+export const namingAppearanceSchema = z.object({
   petId: uuidSchema,
-  style: z.enum(['chinese', 'western', 'cute', 'cool', 'elegant']).default('chinese'),
-  gender: z.enum(['male', 'female', 'unknown']).default('unknown'),
+  photoUrl: memoirPhotoUrlSchema,
 });
 
 // ===== 症状初筛模块 =====
@@ -981,8 +1019,20 @@ export const createFeedingRecordSchema = z.object({
   notes: z.string().max(500, 'notes 最长 500 字符').nullable().optional(),
 });
 
-/** 更新喂养记录（全部字段可选） */
-export const updateFeedingRecordSchema = createFeedingRecordSchema.partial();
+/**
+ * 更新喂养记录（全部字段可选）
+ *
+ * ⚠️【2026-09-11 修复】不能直接 `createFeedingRecordSchema.partial()`：
+ *   `partial()` 只把字段变成可选，`amount` 上的 `.default(0)` **依然生效** ——
+ *   于是"只想改备注"的请求（body 里没有 amount）会被 zod 补成 `amount: 0`，
+ *   仓储层 `COALESCE($6, amount)` 拿到的是 0 而不是 NULL，**把用户原有的喂食量清零**。
+ *   （实测：`{date, notes}` → 解析结果 `{amount: 0, notes}`。）
+ *   这里显式把 amount 重定义为"纯可选"（无默认值），未传时保持 undefined →
+ *   仓储层 COALESCE 收到 NULL → 维持原值。
+ */
+export const updateFeedingRecordSchema = createFeedingRecordSchema.partial().extend({
+  amount: z.number({ error: 'amount 必须为数字' }).min(0, 'amount 不能为负').max(9999, 'amount 过大').optional(),
+});
 
 /** 喂养建议 AI 分析（会员专属）
  * 请求体 = 前端规则引擎产出的喂养画像；服务端注入宠物档案/喂养记录/记忆召回后调 LLM

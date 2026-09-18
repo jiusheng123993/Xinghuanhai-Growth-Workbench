@@ -56,11 +56,14 @@ export const uploadLimiter = rateLimit({
   },
 });
 
-/** 拍照识别品种：5次/分钟（每次=1 次付费视觉 LLM 调用，且本功能已铺到添加宠物流程，必须有独立限流防滥用） */
+/** 拍照识别品种：5次/分钟（每次=1 次付费视觉 LLM 调用，且本功能已铺到添加宠物流程，必须有独立限流防滥用）
+ *  skip: skipInTest（2026-09-10 审查 P2 补齐）：与其余限流器口径一致，
+ *  否则补该接口的集成测试时会因连发请求必然 429 flake（现有视觉接口测试靠 vi.mock 整个模块绕过）。 */
 export const aiRecognizeLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 5,
   keyGenerator,
+  skip: skipInTest,
   message: {
     success: false,
     code: '100003',
