@@ -3,6 +3,7 @@
  * 展示用户生成的分享卡片列表，支持生成新卡片和分享
  */
 import { useEffect, useState, useCallback } from 'react'
+import { useThemeClass } from '../../hooks/useThemeClass'
 import { View, Text, Image, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { shareCardService } from '../../services/shareCardService'
@@ -59,6 +60,19 @@ const TEMPLATES = [
 ]
 
 export default function ShareCardPage() {
+  /**
+   * 主题类名：**必须挂在页面自己的根节点上**
+   *
+   * 为什么：小程序端每个页面独立渲染，app 组件的 JSX 不包裹页面节点，挂在 app 层的
+   * `.theme-*` 传不进页面；不挂就会永远吃 styles/_theme.scss 里 page{} 的秋季基线变量。
+   *
+   * 【为什么本页还是挂了，而不是分享卡故意固定配色】本页没有任何 canvas / 导出逻辑，
+   * 真正分享出去的卡片是**服务端生成的图片**（`card_url`，见 services/shareCardService），
+   * 那段图片不受页面 CSS 变量影响；本页 scss 里那些 var(--*) 全部只作用于页面自己的
+   * 页头 / 筛选 / 生成面板 / 预览弹窗等交互外壳（见 index.scss 里「配色纠偏」那节注释），
+   * 不跟随主题反而会让这页跟宠物板块其它页脱节。故正常跟随。
+   */
+  const themeClass = useThemeClass()
   const [cards, setCards] = useState<ShareCardRow[]>([])
   const [activeTab, setActiveTab] = useState('全部')
   const [previewCard, setPreviewCard] = useState<ShareCardRow | null>(null)
@@ -148,7 +162,7 @@ export default function ShareCardPage() {
   const hasMore = cards.length < total
 
   return (
-    <View className='card-container'>
+    <View className={`card-container ${themeClass}`}>
       <PageBackground />
       {/* ===== 分享 hero 卡 ===== */}
       <View className='share-hero'>

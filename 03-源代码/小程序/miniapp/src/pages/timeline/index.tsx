@@ -1,42 +1,99 @@
 /**
  * 时光页面
- * 宠物时光线展示与回忆记录（打卡动态 + 真实回忆 pet_moments 合并成一条时间线）
- * 页面结构：固定顶部页头 + 可滚动时间线区域
+ *
+ * 【本页是什么】所有宠物共用的一本「时光线」：**只放用户自己记的回忆**
+ *   （pet_moments：手写的文字、拍下的照片、补记的历史日期），按同一条时间轴倒序排列、按月分组；
+ *   顶部另有速览数字与成就分区，页头有唯一写入口「记一条」。
+ *   【绝对不放进来的】任何由打卡数据自动生成的内容 —— 那些属于「打卡记录」，
+ *   主场是健康档案页 pagesPet/trends；判定标准见下面 2026-09-12 第 4b 波那一段。
  *
  * 2026-09-10 调整：回忆录类入口统一收口到「创作 → 回忆录馆」，
  * 本页原有的「回忆精选」三张卡（年度回忆/日常回忆录/纪念Vlog）已整体移除——
  * 后两个与回忆录馆的轻纪念/标准档完全重复，年度回忆则不重复、已迁入回忆录馆。
  * 本页职责收窄为：看时光线 + 记一条回忆。
  *
- * 2026-09-12（IA 第 2c 批）：原独立分包页「宠物日记」（成长日记）已并入本页。
- * 搬入的是 diary 页**独有**的视图 —— diaryEngine 生成的拟人化日记正文 + 6 档心情筛选；
- * 日记正文与页面上的打卡里程碑**共用同一次 checkinService 拉取结果**（见 loadTimelineData ④），
- * 保证同一屏里同一天的数据不会两套口径。
+ * 2026-09-12（IA 第 2c 批）：原独立分包页「宠物日记」（成长日记）曾并入本页 ——
+ * 搬入的是 diary 页**独有**的视图：diaryEngine 生成的拟人化日记正文 + 6 档心情筛选。
+ * ⚠️ 这一步在第 4b 波被推翻：并入的日记正文本身就是**打卡数据自动生成的**（不是用户记的），
+ * 它和心情筛选已整批搬到健康档案页的「打卡记录」分区（见下面 4b 那段）。
+ *
+ * 2026-09-12（高保真 v2 第 2 波 · 屏 02）：按 `02-timeline.png` 重排页面骨架。
+ * 对照原型后补上的两块（这正是本波任务书说的"5 块里 2 缺"）：
+ *   ① **「记一条」写入口**（原型里那条约占 10% 屏高的橙色渐变主 CTA）——
+ *      原实现把写入口塞在**滚动区最底部**（`.timeline-add-main-btn`），首屏根本看不见；
+ *      现在按原型提到页头正下方，是全页唯一写入口。
+ *   ② **「成就」展示分区**（原型把原「成就墙」独立页降级成时光页内的一个分区）——
+ *      原实现本页完全没有成就区。这里**不复用 `AchievementCard` 组件**（它是"单张纪念卡"，
+ *      与原型的两列 gtile 宫格不是一种东西），而是按 `ACHIEVEMENT_TYPES.streak_7/30/100`
+ *      这套既有成就定义，用**真实打卡数据**渲染进度格子（见 buildCheckinSummary）。
+ *      2026-09-12 收口批次：`pagesPet/achievement`（成就墙独立页）已按同一口径**真正删除**
+ *      （页面 + app.config 注册项 + 我的页菜单项），成就从此只有本页这一个展示位。
+ * 另外按原型补上：**按月分组的月份小标题**（`2026 年 9 月` + 该月条数）与**页头右侧的宠物档案圆钮**。
+ *
+ * 2026-09-12（第 4 波 · 时光线与打卡记录拆分）——用户原话：
+ *   「宠物日记和时光是一种东西，你区分错了。真正有问题的是 打卡记录和日记/时光不是一个东西，你塞在一起了」
+ * 这一步**做对了**什么：打卡的原始明细（大便/小便/食欲/精神/体重）整批搬去健康档案页，
+ * `TimelineEvent.type === 'milestone'` 那批从此既不生成也不渲染。
+ * 这一步**做错了**什么：把日记正文也塞进了这条流（见下一段）。
+ *
+ * 2026-09-12（第 4b 波 · 本页最终口径）——用户看完第 4 波成果后的原话：
+ *   「你的打卡记录怎么全部归类到时光了　吃得好睡得好这个全部都是打卡的吧？？　我哪有填了那么多时光」
+ * 【核实结论】第 4 波留在时光线上的那些「今天吃得香睡得香，是快乐的一天～」，是
+ * diaryService → diaryEngine 按**每条打卡 1:1 自动生成**的正文 —— 用户从来没有记过它们。
+ * 它们是打卡数据的另一副面孔，却被当成"用户记的内容"摆在了这一页上，这正是用户看到的那一幕。
+ * 【本次改动】
+ *   ① **日记卡整批移出本页**：自动生成的正文与 6 档心情筛选搬到健康档案页（pagesPet/trends）
+ *      的「打卡记录」分区 —— 每句正文跟着它自己那条打卡显示，并在界面上写明句子来源；
+ *   ② **本页只剩「用户自己记的回忆」**：照片回忆（pet_moments）+ 用户点过「添加到时光线」的
+ *      旧时光提醒（后者只来自宠物档案里用户自己填的日期，判断依据见 findFlashbackMemory 注释）；
+ *   ③ **页头/速览/成就的数字跟着屏幕改口径**：每个数字按什么算，逐条写在
+ *      buildTimelineSummary 与各自注释里（不许出现"数字与列表对不上"）。
+ * 【自查标准】打开本页，每一张卡片都必须能回答"这是用户自己记的"。
+ *
+ * 【页面骨架（第 4b 波后的顺序）】固定顶部条（「时光」+ N 天的记录 + 档案钮）
+ *   → 滚动区：品牌插画横幅 →「记一条」CTA → 时光速览（真实数字）→ 旧时光横幅
+ *   → 按月分组的时光线（**只剩用户回忆**）→ 成就 → 底部呼吸位。
  */
 import { View, Text, ScrollView, Image, Textarea, Picker } from '@tarojs/components'
 import Taro, { useDidShow, useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useThemeClass } from '../../hooks/useThemeClass'
-import { useAnalytics } from '../../hooks/useAnalytics'
+// 【已移除】useAnalytics：本页原来只有「分享这篇日记」一处埋点（share_diary），
+// 日记卡随第 4b 波搬去健康档案页后，本页不再产生任何埋点事件，这个 hook 一并撤掉。
+// 登录态 + 页面级登录守卫（2026-09-12 补齐「时光没有绑定登录」）：
+// 本页此前既没有 import authStore、也没有 import authGuard，是四个 tab 页里唯一漏掉守卫的一页
+// —— 复核结论与「为什么本页此前没有」写在组件里那段 guard 注释中。
+import { useAuthStore } from '../../stores/authStore'
 import { usePetStore } from '../../stores/petStore'
 import { getCheckins } from '../../services/checkinService'
 import { timelineService } from '../../services/timelineService'
-// 2026-09-12 IA 第 2c 批：diary 页并入本页后，日记正文改由这里生成
-// （diaryService → engines/petAvatar/diaryEngine，正是原页面的核心资产）
-import { generateDiaryFromEntries, type DiaryRecord } from '../../services/diaryService'
+// 【已移除】diaryService（generateDiaryFromEntries / DiaryRecord）：
+// 第 4b 波把自动生成的日记正文整批搬到健康档案页（pagesPet/trends），本页不再生成它。
+// diaryService 与 diaryEngine 本身没有孤儿化，只是换了消费方（趋势页「打卡记录」分区）。
 import { resolveAvatarUrl } from '../../services/api'
 import { CONFIG } from '../../config'
 import { storage } from '../../utils/storage'
 import { chooseImageWithPrivacy } from '../../utils/privacy'
+import { redirectToLoginIfNeeded } from '../../utils/authGuard'
 import { localMonthDay, parseLocalDate, formatPetAge, localDateString } from '../../utils/date'
 import { detectPetsInText, toPetTags } from '../../utils/petMatching'
 import type { PetProfile } from '../../services/petService'
 import type { PetHealthEntry } from '../../memory-body/types/memoryBodyTypes'
 import type { PetMoment } from '../../types/familyTypes'
-import type { DiaryTone } from '../../types/avatarTypes'
+// 【已移除】DiaryTone：心情筛选（TONE_FILTERS + 心情色板）随日记正文一起搬到趋势页。
 import './index.scss'
-import { Icon, EmptyState, PageHero } from '../../components'
+import { Icon, EmptyState, PageHero, Illustration } from '../../components'
 import PageBackground from '../../components/PageBackground'
+// 成就名称/图标的出处（constants 里的 ACHIEVEMENT_TYPES）：
+// 本页「成就」分区要写成就名（如「坚持一周」）与档位图标，自己另抄一份必然与常量漂移
+// （同一句文案几处各写各的正是本项目反复踩过的坑）。
+// ⚠️ 2026-09-12：第一格的**图标位已按 v2 屏 02 改成插画**（key `empty-achievement`），
+//   但 `icon` 字段仍在用 —— 它被压在插画底下当**加载失败时的兜底**（详见成就分区注释）。
+// ⚠️ 2026-09-12 收口批次：「成就墙」独立页（pagesPet/achievement）已整页下线，
+//   本页因此成了 constants 这份 ACHIEVEMENT_TYPES 的**唯一消费方**；
+//   打卡弹层 / 疫苗弹层 / 成就分享卡走的是 component 层的**另一套同名定义**
+//   `components/AchievementCard` 的 `ACHIEVEMENT_DEFS`（字段一致、值各写各的），改文案别只改一处。
+import { ACHIEVEMENT_TYPES } from '../../constants'
 // 自定义 tabBar 的选中态广播 hook（本页 = tabBar 第 2 项，路径写错 tsc 直接报错）
 import { useTabBarSelected } from '../../constants/tabBar'
 // 【已移除】PetSwitcher：共用回忆录改造后本页不再"按宠物分类"的切换条（2026-09-11）
@@ -45,7 +102,24 @@ interface TimelineEvent {
   id: string
   date: string
   title: string
-  type: 'milestone' | 'memory' | 'ghost' | 'flashback'
+  /**
+   * 事件类型
+   *
+   * 【为什么没有 'milestone'（2026-09-12 第 4 波）】原先打卡会在这条线上生成
+   * 「体重记录：5kg」「日常记录」这类**里程碑**卡片（type 'milestone'）。用户指出
+   * 打卡记录和日记/时光不是一个东西、不该塞在一起 —— 打卡的明细（大便/小便/食欲/精神/体重）
+   * 已搬到健康档案页（pagesPet/trends）的「打卡记录」分区，所以里程碑从此既不生成也不渲染。
+   * 类型里一并删掉 'milestone'，避免有人再塞一条回到这条流上。
+   * 注：'ghost' 是历史遗留类型（当前全仓没有任何地方产出它），保留是为了不动既有判断逻辑。
+   *
+   * 【三类事件的数据来源（第 4b 波自查用）】
+   *   · 'memory'    —— 用户手记的真实回忆（pet_moments 表），**用户自己记的**；
+   *   · 'flashback' —— 「N 年前的今天」旧时光提醒，来自宠物档案里用户自己填的日期
+   *                   （生日 / 建档日）；由打卡数据派生出来的那几支已在第 4b 波全部删除，
+   *                   判断依据见 findFlashbackMemory 的注释；
+   *   · 'ghost'     —— 历史遗留类型，当前没有任何产出方（保留只为不动既有判断逻辑）。
+   */
+  type: 'memory' | 'ghost' | 'flashback'
   emoji: string
   photos: string[]
   description: string
@@ -57,7 +131,7 @@ interface TimelineEvent {
    *
    * 本页从"按当前宠物分开"改成"所有宠物共用一条时间线"之后，
    * 卡片上必须能看出"这是谁的回忆"——否则多宠家庭的列表会分不清归属。
-   * 系统生成的里程碑（生日/建档/体重…）与用户手记的回忆都会带上这三个字段。
+   * 用户手记的回忆会带上这三个字段（旧时光提醒的文案里已含宠物名，不带归属字段）。
    */
   petId?: string
   petName?: string
@@ -65,7 +139,7 @@ interface TimelineEvent {
   /**
    * 这条回忆关联的**全部宠物**（多宠共同回忆，一只以上时有值）
    *
-   * 来自服务端写入的 `content.pets`；系统里程碑与单宠回忆只有上面三个单值字段。
+   * 来自服务端写入的 `content.pets`；单宠回忆只有上面三个单值字段。
    * 卡片按它渲染多枚标签（同一条回忆可以是「🐱 烧鸡」「🐕 烧鸭」共同的）。
    */
   petTags?: { id: string; name: string; emoji: string }[]
@@ -79,56 +153,76 @@ interface FlashbackMemory {
 }
 
 /**
- * 时光线上的「宠物日记」条目（2026-09-12 IA 第 2c 批并入）
+ * 本页顶部速览与成就分区用到的真实计数（2026-09-12 v2 屏 02 引入，第 4b 波改口径）
  *
- * 复用 diaryService 的 DiaryRecord（日期 + 日记正文 + 来源打卡记录），
- * 额外补上宠物归属三件套 —— 本页是「所有宠物共用一本回忆录」，
- * 卡片上必须能看出这篇日记是谁的（与时间线卡片的宠物标签同一套做法）。
+ * 【为什么要有这个类型】页头副标题写「N 天的记录」、速览第四格写「打卡天数」、
+ * 成就分区写「连续打卡第 N 天」「本月新增 N 张」。这些数字**必须由真实数据现算**
+ * （不许塞假数据），且都出自 loadTimelineData 那一次 `getCheckins` / `getMoments` 的结果
+ * —— 所以统一收成一个 state，免得页面上几处各算一遍、口径还会飘。
+ *
+ * 【第 4b 波为什么把字段整批换名】改前这个类型叫 CheckinSummary，混装了打卡数字与
+ * 「时光线条数」。日记离开时光线后本页屏幕上的内容只剩用户回忆，
+ * 于是每个字段第一次必须回答"它数的是打卡，还是用户记的回忆"——
+ * 与其在旧名字底下偷偷改语义，不如按口径重新起名（见下面每个字段的注释）。
+ *
+ * 【为什么不用 checkinService.getCheckinStats】那个函数只读**本地缓存**（不联网），
+ * 冷启动/换设备时会是空的，而本页手里已经有刚联网拉回来的完整打卡数组。
+ * 它的 streak 算法已在本文件里逐行照做（去重日期 + 从今天往回逐日比对），
+ * 保证本页与打卡页/首页那套口径不会出现"两个连续天数"。
  */
-interface TimelineDiaryRecord extends DiaryRecord {
-  /** 属于哪只宠物（多宠共用一本时靠它区分归属） */
-  petId: string
-  petName: string
-  petEmoji: string
+interface TimelineSummary {
+  /**
+   * 用户回忆（pet_moments）覆盖的**天数**（按本地日历日去重）—— 页头「N 天的记录」用它
+   *
+   * 【第 4b 波改口径】改前这里数的是**打卡天数**：一个天天打卡、从没写过回忆的用户
+   * 会看到页头写着「30 天的记录」，而下面的列表是空的 —— 数字与列表直接对不上。
+   * 现在数的是屏幕上那些卡片覆盖的天数，口径与列表一致（为 0 时页头不渲染这行文案）。
+   */
+  memoryDays: number
+  /**
+   * 有打卡记录的天数（按本地日历日去重，多宠合并算一天）—— 速览「打卡天数」那一格用它
+   *
+   * 【打卡口径，故意同屏保留】它是**打卡**的数字，不跟时光线走：本页速览与成就区一直
+   * 承担顺带看一眼坚持情况的职责（成就第一格就是连续打卡），
+   * 打卡明细则在健康档案页的「打卡记录」分区 —— 两处同源（同一次 getCheckins），数字不会打架。
+   */
+  checkinDays: number
+  /** 连续打卡天数（从今天往回数，与 checkinStore/checkinService 同算法）—— 成就第一格用它 */
+  streak: number
+  /** 本月用户回忆覆盖的天数（按本地日历日去重）—— 成就第二格的副行「本月新增 N 条记录」 */
+  monthMemoryDays: number
+  /** 本月用户回忆里的真实照片张数 —— 成就第二格的主标题「N 张照片」 */
+  monthPhotos: number
+}
+
+/** TimelineSummary 的初值（未登录 / 什么都还没拉到时用它，页面不渲染 0 值格子） */
+const EMPTY_TIMELINE_SUMMARY: TimelineSummary = {
+  memoryDays: 0,
+  checkinDays: 0,
+  streak: 0,
+  monthMemoryDays: 0,
+  monthPhotos: 0,
 }
 
 /**
- * 心情色板（随 2026-09-12 并入的 diary 页原样搬入）
+ * 折线「连续打卡」成就的档位（7 / 30 / 100 天）
  *
- * 这五个色是**心情语义色**（开心/平静/疲惫/不舒服/骄傲），不是主题色：
- * 换主题时心情的颜色本身不该跟着变，所以刻意保留 hex、没有改成 var(--*)。
+ * 名字与图标一律取自 constants 的 ACHIEVEMENT_TYPES，**不另抄一份文案**：
+ * （上面那段 import 注释已说明：component 层还有一套同义的 `ACHIEVEMENT_DEFS` 供打卡/疫苗弹层用，
+ *   两套都在；这里引的是 constants 那份，别串了。）
+ * `icon` 现在有两个用途：第一格压在主插画底下当降级兜底（见成就分区注释），
+ * 其余档位切换时也仍是同一条数据源，所以展开写法保持不变。
  */
-const TONE_COLORS: Record<string, string> = {
-  happy: '#52C41A',
-  neutral: '#8C8C8C',
-  tired: '#FAAD14',
-  sick: '#FF4D4F',
-  proud: '#FF8C42',
-}
+const STREAK_ACHIEVEMENTS = [
+  { key: 'streak_7', days: 7, ...ACHIEVEMENT_TYPES.streak_7 },
+  { key: 'streak_30', days: 30, ...ACHIEVEMENT_TYPES.streak_30 },
+  { key: 'streak_100', days: 100, ...ACHIEVEMENT_TYPES.streak_100 },
+] as const
 
-/** 心情中文名（筛选胶囊与卡片角标共用，避免同一套文案两处各写各的） */
-const TONE_LABELS: Record<string, string> = {
-  happy: '开心',
-  neutral: '平静',
-  tired: '疲惫',
-  sick: '不舒服',
-  proud: '骄傲',
-}
-
-/**
- * 6 档心情筛选（全部 + 5 种心情）—— diary 页原有能力，原样保留
- *
- * key 用 DiaryTone 收口：diaryEngine 将来新增心情时，这里漏加会被 tsc 直接报出来。
- */
-const TONE_FILTERS: { key: DiaryTone | 'all'; label: string }[] = [
-  { key: 'all', label: '全部' },
-  { key: 'happy', label: '开心' },
-  { key: 'neutral', label: '平静' },
-  { key: 'tired', label: '疲惫' },
-  { key: 'sick', label: '不舒服' },
-  { key: 'proud', label: '骄傲' },
-]
-
+// 【已移除】心情色板 TONE_COLORS / 中文名 TONE_LABELS / 6 档筛选 TONE_FILTERS：
+// 它们是「日记正文」的配套设施（筛的是 diaryEngine 算出来的心情档位），
+// 2026-09-12 第 4b 波随日记正文一起搬到健康档案页（pagesPet/trends）的「打卡记录」分区。
+// 留在这里只会是一组没人读的常量，且会误导后来人以为本页还能按心情筛。
 /**
  * 本地日期字符串（YYYY-MM-DD）
  *
@@ -164,10 +258,217 @@ function getLocalDateString(d: Date = new Date()): string {
   return `${y}-${m}-${day}`
 }
 
-function findFlashbackMemory(
-  pet: PetProfile | null,
-  entries: PetHealthEntry[],
-): FlashbackMemory | null {
+// 【已移除】isWithinLast7Days（判断"本周"）：它只服务于第 4 波版 TimelineSummary 里的 weekDays，
+// 而 weekDays 这个数字全页面没有任何一处渲染（页头写的是"N 天的记录"，速览写的是"打卡天数"）。
+// 第 4b 波按"只留屏幕上真在用的数字"的口径清理：该字段与该函数一并删除。
+/**
+ * 这一天是否落在「本月」内（本地日历月）
+ * @param dateStr - YYYY-MM-DD
+ * @param todayStr - 今天（YYYY-MM-DD），由调用方统一取一次，避免函数内多次 new Date 跨零点
+ */
+function isInCurrentMonth(dateStr: string, todayStr: string): boolean {
+  return dateStr.slice(0, 7) === todayStr.slice(0, 7)
+}
+
+/**
+ * 连续打卡天数（从今天往回逐日比对）
+ *
+ * 【算法与 checkinService.calculateLocalStats / checkinStore.fetchCheckins 完全一致】
+ * 那两处是"打卡页 / 首页"的数字来源，本页若另写一套就会出现同一用户
+ * 「时光说连续 5 天、首页说连续 6 天」。所以这里逐行照做：
+ * 去重日期 → 倒序 → 从今天起每命中一天就把游标往前挪一天，断链即停。
+ *
+ * ⚠️ 游标必须用 parseLocalDate（按本地时区解析），不能用 `new Date(dateStr)`
+ * —— 后者按 UTC 解析 "YYYY-MM-DD"，东八区会整体偏一天（本仓 2026-09-11 修过这个坑）。
+ *
+ * @param entries - 全部宠物的打卡记录（本函数内部自己去重日期，多宠同一天只算一天）
+ * @returns 连续天数；今天没打卡就是 0
+ */
+function calcStreakFromEntries(entries: PetHealthEntry[]): number {
+  const sortedDates = Array.from(new Set(entries.map(entryDateStr).filter((d) => d !== ''))).sort().reverse()
+  const cursor = parseLocalDate(new Date())
+  if (!cursor) return 0
+  let streak = 0
+  for (const dateStr of sortedDates) {
+    const expected = getLocalDateString(cursor)
+    if (dateStr === expected) {
+      streak++
+      cursor.setDate(cursor.getDate() - 1)
+    } else {
+      break
+    }
+  }
+  return streak
+}
+
+/**
+ * 选出「当前该展示的那一档连续打卡成就」（v2 屏 02 成就分区的第一格）
+ *
+ * 规则（三档 7/30/100 天）：
+ *   · 还没达标最早那一档 → 返回最早未达标档（卡片显示「还差 N 天」）；
+ *   · 已过某档、还没到下一档 → 返回下一档（同样显示「还差 N 天」）；
+ *   · 三档全达成 → 返回最后一档，卡片显示「已达成」。
+ *
+ * ⚠️ 不返回 null：原型里这一格是**常驻**的（哪怕连续 0 天也显示距离 7 天还差几天），
+ * 返回 null 会让成就区在大多数用户那里直接少一格。
+ *
+ * @param streakDays - 当前连续打卡天数（真实值）
+ */
+function pickStreakAchievement(streakDays: number) {
+  for (const item of STREAK_ACHIEVEMENTS) {
+    if (streakDays < item.days) return item
+  }
+  // 三档全达成：返回最后一档（100 天）
+  return STREAK_ACHIEVEMENTS[STREAK_ACHIEVEMENTS.length - 1]
+}
+
+/**
+ * 从本次拉取到的真实数据里算出页头 / 速览 / 成就需要的计数（第 4b 波重写）
+ *
+ * 【每个数字按什么算 —— 逐条写明，屏幕上的每个数字都能在这里对上】
+ *   · memoryDays      = 用户回忆覆盖的**天数**（events 里能解析出 YYYY-MM-DD 的日期去重）
+ *                       → 页头副标题「N 天的记录」
+ *   · checkinDays     = 有打卡记录的**天数**（逐只宠物的 entries 日期去重）
+ *                       → 速览第四格「打卡天数」
+ *   · streak          = 连续打卡天数（算法与 checkinService 一致）
+ *                       → 成就第一格「已连续 N 天 · 还差 M 天」
+ *   · monthMemoryDays = 本月用户回忆覆盖的天数（去重）
+ *                       → 成就第二格副行「本月新增 N 条记录」
+ *   · monthPhotos     = 本月用户回忆里的真实照片张数
+ *                       → 成就第二格主标题「N 张照片」
+ *
+ * 【第 4b 波改口径的两处，都是为了不许数字与列表对不上】
+ *   ① memoryDays 是新增的：改前页头借的是**打卡天数**，于是天天打卡、从没写回忆的用户
+ *      会看到页头写「30 天的记录」而下面一张卡都没有；
+ *   ② monthMemoryDays / monthPhotos 改吃 events（用户回忆），不再吃原来那份混排 feed ——
+ *      日记已经离开本页，再把它算进本月新增就是拿屏幕上看不见的东西充数。
+ *
+ * 【为什么本页还保留打卡口径的数字】速览的「打卡天数」与成就第一格的「连续 N 天」都有
+ * 明确自己的标签，且与健康档案页「打卡记录」同源（同一次 getCheckins）—— 用户在这一页
+ * 顺带看一眼坚持情况，不等于把打卡内容混进时光线；真正会误导人的是没有标签的打卡内容。
+ *
+ * @param perPetEntries - 每只宠物的打卡记录（loadTimelineData 里那一次拉取的结果）
+ * @param events - 时光线上的全部卡片（用户回忆 + 已加入的旧时光提醒）
+ * @returns TimelineSummary
+ */
+function buildTimelineSummary(
+  perPetEntries: { entries: PetHealthEntry[] }[],
+  events: TimelineEvent[],
+): TimelineSummary {
+  const todayStr = getLocalDateString()
+  const allEntries = perPetEntries.flatMap((p) => p.entries)
+  // 按本地日历日去重：天数要的是天数，同一天补记 3 次仍算 1 天
+  // （与 checkinService 的 totalDays / monthlyDays 同一口径）
+  const checkinDates = Array.from(new Set(allEntries.map(entryDateStr).filter((d) => d !== '')))
+
+  // 回忆的日期：只认 YYYY-MM-DD。旧时光那条是「N 年前」文案，匹配不上这个正则，
+  // 会被自然排除在天数之外 —— 它本来也不代表某个具体日历日。
+  const memoryDates = events.map((e) => e.date).filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+  // 本月：同一条正则的边界在这里由 isInCurrentMonth 兜住（'N年前'.slice(0,7) 不等于本月前缀）
+  const monthEvents = events.filter((e) => isInCurrentMonth(e.date, todayStr))
+
+  return {
+    memoryDays: new Set(memoryDates).size,
+    checkinDays: checkinDates.length,
+    streak: calcStreakFromEntries(allEntries),
+    monthMemoryDays: new Set(monthEvents.map((e) => e.date)).size,
+    monthPhotos: monthEvents.reduce((sum, e) => sum + e.photos.length, 0),
+  }
+}
+/**
+ * 把 YYYY-MM-DD 显示成「9 月 12 日」
+ *
+ * 【为什么不用 event.date 原文】卡面上的日期原来直接显示 `2026-09-11`，
+ * 一列卡片看下来全是 ISO 串、读起来费劲；原型卡面上写的是「今天 09:12」「9 月 8 日」。
+ * 这里只做月/日（年份已经在分组的月份标题上写着了，卡面再写一遍是噪音）。
+ *
+ * @param dateStr - YYYY-MM-DD；不是这个格式时原样返回（旧时光那种「N年前」文案）
+ * @param todayStr - 今天，用来把当天显示成「今天」（原型写法）
+ */
+function formatCardDate(dateStr: string, todayStr: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr
+  if (dateStr === todayStr) return '今天'
+  return `${Number(dateStr.slice(5, 7))} 月 ${Number(dateStr.slice(8, 10))} 日`
+}
+
+/**
+ * 取某条事件的分月键（'YYYY-MM' 或 'undated'）
+ *
+ * 与 groupEventsByMonth 的分组规则保持同一口径（那边是按日期串切前 7 位）。
+ * 「N 年前」这种非日期文案（flashback 的 date）一律归 'undated'，
+ * 分组时它会被放进「旧时光」那一组，而不是凭空造一个「N年前 月」的标题。
+ */
+function timelinePeriodOf(event: TimelineEvent): string {
+  return /^\d{4}-\d{2}/.test(event.date) ? event.date.slice(0, 7) : 'undated'
+}
+
+/**
+ * 把日期映射成可直接字典序比较的串（用于时光线排序）
+ *
+ * 【为什么要这一步】旧时光条目的 date 是「3年前」这种文案，直接 localeCompare
+ * 会把它和 'YYYY-MM-DD' 混在一起比出奇怪的结果。这里把认不出日期的统一映射成
+ * '9999-99-99'：等价于「最旧的一条」，稳定地排在时间轴末尾，与分组里
+ * 「旧时光」永远垫底的表现一致。
+ *
+ * @param dateStr - 事件的 date 字段
+ */
+function sortableDate(dateStr: string): string {
+  return /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? dateStr : '9999-99-99'
+}
+
+/**
+ * 按月分组（第 4b 波：从"吃混排 feed"退回只吃事件数组）
+ *
+ * 【为什么退回】第 4 波把分组写成吃 TimelineFeedItem，是因为时间轴上混进了第二类条目
+ * （日记）；第 4b 波日记整批撤走后，这条流上只剩一类东西 —— 用户回忆（含旧时光提醒），
+ * 留着判别联合加 keep 回调（心情筛选）就成了"只有一个分支的抽象"加"永远返回 true 的参数"，
+ * 属于典型死代码。现在按最朴素的写法只吃 TimelineEvent[]。
+ *
+ * 【月份标签与旧时光组】与改前完全一致：'YYYY-MM' 的标签写成「2026 年 9 月」
+ * （月份去掉前导零），认不出月份的（flashback 的「N 年前」）归到「旧时光」组。
+ *
+ * @param events - 已排序的事件（新的在前；「N 年前」那条已被 sortableDate 垫到最后）
+ */
+function groupEventsByMonth(
+  events: TimelineEvent[],
+): { key: string; label: string; count: number; items: TimelineEvent[] }[] {
+  const groups: { key: string; label: string; count: number; items: TimelineEvent[] }[] = []
+  for (const event of events) {
+    const ym = timelinePeriodOf(event)
+    const year = ym === 'undated' ? '' : ym.slice(0, 4)
+    const label = ym === 'undated' ? '旧时光' : `${year} 年 ${Number(ym.slice(5, 7))} 月`
+    const last = groups[groups.length - 1]
+    if (last && last.key === ym) {
+      last.items.push(event)
+      last.count += 1
+    } else {
+      groups.push({ key: ym, label, count: 1, items: [event] })
+    }
+  }
+  return groups
+}
+/**
+ * 「N 年前的今天」旧时光提醒 —— 数据来源逐个核对（2026-09-12 第 4b 波的重点之一）
+ *
+ * 【为什么要逐个核对】用户的要求是时光里每一张卡都要能回答『这是我自己记的』，
+ * 而这条提醒是**系统按日期算出来**的，所以必须先看清它吃的每个字段是谁的数据：
+ *   · pet.birthDate —— **宠物档案里用户自己填的生日** → 保留；
+ *   · pet.createdAt —— 宠物档案的建档时间（用户把这只毛孩子加进 App 的那天）→ 保留：
+ *     它同样来自档案本身，不是打卡算出来的；
+ *   · entries（打卡记录）—— 原实现还有三支：紧急预警「渡过难关」、打卡备注「往日时光」、
+ *     体重「体重记录」。这三支**全部来自 pet_health_entries**，正是这一波要清掉的东西：
+ *     它们会在时光线上凭空造出用户没记过的内容（体重/预警都是打卡数据）。
+ *     备注那一支原文虽然是用户写的，但它就是**打卡记录里的备注**，归宿是健康档案页
+ *     「打卡记录」分区（那里本来就逐条显示 note），所以整支一并删除、内容没丢。
+ * 【结论】现在只剩「生日 / 加入家庭」两支，且只在月日正好对上今天时才会出现 ——
+ * 两者都是用户自己填进档案的日期，符合本页的口径。
+ *
+ * ⚠️ 提醒不等于记录：用户点过「添加到时光线」之后（flashbackAdded）它才成为一张卡片。
+ *
+ * @param pet - 宠物档案（生日与建档时间都取自这里）
+ * @returns 命中的提醒文案；没有则 null
+ */
+function findFlashbackMemory(pet: PetProfile | null): FlashbackMemory | null {
   if (!pet) return null
 
   const today = new Date()
@@ -204,137 +505,18 @@ function findFlashbackMemory(
     }
   }
 
-  if (entries.length > 0) {
-    const sameDayEntries = entries.filter(e => {
-      const d = entryDateStr(e)
-      const md = getMonthDay(d)
-      const year = parseInt(d.slice(0, 4))
-      return md === todayMD && year < currentYear
-    })
-
-    if (sameDayEntries.length > 0) {
-      sameDayEntries.sort((a, b) => entryDateStr(b).localeCompare(entryDateStr(a)))
-      const bestEntry = sameDayEntries[0]
-      const entryYear = parseInt(entryDateStr(bestEntry).slice(0, 4))
-      const yearsAgo = currentYear - entryYear
-
-      if (bestEntry.riskLevel === 'emergency') {
-        return {
-          title: '渡过难关',
-          emoji: '💪',
-          description: `${yearsAgo}年前的今天，${pet.name}经历了一次健康预警。现在它很健康，感谢你的悉心照顾。`,
-          yearsAgo,
-        }
-      }
-
-      if (bestEntry.note) {
-        return {
-          title: '往日时光',
-          emoji: '💭',
-          description: `${yearsAgo}年前的今天，你记录了：${bestEntry.note.length > 30 ? bestEntry.note.slice(0, 30) + '...' : bestEntry.note}`,
-          yearsAgo,
-        }
-      }
-
-      if (bestEntry.weight !== undefined && bestEntry.weight !== null) {
-        return {
-          title: '体重记录',
-          emoji: '⚖️',
-          description: `${yearsAgo}年前的今天，${pet.name}的体重是${bestEntry.weight}kg`,
-          yearsAgo,
-        }
-      }
-    }
-  }
-
+  // 【第 4b 波删除】原来这里还有一段翻打卡记录找去年的今天：
+  // 紧急预警 / 打卡备注 / 体重三支，全部由 pet_health_entries 派生。判断依据见函数头注释。
   return null
 }
 
-function generateTimelineFromData(pet: PetProfile | null, entries: PetHealthEntry[]): TimelineEvent[] {
-  const events: TimelineEvent[] = []
-
-  if (pet) {
-    const birthday = pet.birthDate
-    if (birthday) {
-      // 年龄文案统一走 utils/date（2026-09-11 审查 P1-1）：
-      // 原实现是 `Math.floor(毫秒差 / 365.25天)` 只保留「岁」、且用 new Date('YYYY-MM-DD')（UTC 解析），
-      // 结果同一只宠物会出现"时光线说 2 岁、宠物档案说 2岁11个月"——全站最后第二处异口径。
-      const ageText = formatPetAge(birthday)
-      events.push({
-        id: 'milestone-birth',
-        date: birthday,
-        title: `${pet.name}的生日`,
-        type: 'milestone',
-        emoji: '🎂',
-        photos: [],
-        description: `来到这个世界的第一天${ageText ? `，现在已经${ageText}了` : ''}`,
-      })
-    }
-
-    const createdAt = pet.createdAt || ''
-    if (createdAt && (!birthday || createdAt.slice(0, 10) !== pet.birthDate.slice(0, 10))) {
-      events.push({
-        id: 'milestone-adopt',
-        // 只取本地日历日（YYYY-MM-DD）：createdAt 是带时间的 ISO 串，
-        // 直接塞进 date 会让卡片上显示成「2024-08-20T02:00:00.000Z」（2026-09-11 出图时发现）。
-        // 同时复用 localDateString（本地零点解析），与全站日期口径一致。
-        date: localDateString(createdAt) || createdAt.slice(0, 10),
-        title: '加入家庭的第1天',
-        type: 'milestone',
-        emoji: '🏠',
-        photos: [],
-        description: `欢迎${pet.name}成为家庭的一员`,
-      })
-    }
-  }
-
-  const sortedEntries = [...entries].sort((a, b) => {
-    const aDate = entryDateStr(a)
-    const bDate = entryDateStr(b)
-    return bDate.localeCompare(aDate)
-  })
-
-  const recentEntries = sortedEntries.slice(0, 6)
-  for (const entry of recentEntries) {
-    const dateStr = entryDateStr(entry)
-    const note = entry.note || ''
-
-    if (entry.riskLevel === 'emergency') {
-      events.push({
-        id: `memory-${entry.id}`,
-        date: dateStr,
-        title: '健康预警',
-        type: 'memory',
-        emoji: '🚨',
-        photos: [],
-        description: note || '检测到紧急健康信号，请关注宠物状态',
-      })
-    } else if (entry.weight !== undefined && entry.weight !== null) {
-      events.push({
-        id: `memory-${entry.id}`,
-        date: dateStr,
-        title: `体重记录：${entry.weight}kg`,
-        type: 'memory',
-        emoji: '⚖️',
-        photos: [],
-        description: note || '定期体重监测',
-      })
-    } else if (note) {
-      events.push({
-        id: `memory-${entry.id}`,
-        date: dateStr,
-        title: '日常记录',
-        type: 'memory',
-        emoji: '📝',
-        photos: [],
-        description: note,
-      })
-    }
-  }
-
-  return events
-}
-
+// 【已删除】generateTimelineFromData（打卡记录 → 时光线事件）：
+// 第 4 波它已经退化成"恒返回空数组"的占位实现，当时的理由是"调用点还要靠它完成
+// 逐只宠物拉打卡的 IO"—— 但实际调用点（loadTimelineData ②）是自己直接调 getCheckins 的，
+// 这个函数**从头到尾没有任何调用方**（第 4b 波用全仓检索复核过）。
+// 留着一个没有调用方、又恒返回 [] 的函数，只会让后来人以为时光线上还有系统生成的卡片，
+// 所以本波直接删掉；打卡数据的 IO 仍在 loadTimelineData 里，一行没少。
+//
 /**
  * 真实回忆（pet_moments）→ 时间线事件
  * 用户手动添加的回忆帖是时光线的核心内容，必须展示（原实现漏加载导致"打不开"）
@@ -380,51 +562,47 @@ function momentToTimelineEvent(moment: PetMoment): TimelineEvent {
   }
 }
 
-/**
- * 给某只宠物生成的系统事件统一打上「宠物归属」（共用回忆录改造）
- *
- * 【为什么 id 要加宠物前缀】`generateTimelineFromData` 产出的事件 id 是
- * `milestone-birth` / `milestone-adopt` / `memory-<entryId>` 这类**不含宠物**的 id；
- * 多宠合并进同一条时间线后，每只宠物都会有一个 `milestone-birth` ——
- * 直接用会撞 React key（列表错乱），所以统一加上 `${petId}-` 前缀。
- *
- * @param events - 单只宠物的事件
- * @param pet - 该宠物档案（取名字与物种 emoji）
- */
-function tagPetEvents(events: TimelineEvent[], pet: PetProfile): TimelineEvent[] {
-  const petEmoji = pet.species === 'cat' ? '🐱' : pet.species === 'dog' ? '🐕' : '🐾'
-  return events.map((event) => ({
-    ...event,
-    id: `${pet.id}-${event.id}`,
-    petId: pet.id,
-    petName: pet.name,
-    petEmoji,
-  }))
-}
+// 【已删除】tagPetEvents（给单只宠物的事件补归属 + id 加宠物前缀）：
+// 第 4 波它就已经没有调用点了（当时被以后可能还要用的理由保留下来）。
+// 第 4b 波复核：本页唯一还会新增事件的地方是 momentToTimelineEvent —— 它拿到的回忆
+// 自带服务端写入的 content.pets 归属，id 本身就是 `moment-<id>` 全局唯一，不经过这里。
+// 按只被本页用到、又没人用的就删干净的口径一并删除；将来真要重做系统事件，
+// 需要的是重新设计归属与 id 规则，而不是这段为旧结构写的映射。
+//
 
 export default function TimelinePage() {
   const [showBanner, setShowBanner] = useState(true)
-  const [dynamicEvents, setDynamicEvents] = useState<TimelineEvent[]>([])
-  // 真实回忆事件（pet_moments），与打卡生成的动态事件分开维护，便于局部刷新
+  // 真实回忆事件（pet_moments）：时光线上用户亲手记的那一类内容，新增回忆后就地插入避免整页重拉
   const [momentEvents, setMomentEvents] = useState<TimelineEvent[]>([])
+  // 【已删除】dynamicEvents（2026-09-12 第 4 波拆分）：它原本装打卡里程碑 + 打卡明细事件，
+  //   那两类已按用户要求撤出时光线（明细搬去健康档案页），产出的数组恒为空 ——
+  //   留着一个永远是 [] 的 state 只会让后来人以为这条流上还有打卡内容。
+  // 【已删除】diaryRecords（2026-09-12 IA 第 2c 批并入的「宠物日记」）：
+  // 那批内容（diaryEngine 按每条打卡 1:1 生成的正文）是打卡数据的衍生品，不是用户记的回忆，
+  // 第 4b 波按用户要求整批移出本页 —— 生成逻辑与渲染都搬到了健康档案页（pagesPet/trends）
+  // 的「打卡记录」分区。本页因此不再持有、也不再渲染任何自动生成的内容。
   /**
-   * 宠物日记（2026-09-12 IA 第 2c 批并入）
+   * 用户是否**手动改过**「记给谁」（新增回忆弹窗里的宠物胶囊）
    *
-   * 与 dynamicEvents **同源不同粒度**：dynamicEvents 只取每只宠物最近 6 条打卡做记录/里程碑，
-   * 日记则是**每条打卡一篇**（diaryService 1:1 映射）。
-   * 两者由同一次 loadTimelineData 一起写入 —— 这正是把 diary 并进来的意义：
-   * 同一屏里「打卡了几次」和「有几篇日记」不可能再出现两套数字。
-   */
-  const [diaryRecords, setDiaryRecords] = useState<TimelineDiaryRecord[]>([])
-  /**
-   * 心情筛选当前值（6 档：all + 5 种心情）
+   * 手动改过之后就不再被正文自动识别覆盖 —— 否则用户选好归属、回头补一句提到别的宠物，
+   * 选择会被悄悄改掉（这正是 AI 自动选宠物最容易惹人烦的地方）。
    *
-   * 与既有筛选的关系：本页此前**没有任何筛选控件**（时间线是全量倒序展示），
-   * 所以这里不需要做互斥/联动，只作用在日记分区，不会改变时光足迹的显示。
+   * 【位置】与其它 state 放在一起（原先夹在 applyAutoPetSelection 与打开弹窗之间）。
    */
-  const [toneFilter, setToneFilter] = useState<DiaryTone | 'all'>('all')
+  const petSelectionTouchedRef = useRef(false)
+  // 【已删除】toneFilter（6 档心情筛选）：日记卡离开本页后它筛不了任何东西
+  // （本页剩下的回忆卡没有心情档位，硬套一个只能靠猜），所以随日记一起搬到
+  // 健康档案页的「打卡记录」分区 —— 那里筛的是每条打卡自动生成的心情档位。
   const [flashback, setFlashback] = useState<FlashbackMemory | null>(null)
   const [flashbackAdded, setFlashbackAdded] = useState(false)
+  /**
+   * 页头副标题、速览与成就分区要用的真实计数（2026-09-12 v2 屏 02 新增，第 4b 波改口径）
+   *
+   * 由 loadTimelineData **同一次拉取**里现算（回忆 + 打卡两批数据都是刚拉到的），
+   * 保证页头的「N 天的记录」、速览的「时光记录」与时间线上的条数不会各说各话。
+   * 每个字段数的是打卡还是回忆，见 TimelineSummary / buildTimelineSummary 的注释。
+   */
+  const [timelineSummary, setTimelineSummary] = useState<TimelineSummary>(EMPTY_TIMELINE_SUMMARY)
   const themeClass = useThemeClass()
   /**
    * 广播「当前选中的是第 2 个 tab」给自定义 tabBar 组件（时光 = 下标 1）。
@@ -439,14 +617,50 @@ export default function TimelinePage() {
    * 位置要求：组件函数体顶层、与其它 hook 同级（无条件调用）。
    */
   useTabBarSelected('/pages/timeline/index')
-  /** 埋点：日记卡的「分享这篇日记」沿用 diary 页原有的 share_diary 事件，不另造事件名 */
-  const { trackEvent } = useAnalytics()
+
+  /**
+   * 登录态三件套（2026-09-12 补齐「时光没有绑定登录」）
+   *
+   * 【为什么本页此前没有（代码事实，不是历史猜测）】本页改造前从头到尾没有出现过
+   * authStore / authGuard：数据加载只兜了一道 `if (userId && petsList.length)`，
+   * 而 userId 来自 petStore（下面那行 `usePetStore((s) => s.userId)`），跟登录态并不是一回事 ——
+   * 于是未登录用户能直接进到本页，退出登录 / 换账号后也没人把用户送回登录页。
+   * 另外三个 tab 页（mine、creative、pet-profile）都已按 redirectToLoginIfNeeded 收口，本页对齐。
+   */
+  const user = useAuthStore((s) => s.user)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const isInitialized = useAuthStore((s) => s.isInitialized)
+
+  /**
+   * 页面级未登录守卫：未登录进入时光页时统一走 redirectToLoginIfNeeded 收口跳登录页
+   * （与 mine / creative / pet-profile 三个 tab 页同款，2026-09-12 补齐）。
+   *
+   * 【为什么必须先判 isInitialized（关键）】authStore 的初始值就是
+   * `isAuthenticated: false`（stores/authStore.ts:41），真正的登录态要等 `initialize()`
+   * 从本地存储恢复完才落定。若这里直接判「!isAuthenticated 就跳」，冷启动那一瞬会把
+   * **已经登录的用户**也弹去登录页 —— 所以初始化没跑完时一律不动，等它变 true 再判。
+   *
+   * 【位置】与其它 hook 同级、无条件调用：不能塞进条件分支或循环里，否则 hook 调用顺序会漂。
+   *
+   * 依赖数组按三个对照页的口径写（isInitialized / isAuthenticated / user）：
+   * 初始化完成、登录态翻转、换账号（user 对象引用变化）都会重新判一次。
+   */
+  useEffect(() => {
+    if (!isInitialized) return
+    if (!isAuthenticated || !user) {
+      // 未登录统一走收口守卫：已是登录页时不再 reLaunch（避免路由竞态报 routeDone not found）
+      redirectToLoginIfNeeded()
+      return
+    }
+  }, [isInitialized, isAuthenticated, user])
+  // 【已删除】useAnalytics/trackEvent：本页唯一的埋点是日记卡的「分享这篇日记」（share_diary），
+  // 随日记卡一起搬去了趋势页；本页现在不产生任何埋点事件，遂一并撤掉这次 hook 调用。
   const currentPet = usePetStore((s) => s.currentPet)
   const userId = usePetStore((s) => s.userId)
   // 【本页的宠物归属口径（2026-09-11 两轮反复后的最终结论）】
   //   第一轮："多宠物场景不能只固定一只" → 加宠物切换条，整页（列表 + 数字）跟着选中那只变。
   //   第二轮：用户否掉第一轮 —— "时光页面 所有宠物应该共用一个回忆录吧 你怎么做分类了？？"
-  //           → 切换条整体移除，回忆与打卡动态合并成**一条共用时间线**，每条卡片上标注是哪只宠物；
+  //           → 切换条整体移除，所有宠物共用**一条时间线**，每条卡片上标注是哪只宠物；
   //             速览数字改成全宠口径。
   //   因此这里只保留宠物列表本身，用途收窄为：①冷启动时兜底加载 ②新增回忆时选归属宠物。
   const pets = usePetStore((s) => s.pets)
@@ -506,14 +720,15 @@ export default function TimelinePage() {
   // 共用回忆录改造后列表是"全账号"的，不存在"列表属于某只宠物"这回事，该 ref 一并移除。
 
   /**
-   * 加载时光线数据：**所有宠物共用的回忆录**（真实回忆 pet_moments + 打卡动态 + 旧时光提醒）
+   * 加载时光线数据：**所有宠物共用的回忆录**（真实回忆 pet_moments + 旧时光提醒）
+   * 外带一次「逐只宠物拉打卡」—— 后者不产出任何卡片，只喂给页头/速览/成就的打卡数字（第 4b 波）。
    *
    * 【2026-09-11 改造：从"按当前宠物分开"改为"一本共用回忆录"】
    *   用户原话："时光页面 所有宠物应该共用一个回忆录吧 你怎么做分类了？？"
    *   改前：`getMoments(当前宠物id)` + `getCheckins(当前宠物id)` → 列表与数字都只属于选中那只，
    *         顶部还有宠物切换条（那就是用户说的"分类"）。
-   *   改后：回忆一次性拉**本账号下全部**（不传 petId 即为全量），打卡里程碑逐只生成后合并，
-   *         每个事件都带宠物归属（卡片上显示"谁的回忆"）——见 tagPetEvents / momentToTimelineEvent。
+   *   改后：回忆一次性拉**本账号下全部**（不传 petId 即为全量），
+   *         每条回忆都带宠物归属（卡片上显示"谁的回忆"，见 momentToTimelineEvent）。
    *
    * 抽成 useCallback 是为了让「首次进入」与「切回本页」共用同一份加载逻辑（见下方 useDidShow）。
    *
@@ -531,21 +746,29 @@ export default function TimelinePage() {
       lastUserIdRef.current = userId ?? null
       hasLoadedRef.current = false
       setMomentEvents([])
-      setDynamicEvents([])
-      // 日记同属上一账号的数据，必须一起清（否则换号后日记分区会残留别人的记录）
-      setDiaryRecords([])
+      // 打卡里程碑事件已不再生成（2026-09-12 第 4 波），故这一支无需再清 dynamicEvents
       setFlashback(null)
+      // 计数同理：页头「N 天的记录」与速览的数字都是上一账号的，不清理就会串号显示
+      setTimelineSummary(EMPTY_TIMELINE_SUMMARY)
     }
     // 宠物列表以 store 为准；冷启动时 store 可能还没加载，用 currentPet 兜底成"只有一只"
     const storePets = usePetStore.getState().pets
     const petsList = storePets.length ? storePets : (currentPetRef.current ? [currentPetRef.current] : [])
+    /**
+      * 本次加载得到的时光线卡片（用户回忆 + 已加入的旧时光提醒）
+      *
+      * 【为什么提升到 try 外层】两条兜底分支（没账号 / 刷新失败）要它保持为空，
+      * 而且 ⑤ 的计数必须吃**本次这批**数据（state 更新是异步的，此刻读不到新值）。
+      * 初始为 [] 也就是「这次没拉到东西」，两条兜底分支不必再各自写一遍。
+      */
+    let eventsForSummary: TimelineEvent[] = []
     try {
       if (userId && petsList.length) {
         /* ① 回忆：不传 petId = 拉本账号下**所有宠物**的回忆（共用一本回忆录的关键一行）。
          *
-         * 回忆与里程碑**各自兜错**（这是 2026-09-11 改造时特意分开的）：
-         * 回忆接口挂掉时，打卡/生日/建档这些里程碑仍然应该照常显示，
-         * 不能因为一个接口失败就把整条时间线降级成"只有当前宠物的里程碑"。
+         * 回忆与下面的打卡**各自兜错**（2026-09-11 改造时特意分开的）：
+         * 回忆接口挂掉时，旧时光提醒/页头数字仍然应该照常显示，
+         * 不能因为一个接口失败就把整条时间线降级成空白。
          */
         let fetchedMoments: PetMoment[] = []
         let momentsFailed = false
@@ -557,8 +780,8 @@ export default function TimelinePage() {
         if (isStale()) return
         if (momentsFailed) {
           // 刷新失败：**绝不把已经显示出来的回忆清空**（2026-09-11 审查 P2-1 事故）。
-          // 本函数每次切回都会跑，若"失败即置空"，一次网络抖动就会让用户看到
-          // "还没有时光记录"——那比"看不到新记录"更严重（数据其实在库里）。
+          // 本函数每次切回都会跑，若「失败即置空」，一次网络抖动就会让用户看到
+          // 「还没有时光记录」——那比「看不到新记录」更严重（数据其实在库里）。
           if (hasLoadedRef.current) {
             Taro.showToast({ title: '刷新失败，请稍后重试', icon: 'none' })
           } else {
@@ -568,8 +791,10 @@ export default function TimelinePage() {
           setMomentEvents(fetchedMoments.map(momentToTimelineEvent))
         }
 
-        // ② 打卡动态/里程碑：逐只宠物拉打卡记录生成后合并（宠物数量通常 ≤4，并发拉取）
-        //    单只失败不拖垮整页：该只退化为"仅宠物里程碑"（生日/建档），其余照常展示。
+        // ② 打卡：逐只宠物各拉一次（宠物数量通常 ≤4，并发拉取）。
+        //    【2026-09-12 第 4 波】这批打卡**不再生成时光线事件**（明细已搬到健康档案页），
+        //    【第 4b 波】日记也搬走了，于是它只剩一个用途：喂给 ⑤ 算速览与成就里的
+        //    **打卡口径**数字（打卡天数 / 连续天数）。单只失败不拖垮整页：该只按没有打卡算。
         const perPetEvents = await Promise.all(
           petsList.map(async (pet) => {
             try {
@@ -581,63 +806,68 @@ export default function TimelinePage() {
           }),
         )
         if (isStale()) return
-        const merged = perPetEvents.flatMap(({ pet, entries }) =>
-          tagPetEvents(generateTimelineFromData(pet, entries), pet),
-        )
-        setDynamicEvents(merged)
 
-        /**
-         * ④ 宠物日记（2026-09-12 IA 第 2c 批并入）：用**本次刚拉到的那批打卡记录**生成
-         *
-         * 【数据源统一决策：跟本页的 service 走，不用 useCheckinStore】
-         *   ① 同屏不自相矛盾（本页合并的初衷）——日记与上面的打卡里程碑吃的是同一个
-         *      `perPetEvents.entries` 数组、同一次请求，不存在「里程碑 3 条、日记 5 篇」这种两套口径；
-         *      也不会出现「接口刷新了、store 还是旧的」导致的半屏新半屏旧。
-         *   ② 类型正确 —— PetHealthEntry 正是 generateDiaryFromEntries 的入参类型；
-         *      原 diary 页因为 store 里存的是视图态 Checkin，只能 `as any` 硬塞，
-         *      一旦服务端字段变了就会静默退化成「一切正常」的文案（checkinStore.ts 注释里记着这个坑）。
-         *   ③ 归属正确 —— store 只有「当前宠物」那一只（checkinsPetId），而本页已改成
-         *      「所有宠物共用一本回忆录」；用 store 会让日记只剩一只宠物，与页面定位直接冲突。
-         *   ④ 失败语义一致 —— 某只宠物打卡拉取失败时 entries 为空数组，
-         *      于是它既没有打卡里程碑也没有日记，两边同时缺席而不是一边有一边没有。
-         */
-        const diaryList = perPetEvents
-          .flatMap(({ pet, entries }) =>
-            generateDiaryFromEntries(entries, pet.birthDate).map((record) => ({
-              ...record,
-              petId: pet.id,
-              petName: pet.name,
-              petEmoji: pet.species === 'cat' ? '🐱' : pet.species === 'dog' ? '🐕' : '🐾',
-            })),
-          )
-          // 多宠混排后必须整体重排：最近的在最上面，与「时光足迹」同一阅读方向
-          .sort((a, b) => b.date.localeCompare(a.date))
-        setDiaryRecords(diaryList)
-
-        // ③ 旧时光提醒：扫全部宠物，取第一只有"往年今天"的（横幅文案里已含宠物名）
+        // ③ 旧时光提醒：扫全部宠物，取第一只有「往年今天」的（横幅文案里已含宠物名）
+        //    第 4b 波起它只认宠物档案里的日期（生日 / 建档日），不再翻打卡记录 ——
+        //    判断依据写在 findFlashbackMemory 的函数头注释里。
         let memory: FlashbackMemory | null = null
-        for (const { pet, entries } of perPetEvents) {
-          memory = findFlashbackMemory(pet, entries)
+        for (const { pet } of perPetEvents) {
+          memory = findFlashbackMemory(pet)
           if (memory) break
         }
         setFlashback(memory)
 
+        /**
+         * ④ 页头副标题 + 速览 + 成就分区的真实计数（2026-09-12 v2 屏 02；第 4b 波改口径）
+         *
+         * 【为什么放在这里、吃同一批数据】页头写「N 天的记录」、成就写「本月新增 N 条」，
+         * 若另起一次请求去算，就会出现「页头说 12 天、时间线上只有 9 天」这种同屏自相矛盾。
+         * 这里用的正是上面 ① 拉到的回忆与 ② 拉到的打卡，与渲染的是同一份数据。
+         *
+         * 【为什么就地拼一份事件数组、而不是读 state】state 更新是异步的（下一个渲染周期才生效），
+         * 此刻读到的还是上一轮的值。而「本月新增 N 条」必须包含本次刚拉到的回忆
+         * —— 所以就地用本次结果拼出与渲染时**同一个算法**的事件数组，只是不等 state。
+         * 拼法与 timelineEvents 那个 memo 一一对应（回忆 + 已加入的旧时光提醒）。
+         *
+         * 【回忆用哪个变量】回忆接口失败时会保留旧列表（不 setMomentEvents），
+         * 所以这里吃的是**本次成功拉到的** fetchedMoments；
+         * 失败（momentsFailed）时按 0 算 —— 计数少算好过虚高。
+         */
+        eventsForSummary = [
+          ...(momentsFailed ? [] : fetchedMoments.map(momentToTimelineEvent)),
+          // 旧时光条目只有用户点过「添加到时光线」才在线上（flashbackAdded），与渲染口径一致
+          ...(flashbackAdded && memory
+            ? [{
+                id: 'flashback-auto',
+                date: `${memory.yearsAgo}年前`,
+                title: memory.title,
+                type: 'flashback' as const,
+                emoji: memory.emoji,
+                photos: [] as string[],
+                description: memory.description,
+                flashbackYear: memory.yearsAgo,
+              }]
+            : []),
+        ]
+        setTimelineSummary(buildTimelineSummary(perPetEvents, eventsForSummary))
+
         hasLoadedRef.current = true
       } else if (currentPetRef.current) {
-        // 账号信息还没到位（极少见）：退化为"仅当前宠物的里程碑"，至少不是纯空白
-        const pet = currentPetRef.current
-        setDynamicEvents(tagPetEvents(generateTimelineFromData(pet, []), pet))
+        // 账号信息还没到位（极少见）：没有账号就拉不到任何真实数据，
+        // 本页退化成「只有宠物档案、没有内容」的形态 —— 但绝不给假数据凑数。
+        // 需要说明的是：这里**不再**放生日/建档里程碑（2026-09-12 第 4 波已把它们撤出时光线），
+        // 唯一与档案有关的只剩下面这条「旧时光提醒」横幅（用户点「添加到时光线」才会变成卡片）。
         setMomentEvents([])
-        // 这一支连账号都还没有，没拉过打卡 → 日记同步置空，别让上一轮的日记留在屏幕上
-        setDiaryRecords([])
-        setFlashback(findFlashbackMemory(pet, []))
+        setFlashback(findFlashbackMemory(currentPetRef.current))
+        // 同理：没拉过任何数据，计数必须归零，不能把上一账号的数字留在页头上
+        setTimelineSummary(EMPTY_TIMELINE_SUMMARY)
         hasLoadedRef.current = true
       }
     } catch {
       if (isStale()) return
       // 兜底（正常不会走到：上面两条链路都已各自 try/catch）：
       // 保留旧列表并提示，绝不把用户已经看到的回忆清空。
-      // （列表是"全账号共用"的，不再有"保留的旧列表属于别的宠物"那种串号问题，
+      // （列表是「全账号共用」的，不再有「保留的旧列表属于别的宠物」那种串号问题，
       //   原先按宠物核对归属的 loadedPetIdRef 判断随之删除。）
       if (hasLoadedRef.current) {
         Taro.showToast({ title: '刷新失败，请稍后重试', icon: 'none' })
@@ -645,11 +875,11 @@ export default function TimelinePage() {
       }
       if (currentPetRef.current) {
         const pet = currentPetRef.current
-        setDynamicEvents(tagPetEvents(generateTimelineFromData(pet, []), pet))
         setMomentEvents([])
-        // 同上一支：这里只会在「从未加载成功过」时走到，日记也一并为空
-        setDiaryRecords([])
-        setFlashback(findFlashbackMemory(pet, []))
+        // 同上一支：这里只会在「从未加载成功过」时走到
+        setFlashback(findFlashbackMemory(pet))
+        // 兜底支同样要把计数归零：否则页头会留着上一轮的「N 天的记录」
+        setTimelineSummary(EMPTY_TIMELINE_SUMMARY)
       }
     }
     // pets 用 id 串做依赖（值语义）：换宠物/增删宠物都会重载，而数组引用抖动不会
@@ -688,7 +918,7 @@ export default function TimelinePage() {
    */
   const isFirstShowRef = useRef(true)
   useDidShow(() => {
-    // 宠物列表兜底加载（仅在列表为空时）：共用回忆录需要"全部宠物的 id"才能拉全量回忆与里程碑，
+    // 宠物列表兜底加载（仅在列表为空时）：共用回忆录要"全部宠物的 id"才能拉全量回忆，
     // 而 store 里的列表依赖「先进过首页/档案页」，用户若直接从「时光」tab 冷启动就会是空的
     // → 会退化成"只按 currentPet 兜底"的残缺列表。
     //
@@ -716,7 +946,9 @@ export default function TimelinePage() {
    * ⚠️ 已经发出去的旧分享卡片仍指向**已删除的日记页路由**，微信小程序分享卡片 **path 无法重定向**，
    *   只能失效 —— 这项取舍在交付自述里单独交代（清单原本建议留 20 行 redirect 页，本批按任务书
    *   硬约束「删目录」执行，未留 redirect）。
-   * ⚠️ 不注册 share hook 的话，右上角「转发」会被小程序隐藏，日记卡上的「分享这篇日记」也就彻底没用了。
+   * ⚠️ 不注册 share hook 的话，右上角「转发」会被小程序隐藏（微信只在页面注册了回调时才露出转发入口）。
+   * 【第 4b 波】原来这里还补了一句日记卡上的分享按钮也要靠它—— 日记卡已搬去健康档案页，
+   * 本页现在只剩**页面级转发**这一个用途，但这条 hook 必须留着（否则本页没法分享）。
    */
   useShareAppMessage(() => ({
     title: '星河宠记 - 时光线',
@@ -726,6 +958,16 @@ export default function TimelinePage() {
     title: '星河宠记 - 时光线',
   }))
 
+  /**
+   * 时光线的全部卡片（2026-09-12 第 4 波；第 4b 波起这是本页**唯一**的内容来源）
+   *
+   * 【包含哪些】① 用户手记的真实回忆（momentEvents）；② 用户点过「添加到时光线」的旧时光提醒。
+   * 【不包含哪些】**打卡里程碑与打卡明细已经整批移除** —— 用户在时间线上看到的内容应当是
+   * 「自己留下过什么」，而打卡明细与自动生成的日记现在都归健康档案页（见文件头 4b 那段）。
+   * 【排序】按 date 降序；旧时光那条是「N年前」文案，认不出日期，会被 sortableDate 兜到最后，
+   * 于是它既排在末尾、又落进分组里的「旧时光」组。改前这一步在 buildTimelineFeedItems 里，
+   * 那个函数随日记一起删除后，排序就近放回本 memo（它本来就只服务于这条线）。
+   */
   const timelineEvents = useMemo(() => {
     const allEvents: TimelineEvent[] = []
 
@@ -742,24 +984,86 @@ export default function TimelinePage() {
       })
     }
 
-    // 真实回忆优先展示（用户主动记录的内容），再叠加打卡生成事件
-    const sorted = [...momentEvents, ...dynamicEvents].sort((a, b) => b.date.localeCompare(a.date))
-    allEvents.push(...sorted)
+    // 用户手记的真实回忆：按日期降序（新的在前）
+    allEvents.push(...momentEvents)
 
-    return allEvents
-  }, [dynamicEvents, momentEvents, flashback, flashbackAdded])
+    // 整体排序：'YYYY-MM-DD' 按字典序降序；旧时光那条经 sortableDate 变成 '9999-99-99' 垫底
+    return allEvents.sort(
+      (a, b) => sortableDate(b.date).localeCompare(sortableDate(a.date)),
+    )
+  }, [momentEvents, flashback, flashbackAdded])
 
   /**
-   * 心情筛选后的日记（照搬 diary 页的 filteredRecords）
+   * 今天（本地日历日），供卡面日期与本月判断使用
    *
-   * 只作用于日记分区，与上面的 timelineEvents 互不影响：
-   * 本页没有第二套筛选控件，所以不存在两个筛选状态打架的问题
-   * （如果要给时光足迹也加筛选，才需要设计联动，本批不做）。
+   * 【为什么放在这里】2026-09-12 第 4 波起它就被上移到数据区（当时 feed 排序要用）；
+   * 第 4b 波删掉 feed 后它仍然被渲染层用着（卡面上的「今天」）。取法不变：
+   * 本地日历日、每次渲染取一次。本页是个长驻的 tab 页，跨零点不会自己重渲染，
+   * 但跨零点时用户总要切走再切回（useDidShow 会重新拉数据、连带这次渲染），
+   * 所以不需要为此挂计时器 —— 那样反而多一个常驻定时器。
    */
-  const filteredDiary = useMemo(
-    () => (toneFilter === 'all' ? diaryRecords : diaryRecords.filter((r) => r.diary.tone === toneFilter)),
-    [diaryRecords, toneFilter],
+  const todayStr = getLocalDateString()
+
+  /**
+   * 时光线按月分组（渲染直接吃它，第 4b 波起不再有第二份"筛选后的"分组）
+   *
+   * 【为什么单独一个 memo】分组只该算一次：下面渲染要按组渲染、速览的数字要从同一份结果里数，
+   * 两处吃同一份才能保证「数字与列表对得上」。
+   * 【第 4b 波】原来的"心情筛选 → 可见分组"两级结构拆掉了：日记离开本页后没有可筛的东西，
+   * 屏幕上渲染的就是这里的分组，不再有第二套口径。
+   */
+  const monthGroups = useMemo(() => groupEventsByMonth(timelineEvents), [timelineEvents])
+
+  /**
+   * 速览「时光记录」那一格的数字
+   *
+   * 【口径】= 时光线上**实际渲染的卡片数**（用户回忆 + 已加入的旧时光提醒），
+   * 直接从渲染用的分组里数出来 —— 屏幕上有几张卡，这里就是几，不存在第二种口径。
+   */
+  const recordCount = useMemo(
+    () => monthGroups.reduce((sum, group) => sum + group.count, 0),
+    [monthGroups],
   )
+
+  /**
+   * 页头副标题里的「N 天的记录」
+   *
+   * 【第 4b 波改口径】改前取的是**打卡天数**：天天打卡但从没写过回忆的用户，
+   * 页头会写着「30 天的记录」而下面一张卡都没有 —— 正是"数字与列表对不上"。
+   * 现在取的是**用户回忆覆盖的天数**（buildTimelineSummary.memoryDays，按本地日历日去重），
+   * 与屏幕上这条时光线同源。
+   *
+   * 为 0 时返回空串 → 页头只显示「时光」，不显示「0 天的记录」这种丧气文案（原型也没有）。
+   */
+  const recordDaysLabel = timelineSummary.memoryDays > 0 ? `${timelineSummary.memoryDays} 天的记录` : ''
+
+  /**
+   * 成就分区第一格（连续打卡）当前展示的那一档
+   *
+   * 三档 7/30/100 天全达成时返回最后一档（卡片显示「已达成」），永不返回 null。
+   * 【为什么这一格仍是打卡口径】它本身就是"坚持打卡"的成就，与速览的「打卡天数」同源
+   * （同一次 getCheckins），见 buildTimelineSummary 的注释。
+   */
+  const streakItem = useMemo(() => pickStreakAchievement(timelineSummary.streak), [timelineSummary.streak])
+
+  /**
+   * 点页头右侧的爪印圆钮 → 打开宠物档案
+   *
+   * ⚠️ 必须用 navigateTo：宠物档案（pages/pet-profile/index）已于 2026-09-12
+   * 退出 tabBar.list，变成**普通页面**；对非 tab 页调 switchTab 会**静默失败**
+   * （不抛错、不报错，用户点了毫无反应）。反过来本页自己是 tab 页，
+   * 从别的页面回本页才需要 switchTab —— 本页没有这种入口。
+   *
+   * 一只宠物都没有时不跳转（档案页对空列表有自己的空态，跳过去只会让用户多绕一圈），
+   * 改为提示去添加，避免出现"点了没反应"的假按钮。
+   */
+  const handleOpenPetProfile = () => {
+    if (!pets.length) {
+      Taro.showToast({ title: '先去添加一只毛孩子吧', icon: 'none' })
+      return
+    }
+    Taro.navigateTo({ url: '/pages/pet-profile/index' })
+  }
 
   /**
    * 从回忆正文里**自动认宠物**（2026-09-11 新增，用户点名要的能力）
@@ -782,14 +1086,6 @@ export default function TimelinePage() {
     const detected = detectPets(text)
     if (detected.length) setMemoryPetIds(detected)
   }
-
-  /**
-   * 用户是否**手动改过**"记给谁"
-   *
-   * 手动改过之后就不再被正文自动识别覆盖 —— 否则用户选好归属、回头补一句"烧鸡也在旁边"，
-   * 选择会被悄悄改掉（这正是"AI 自动选宠物"最容易惹人烦的地方）。
-   */
-  const petSelectionTouchedRef = useRef(false)
 
   /**
    * 打开「新增回忆」弹窗
@@ -995,28 +1291,18 @@ export default function TimelinePage() {
     }
   }
 
-  /** 点击时间线条目：统一点开详情弹窗——生日/体重/日常记录等系统生成条目同样有完整
-   * 标题/日期/描述，此前只弹"查看"toast 是打不开的死胡同；删除按钮仅对有 sourceId
-   * 的真实回忆显示（归属校验在 handleDeleteMoment 内），查看权限与删除权限分离 */
+  /** 点击时间线条目：统一点开详情弹窗（标题/日期/描述/大图）。
+   * 【第 4b 波】时光线上只剩用户回忆与旧时光提醒两类卡片，所以不再需要
+   * "系统生成的条目也给它一个详情"这个说法 —— 每一条都是可看、可删的真实内容。
+   * 删除按钮仅对有 sourceId 的真实回忆显示（归属校验在 handleDeleteMoment 内），查看与删除权限分离。 */
   const handleEventClick = (event: TimelineEvent) => {
     setDetailEvent(event)
   }
 
-  /**
-   * 分享某篇日记（原 diary 页的「分享这篇日记」，2026-09-12 随页面并入）
-   *
-   * 与原来一致：只埋点 + 打开转发菜单（微信不支持程序化唤起分享面板，
-   * 转发卡片走本页注册的 useShareAppMessage，path = /pages/timeline/index）。
-   * ⚠️ 既有问题如实记录：这个按钮点击后**不会**立刻弹出分享面板，用户需要再点右上角转发
-   * —— 原 diary 页就是这样（属假按钮问题），本批只搬不改，留给后续统一治理。
-   */
-  const handleDiaryShare = useCallback(
-    (record: TimelineDiaryRecord) => {
-      trackEvent('share_diary', { date: record.date, tone: record.diary.tone })
-      Taro.showShareMenu({ withShareTicket: true })
-    },
-    [trackEvent],
-  )
+  // 【已删除】handleDiaryShare（日记卡的「分享这篇日记」）：日记卡已经不在本页，
+  // 这个按钮与它的埋点（share_diary）一并搬到了健康档案页的「打卡记录」分区。
+  // 本页注册的 useShareAppMessage 仍然保留 —— 它是**页面级**的转发出口（右上角「…」→ 转发），
+  // 与日记卡无关，删掉反而会让用户在本页没法分享（见上方 useShareAppMessage 的注释）。
 
   /** 预览大图：支持单张/多张轮播 */
   const handlePreviewPhotos = (urls: string[], current: string) => {
@@ -1069,11 +1355,20 @@ export default function TimelinePage() {
    * 注意：`pets` 仍是"增删宠物后要不要重新加载"的判据（petsKey），别因为撤掉数字就删它。
    */
 
-  /** 时光线里累计珍藏的照片张数 */
+  /**
+   * 速览第三格「珍藏照片」：时光线上累计的照片张数
+   *
+   * 【口径】= timelineEvents 里所有卡片的 photos 张数之和（只可能来自用户回忆，
+   * 旧时光提醒固定 photos: []）—— 用户真实拍下/上传的照片，不含任何占位图。
+   * 【第 4b 波】改前它也是这么数的（日记条目没有 photos 字段），所以这次口径没变、数字不会跳。
+   */
   const photoCount = useMemo(
     () => timelineEvents.reduce((sum, e) => sum + e.photos.length, 0),
     [timelineEvents],
   )
+
+  // todayStr（今天，本地日历日）在数据区就已经取好了：卡面的「今天」、分组、成就与速览数字
+  // 都吃它，取法不变（渲染期取一次、不挂计时器）。
 
   return (
     <View className={`timeline-page ${themeClass}`}>
@@ -1083,23 +1378,60 @@ export default function TimelinePage() {
       {/* 宠物切换条已移除（2026-09-11 共用回忆录改造）：
           用户要求"所有宠物共用一个回忆录"，顶部那条"可乐/布丁/…"的切换条就是他说的"分类"。 */}
 
-      {/* ===== 固定顶部：合并后的唯一页头 =====
-          原先这里是「{宠物名}的时光线 + 记录按钮」，滚动区里又有一个 PageHero，
-          两套标题叠在一起重复（用户反馈「冲突了 融合一下」）。
-          现在统一由 PageHero 承担：插画 + 页面名 + 说明 + 记录按钮，只此一处。
-          标题**不再挂具体宠物名** —— 本 App 支持多宠物，挂某一只的名字在切换宠物后会立刻失效。 */}
-      <View className='timeline-fixed-top'>
-        <PageHero
-          illustration='page-timeline'
-          title='时光线'
-          subtitle='一路走来的每一个瞬间'
-          actionText='记录'
-          onAction={handleAddMemory}
-        />
+      {/* ===== 固定顶部条（v2 屏 02 的 topbar）=====
+          结构与原型一致：左「时光 + N 天的记录」，右一枚爪印圆钮进宠物档案。
+          【为什么这里是固定层而不是跟着滚动】原型是整页滚动，但本页有自定义 tabBar 的
+          底部让位契约（根容器写死 `height: calc(100vh - 160rpx - 安全区)` + 内部 ScrollView），
+          把页头也塞进滚动区就得重做那套让位（任务书明确要求别破坏它）。
+          固定条只有 104rpx 高，不会重演"顶部信息栏太大"那次的投诉。
+          【不再放 PageHero】原来固定在顶部的是 <PageHero>（156rpx 插画卡），
+          现在它挪进了滚动区当品牌横幅 —— v2 的品牌插画本来就在「记一条」上面、
+          不占固定层；两条标题叠一起正是用户当初说"冲突了"的那个问题。 */}
+      <View className='timeline-topbar'>
+        <View className='timeline-topbar-head'>
+          <Text className='timeline-topbar-brand'>时光</Text>
+          {/* 副标题只在真有记录时渲染：没记录时显示「0 天的记录」是丧气文案，原型也没有 */}
+          {recordDaysLabel ? <Text className='timeline-topbar-sub'>{recordDaysLabel}</Text> : null}
+        </View>
+        <View className='timeline-topbar-btn' onClick={handleOpenPetProfile}>
+          <Icon name='paw-print' size={19} tone='primary' />
+        </View>
       </View>
 
-      {/* ===== 可滚动区域：速览 + 横幅 + 时间线 ===== */}
+      {/* ===== 可滚动区域：品牌横幅 + 记一条 + 时光速览 + 旧时光横幅 + 时光线 + 成就 ===== */}
       <ScrollView className='timeline-scroll' scrollY>
+        {/* 品牌横幅：文案沿用原型（每一条记录，都是它来过人间的证据 / 按月份自动整理，可一键成片）。
+            仍然用 <PageHero> 而不是原型那种"整图 + 底部文案条"：本页插画是 1254×1254 方图，
+            铺成整宽横幅要吃掉约 750rpx 高（口径：本页横幅槽位是**通栏** —— `.timeline-scroll`
+            只有 padding-top、没有左右内边距，<PageHero> 自身也没有横向 margin，故宽 = 750rpx；
+            方图 1:1，高度≈宽度。原先写的 694 是"750 − 28×2"那套旧内边距口径的残留），
+            而且实测中段横裁会切掉猫耳与狗头顶（look.cjs 结论），
+            方图 aspectFit 又会留大片奶油边。PageHero 正是为这批方图设计的（左图右文、不裁切）。 */}
+        <PageHero
+          illustration='page-timeline'
+          title='每一条记录，都是它来过人间的证据'
+          subtitle='按月份自动整理，可一键成片'
+        />
+
+        {/* ===== 「记一条」写入口（v2 屏 02 的那条橙色渐变主 CTA）=====
+            IA 定的唯一写入口：时光页只留「记一条」，记录类动作不放这儿。
+            原实现把写入口塞在**滚动区最底部**（.timeline-add-main-btn），首屏根本看不见 ——
+            这正是本波任务书说的"5 块里 2 缺"之一。
+            点击开的是本页既有的「新增回忆」弹窗（日期补记 + 多图 + AI 辅助），
+            不是新造的第二套记录流程。 */}
+        <View className='timeline-cta' onClick={handleAddMemory}>
+          <View className='timeline-cta-icon-wrap'>
+            <Text className='timeline-cta-icon'>✍️</Text>
+          </View>
+          <View className='timeline-cta-body'>
+            <Text className='timeline-cta-title'>记一条</Text>
+            <Text className='timeline-cta-desc'>添加时光记录 · 随手写一句、配张照片，团团会自动归档</Text>
+          </View>
+          <View className='timeline-cta-go'>
+            <Text className='timeline-cta-go-text'>开始</Text>
+          </View>
+        </View>
+
         {/* 时光速览：用真实数据撑起页面（原「回忆精选」撤掉后留下的空间，
             换成对用户有信息量的数字，而不是拿装饰硬填） */}
         <View className='timeline-overview'>
@@ -1116,9 +1448,14 @@ export default function TimelinePage() {
               <View className='timeline-overview-divider' />
             </>
           )}
+          {/* 第二格：时光记录（第 4b 波口径 = recordCount）。
+              数的是时光线上**实际渲染的卡片数**（用户回忆 + 已加入的旧时光提醒），
+              直接从渲染用的分组里现数：屏幕上有几张卡，这里就是几 —— 数字与列表永远一致。
+              改前它数的是「事件数」（照片回忆 + 打卡里程碑），日记还在时又漏掉日记那一半，
+              两次都对不上屏幕；现在只有这一种口径，也不再有心情筛选能让它变小。 */}
           <View className='timeline-overview-item'>
             <Icon name='note-pencil' size={18} tone='primary' />
-            <Text className='timeline-overview-value'>{timelineEvents.length}</Text>
+            <Text className='timeline-overview-value'>{recordCount}</Text>
             <Text className='timeline-overview-label'>时光记录</Text>
           </View>
           <View className='timeline-overview-divider' />
@@ -1127,6 +1464,22 @@ export default function TimelinePage() {
             <Text className='timeline-overview-value'>{photoCount}</Text>
             <Text className='timeline-overview-label'>珍藏照片</Text>
           </View>
+          {/* 第四格：打卡天数（2026-09-12 v2 屏 02 新增；第 4b 波保留并核对口径）。
+              【为什么时光页还留一个打卡数字】它是**打卡口径**的数字，标签写得清清楚楚，
+              与健康档案页「打卡记录」同源（同一次 getCheckins）；本页的速览与成就区一直
+              承担"顺带看一眼坚持情况"的职责（成就第一格就是连续打卡）。
+              用户抗议的是"没标签的打卡内容被当成我记的回忆"，不是这个带标签的计数。
+              只在真的有打卡时渲染 —— 0 天时多一格"0 打卡天数"只是噪音。 */}
+          {timelineSummary.checkinDays > 0 && (
+            <>
+              <View className='timeline-overview-divider' />
+              <View className='timeline-overview-item'>
+                <Icon name='checkin' size={18} tone='primary' />
+                <Text className='timeline-overview-value'>{timelineSummary.checkinDays}</Text>
+                <Text className='timeline-overview-label'>打卡天数</Text>
+              </View>
+            </>
+          )}
         </View>
 
         {showBanner && (
@@ -1161,174 +1514,192 @@ export default function TimelinePage() {
           </View>
         )}
 
+        {/* ===== 时光线（第 4b 波：只剩「用户自己记的回忆」这一类卡片）===== */}
         <View className='timeline-list'>
-          <Text className='timeline-list-title'>时光足迹</Text>
-          {timelineEvents.length > 0 ? (
-            timelineEvents.map((event, index) => (
-            <View key={event.id} className='timeline-item' onClick={() => handleEventClick(event)}>
-              <View className='timeline-line-col'>
-                <View className={`timeline-dot timeline-dot--${event.type}`}>
-                  <Text className='timeline-dot-emoji'>{event.emoji}</Text>
-                </View>
-                {index < timelineEvents.length - 1 && (
-                  <View className='timeline-line' />
-                )}
-              </View>
-              <View className={`timeline-card timeline-card--${event.type}`}>
-                <View className='timeline-card-date'>
-                  <Text className='timeline-date-text'>{event.date}</Text>
-                  {/* 宠物标签：共用回忆录里每张卡都要能看出"这是谁的回忆"。
-                      多宠共同回忆（content.pets 有 2 只以上）→ 渲染多枚标签；
-                      单宠回忆/系统里程碑 → 用单值 petName；旧数据缺名字时不渲染。 */}
-                  {(event.petTags?.length ? event.petTags : (event.petName ? [{ id: event.petId || 'p', name: event.petName, emoji: event.petEmoji || '🐾' }] : []))
-                    .map((tag) => (
-                      <View key={tag.id} className='timeline-pet-tag'>
-                        <Text className='timeline-pet-tag-text'>{tag.emoji || '🐾'} {tag.name}</Text>
+          {/* 【已删除】心情筛选行（.timeline-feed-filter）：它筛的是 diaryEngine 给每篇日记算出的
+              心情档位，日记卡离开本页后这里没有任何东西可筛 —— 该行与它的横滑容器样式一并清除，
+              「按心情筛」的能力跟着日记搬到健康档案页「打卡记录」分区（在那里筛的是打卡记录）。
+              同一条支线上的次级空态（.timeline-diary-empty「该心情下暂无日记」）同理删除。 */}
+
+          {/* 按月分组（v2 屏 02）：月份小标题「● 2026 年 9 月 ——— 3 条」+ 该月卡片。
+              分组吃的是 monthGroups（= 时光线上实际要渲染的全部卡片），与速览的「时光记录」
+              同源，所以「标题写 N 条」和「组里真有 N 张卡」永远对得上。
+              ⚠️ 空态挂在「一张卡都没有」上：改前这里判的是分组数组长度，而分组数恒大于等于 0 这件事
+              很容易被后来人加工成「永远有值」，所以本波直接判 monthGroups 为空即空态。 */}
+          {monthGroups.length > 0 ? (
+            <View className='timeline-feed'>
+              {monthGroups.map((group) => (
+                <View key={group.key} className='timeline-month'>
+                  <View className='timeline-month-head'>
+                    <View className='timeline-month-dot' />
+                    <Text className='timeline-month-title'>{group.label}</Text>
+                    <Text className='timeline-month-count'>{group.count} 条</Text>
+                  </View>
+                  {group.items.map((event, index) => (
+                    /* —— 用户回忆 / 旧时光提醒（两类都是「用户自己记的」）—— */
+                    <View key={event.id} className='timeline-item' onClick={() => handleEventClick(event)}>
+                      <View className='timeline-line-col'>
+                        <View className={`timeline-dot timeline-dot--${event.type}`}>
+                          <Text className='timeline-dot-emoji'>{event.emoji}</Text>
+                        </View>
+                        {index < group.items.length - 1 && (
+                          <View className='timeline-line' />
+                        )}
                       </View>
-                    ))}
-                  {event.type === 'milestone' && (
-                    <View className='timeline-milestone-badge'>
-                      <Text className='timeline-milestone-badge-text'>里程碑</Text>
+                      <View className={`timeline-card timeline-card--${event.type}`}>
+                        <View className='timeline-card-date'>
+                          {/* 卡面日期改成「今天」/「9 月 11 日」：原来是 2026-09-11 这种 ISO 串，
+                              一列看下来既是噪音、年份也和月份标题重复（原型写法见 02-timeline.png） */}
+                          <Text className='timeline-date-text'>{formatCardDate(event.date, todayStr)}</Text>
+                          {/* 宠物标签：共用回忆录里每张卡都要能看出这是谁的回忆。
+                              多宠共同回忆（content.pets 有 2 只以上）→ 渲染多枚标签；
+                              单宠回忆 → 用单值 petName；旧数据缺名字时不渲染。
+                              旧时光提醒没有归属字段（横幅文案里已含宠物名），自然不渲染标签。 */}
+                          {(event.petTags?.length ? event.petTags : (event.petName ? [{ id: event.petId || 'p', name: event.petName, emoji: event.petEmoji || '🐾' }] : []))
+                            .map((tag) => (
+                              <View key={tag.id} className='timeline-pet-tag'>
+                                <Text className='timeline-pet-tag-text'>{tag.emoji || '🐾'} {tag.name}</Text>
+                              </View>
+                            ))}
+                          {event.type === 'memory' && (
+                            <View className='timeline-memory-badge'>
+                              <Text className='timeline-memory-badge-text'>回忆</Text>
+                            </View>
+                          )}
+                          {event.type === 'flashback' && (
+                            <View className='timeline-flashback-badge'>
+                              <Text className='timeline-flashback-badge-text'>旧时光</Text>
+                            </View>
+                          )}
+                        </View>
+                        <Text className='timeline-card-title'>{event.title}</Text>
+                        <Text className='timeline-card-desc'>{event.description}</Text>
+                        {event.photos.length > 0 ? (
+                          <View className='timeline-photo-grid'>
+                            {event.photos.map((photo, pi) => (
+                              // 真实照片展示（原实现只有占位符，无法看到照片内容）
+                              <Image
+                                key={pi}
+                                className='timeline-photo-img'
+                                src={resolveAvatarUrl(photo)}
+                                mode='aspectFill'
+                                onClick={() => handlePreviewPhotos(event.photos.map(resolveAvatarUrl), resolveAvatarUrl(photo))}
+                              />
+                            ))}
+                          </View>
+                        ) : (
+                          // 原先是「+ 添加照片」的虚线按钮样式，但整张卡片点击只会打开详情、
+                          // 并不支持给这条记录补照片 —— 是个点不出预期结果的假按钮。
+                          // 改成不带按钮感的纯提示，不再误导用户去点。
+                          <View className='timeline-photo-empty'>
+                            <Icon name='camera' size={14} tone='muted' />
+                            <Text className='timeline-photo-empty-text'>这条记录还没有照片</Text>
+                          </View>
+                        )}
+                      </View>
                     </View>
-                  )}
-                  {event.type === 'memory' && (
-                    <View className='timeline-memory-badge'>
-                      <Text className='timeline-memory-badge-text'>回忆</Text>
-                    </View>
-                  )}
-                  {event.type === 'flashback' && (
-                    <View className='timeline-flashback-badge'>
-                      <Text className='timeline-flashback-badge-text'>旧时光</Text>
-                    </View>
-                  )}
+                  ))}
                 </View>
-                <Text className='timeline-card-title'>{event.title}</Text>
-                <Text className='timeline-card-desc'>{event.description}</Text>
-                {event.photos.length > 0 ? (
-                  <View className='timeline-photo-grid'>
-                    {event.photos.map((photo, pi) => (
-                      // 真实照片展示（原实现只有占位符，无法看到照片内容）
-                      <Image
-                        key={pi}
-                        className='timeline-photo-img'
-                        src={resolveAvatarUrl(photo)}
-                        mode='aspectFill'
-                        onClick={() => handlePreviewPhotos(event.photos.map(resolveAvatarUrl), resolveAvatarUrl(photo))}
-                      />
-                    ))}
-                  </View>
-                ) : (
-                  // 原先是「+ 添加照片」的虚线按钮样式，但整张卡片点击只会打开详情、
-                  // 并不支持给这条记录补照片 —— 是个点不出预期结果的假按钮。
-                  // 改成不带按钮感的纯提示，不再误导用户去点。
-                  <View className='timeline-photo-empty'>
-                    <Icon name='camera' size={14} tone='muted' />
-                    <Text className='timeline-photo-empty-text'>这条记录还没有照片</Text>
-                  </View>
-                )}
-              </View>
+              ))}
             </View>
-          ))) : (
+          ) : (
+            /* 真实空态（第 4b 波明确要求：没记过任何回忆时给空态 + 指向「记一条」的引导）。
+               · 它只可能在「本账号一条回忆都没有、且没把旧时光提醒加进线里」时出现；
+               · 给的是**可点的行动**（actionText/onAction → 打开既有的「新增回忆」弹窗，
+                 与页头那条「记一条」CTA 是同一个 handler），而不是一句「0 条记录」了事；
+               · 文案里没有任何假数据，也没有「即将上线」之类的糊弄话。 */
             <EmptyState
               illustration='empty-timeline'
               title='还没有时光记录'
-              desc='点右上角「记录」，写下第一个珍贵瞬间'
+              desc='这里只放你自己记下的回忆：一句话、一张照片都算'
+              actionText='记第一条回忆'
+              onAction={handleAddMemory}
             />
           )}
         </View>
 
-        {/* ===== 宠物日记（2026-09-12 IA 第 2c 批：原「宠物日记」页并入本页） =====
-            【搬的是什么】diary 页**独有**的视图：diaryEngine 生成的拟人化日记正文 + 6 档心情筛选。
-            时光足迹是「最近 6 条打卡 + 全部回忆」，日记分区是「每条打卡一篇日记」——
-            粒度不同，所以两段都保留（本页合并的不是重复页，而是把日记视图搬过来）。
-            【视觉】完全沿用本页已有的时间线写法（timeline-item / timeline-line-col /
-            timeline-card / timeline-pet-chip），不引入第二套设计语言。 */}
-        <View className='timeline-diary'>
-          <View className='timeline-diary-head'>
-            <Text className='timeline-diary-title'>宠物日记</Text>
-            <Text className='timeline-diary-count'>共 {filteredDiary.length} 篇</Text>
+        {/* ===== 成就（v2 屏 02：原「成就墙」独立页在本页降级成一个展示分区）=====
+            两块都吃真实数据，没有任何一处是编的：
+              · 第一格 = 连续打卡成就进度，档位（7/30/100 天）取自 constants 的 ACHIEVEMENT_TYPES；
+                它的图标位按 v2 屏 02 用**品牌插画** empty-achievement（原型 L800 的 ipCard('achievement')，
+                随四季主题换图），档位 emoji 压在图下当加载失败时的兜底；
+              · 第二格 = 本月新增照片与本月新增记录（第 4b 波起只数**用户回忆**，见下）。
+            【为什么不做成「成就列表」】achievementService 那套是**每日弹层的一次性触发**
+            （checkAllAchievements 返回「今天该弹哪个」，还有本地去重），它没有「已解锁成就清单」
+            这个概念 —— 拿它渲染列表只会得到空。所以这里只渲染能从数据算出来的进度。
+            2026-09-12 收口批次：原「成就墙」独立页（pagesPet/achievement）已下线，
+            该页曾用「累计打卡次数」而非「连续天数」，且读的是只读本地缓存的 getCheckinStats；
+            本分区沿用联网拉到的真实打卡数组算 streak，口径更强，故不回头搬那套累计口径。
+            【2026-09-12 第 4 波改口径】第二格的「本月新增 N 条记录」不再把打卡里程碑算进去。
+            【第 4b 波再改一次】它也**不再把日记算进去**（日记已整批搬去健康档案页）：
+            现在数的是本月的用户回忆（按日期去重）+ 这些回忆里的真实照片张数，
+            口径与屏幕上那条时光线一致 —— 屏幕上看不见的东西不参与计数。
+            注意第二格只有当月数据为 0 时不渲染，避免「本月新增 0 张」这种丧气格子。 */}
+        <View className='timeline-achv'>
+          <View className='timeline-sec-head'>
+            <View className='timeline-sec-dot' />
+            <Text className='timeline-sec-title'>成就</Text>
           </View>
-
-          {/* 6 档心情筛选（照搬 diary 页）：横滑 + 贴纸胶囊，与弹窗里的宠物胶囊同一套样式 */}
-          <ScrollView scrollX className='timeline-diary-filter-scroll' showScrollbar={false}>
-            <View className='timeline-diary-filter-list'>
-              {TONE_FILTERS.map((f) => (
-                <View
-                  key={f.key}
-                  className={`timeline-pet-chip${toneFilter === f.key ? ' timeline-pet-chip--active' : ''}`}
-                  onClick={() => setToneFilter(f.key)}
-                >
-                  <Text className='timeline-pet-chip-text'>{f.label}</Text>
+          <View className='timeline-achv-grid'>
+            <View className='timeline-achv-tile'>
+              <View className='timeline-achv-icon'>
+                {/* 图标位按 v2 屏 02 换成**品牌插画**：key empty-achievement 在
+                    data/illustrations.ts 的 SEASONAL_SLOT 里映射到 achievement-<季>-card.jpg
+                    （四季图，服务器实测四张全 HEAD 200、1254x1254，与本页品牌横幅同一批资产）。
+                    emoji 保留在底下当**降级兜底**：插画是网络图且 <Illustration> 加载失败时
+                    整块返回 null，那时露出这枚档位 emoji，图标底不会变成一个空色块。 <Illustration>
+                    在 scss 里是绝对定位，正常加载时一定盖住 emoji。 */}
+                <Illustration
+                  name='empty-achievement'
+                  fill
+                  mode='aspectFill'
+                  className='timeline-achv-icon-illus'
+                />
+                <Text className='timeline-achv-icon-text'>{streakItem.icon}</Text>
+              </View>
+              <View className='timeline-achv-body'>
+                <Text className='timeline-achv-title'>{streakItem.title}</Text>
+                <Text className='timeline-achv-sub'>
+                  {timelineSummary.streak >= streakItem.days
+                    ? `${streakItem.days} 天已达成`
+                    : `已连续 ${timelineSummary.streak} 天 · 还差 ${streakItem.days - timelineSummary.streak} 天`}
+                </Text>
+              </View>
+            </View>
+            {timelineSummary.monthPhotos > 0 || timelineSummary.monthMemoryDays > 0 ? (
+              <View className='timeline-achv-tile'>
+                <View className='timeline-achv-icon timeline-achv-icon--alt'>
+                  <Text className='timeline-achv-icon-text'>📸</Text>
                 </View>
-              ))}
-            </View>
-          </ScrollView>
-
-          {diaryRecords.length === 0 ? (
-            /* 空态沿用 diary 页的原文案（同一套说法），但只做轻量提示：
-               本页上方已经可能有一个大插画空态，同屏再放第二个插画会抢注意力 */
-            <View className='timeline-diary-empty'>
-              <Text className='timeline-diary-empty-text'>还没有日记哦~</Text>
-              <Text className='timeline-diary-empty-hint'>每天打卡后会自动生成一篇日记</Text>
-            </View>
-          ) : filteredDiary.length === 0 ? (
-            <View className='timeline-diary-empty'>
-              <Text className='timeline-diary-empty-text'>该心情下暂无日记</Text>
-              <Text className='timeline-diary-empty-hint'>换一个心情标签看看</Text>
-            </View>
-          ) : (
-            filteredDiary.map((record, index) => (
-              <View key={`${record.petId}-${record.entry.id}`} className='timeline-item'>
-                <View className='timeline-line-col'>
-                  {/* 圆点底色跟随心情（语义色），与卡片上的心情角标同源 */}
-                  <View
-                    className='timeline-dot timeline-dot--diary'
-                    style={{ backgroundColor: TONE_COLORS[record.diary.tone] || '#8C8C8C' }}
-                  >
-                    <Text className='timeline-dot-emoji'>{record.diary.emoji}</Text>
-                  </View>
-                  {index < filteredDiary.length - 1 && <View className='timeline-line' />}
-                </View>
-                <View className='timeline-card timeline-card--diary'>
-                  <View className='timeline-card-date'>
-                    <Text className='timeline-date-text'>{record.date}</Text>
-                    <View
-                      className='timeline-diary-mood'
-                      style={{ backgroundColor: TONE_COLORS[record.diary.tone] || '#8C8C8C' }}
-                    >
-                      <Text className='timeline-diary-mood-text'>
-                        {record.diary.emoji} {TONE_LABELS[record.diary.tone] || record.diary.tone}
-                      </Text>
-                    </View>
-                    {/* 宠物归属标签：与时光足迹卡片同一套写法（共用一本时每张卡都要能看出是谁的） */}
-                    <View className='timeline-pet-tag'>
-                      <Text className='timeline-pet-tag-text'>{record.petEmoji} {record.petName}</Text>
-                    </View>
-                  </View>
-                  <Text className='timeline-diary-text'>{record.diary.text}</Text>
-                  {record.entry.note ? (
-                    <View className='timeline-diary-note'>
-                      <Text className='timeline-diary-note-label'>📝 备注</Text>
-                      <Text className='timeline-diary-note-text'>{record.entry.note}</Text>
-                    </View>
-                  ) : null}
-                  <View className='timeline-diary-actions'>
-                    <View className='timeline-diary-share' onClick={() => handleDiaryShare(record)}>
-                      <Text className='timeline-diary-share-text'>📤 分享这篇日记</Text>
-                    </View>
-                  </View>
+                <View className='timeline-achv-body'>
+                  {/* 两行必须说的是**同一件事**：先照片、没有照片就说记录条数。
+                      ⚠️ 首版这里写死成「N 张照片」+「本月新增 N 条记录」，
+                      真机取图时抓到了这个缺陷：用户本月只写了文字、没传照片时，
+                      卡片会变成「0 张照片 / 本月新增 1 条记录」—— 主标题是个 0，看着像坏掉了。
+                      所以条件渲染里主标题改成「有照片说照片、没照片说记录」。
+                      【2026-09-12 第 4b 波】两个数字都改吃**用户回忆**（timelineSummary 的
+                      monthPhotos / monthMemoryDays）：日记已经不是本页的内容，
+                      再把它算进「本月新增」就是拿屏幕上看不见的东西充数。 */}
+                  <Text className='timeline-achv-title'>
+                    {timelineSummary.monthPhotos > 0
+                      ? `${timelineSummary.monthPhotos} 张照片`
+                      : `${timelineSummary.monthMemoryDays} 条记录`}
+                  </Text>
+                  <Text className='timeline-achv-sub'>
+                    {timelineSummary.monthPhotos > 0
+                      ? `本月新增 ${timelineSummary.monthMemoryDays} 条记录`
+                      : '本月新增'}
+                  </Text>
                 </View>
               </View>
-            ))
-          )}
+            ) : null}
+          </View>
         </View>
 
-        {/* ===== 添加时光记录按钮（原型对齐） ===== */}
-        <View className='timeline-add-main-btn' onClick={handleAddMemory}>
-          <Text className='timeline-add-main-icon'>+</Text>
-          <Text className='timeline-add-main-text'>添加时光记录</Text>
-        </View>
-
+        {/* 底部让位：滚动区自身高度只减掉了自定义 tabBar 的 160rpx（见 .timeline-page 的
+            height 计算），这条 40rpx 是最后一张卡与底栏之间的呼吸位。
+            原来这里还有一个「+ 添加时光记录」通栏按钮 —— 写入口已按 v2 提到页头下方
+            （.timeline-cta），同页再放第二个写入口只会让用户以为有两个不同的功能。 */}
         <View className='timeline-bottom-safe' />
       </ScrollView>
 

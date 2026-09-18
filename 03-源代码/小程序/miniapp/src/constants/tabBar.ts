@@ -55,13 +55,14 @@ export const TAB_BAR_TABS: readonly TabBarTab[] = [
 export const TAB_BAR_AI_SLOT = 2
 
 /**
- * 中心 AI 按钮当前指向的页面
+ * 中心 AI 按钮指向的页面
  *
- * ⚠️ 临时指向首页：AI 对话目前**仍然挂在首页**（`pages/index` 本身就是对话页），
- * 第 4 批「团团全屏态 + 首页重做为今天看板」上线后，把这里改成团团全屏页路径即可，
- * 组件侧无需改动。
+ * 【2026-09-12 IA 第 4 批已改指团团全屏页】此前指向 `/pages/index/index`（AI 对话当时挂在首页 tab）。
+ * 现在 AI 对话整体搬到 `pagesYuantuan/agent`，中心按钮 `navigateTo` 打开它 —— 这也是「团团 = 全站
+ * AI 能力唯一入口」这条 IA 口径的落点。**它不再是 tab 页**，所以组件会走 navigateTo 分支
+ * （`custom-tab-bar/index.tsx` 按「是不是 tab 页」自动选 API，改路径不用改组件）。
  */
-export const TAB_BAR_AI_PATH = '/pages/index/index'
+export const TAB_BAR_AI_PATH = '/pagesYuantuan/agent/index'
 
 /** 中心 AI 按钮的文案（给读屏/hover 提示用；注意微信端 `aria-label` 实测不生效，见组件内说明） */
 export const TAB_BAR_AI_TEXT = '团团'

@@ -108,20 +108,50 @@ describe('EmergencyAlert', () => {
     expect(queryByText('查食物')).toBeNull()
   })
 
-  it('symptom button click calls onClose and navigates to symptom-check', () => {
+  it('symptom button click calls onClose and opens the symptom capability in 团团', () => {
     const onClose = vi.fn()
     render(<EmergencyAlert {...defaultProps} onClose={onClose} />)
     fireEvent.click(screen.getByText('记录症状'))
     expect(onClose).toHaveBeenCalledTimes(1)
-    expect(Taro.navigateTo).toHaveBeenCalledWith({ url: '/pagesPet/symptom-check/index' })
+    // 2026-09-12 收口批次 §2：症状初筛属 AI 推理类能力，入口收拢到团团；
+    // 带 capability 参数让团团进页自动打开该能力（不是只把人丢到团团首屏）
+    expect(Taro.navigateTo).toHaveBeenCalledWith({
+      url: '/pagesYuantuan/agent/index?capability=symptom',
+    })
   })
 
-  it('food button click calls onClose and navigates to food-query', () => {
+  it('food button click calls onClose and opens the food capability in 团团', () => {
     const onClose = vi.fn()
     render(<EmergencyAlert {...defaultProps} onClose={onClose} />)
     fireEvent.click(screen.getByText('查食物'))
     expect(onClose).toHaveBeenCalledTimes(1)
-    expect(Taro.navigateTo).toHaveBeenCalledWith({ url: '/pagesPet/food-query/index' })
+    expect(Taro.navigateTo).toHaveBeenCalledWith({
+      url: '/pagesYuantuan/agent/index?capability=food',
+    })
+  })
+
+  it('hospital button click calls onClose and opens the hospital capability in 团团', () => {
+    const onClose = vi.fn()
+    render(<EmergencyAlert {...defaultProps} onClose={onClose} />)
+    fireEvent.click(screen.getByText('找医院'))
+    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(Taro.navigateTo).toHaveBeenCalledWith({
+      url: '/pagesYuantuan/agent/index?capability=hospital',
+    })
+  })
+
+  it('never navigates straight to the page-level AI entries anymore', () => {
+    render(<EmergencyAlert {...defaultProps} />)
+    fireEvent.click(screen.getByText('记录症状'))
+    fireEvent.click(screen.getByText('查食物'))
+    fireEvent.click(screen.getByText('找医院'))
+    const urls = vi.mocked(Taro.navigateTo).mock.calls.map(c => (c[0] as { url: string }).url)
+    // 三个按钮都只能落在团团（各带自己的 capability）；沿用旧直达路径即为回归
+    expect(urls).toEqual([
+      '/pagesYuantuan/agent/index?capability=symptom',
+      '/pagesYuantuan/agent/index?capability=food',
+      '/pagesYuantuan/agent/index?capability=hospital',
+    ])
   })
 
   it('close button is disabled initially (has disabled class)', () => {

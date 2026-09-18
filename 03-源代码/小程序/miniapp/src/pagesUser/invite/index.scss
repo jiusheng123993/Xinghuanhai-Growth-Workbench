@@ -178,8 +178,12 @@
     margin-bottom: 20px;
   }
 
+  // 「检查奖励」：与同页的 `__copy-btn` / `__timeline-btn` 用**同一个实色主色**。
+  // ⚠️ 原先这里用的是 `$color-primary-light`（#FFA082）—— 浅橙底 + 白字对比度只有约 2:1，
+  // 实测观感像"置灰不可点"（28 号 复核取图时提出）。同页另外两个动作按钮都是 `$color-primary`，
+  // 此处是全页唯一的浅色变体，改回主色既修好对比度、也消除了同页不一致。
   &__reward-btn {
-    background: $color-primary-light !important;
+    background: $color-primary !important;
     color: $color-text-inverse !important;
     border-radius: 40px !important;
     font-size: 26px !important;

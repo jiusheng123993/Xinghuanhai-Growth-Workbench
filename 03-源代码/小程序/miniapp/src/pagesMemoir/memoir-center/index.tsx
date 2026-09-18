@@ -14,12 +14,14 @@ import { pickTierPrice, formatYuan, isTierAvailable } from '../../utils/memoirTi
 
 import './index.scss'
 import PageBackground from '../../components/PageBackground'
-import { Icon } from '../../components'
+import { Icon, Illustration } from '../../components'
+import { useThemeClass } from '../../hooks/useThemeClass'
 
 /**
- * 回忆录馆（2026-09-09 对齐高保真原型 creative-hub-prototype.html 屏3）：
+ * 回忆录馆（2026-09-09 对齐高保真原型 creative-hub-prototype.html 屏3；
+ * 2026-09-12 页头按**高保真 v2 屏 08** 重做）：
  * 「创作板块」IA 中的回忆录聚合页——米白暖色主题（与全 App 主视觉一致，非深色风）。
- * 结构：紫渐变 hero → 素材盘点 banner（前置：告诉用户能做什么档、缺什么素材）
+ * 结构：四季回忆录大插画页头（+ 标题/副标题）→ 素材盘点 banner（前置：告诉用户能做什么档、缺什么素材）
  *       → 三档定价卡同屏（轻纪念/标准/完整，点击直达对应流程）→ 更多（年度回顾/我的回忆录）
  * 档位卡路由规则：轻纪念 → memoir-daily（light 单段流水线）；
  *                标准/完整 → memoir-full?tier=standard|full（多段纪念管线，确认页可改档）
@@ -44,6 +46,15 @@ const MemoirCenter = () => {
   const currentPet = usePetStore((s) => s.currentPet)
   const petName = currentPet?.name || '毛孩子'
 
+  /**
+   * 主题类名：必须挂在页面自己的根节点上（2026-09-13 修复「回忆录馆没有跟随主题」）
+   *
+   * 为什么不能只靠 app.js 那层：小程序端每个页面是独立渲染的，app 组件的 JSX
+   * 并不包裹页面节点，.theme-starry 这类类名的 CSS 变量根本传不到页面里；
+   * 本页 index.scss 的配色又全部取 $color-* token（编译后即 var(--*)），没挂类就只能吃到基线（秋·暖阳珊瑚橙）兜底色。
+   * 写法与 creative / mine / pet-profile 三页一致：顶层无条件调用 + 根节点拼类名。
+   */
+  const themeClass = useThemeClass()
   const [material, setMaterial] = useState<MaterialCheck | null>(null)
   const [pricing, setPricing] = useState<Awaited<ReturnType<typeof getMemoirPricing>> | null>(null)
 
@@ -171,14 +182,29 @@ const MemoirCenter = () => {
   const standardP = priceOf('standard')
   const fullP = priceOf('full')
 
+  // 主题类挂在页面根节点上（写法照抄 creative / mine / pet-profile）：
+  // 本页配色全部走 $color-* token，靠这一层把主题 CSS 变量接进页面作用域。
   return (
-    <View className='mhall'>
+    <View className={`mhall ${themeClass}`}>
       <PageBackground />
-      {/* ===== 紫渐变 hero（原型屏3） ===== */}
+      {/* ===== 页头：四季回忆录大插画 + 标题（高保真 v2 屏 08 的 brandip 版式） =====
+          【为什么 2026-09-12 换掉紫渐变】原实现是「紫渐变底 + 🎞️ emoji 当标题图」，
+          照的是**旧原型**（creative-hub-prototype 屏 3）。高保真 v2 这一屏的页头是
+          `ip('memoir')` 那张大插画 —— 服务器 `memoir-<季>.jpg`，四季同构图只换色系，
+          **1254×1254 方图**（v2 源文件里对这批图有明确标注），下方接标题 + 副标题。
+          版式与今天页 `today-hero` 完全同类，所以直接复用那套已验证的尺寸口径：
+          `fill` + `aspectFit` + `width:100%; height:750rpx`（方图进方形容器 → 零裁切、零留白带，
+          且高度是显式值，图片加载完不会跳版；这里踩过"按 16:9 猜高度导致两侧各留白 25%"的坑）。
+          插画 key 用 `header-memoir`：它在 data/illustrations.ts 的 SEASONAL_SLOT 里映射到
+          slot `memoir` + 后缀 ''，正是 v2 那张图，且随四季主题换色 —— 主包零新增图片资源。 */}
       <View className='mhall-hero'>
-        <Text className='mhall-hero-face'>🎞️</Text>
-        <Text className='mhall-hero-title'>回忆录馆</Text>
-        <Text className='mhall-hero-sub'>把和{petName}的日子，讲成一部小电影</Text>
+        <Illustration name='header-memoir' fill mode='aspectFit' className='mhall-hero__art' />
+        <View className='mhall-hero__cap'>
+          {/* 文案取 v2 原文：原自造句「把和{名}的日子，讲成一部小电影」没有说明这页要干什么，
+              v2 的副标题「选一个档位，剩下的交给团团」正好交代了下面三档卡片的用途 */}
+          <Text className='mhall-hero__title'>把{petName}的故事，做成一部片子</Text>
+          <Text className='mhall-hero__sub'>选一个档位，剩下的交给团团</Text>
+        </View>
       </View>
 
       {/* ===== 素材盘点 banner（前置：能做什么档/缺什么素材） ===== */}
@@ -192,14 +218,16 @@ const MemoirCenter = () => {
         </View>
       )}
 
-      {/* ===== 选择档位（三档同屏，原型 wide 卡） ===== */}
-      <View className='mhall-sectitle'>选择档位</View>
+      {/* ===== 选档位（三档同屏，原型 wide 卡）。标题取 v2 原文「选档位」 ===== */}
+      <View className='mhall-sectitle'>选档位</View>
 
       <View
         className={`mhall-card${tierDisabled('light') ? ' mhall-card--dim' : ''}`}
         onClick={() => goTier('light')}
       >
-        <Text className='mhall-card-em'>🍃</Text>
+        {/* v2 这一档的图标是 🎞️（胶卷），原先实现用的是 🍃（叶子）—— 与「轻纪念 = 一段真实影像」
+            的语义对不上，按 v2 换回胶卷。另外两档的图标本就是图标组件（书 / 胶片），保持不动 */}
+        <Text className='mhall-card-em'>🎞️</Text>
         <View className='mhall-card-txt'>
           <View className='mhall-card-titlerow'>
             <Text className='mhall-card-title'>轻纪念</Text>

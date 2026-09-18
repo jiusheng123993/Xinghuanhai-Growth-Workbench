@@ -36,6 +36,8 @@
  *   不在本守卫防护范围内（二者均有各自的上游防重复逻辑兜底）。
  */
 import Taro from '@tarojs/taro'
+// 分包名单的唯一真相源（含与 app.config.ts 对齐的单测）—— 别在这里再硬编码前缀
+import { isSubPackageUrl } from '../constants/subPackages'
 
 /** 主包路由的占位保护窗：原 API 迟迟不 settle 时的最长锁定期（防锁死） */
 const PENDING_HOLD_MS = 1500
@@ -44,12 +46,18 @@ const PENDING_HOLD_MS = 1500
 const SUBPACK_PENDING_HOLD_MS = 8000
 
 /**
- * 判断导航目标是否位于分包（pagesPet / pagesUser）
+ * 判断导航目标是否位于分包
  * 分包首载需下载，路由窗口远长于主包，必须用长占位窗防连点
+ *
+ * 【2026-09-12 修正】名单原本硬编码成 `pagesPet / pagesUser` 两个前缀 —— 于是
+ * `pagesMemoir` 一直漏在保护之外，新增的 `pagesYuantuan`（团团全屏页）也会漏。
+ * 现改为统一读 `constants/subPackages.ts` 的 `SUB_PACKAGE_ROOTS`（唯一真相源，
+ * 且有单测与 `app.config.ts` 的 subPackages 对齐，漏加会红）。
+ *
  * @param url 导航目标完整路径（如 /pagesPet/avatar-customize/index）
  */
 function isSubpackUrl(url?: string): boolean {
-  return !!url && (url.startsWith('/pagesPet/') || url.startsWith('/pagesUser/'))
+  return isSubPackageUrl(url)
 }
 
 /** 路由 settle 后的收尾冷却：等待基础库 routeDone 消息处理完再放行下一次导航 */

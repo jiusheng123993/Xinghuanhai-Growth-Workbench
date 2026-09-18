@@ -3,6 +3,7 @@
  * 金色横幅 + 本周亮点 + 成员健康小结 + 本周数据 + AI 寄语 + 分享，历史列表与生成
  */
 import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useThemeClass } from '../../hooks/useThemeClass'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { api } from '../../services/api'
@@ -36,6 +37,14 @@ function memberSummary(ps: BackendWeeklyReport['petReports'][number]): string {
 }
 
 export default function WeeklyReport() {
+  /**
+   * 主题类名：**必须挂在页面自己的根节点上**（本页两个渲染分支都挂）
+   *
+   * 为什么：小程序端每个页面独立渲染，app 组件的 JSX 不包裹页面节点，挂在 app 层的
+   * `.theme-*` 传不进页面；不挂就会永远吃 styles/_theme.scss 里 page{} 的秋季基线变量，
+   * 用户切主题后本页仍是一片秋色。口径与 pages/creative、pages/mine 一致。
+   */
+  const themeClass = useThemeClass()
   const { currentFamily } = useFamilyStore()
   const [latestReport, setLatestReport] = useState<BackendWeeklyReport | null>(null)
   const [historyList, setHistoryList] = useState<BackendWeeklyReport[]>([])
@@ -120,7 +129,7 @@ export default function WeeklyReport() {
 
   if (!currentFamily) {
     return (
-      <View className='report-page'>
+      <View className={`report-page ${themeClass}`}>
         <View className='report-page__empty'>
           <Icon name='clipboard-text' size={48} tone='primary' className='report-page__empty-icon' />
           <Text className='report-page__empty-text'>请先创建家庭</Text>
@@ -132,7 +141,7 @@ export default function WeeklyReport() {
   const report = latestReport
 
   return (
-    <ScrollView className='report-page' scrollY>
+    <ScrollView className={`report-page ${themeClass}`} scrollY>
       {/* 全屏动态背景层 */}
       <PageBackground />
 

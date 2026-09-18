@@ -1,11 +1,16 @@
 /**
  * 轻纪念页面（回忆录馆「轻纪念」档流程，按高保真原型 1:1 重构）
- * 标题区 + hero + 双产品线卡 + 三步流程（上传素材 → AI生成 → 预览保存）
+ * 标题区 + 样例预览 hero + 三步流程（上传素材 → AI生成 → 预览保存）
  * 保留完整业务：照片选择、风格/BGM、Ken Burns 预览、生成任务、WS+轮询、保存分享
  * 2026-09-09 B2：生成改为三档定价支付链（light 档：下单→微信支付→轮询回调创建的任务），
  * 本地照片先上传服务器再提交（wxfile:// 会被后端 source_photos 白名单拒绝）
+ * 2026-09-13（轻纪念页改造）：
+ * - 页内大标题改「轻纪念」（用户明确要求；与原生导航栏标题同名，取舍见主渲染处注释）
+ * - 原底部「🎬 看看别人的轻纪念长什么样」样例模块删除，样例搬进顶部 hero 大框做真实预览位
+ * - 新增「从回忆里选照片」第二通道：复用 memoir-full 的 photo-pool 口径（档案相册 + 时光线照片），
+ *   库内照片本来就在服务器上，回填 remoteUrl 即可提交，**不再走一遍上传**
  */
-import { View, Text, ScrollView, Canvas, Image, Textarea } from '@tarojs/components'
+import { View, Text, ScrollView, Canvas, Image, Textarea, Video } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { CONFIG } from '../../config'
@@ -17,6 +22,7 @@ import { useThemeClass } from '../../hooks/useThemeClass'
 import { usePetStore } from '../../stores/petStore'
 import {
   uploadLocalPhoto,
+  getPhotoPool,
   createMemoirOrder,
   payWithWechat,
   waitForNewTask,
@@ -83,7 +89,15 @@ const BGM_OPTIONS: BGMOption[] = [
 // 三步流程（原型：上传素材 / AI生成 / 预览保存）
 const STEP_LABELS = ['上传素材', 'AI生成', '预览保存']
 
-/** 参考样例视频（2026-09-10 用户提供的轻纪念成片案例，公网已部署 memoir-sample/） */
+/** 本页照片上限：本地相册 + 「从回忆里选」两条通道合计（light 档就是 3 张） */
+const PHOTO_LIMIT = 3
+
+/**
+ * 参考样例视频（2026-09-10 用户提供的轻纪念成片案例，公网已部署 memoir-sample/）
+ * 2026-09-13：从原底部「看看别人的轻纪念长什么样」卡片区搬到 hero 预览位
+ * （用户原话「这里是放样例的地方」）。主位只播当前选中项，其余项降为次位切换按钮，
+ * 不再两张并排铺开。封面直接用视频自身首帧（不设 poster），避免引入新图片资源。
+ */
 const SAMPLE_VIDEOS: Array<{ url: string; label: string; emoji: string }> = [
   { url: 'https://api.xinghuanhai.com/uploads/memoir-sample/sample-light-1.mp4', label: '样例一 · 静图动效', emoji: '🎬' },
   { url: 'https://api.xinghuanhai.com/uploads/memoir-sample/sample-light-2.mp4', label: '样例二 · 温暖短片', emoji: '🎞️' },
@@ -100,11 +114,25 @@ export default function MemoirDaily() {
   const [step, setStep] = useState(0)
   const [animKey, setAnimKey] = useState(0)
 
+  // —— hero 样例预览（2026-09-13：样例从底部模块搬进顶部大框） ——
+  /** hero 主位正在预览的样例下标（次位按钮改它，取值由 SAMPLE_VIDEOS 长度约束） */
+  const [sampleIndex, setSampleIndex] = useState(0)
+
   // —— 步骤1：选照片 ——
   const [photos, setPhotos] = useState<PhotoItem[]>([])
   const [story, setStory] = useState('')
   // 回忆标签（F4 记忆驱动）：选中的标签传给服务端按标签筛核心层记忆作分镜素材
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+
+  // 「从回忆里选照片」第二条通道（2026-09-13 新增）：照片来自服务端照片池，与本地相册并存
+  /** 选照片面板展开态（展开时才去拉照片池，避免白耗一次请求） */
+  const [showPool, setShowPool] = useState(false)
+  /** 库内照片池（档案相册 + 时光线照片）；展开一次后缓存，重开面板不重复请求 */
+  const [photoPool, setPhotoPool] = useState<Awaited<ReturnType<typeof getPhotoPool>> | null>(null)
+  /** 照片池加载中 */
+  const [loadingPool, setLoadingPool] = useState(false)
+  /** 照片池加载失败（阻断自动重试死循环，重试交用户手动——与 memoir-full 选照片屏同口径） */
+  const [poolLoadFailed, setPoolLoadFailed] = useState(false)
 
   /** 切换回忆标签选中态（最多 8 个，与服务端 schema 上限一致） */
   const toggleTag = useCallback((key: string) => {
@@ -321,9 +349,10 @@ export default function MemoirDaily() {
   }, [])
 
   const handleAddPhoto = useCallback(() => {
-    const remain = 3 - photos.length
+    // 额度 = 上限 - 已选（photos 里同时装着本地照片和「从回忆里选」的库内照片，故两条通道天然共享同一额度）
+    const remain = PHOTO_LIMIT - photos.length
     if (remain <= 0) {
-      Taro.showToast({ title: '最多选择3张照片', icon: 'none' })
+      Taro.showToast({ title: `最多选择 ${PHOTO_LIMIT} 张照片`, icon: 'none' })
       return
     }
 
@@ -337,7 +366,7 @@ export default function MemoirDaily() {
           added.push({ key, filePath: f.path })
           return { key, path: f.path, size: f.size || 0, uploading: true }
         })
-        setPhotos(prev => [...prev, ...newPhotos].slice(0, 3))
+        setPhotos(prev => [...prev, ...newPhotos].slice(0, PHOTO_LIMIT))
         // 逐张进入串行上传队列
         added.forEach(({ key, filePath }) => uploadPhotoItem(key, filePath))
       })
@@ -364,6 +393,61 @@ export default function MemoirDaily() {
       urls,
     })
   }, [photos])
+
+  // ==================== 从回忆里选照片（2026-09-13 新增第二条通道） ====================
+
+  /**
+   * 展开「从回忆里选」面板后懒加载照片池（档案相册 + 时光线照片）。
+   * 数据源与 memoir-full 选照片屏完全同一口径：getPhotoPool → GET /api/pets/:id/memoir/photo-pool，
+   * 返回值里 profile_photos / moment_photos 是补全过的展示地址，profilePhotosRaw / momentPhotosRaw
+   * 是服务端原始路径（提交用），两套数组下标一一对应。
+   * poolLoadFailed 用于阻断自动重试：否则失败 → loadingPool 复位 → effect 重跑 → 无限请求 + 无限 toast。
+   */
+  useEffect(() => {
+    if (!showPool || photoPool || loadingPool || poolLoadFailed || !petId) return
+    setLoadingPool(true)
+    getPhotoPool(petId)
+      .then(setPhotoPool)
+      .catch(() => setPoolLoadFailed(true))
+      .finally(() => setLoadingPool(false))
+  }, [showPool, photoPool, loadingPool, poolLoadFailed, petId])
+
+  /** 照片池加载失败后的手动重试入口（只解锁失败标志，上面的 effect 会自动重新拉取） */
+  const handleRetryPool = useCallback(() => setPoolLoadFailed(false), [])
+
+  /**
+   * 勾选 / 取消勾选「我的回忆」里的一张照片（与相册通道合计不超过 PHOTO_LIMIT 张）
+   *
+   * ⚠️ 库内照片【不需要也不能再上传】：这张照片本来就存在服务器上，rawUrl 就是它的服务端原始路径，
+   *    直接回填成 PhotoItem.remoteUrl 就能进 source_photos 提交；只有本地相册那条路选出来的是
+   *    wxfile:// 临时路径（后端白名单不认），才必须走 uploadLocalPhoto 换 URL。
+   *    以后改这里别再补一次上传——会白等一轮，还会在服务器上多留一份重复文件。
+   *
+   * @param rawUrl 服务端原始路径（提交用，见 getPhotoPool 的 profilePhotosRaw / momentPhotosRaw）
+   * @param displayUrl 补全后的绝对地址（只用于 <Image> 展示）
+   */
+  const handleTogglePoolPhoto = useCallback((rawUrl: string, displayUrl: string) => {
+    setPhotos((prev) => {
+      // 再点一次 = 取消勾选（按 remoteUrl 匹配：本地照片的 remoteUrl 也是 /uploads/...，
+      // 但同一张库内照片的 rawUrl 只会出现一次，不会误删本地照片）
+      if (prev.some((p) => p.remoteUrl === rawUrl)) {
+        return prev.filter((p) => p.remoteUrl !== rawUrl)
+      }
+      if (prev.length >= PHOTO_LIMIT) {
+        // 文案与实际上限同源，避免「提示 3 张、实际能选 5 张」这类自相矛盾
+        Taro.showToast({ title: `最多选择 ${PHOTO_LIMIT} 张照片`, icon: 'none' })
+        return prev
+      }
+      // uploading / failed 一律不置位：这两个状态只属于「等待上传的本地照片」，
+      // 库内照片选完即处于可提交状态（有 remoteUrl、无 uploading、无 failed）
+      return [...prev, { key: `pool_${rawUrl}`, path: displayUrl, size: 0, remoteUrl: rawUrl }]
+    })
+  }, [])
+
+  /** 空态引导：「时光」是 tabBar 页，必须走 switchTab（navigateTo 打不开 tab 页） */
+  const handleGoTimeline = useCallback(() => {
+    Taro.switchTab({ url: '/pages/timeline/index' })
+  }, [])
 
   /**
    * 跳转「多段纪念管线」页（供 handleGenerate 超时引导、挂载检测、轮询闸门引导复用）
@@ -628,6 +712,11 @@ export default function MemoirDaily() {
     setPhotos([])
     setStory('')
     setSelectedTags([])
+    // 「从回忆里选」面板同步回到初始态：照片清空后再重选时，照片池也要重新拉一次
+    //（用户在这期间可能往时光线补了新照片，缓存住只会看到旧列表）
+    setShowPool(false)
+    setPhotoPool(null)
+    setPoolLoadFailed(false)
     setSelectedStyle('warm')
     setTaskId('')
     setOutputUrl('')
@@ -709,6 +798,23 @@ export default function MemoirDaily() {
     })
   }, [outputUrl])
 
+  /**
+   * 全屏播放 hero 里的样例视频。
+   * 沿用改造前底部样例卡的做法（Taro.previewMedia 唤起系统全屏播放器）：页面内嵌的 <Video>
+   * 负责「就地看看」，这个入口负责「全屏看完整片」，两种机型能力下用户都有路可走。
+   * @param url 样例视频地址（SAMPLE_VIDEOS 里的公网 mp4）
+   */
+  const handlePlaySample = useCallback((url: string) => {
+    Taro.previewMedia({ sources: [{ url, type: 'video' }] }).catch(() => {
+      Taro.showToast({ title: '视频播放失败，请重试', icon: 'none' })
+    })
+  }, [])
+
+  /** hero 内联样例加载失败提示（域名白名单/网络问题都让用户看得见，不静默留一个黑框） */
+  const handleSampleError = useCallback(() => {
+    Taro.showToast({ title: '样例视频加载失败，可点「全屏播放」重试', icon: 'none' })
+  }, [])
+
   // ==================== 定价展示（审查 P1：产品卡文案随 B1 三档体系动态取价） ====================
 
   // 挂载拉取三档价格：产品卡显示 light 档实时价（会员/非会员分价），vlog 卡显示 full 档起价
@@ -725,6 +831,16 @@ export default function MemoirDaily() {
 
   const isMember = pricing?.isMember ?? false
   const lightPrice = pricing?.prices ? pickTierPrice(pricing.prices, 'light', isMember) : null
+
+  // ==================== 渲染用派生值 ====================
+
+  /** hero 主位样例（下标只可能来自 SAMPLE_VIDEOS 的渲染循环，越界时兜底回第一支） */
+  const activeSample = SAMPLE_VIDEOS[sampleIndex] || SAMPLE_VIDEOS[0]
+
+  /** 照片池是否确为空：用来区分「库里真没回忆照片」与「还没加载出来」，避免静默显示空列表 */
+  const poolIsEmpty = !!photoPool
+    && photoPool.profilePhotosRaw.length === 0
+    && photoPool.momentPhotosRaw.length === 0
 
   // ==================== 渲染：步骤指示器 ====================
 
@@ -793,7 +909,7 @@ export default function MemoirDaily() {
           </View>
         ))}
 
-        {photos.length < 3 && (
+        {photos.length < PHOTO_LIMIT && (
           <View className='memoir__photo-slot memoir__photo-slot--add' onClick={handleAddPhoto}>
             <Icon name='camera' size={22} tone='primary' className='memoir__photo-add-icon' />
             <Text className='memoir__photo-add-text'>添加</Text>
@@ -801,12 +917,100 @@ export default function MemoirDaily() {
         )}
       </View>
 
+      {/* 通道一：手机相册（选出来的是 wxfile:// 临时路径，需要先上传换服务端 URL，见 uploadPhotoItem） */}
       <View
-        className={`memoir__pick-btn ${photos.length === 3 ? 'memoir__pick-btn--disabled' : ''}`}
+        className={`memoir__pick-btn ${photos.length >= PHOTO_LIMIT ? 'memoir__pick-btn--disabled' : ''}`}
         onClick={handleAddPhoto}
       >
-        <Text className='memoir__pick-btn-text'>🖼️ 选择照片（{photos.length}/3）</Text>
+        <Text className='memoir__pick-btn-text'>🖼️ 选择照片（{photos.length}/{PHOTO_LIMIT}）</Text>
       </View>
+
+      {/* 通道二：从回忆里选（2026-09-13 新增）。照片已在服务器上，勾选即用、不再上传 */}
+      <View
+        className={`memoir__pick-btn memoir__pick-btn--pool${showPool ? ' memoir__pick-btn--open' : ''}`}
+        onClick={() => setShowPool(v => !v)}
+      >
+        <Text className='memoir__pick-btn-text'>
+          🕰️ 从回忆里选（{photos.length}/{PHOTO_LIMIT}）{showPool ? ' · 收起' : ''}
+        </Text>
+      </View>
+
+      {showPool && (
+        <View className='memoir__pool'>
+          <Text className='memoir__pool-hint'>这些照片已经在你的回忆里，勾选就能用，不用重新上传</Text>
+
+          {loadingPool && <Text className='memoir__pool-tip'>回忆照片加载中…</Text>}
+
+          {/* 失败态：给明确的重试入口，不静默留一个空列表 */}
+          {!loadingPool && poolLoadFailed && (
+            <View className='memoir__pool-retry' onClick={handleRetryPool}>
+              <Text className='memoir__pool-retry-text'>回忆照片加载失败，点击重试</Text>
+            </View>
+          )}
+
+          {/* 缺 petId（从失效的外部分享进来的非常规入口）：说明原因，不留一个空壳面板 */}
+          {!loadingPool && !poolLoadFailed && !petId && (
+            <Text className='memoir__pool-tip'>未获取到宠物信息，请从宠物档案重新进入</Text>
+          )}
+
+          {/* 空态：引导去时光线记一条（tab 页用 switchTab 打开） */}
+          {!loadingPool && !poolLoadFailed && poolIsEmpty && (
+            <View className='memoir__pool-empty'>
+              <Icon name='clock' size={40} tone='primary' className='memoir__pool-empty-icon' />
+              <Text className='memoir__pool-empty-text'>时光线里还没有照片，去记一条回忆就有了</Text>
+              <View className='memoir__pool-empty-btn' onClick={handleGoTimeline}>
+                <Text className='memoir__pool-empty-btn-text'>去时光线记一条</Text>
+              </View>
+            </View>
+          )}
+
+          {photoPool && photoPool.profilePhotosRaw.length > 0 && (
+            <>
+              <Text className='memoir__pool-section'>🏠 档案相册</Text>
+              <View className='memoir__pool-grid'>
+                {/* 展示用补全后的绝对地址，提交用服务端原始路径（两套数组同下标一一对应） */}
+                {photoPool.profilePhotosRaw.map((rawUrl, i) => {
+                  const displayUrl = photoPool.profile_photos[i]
+                  const selected = photos.some(p => p.remoteUrl === rawUrl)
+                  return (
+                    <View
+                      key={rawUrl}
+                      className={`memoir__pool-item${selected ? ' memoir__pool-item--selected' : ''}`}
+                      onClick={() => handleTogglePoolPhoto(rawUrl, displayUrl)}
+                    >
+                      <Image className='memoir__pool-img' src={displayUrl} mode='aspectFill' />
+                      {selected && <View className='memoir__pool-check'><Text>✓</Text></View>}
+                    </View>
+                  )
+                })}
+              </View>
+            </>
+          )}
+
+          {photoPool && photoPool.momentPhotosRaw.length > 0 && (
+            <>
+              <Text className='memoir__pool-section'>🕰️ 时光线照片</Text>
+              <View className='memoir__pool-grid'>
+                {photoPool.momentPhotosRaw.map((m, i) => {
+                  const displayUrl = photoPool.moment_photos[i].url
+                  const selected = photos.some(p => p.remoteUrl === m.url)
+                  return (
+                    <View
+                      key={`${m.moment_id}-${m.url}`}
+                      className={`memoir__pool-item${selected ? ' memoir__pool-item--selected' : ''}`}
+                      onClick={() => handleTogglePoolPhoto(m.url, displayUrl)}
+                    >
+                      <Image className='memoir__pool-img' src={displayUrl} mode='aspectFill' />
+                      <Text className='memoir__pool-day'>{m.day}</Text>
+                      {selected && <View className='memoir__pool-check'><Text>✓</Text></View>}
+                    </View>
+                  )
+                })}
+              </View>
+            </>
+          )}
+        </View>
+      )}
 
       {/* 回忆标签：勾选后服务端按标签取真实记忆作叙事素材，无标签则用全部记忆 */}
       <View className='memoir__tags'>
@@ -1038,44 +1242,76 @@ export default function MemoirDaily() {
 
   return (
     <View className={`memoir ${themeClass}`}>
-      {/* 标题区 */}
+      {/* 标题区
+          ⚠️ 页内标题与原生导航栏标题（index.config.ts 的 navigationBarTitleText）同名「轻纪念」：
+          这是用户明确要求的结果，故照办；副标题按指示保持原样未动。
+          为压掉同屏重复感，页内不再出现第二处「轻纪念」字样——hero 改用信息性文案「样例预览」。 */}
       <View className='memoir__head'>
-        <Text className='memoir__title'>宠物回忆录</Text>
+        <Text className='memoir__title'>轻纪念</Text>
         <Text className='memoir__subtitle'>把 TA 的一生，讲成一个故事</Text>
       </View>
 
-      {/* hero 横幅 */}
+      {/* hero：样例预览位（2026-09-13 用户指认「这里是放样例的地方」，原底部样例模块已删除）
+          - 主位放真实样例视频，封面用视频自身首帧（不设 poster，不新增图片资源）
+          - 右上角「✨ AI 时光电影」角标是本档卖点标识，用户没让删，保留
+          - 角标与说明放在视频之外的行里：少数未开同层渲染的机型上，原生 video 也不会把它盖住
+          - 2026-09-13（24号）：视频收进 .memoir__hero-frame 比例盒（4:3）。原来 <Video> 直接当 hero 的一行、
+            靠 height: 340rpx 定高，而片源是 4:3 → 框比画面扁得多，objectFit='contain' 按高度适配后左右各留一半黑边；
+            更要命的是 H5 构建里 Taro 的 video 宿主元素自带 position: absolute，hero 没有定位祖先时它以视口为包含块
+            （width:100% = 整屏宽），把页内标题盖住。套一层 position: relative 的比例盒后，两个问题一起解决，
+            而且 H5 与小程序两端都成立（小程序那条是纯防御，原生 video 没有那套 absolute 样式）。 */}
       <View className='memoir__hero'>
-        <View className='memoir__hero-bg'>
-          <Icon name='cat' size={80} tone='primary' className='memoir__hero-emoji' />
+        <View className='memoir__hero-head'>
+          <Text className='memoir__hero-label'>🎬 样例预览</Text>
+          <View className='memoir__hero-badge'>
+            <Text className='memoir__hero-badge-text'>✨ AI 时光电影</Text>
+          </View>
         </View>
-        <View className='memoir__hero-badge'>
-          <Text className='memoir__hero-badge-text'>✨ AI 时光电影</Text>
-        </View>
-      </View>
 
-      {/* 参考样例视频（2026-09-10 用户提供的轻纪念成片案例，点击全屏播放） */}
-      <View className='memoir__samples'>
-        <Text className='memoir__samples-title'>🎬 看看别人的轻纪念长什么样</Text>
-        <View className='memoir__samples-list'>
-          {SAMPLE_VIDEOS.map((sv) => (
-            <View
-              key={sv.url}
-              className='memoir__samples-card'
-              onClick={() => {
-                Taro.previewMedia({ sources: [{ url: sv.url, type: 'video' }] }).catch(() => {
-                  Taro.showToast({ title: '视频播放失败，请重试', icon: 'none' })
-                })
-              }}
-            >
-              <Text className='memoir__samples-card-emoji'>{sv.emoji}</Text>
-              <View className='memoir__samples-card-info'>
-                <Text className='memoir__samples-card-label'>{sv.label}</Text>
-                <Text className='memoir__samples-card-hint'>5-30 秒 · 点击播放</Text>
+        {/* 比例盒：高度由宽度按片源比例撑出（padding-top: 75% 即 4:3），视频绝对定位铺满它。
+            换 4:3 以外的片源，必须同步改 index.scss 里 .memoir__hero-frame 的 padding-top（那里有换算口径）。 */}
+        <View className='memoir__hero-frame'>
+          {/* key 绑 url：切样例时重建播放器，避免上一支的进度/暂停态残留到下一支 */}
+          <Video
+            key={activeSample.url}
+            className='memoir__hero-video'
+            src={activeSample.url}
+            objectFit='contain'
+            controls
+            showCenterPlayBtn
+            showPlayBtn
+            showProgress
+            showFullscreenBtn
+            onError={handleSampleError}
+          />
+        </View>
+
+        <View className='memoir__hero-foot'>
+          <View className='memoir__hero-caption'>
+            <Text className='memoir__hero-caption-label'>{activeSample.emoji} {activeSample.label}</Text>
+            <Text className='memoir__hero-caption-hint'>5-30 秒 · 真实成片</Text>
+          </View>
+          <View className='memoir__hero-actions'>
+            {/* 次位：其余样例做成小切换按钮（不再是两张卡片并排铺开） */}
+            {SAMPLE_VIDEOS.length > 1 && (
+              <View className='memoir__hero-switch'>
+                {SAMPLE_VIDEOS.map((sv, i) => (
+                  <View
+                    key={sv.url}
+                    className={`memoir__hero-switch-item${i === sampleIndex ? ' memoir__hero-switch-item--active' : ''}`}
+                    onClick={() => setSampleIndex(i)}
+                  >
+                    {/* 按钮只放序号：样例名已在左侧说明里完整给出，避免窄屏挤成两行 */}
+                    <Text className='memoir__hero-switch-text'>{i + 1}</Text>
+                  </View>
+                ))}
               </View>
-              <View className='memoir__samples-card-play'><Text>▶</Text></View>
+            )}
+            {/* 全屏播放：沿用改造前底部样例卡的那套 Taro.previewMedia */}
+            <View className='memoir__hero-fullscreen' onClick={() => handlePlaySample(activeSample.url)}>
+              <Text className='memoir__hero-fullscreen-text'>⛶ 全屏播放</Text>
             </View>
-          ))}
+          </View>
         </View>
       </View>
 

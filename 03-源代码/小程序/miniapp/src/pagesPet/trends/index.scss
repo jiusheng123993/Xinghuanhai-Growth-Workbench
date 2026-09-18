@@ -86,11 +86,60 @@
   position: relative;
   z-index: 2;
   flex: 1;
-  // 注意：webview 渲染模式不支持 scroll-view 的 padding，内边距放在内部容器上
+  /*
+   * 【2026-09-12 必须给确定高度，否则本页大半内容够不着】
+   *
+   * ── 实测数据（微信开发者工具真机，390×753）──
+   *   · 本页内容实高 2049px（.pet-trends__content-inner 实测 h=2049）；
+   *   · 但**页面最多只能滚 109px** → 页面滚动可达高度上限 ≈ 753 + 109 = 862px；
+   *     实测 .pet-trends-page 的 h 正好 = 863（就是被锁死的那个高度）；
+   *   · 于是 863px 以下（导出区 top=1941、免责声明 top=2059）**页面滚动永远够不着**。
+   *
+   * ⚠️ 量"页面最多能滚多远"必须用 `miniProgram.pageScrollTo(99999)` ——
+   *    miniprogram-automator 里 `Page.scrollTop()` 是**读滚动位置的 getter**
+   *    （`Page.d.ts`: `scrollTop(): Promise<string | string[]>`，无参），
+   *    拿它当 setter 用会得到"怎么滚都不动"的假结论（我曾据此误判为全站问题，舰长已纠正）。
+   *
+   * ── 根因（结构性，不是全站性的）──
+   *   本页结构与"能正常滚满"的页面（如今天页）差在**内层 ScrollView 的高度协议**：
+   *   · 本元素只写了 `flex: 1`，父级 `.pet-trends-page` 是 `min-height: 100vh`（不是定高）
+   *     → flex-basis 解不出来，ScrollView 自身高度被解析成一个**定值 649px**；
+   *   · ScrollView 的**可滚动溢出不计入祖先的布局高度** → `.pet-trends-page` 最终只有 863px，
+   *     它那 2049px 的内容对文档流"不可见"，页面于是只多出 109px 的滚动量；
+   *   · 对照组：今天页没有内层滚动容器，`.today-grid` 是普通流内容 → 文档如实长到 1276px，
+   *     页面能滚 523px，内容全部可达。
+   *   结论：**本页是结构问题（ScrollView 形同虚设、滚动落到 page 上又滚不动），
+   *   不是"全站被 overflow:hidden 裁掉"** —— 所以修法也只在本页，
+   *   共用样式 `src/app.scss` 的 `.app-root { overflow: hidden }` **按舰长裁决保持不动**
+   *   （它负责裁掉背景光斑装饰层的外溢，是全站有意为之）。
+   *
+   * ── 修法 ──
+   *   给一个**确定高度**，让 ScrollView 真正成为滚动容器（本仓 tab 页的既有约定：
+   *   根容器定高 + 内层滚动容器，今天页/时光页都这么写）。
+   *   高度的算法：窗口高 − 上方两块固定区（实测 .pet-switcher 0~72.7px、
+   *   .pet-trends__time-range 72.7~130.4px，合计约 130px）− 底部让位，
+   *   取 `calc(100vh - 200rpx)`：在 390×753 上 = 753 − 100 = 653px（实测 649px，含边框差）。
+   *
+   * ── 改完的验收判据（舰长点名）──
+   *   滚到底后**最后一个内容块的 bottom 必须 ≤ 视口高**。实测：
+   *   第一次跳转 .pet-trends__disclaimer top=867 bottom=933 ❌ → 第二次 top=660 bottom=726 ✅（≤753）。
+   * box-sizing 已在全局 app.scss 对 view/scroll-view 设过 border-box，这里显式再写一次防止旁人改动全局后失配。
+   */
+  height: calc(100vh - 200rpx);
+  box-sizing: border-box;
+  // 注意：webview 渲染模式不支持 scroll-view 的 padding，内边距放在内部容器上（见 .pet-trends__content-inner）
 }
 
 .pet-trends__content-inner {
   padding: 20rpx 32rpx;
+  /*
+   * 底部兜底留白：滚到最底时，最后一行（免责声明）原来会贴着屏幕下沿 ——
+   * 取图实测过一次：末尾那个字被 iPhone 的 Home Indicator 压掉半个。
+   * 这里补一层安全区留白（取图那台 safe-area-inset-bottom = 34px，但各代机型不同，
+   * 所以用 constant()/env() 两写法做兜底，与仓里 .safe-bottom 同一套写法）。
+   */
+  padding-bottom: calc(40rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
 }
 
 .pet-trends__chart-area {
@@ -1590,3 +1639,715 @@
     }
   }
 }
+
+// ============================================================================
+// 高保真 v2 层（屏 07「健康档案」· 2026-09-12 第 2 波）
+// ============================================================================
+// 【为什么是"追加覆盖"而不是重写】本文件 1616 行、约 130 个选择器，其中相当一部分
+// 覆盖的是**真机上取不到的极端状态**（品种体重分析 4 种变体、柱状图入场动画、
+// 报告弹窗、生成中/禁用态）—— 整段重写就会把它们静默删掉。
+// 因此沿用文件里既有的「同特异性 + 顺序在后」覆盖法：上面一行都不删。
+//
+// 【要覆盖什么】v2 的视觉语言是「白卡 + 实线细边 + 主色淡晕」，而上面那层
+// 「方向 C 温暖手账」用的是「纸面 + 3rpx 虚线 + 胶带」。两套语言同屏会互相打架，
+// 所以**始终可见**的那几块（AI 小结、三张趋势卡、导出区、免责声明）按 v2 改回白卡；
+// 图表本体（svg 曲线 / 柱状 / 网格 / 坐标轴）一行不碰。
+//
+// 【颜色纪律】一律走主题变量。深色主题（.theme-starry）会把 --text-* 翻成浅色，
+// 而卡片底取 var(--bg-card)（深色主题下是深色卡面）—— 底与字同源，所以自动成立；
+// 只有"浅色纸面"这类写死浅底的地方才需要显式钉字色（本波没有这种地方）。
+.pet-trends-page {
+
+  // —— 块 1：宽幅页头（插画铺满 + 右侧叠字） ——
+  // 高 240rpx（=120px）：v2 里页头是首屏最醒目的一块，但也不能把首屏吃光
+  // （下方还要露出"体重趋势"卡的头，用户才知道下面有内容）。
+  .trends-hero {
+    position: relative;
+    height: 240rpx;
+    border-radius: $radius-md;
+    overflow: hidden;
+    background: $color-primary-bg;
+    box-shadow: $shadow-card;
+  }
+
+  .trends-hero__art {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  // 遮罩：插画是"猫狗在浅色画板前"的亮调构图，右侧要压白字 —— 没有这层就是白字压浅底。
+  // 渐变左淡右浓：左侧留出插画主体，右侧给文字一块足够暗的底。
+  // 【2026-09-12 取图复核后加深】首版到 58% 就被判"文字与背景融合、边缘发混"——
+  // 因为遮罩是**半透明叠在亮色插画上**，58% 的深色合成的仍是中浅色底。
+  // 现在把文字所在的右半段推到 0.72~0.78，白字对比度实测足够；左半段保持很淡，不压主体。
+  .trends-hero__scrim {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: linear-gradient(
+      100deg,
+      rgba(64, 40, 28, 0.04) 0%,
+      rgba(64, 40, 28, 0.18) 38%,
+      rgba(64, 40, 28, 0.62) 62%,
+      rgba(64, 40, 28, 0.78) 100%
+    );
+  }
+
+  .trends-hero__cap {
+    position: absolute;
+    top: 0;
+    right: 28rpx;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    max-width: 58%;
+  }
+
+  .trends-hero__title {
+    font-size: 40rpx;
+    font-weight: $font-weight-bold;
+    // 钉白字：这行字压在自己画的深色遮罩上，与主题明暗无关（深色主题下也是压在深遮罩上）
+    color: #FFFFFF;
+    line-height: 1.2;
+    text-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.35);
+  }
+
+  .trends-hero__subtitle {
+    display: block;
+    margin-top: 8rpx;
+    font-size: 22rpx;
+    color: rgba(255, 255, 255, 0.92);
+    line-height: 1.4;
+    text-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.3);
+  }
+
+  // —— 块 3：体重趋势「近 7 天」柱状速览 ——
+  .trends-week-card {
+    padding: 26rpx 26rpx 22rpx;
+    @include card-base;
+    box-shadow: $shadow-card;
+  }
+
+  .trends-week-card__head {
+    display: flex;
+    align-items: baseline;
+    gap: 12rpx;
+    margin-bottom: 18rpx;
+  }
+
+  .trends-week-card__title {
+    font-size: 30rpx;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+  }
+
+  .trends-week-card__unit {
+    font-size: 21rpx;
+    color: $color-text-tertiary;
+  }
+
+  // 差值胶囊靠右：正升绿、下降蓝、持平灰、记录不足走中性色
+  .trends-week-card__delta {
+    margin-left: auto;
+    font-size: 22rpx;
+    font-weight: $font-weight-semibold;
+    padding: 4rpx 14rpx;
+    border-radius: $radius-round;
+
+    &--up {
+      color: $color-sage;
+      background: rgba(var(--sage-rgb, 47, 201, 142), 0.12);
+    }
+
+    &--down {
+      color: $color-teal;
+      background: rgba(var(--teal-rgb, 79, 163, 227), 0.12);
+    }
+
+    &--flat {
+      color: $color-text-secondary;
+      background: rgba(var(--border-rgb, 243, 226, 210), 0.6);
+    }
+
+    &--muted {
+      color: $color-text-tertiary;
+      background: rgba(var(--border-rgb, 243, 226, 210), 0.4);
+      font-weight: $font-weight-normal;
+    }
+  }
+
+  // 柱状区：固定高度 200rpx，柱高按窗口内 min~max 归一化后写在内联 style 上（见 tsx）
+  .trends-week-card__bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 200rpx;
+    gap: 10rpx;
+  }
+
+  .trends-week-card__bar-item {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8rpx;
+  }
+
+  .trends-week-card__bar {
+    width: 100%;
+    max-width: 48rpx;
+    border-radius: 14rpx 14rpx 6rpx 6rpx;
+    // 柱体走主题主色渐变（v2 是橙色柱；主题切换时跟着变，不写死 hex）
+    background: linear-gradient(180deg, $color-primary-light, $color-primary);
+    min-height: 12rpx;
+
+    // 当天有异常 → 换成警示色，与"异常日"的语义一致
+    &--abnormal {
+      background: linear-gradient(180deg, $color-gold-soft, $color-warning);
+    }
+  }
+
+  .trends-week-card__bar-label {
+    font-size: 20rpx;
+    color: $color-text-tertiary;
+    line-height: 1;
+  }
+
+  .trends-week-card__legend {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16rpx;
+    padding-top: 14rpx;
+    border-top: 1px solid $color-divider;
+  }
+
+  .trends-week-card__legend-text {
+    font-size: 21rpx;
+    color: $color-text-secondary;
+  }
+
+  .trends-week-card__legend-warn {
+    font-size: 21rpx;
+    color: $color-gold-deep;
+  }
+
+  // 本卡空态（不能用 .trend-chart__empty：那是曲线卡的空态类，测试会按第一个命中取文本）
+  .trends-week-card__empty {
+    padding: 48rpx 24rpx;
+    margin: 8rpx 0;
+    border-radius: $radius-sm;
+    border: 1px solid rgba(var(--primary-rgb, 255, 107, 61), 0.2);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.04);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .trends-week-card__empty-text {
+    font-size: 28rpx;
+    font-weight: $font-weight-semibold;
+    color: $color-text-secondary;
+    margin-bottom: 10rpx;
+  }
+
+  .trends-week-card__empty-hint {
+    font-size: 22rpx;
+    color: $color-text-tertiary;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  // —— 块 5：当前体重 / 连续正常天数（两卡并排） ——
+  .trends-metric-pair {
+    display: flex;
+    gap: 20rpx;
+  }
+
+  .trends-metric-card {
+    flex: 1;
+    min-width: 0;
+    padding: 24rpx 22rpx 20rpx;
+    @include card-base;
+    box-shadow: $shadow-card;
+  }
+
+  .trends-metric-card__label {
+    font-size: 22rpx;
+    color: $color-text-tertiary;
+  }
+
+  .trends-metric-card__value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8rpx;
+    margin-top: 8rpx;
+  }
+
+  .trends-metric-card__value {
+    // 数字用大号主色：v2 里这两个数是卡片唯一的视觉重心
+    font-size: 52rpx;
+    font-weight: $font-weight-bold;
+    color: $color-primary;
+    line-height: 1;
+  }
+
+  .trends-metric-card__unit {
+    font-size: 22rpx;
+    color: $color-text-tertiary;
+  }
+
+  .trends-metric-card__delta {
+    margin-left: auto;
+    font-size: 22rpx;
+    font-weight: $font-weight-semibold;
+
+    &--up { color: $color-sage; }
+    &--down { color: $color-teal; }
+    &--flat { color: $color-text-secondary; }
+    &--muted { color: $color-text-tertiary; font-weight: $font-weight-normal; }
+  }
+
+  .trends-metric-card__hint {
+    display: block;
+    margin-top: 10rpx;
+    font-size: 20rpx;
+    color: $color-text-tertiary;
+    line-height: 1.4;
+  }
+
+  // AI 小结卡里的「查看健康报告 ›」快捷入口（同页内跳转，不是新页面）
+  .trends-ai-card__more {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8rpx;
+    margin-top: 18rpx;
+
+    &--hover {
+      opacity: 0.7;
+    }
+  }
+
+  .trends-ai-card__more-text {
+    font-size: 23rpx;
+    font-weight: $font-weight-semibold;
+    color: $color-primary;
+  }
+
+  // —— 块 6：健康报告（区块头 + 两条真实入口 + 两枚动作卡） ——
+  .trends-report-sec__head {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+    margin: 4rpx 0 16rpx;
+  }
+
+  // 小圆点：v2 每个区块标题前都有一颗主色圆点
+  .trends-report-sec__dot {
+    width: 12rpx;
+    height: 12rpx;
+    border-radius: 50%;
+    background: $color-primary;
+    box-shadow: 0 0 12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.5);
+  }
+
+  .trends-report-sec__title {
+    font-size: 30rpx;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+  }
+
+  .trends-menu {
+    @include card-base;
+    box-shadow: $shadow-card;
+    overflow: hidden;
+  }
+
+  .trends-menu__row {
+    display: flex;
+    align-items: center;
+    gap: 18rpx;
+    padding: 24rpx 22rpx;
+
+    // 按压缩放：行是可点的（跳真实报告页），没有反馈会让人以为点了没反应
+    &--hover {
+      background: $color-primary-bg;
+    }
+  }
+
+  .trends-menu__divider {
+    height: 1px;
+    margin-left: 84rpx;
+    background: $color-divider;
+  }
+
+  // 行首图标：淡色圆角方块 + 主题色图标（底淡晕、图标实色，两者同源）
+  .trends-menu__icon {
+    width: 56rpx;
+    height: 56rpx;
+    border-radius: 18rpx;
+    @include flex-center;
+    flex-shrink: 0;
+
+    &--a { background: $color-primary-bg; }
+    &--c { background: rgba(var(--teal-rgb, 79, 163, 227), 0.12); }
+  }
+
+  .trends-menu__label {
+    flex: 1;
+    min-width: 0;
+    font-size: 27rpx;
+    color: $color-text-primary;
+    @include text-ellipsis;
+  }
+
+  // 右侧 chevron：用两条边框转 45° 画，不新增图标名、也不受图标取色影响
+  .trends-menu__chev {
+    width: 14rpx;
+    height: 14rpx;
+    border-top: 3rpx solid $color-text-tertiary;
+    border-right: 3rpx solid $color-text-tertiary;
+    transform: rotate(45deg);
+    flex-shrink: 0;
+  }
+
+  .trends-action-pair {
+    display: flex;
+    gap: 20rpx;
+    margin-top: 20rpx;
+  }
+
+  .trends-action-card {
+    flex: 1;
+    padding: 24rpx 16rpx;
+    @include card-base;
+    box-shadow: $shadow-card;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12rpx;
+    transition: transform $transition-fast, background $transition-fast;
+
+    &--hover {
+      transform: scale(0.97);
+      background: $color-primary-bg;
+    }
+  }
+
+  .trends-action-card__label {
+    font-size: 25rpx;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+  }
+
+  // —— 覆盖手账层：把"始终可见"的几块改回 v2 的白卡语言（纸面/虚线/衬线 → 白卡/实线/无衬线） ——
+  .trends-ai-card,
+  .trends-chart-card,
+  .trend-card {
+    background: $color-bg-card;
+    border: 1px solid $color-border;
+    border-radius: $radius-md;
+    box-shadow: $shadow-card;
+  }
+
+  // 便签胶带（.trends-ai-card::before）是手账语言里最显眼的一处，v2 没有 → 清掉
+  .trends-ai-card::before {
+    display: none;
+  }
+
+  .trends-ai-card__title,
+  .trends-chart-card__title,
+  .trend-card__title {
+    // 手账层用的是衬线体（journal-serif），v2 是系统无衬线 —— 显式改回来
+    font-family: inherit;
+  }
+
+  .trends-note {
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
+    border: 1px solid rgba(var(--gold-rgb, 255, 176, 32), 0.32);
+    border-radius: $radius-sm;
+  }
+
+  .trend-chart__empty {
+    border: 1px solid rgba(var(--primary-rgb, 255, 107, 61), 0.2);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.04);
+    border-radius: $radius-sm;
+  }
+
+  .trend-chart__empty-text {
+    font-family: inherit;
+  }
+
+  // 导出区五枚按钮：虚线贴纸 → v2 的实线按钮
+  .export-section {
+    padding: 16rpx 0 0;
+    margin-top: 24rpx;
+    gap: 16rpx;
+
+    .preview-btn,
+    .csv-btn,
+    .vet-btn {
+      border-style: solid;
+      box-shadow: none;
+    }
+  }
+
+  // 免责声明：金色虚线条 → 中性细边说明条（v2 的页脚说明就是一行小字）
+  .pet-trends__disclaimer {
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.08);
+    background-image: none;
+    border: 1px solid rgba(var(--gold-rgb, 255, 176, 32), 0.28);
+    border-radius: $radius-sm;
+    margin: 24rpx 0 0;
+  }
+}
+
+
+// ==================== 打卡记录（2026-09-12 第 4 波：从时光页迁入）====================
+// 复用 .trends-chart-card 的卡片外观（白底 + 圆角 + fadeInUp），只补列表与贴纸两段自有样式 ——
+// 另起一套卡片语言会让本页出现两种卡面。
+// 【颜色纪律】一律走 _theme 变量；淡色底用 rgba(var(--x-rgb, R,G,B), α) 通道写法，
+// 绝不能写成 rgba(var(--x), α)（小程序 WXSS 解析不了，整条声明会被丢掉）。
+.trends-checkin-card {
+  margin-top: 24rpx;
+}
+
+.trends-checkin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+// 单条打卡：浅底贴纸条（与「异常记录 / 用药史」的 .trends-report-item 同一套质感）
+.trends-checkin-item {
+  padding: 20rpx 24rpx;
+  border-radius: $radius-md;
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
+  border: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.16);
+}
+
+.trends-checkin-item__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 12rpx;
+}
+
+// 【为什么日期要 display: block】<Text> 默认 inline，紧跟其后的体重贴纸会挤在同一行
+// 导致换行时机不可控（本仓刚修过这个坑），显式声明块级最稳。
+.trends-checkin-item__date {
+  display: block;
+  font-size: 24rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.trends-checkin-item__weight {
+  padding: 4rpx 14rpx;
+  border-radius: $radius-round;
+  background: rgba(var(--success-rgb, 47, 201, 142), 0.12);
+  flex-shrink: 0;
+}
+
+.trends-checkin-item__weight-text {
+  font-size: 20rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-success;
+}
+
+// 四项指标贴纸：自动换行（窄屏两列、宽屏四列都能看）
+.trends-checkin-item__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.trends-checkin-tag {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 6rpx 16rpx;
+  border-radius: $radius-round;
+  background: $color-bg-secondary;
+}
+
+.trends-checkin-tag__label {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+}
+
+.trends-checkin-tag__value {
+  font-size: 22rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+// 备注：与指标贴纸区分开（前缀已有 📝，这里只做弱化小字）
+.trends-checkin-item__note {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: $color-text-secondary;
+}
+
+// 截断说明：只在真的被截断时出现，配色用弱化文字（不是警告）
+.trends-checkin-limit {
+  display: block;
+  margin-top: 20rpx;
+  font-size: 20rpx;
+  line-height: 1.6;
+  color: $color-text-tertiary;
+}
+
+// ============================================
+// 打卡记录里的「自动生成的日记」与心情筛选（2026-09-12 第 4b 波：从时光页搬入）
+// ============================================
+// 【为什么落在本页】那些句子（「今天吃得香睡得香…」）是 diaryService 按每条打卡 1:1
+// 生成的，不是用户记的回忆 —— 用户在原时光页看到它们被当成自己记的内容。
+// 搬到这里后：每句跟着它自己那条打卡显示，卡片顶部有一句来源说明，心情筛选也归这里。
+// 【颜色纪律】一律走 _theme 变量；淡色底用 rgba(var(--x-rgb, R,G,B), α) 通道写法，
+// 绝不能写成 rgba(var(--x), α)（小程序 WXSS 解析不了，整条声明会被丢掉）。
+// 唯一的例外是心情语义色（开心/平静/疲惫/不舒服/骄傲）—— 它们由 tsx 内联给，
+// 换主题时心情颜色本身不该跟着变。
+
+// 来源说明：必须让用户一眼看懂这些句子不是我写的
+// 【为什么 display: block】<Text> 默认 inline，不加这条会与后面的筛选行挤在同一行。
+.trends-checkin-source {
+  display: block;
+  margin-bottom: 16rpx;
+  padding: 12rpx 18rpx;
+  border-radius: $radius-xs;
+  background: rgba(var(--teal-rgb, 79, 163, 227), 0.10);
+  border-left: 4rpx solid rgba(var(--teal-rgb, 79, 163, 227), 0.45);
+  font-size: 21rpx;
+  line-height: 1.6;
+  color: $color-text-secondary;
+}
+
+// 心情筛选行：标题 + 计数 + 横滑胶囊 + 口径说明
+.trends-checkin-filter {
+  margin-bottom: 16rpx;
+}
+
+.trends-checkin-filter__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 10rpx;
+}
+
+.trends-checkin-filter__title {
+  display: block;
+  font-size: 22rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.trends-checkin-filter__count {
+  display: block;
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+}
+
+// 横滑容器：必须给固定高度 —— WXSS 里横滑 scroll-view 的高度会塌成内容的一半（本项目踩过），
+// 胶囊会被裁掉半截。56rpx 比胶囊本体略高，最稳。
+.trends-checkin-filter__scroll {
+  width: 100%;
+  height: 56rpx;
+  white-space: nowrap;
+  margin-bottom: 8rpx;
+}
+
+// 胶囊排布：父级 nowrap + 子级 inline-flex（不能给胶囊加 display: flex，那会撑成整行宽）
+.trends-checkin-filter__list {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.trends-checkin-chip {
+  padding: 6rpx 20rpx;
+  border-radius: $radius-round;
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
+  border: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.18);
+  flex-shrink: 0;
+}
+
+.trends-checkin-chip--active {
+  background: $color-primary;
+  border-color: $color-primary;
+}
+
+.trends-checkin-chip__text {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+}
+
+.trends-checkin-chip--active .trends-checkin-chip__text {
+  color: #FFFFFF;
+  font-weight: $font-weight-semibold;
+}
+
+.trends-checkin-filter__hint {
+  display: block;
+  font-size: 20rpx;
+  line-height: 1.5;
+  color: $color-text-tertiary;
+}
+
+// 一条记录下的团团的日记：与打卡指标区分开（指标是用户填的，这段是自动生成的）
+.trends-checkin-diary {
+  margin-top: 14rpx;
+  padding: 14rpx 18rpx;
+  border-radius: $radius-xs;
+  background: rgba(var(--sage-rgb, 47, 201, 142), 0.08);
+  border: 1rpx dashed rgba(var(--sage-rgb, 47, 201, 142), 0.35);
+}
+
+.trends-checkin-diary__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+  margin-bottom: 8rpx;
+}
+
+.trends-checkin-diary__label {
+  display: block;
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+}
+
+// 心情角标：底色由 tsx 按心情内联给（语义色，不跟主题走），这里只管形状与文字
+.trends-checkin-diary__mood {
+  padding: 2rpx 14rpx;
+  border-radius: $radius-round;
+  flex-shrink: 0;
+}
+
+.trends-checkin-diary__mood-text {
+  font-size: 20rpx;
+  font-weight: $font-weight-semibold;
+  color: #FFFFFF;
+}
+
+// 正文：用次级文字色，视觉上明显弱于用户自己填的指标（它只是团团写的）
+.trends-checkin-diary__text {
+  display: block;
+  font-size: 23rpx;
+  line-height: 1.7;
+  color: $color-text-secondary;
+}
+

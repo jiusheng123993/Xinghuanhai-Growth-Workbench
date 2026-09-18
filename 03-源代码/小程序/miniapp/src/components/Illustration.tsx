@@ -45,11 +45,22 @@ interface IllustrationProps {
    *
    * 开启后**不再写内联 width/height**，尺寸完全交给 className 的 CSS ——
    * 否则内联样式优先级高于类，父级怎么设都会被覆盖成固定像素。
-   * 配套需要 `mode='aspectFill'` 才能裁切铺满。
+   *
+   * ⚠️ `fill` **只管"尺寸从哪来"**，它**不要求** `mode='aspectFill'`：
+   * mode 按用途另选 —— 铺满背景用 `aspectFill`；想"零裁切又零留白"用 `widthFix`/`heightFix`
+   * （`src/components/PageHero.tsx` 就是 `fill` + `heightFix`，其注释里有完整决策链）。
    */
   fill?: boolean
-  /** 裁切方式，默认 aspectFit（完整显示）；fill 场景通常配 aspectFill */
-  mode?: 'aspectFit' | 'aspectFill' | 'scaleToFill'
+  /**
+   * 裁切方式，默认 aspectFit（完整显示）；fill 场景通常配 aspectFill
+   *
+   * ⚠️ 2026-09-12 补 `widthFix` / `heightFix`：这两个都是微信 `<image>` 的**合法 mode**
+   * （`widthFix` = 宽由 CSS 定、高按图片自身比例算；`heightFix` = 高由 CSS 定、宽按比例算）。
+   * 之前这里漏了，逼得 `PageHero` 想用时只能 `as unknown as 'aspectFit'` 硬转。
+   * 判定口径：**同一个位置要放不同比例的图、又不想裁切也不想留白时，就该用这两个 mode**
+   * （`aspectFit` 会留空带、`aspectFill` 会裁切，两者在"跨季比例不一致"的资产上都会露馅）。
+   */
+  mode?: 'aspectFit' | 'aspectFill' | 'scaleToFill' | 'widthFix' | 'heightFix'
   className?: string
 }
 

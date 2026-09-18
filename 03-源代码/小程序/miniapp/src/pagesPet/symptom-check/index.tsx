@@ -5,6 +5,7 @@
 import { View, Text } from '@tarojs/components'
 import Taro, { useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useThemeClass } from '../../hooks/useThemeClass'
 import { usePet } from '../../hooks/usePet'
 import { useSymptom } from '../../hooks/useSymptom'
 import { useMembership } from '../../hooks/useMembership'
@@ -84,6 +85,14 @@ const BASIS_LABEL: Record<string, string> = {
 }
 
 export default function PetSymptomCheck() {
+  /**
+   * 主题类名：**必须挂在页面自己的根节点上**（本页三个渲染分支都挂）
+   *
+   * 为什么：小程序端每个页面独立渲染，app 组件的 JSX 不包裹页面节点，挂在 app 层的
+   * `.theme-*` 传不进页面；不挂就会永远吃 styles/_theme.scss 里 page{} 的秋季基线变量，
+   * 用户切主题后本页仍是一片秋色。口径与 pages/creative、pages/mine 一致。
+   */
+  const themeClass = useThemeClass()
   const { pets, currentPet, switchPet, isLoading: petLoading } = usePet()
   const {
     categories,
@@ -356,7 +365,7 @@ export default function PetSymptomCheck() {
 
   if (isLoading && pets.length === 0) {
     return (
-      <View className='pet-symptom-check'>
+      <View className={`pet-symptom-check ${themeClass}`}>
         <PageLoading />
       </View>
     )
@@ -364,14 +373,14 @@ export default function PetSymptomCheck() {
 
   if (loadError && pets.length === 0) {
     return (
-      <View className='pet-symptom-check'>
+      <View className={`pet-symptom-check ${themeClass}`}>
         <PageError message={loadError} onRetry={loadSymptomData} />
       </View>
     )
   }
 
   return (
-    <View className='pet-symptom-check'>
+    <View className={`pet-symptom-check ${themeClass}`}>
       {/* 全小程序统一动态背景层 */}
       <PageBackground />
 

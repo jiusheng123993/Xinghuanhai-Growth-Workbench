@@ -2,7 +2,17 @@
 @import '../../styles/_animations';
 
 // ============================================
-// 我的页面 — 插画横幅名片卡 + 家庭卡（星澜小筑）+ 分组菜单
+// 我的页面 — 全家福横幅名片卡 + 数据条（statbar）+ 家庭卡（星澜小筑）
+//             + 内容/工具分组菜单 + 会员卡（memcard）
+//
+// 【2026-09-12 第三轮：按高保真 v2 补齐三块（本批）】
+//   1. **新增 `.mine-statbar`（四项数据条）**：v2 在名片卡下有一横排 4 项数据。
+//      原来这 4 类数字是挤在名片卡信息区里的一行 3 格（.mine-card__stats / .mine-stat*），
+//      本批整块搬进 statbar 并**删掉旧样式**（不留死样式），避免同屏两处统计。
+//   2. **新增 `.mine-memcard`（金色渐变会员卡）**：v2 的 .memcard/.mbtn。
+//   3. 菜单新增「我的宠物 / 家人与家庭 / 作品与回忆」三组；
+//      组标题右侧多了一个不可点的引导小字 `.mine-menu-group-more`（v2 的「点进档案 ›」），
+//      菜单行多了一行可选副标题 `.mine-menu-desc`（原 `.mine-menu-theme-desc` 改名复用）。
 //
 // 【2026-09-11 第一轮改版说明（历史，结构见下方各段注释）】
 //   改版前的实际结构（工作区状态）是「页头插画条 + 无卡头部 + 数据概览白卡 + 家庭卡 +
@@ -11,7 +21,7 @@
 //   页头插画条"我的"、头像昵称）。
 //   本轮：
 //     1. 页头插画条与无卡头部、数据概览白卡合并为**一张名片卡**（页面只剩一个视觉主体）。
-//        注意最终落地的是"插画横幅 + 白底信息区"的上下分层版，不是早期试过的实色渐变版
+//        注意最终落地的是"横幅图 + 白底信息区"的上下分层版，不是早期试过的实色渐变版
 //        （实色版被用户否掉、遮罩版把猫抹掉了，过程见 .mine-card 段注释）；
 //     2. 宠物切换器曾重做为 flex 行 + 96rpx 头像（**该整块已在第二轮删除**，见下）；
 //     3. 菜单三组各给一个色系，打破 8 行图标同色的整块感。
@@ -23,7 +33,7 @@
 //   2. **重做家庭卡（星澜小筑）**：暖渐变底 + 渐变徽章 + 角色胶囊 + 信息胶囊 + 渐变按钮，
 //      与下方纯白菜单卡拉开层次（详见该段注释）。
 //   配色基本走主题变量（$color-* 即 var(--x, 回退值)）；仅两类例外且都有注释说明：
-//   ① 插画横幅的兜底渐变（固定浅奶油色，与主题无关）；② 深色主题兜底段里钉回的浅底取值。
+//   ① 横幅图（自有全家福）的兜底渐变（固定浅奶油色，与主题无关）；② 深色主题兜底段里钉回的浅底取值。
 // ============================================
 
 .mine-page {
@@ -33,14 +43,17 @@
   animation: pageEnter 0.4s ease-out;
 }
 
-// ===== 个人名片卡（页面唯一视觉主体，插画横幅版） =====
+// ===== 个人名片卡（页面唯一视觉主体，自有全家福横幅版） =====
 // 【为什么是这个版式】
 //   第一版用实色主色渐变，用户反馈「颜色我不喜欢，看起来很奇怪」（高饱和橙红压奶油米底，
 //   视觉权重过载）。第二版把插画当整卡底图 + 左侧遮罩，结果卡片比例（1.74）与插画（1.78）
 //   虽接近，但**遮罩把插画左半边的猫整个抹掉了**，只剩右侧一只狗。
-//   本版改为**上下分层**：上半是插画横幅（容器按 16:9 取，与插画同比例 → aspectFill
+//   本版改为**上下分层**：上半是横幅图（容器按 16:9 取，与图同比例 → aspectFill
 //   既铺满又不裁主体），下半是白底信息区（文字在浅底上，不需要任何遮罩）。
 //   猫狗完整可见、文字可读性最好，也不再依赖遮罩这种"两头不讨好"的手段。
+//   【2026-09-12：横幅改用自有 16:9 全家福】上面"与图同比例"此前只对线上的 summer 那张成立
+//   （spring/autumn/winter 实测是 1:1 的 1254×1254，进 16:9 必被居中裁掉约 44% 高度）；
+//   换成同比例的本地自有图后，aspectFill 才真正做到"铺满且零裁切"。
 .mine-card {
   position: relative;
   overflow: hidden;
@@ -53,18 +66,20 @@
   animation: fadeInUp 0.45s ease-out;
 }
 
-// 插画横幅：高度按容器宽度 / 16:9 推出来（内容宽 686rpx → 386rpx），
-// 比例与插画一致，aspectFill 才不会裁掉猫狗。
+// 横幅容器：高度按容器宽度 / 16:9 推出来（内容宽 686rpx → 386rpx）。
+// 这个 16:9 是**与图本身的比例对齐**的 —— 本页 assets/family-hero.jpg 就是 16:9，
+// 所以 aspectFill 既铺满又零裁切（将来换非 16:9 的图，务必先重算这个高度）。
 .mine-card__banner {
   position: relative;
   width: 100%;
   height: 386rpx;
-  // 兜底色：插画未加载/失败时这里是一块浅奶油横幅（取自插画背景的同色系）
+  // 兜底色：图未加载完/失败时这里是一块浅奶油横幅（取自全家福背景的同色系）——
+  // 本地静态图同样可能取不到（清缓存、包体裁剪），这层兜底不能省。
   background: linear-gradient(135deg, #FFFDF9 0%, #FFF1E2 100%);
   overflow: hidden;
 }
 
-// 插画本体：铺满横幅（Illustration 的 fill 模式不写内联尺寸，尺寸全交给这里）
+// 横幅图本体：绝对定位铺满容器（尺寸全交给这里，Image 自身不带内联尺寸）
 .mine-card__art {
   position: absolute;
   top: 0;
@@ -91,7 +106,7 @@
   width: 112rpx;
   height: 112rpx;
   border-radius: $radius-full;
-  // 白环 + 轻投影，把头像从插画/白底上"托"起来
+  // 白环 + 轻投影，把头像从白底上"托"起来
   border: 5rpx solid $color-bg-card;
   box-sizing: border-box;
   background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.18), rgba(var(--gold-rgb, 255, 176, 32), 0.24));
@@ -185,45 +200,54 @@
   font-weight: $font-weight-semibold;
 }
 
-// 数据条：极淡 tint 底 + 细边框，在白卡信息区里分层（不再需要压插画，故不用白玻璃）
-.mine-card__stats {
-  position: relative;
+// ===== 数据条 statbar（2026-09-12 本批新增，对齐高保真 v2 第 3 块） =====
+// 【v2 原型取值】.sec.card.statbar：padding 12px 6px、等距四列（每列 flex:1、居中）；
+//   数字 17px/800 主色深色档（--primary-deep）、标签 10px 三级文字色（--ink3）。
+//   换算到 rpx 即 24rpx 内边距、数字 34rpx、标签 20rpx。
+// 【卡底为什么用 --glass-bg】v2 的 .card 就是 --g72（= _theme.scss 的 --glass-bg 0.72），
+//   本页菜单卡用的是不透明 $color-bg-card；数据条是压在页面光斑上的**次级信息块**，
+//   按 v2 走基准玻璃档（WXSS 无 backdrop-filter，半透明白压在奶油底上接近纯白，不糊字）。
+// ⚠️ 不用 `rgba(var(--x), α)` 这种非法写法（本仓实测过）：要半透明一律
+//   `rgba(var(--x-rgb, R,G,B), α)`，或者像这里直接用已定义的 $glass-bg 变量。
+.mine-statbar {
   display: flex;
   align-items: center;
-  margin-top: 26rpx;
-  padding: 22rpx 0;
-  border-radius: 28rpx;
-  background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.07), rgba(var(--gold-rgb, 255, 176, 32), 0.12));
-  border: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+  margin: 24rpx $spacing-xl 0;
+  padding: 24rpx 12rpx;
+  border-radius: $radius-md;
+  background: $glass-bg;
+  border: 1rpx solid $glass-border;
+  box-shadow: $shadow-card;
+  animation: fadeInUp 0.45s ease-out 0.06s both;
 }
 
-.mine-stat {
+// 单列：数字在上、标签在下（v2 用 text-align:center，这里用 flex 列居中，效果一致）
+.mine-statbar__item {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8rpx;
+  // 四列等宽时数字最长 4 位（如 1189），不写 min-width:0 也不会把列撑破；
+  // 但极端数字（5 位以上）仍可能溢出 —— 这里让它换行而不是压掉标签
+  min-width: 0;
 }
 
-.mine-stat__num {
-  font-size: 38rpx;
+// 数字：v2 的 --primary-deep（= 本仓 $color-primary-dark，跟随主题的深主色）
+.mine-statbar__num {
+  font-size: 34rpx;
   font-weight: $font-weight-bold;
-  color: $color-text-primary;
   line-height: 1.1;
+  color: $color-primary-dark;
+  // 等宽数字：四个数字纵向对齐，切数字时不会左右抖
   font-variant-numeric: tabular-nums;
 }
 
-// 标签小字：深色字压在白玻璃底上，对比度充裕（不再有白字压主色的可读性问题）
-.mine-stat__label {
-  font-size: 21rpx;
-  color: $color-text-tertiary;
+// 标签：v2 的 --ink3（= 本仓 $color-text-tertiary）
+.mine-statbar__label {
+  font-size: 20rpx;
   line-height: 1;
-}
-
-.mine-stat__divider {
-  width: 1rpx;
-  height: 56rpx;
-  background: rgba(var(--primary-rgb, 255, 107, 61), 0.16);
+  color: $color-text-tertiary;
 }
 
 // ===== 家庭信息卡（星澜小筑） =====
@@ -275,7 +299,9 @@
      · 112rpx（从 88 提到 112：猫狗同框的细节在 44px 里看不清，56px 才站得住）
      · 20rpx 圆角方卡（与 .pf-polaroid-frame 同款圆角，全站"方照片"统一）
      · 保留原来那圈 8rpx 白描边 + 暖色落影（这是该卡原有的"贴纸浮起"观感，不动）
-     · 渐变底去掉：现在由图片自己铺满，渐变只作为图片加载前的兜底色 */
+     · 渐变底去掉：现在由图片自己铺满，渐变只作为图片加载前的兜底色
+   2026-09-12：图从 family-avatar.png 换成 family-avatar.jpg（**多猫狗一家人**合影，1:1）。
+   尺寸仍保持 112rpx —— 合影是小图，主体多，56px 下细节会糊，若要放大请连同这里一起评估。 */
 .mine-family-badge {
   @include flex-center;
   position: relative;
@@ -404,6 +430,95 @@
   color: #FFFFFF;
 }
 
+// ===== 会员卡 memcard（2026-09-12 本批新增，对齐 v2 的金色渐变卡） =====
+// 【v2 原型取值】.memcard：padding 14px、圆角同 .card（--r-md）；
+//   渐变 linear-gradient(135deg, rgba(255,201,77,.9), rgba(255,140,60,.92))；
+//   标题 15px/800 白色、说明 10.5px（opacity .94）；按钮 .mbtn 在其下方：
+//   白底 .94、字色 #E8920A、6px 14px 内边距、999px 圆角。
+// 【本仓落地】颜色一律换成主题变量（硬约束"颜色走主题变量，不写死 hex"）：
+//   渐变 = rgba(var(--gold-rgb),.9) → rgba(var(--primary-rgb),.92)
+//   —— 基线秋色与 v2 几乎同色（金 → 主色橙），换季/星空主题整卡跟随主题。
+//   按钮字色用 $color-gold-deep（= v2 的 #E8920A，且 spring/winter 主题下有各自深金值）。
+// 【整卡可点】按钮**不是**独立可点元素（tsx 里只在卡上挂 onClick）：避免"看着像按钮、
+//   点了没反应"的假按钮，也免得两个点击区在同一处重复触发。
+.mine-memcard {
+  position: relative;
+  overflow: hidden;
+  margin: 32rpx $spacing-xl 0;
+  padding: 28rpx;
+  border-radius: $radius-md;
+  /* 【为什么这张卡**故意不跟主题变量**】会员卡是**品牌资产**，卡内文字是写死的白色。
+     若用 `--gold-rgb/--primary-rgb`（主题变量），「星空银河」主题下 primary 是蓝紫 #7A8CFF
+     → 卡面变成「浅金 → 蓝紫」渐变，白字压在浅金那一端对比度明显下降（独立审查按变量推演指出）。
+     v2 原型在四季主题下也都保持「金 → 橙」不变，故这里用**固定品牌色字面量**。
+     ⚠️ 必须写字面 hex，**不能写 `rgba($color-gold, .9)`**：本仓的 `$color-gold/$color-primary`
+     本身就是 `var(--gold, #FFB020)` 这种 CSS 变量，套进 rgba() 会编译成
+     `rgba(var(--gold, #FFB020), .9)` —— **这是非法 CSS，整条声明会被 WXSS 丢弃**
+     （会员卡会直接没有底色）。这条是本仓库记过的老坑，2026-09-12 我自己在这里踩了一次。 */
+  background: linear-gradient(
+    135deg,
+    rgba(255, 176, 32, 0.9) 0%,
+    rgba(255, 107, 61, 0.92) 100%
+  );
+  // 无描边（v2 是 border:0）：卡面本身就是满色渐变，加描边会显得脏
+  border: 0;
+  box-shadow: 0 16rpx 40rpx -18rpx rgba(240, 78, 29, 0.55);
+  animation: fadeInUp 0.45s ease-out 0.16s both;
+  @include press-feedback;
+}
+
+// 右上角柔光：纯装饰（给平铺的渐变一点光感方向），不接事件
+.mine-memcard__glow {
+  position: absolute;
+  top: -80rpx;
+  right: -50rpx;
+  width: 260rpx;
+  height: 260rpx;
+  border-radius: $radius-full;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
+}
+
+.mine-memcard__body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.mine-memcard__title {
+  font-size: 30rpx;
+  font-weight: $font-weight-bold;
+  // 金/橙渐变上写白字：与全站"主色渐变上的文字一律 #fff"一致（不用 $color-text-inverse，
+  // 它在星空主题下会被翻成深蓝，压渐变会看不清）
+  color: #FFFFFF;
+}
+
+// 说明行：v2 的 opacity .94 —— 白字略降不透明度，弱化但不影响可读
+.mine-memcard__desc {
+  margin-top: 8rpx;
+  font-size: 21rpx;
+  line-height: 1.4;
+  color: #FFFFFF;
+  opacity: 0.94;
+}
+
+// 按钮（视觉上是按钮，点击落在整卡上）：白底胶囊 + 深金字
+.mine-memcard__btn {
+  @include flex-center;
+  gap: 4rpx;
+  margin-top: 20rpx;
+  padding: 12rpx 28rpx;
+  border-radius: $radius-round;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.mine-memcard__btn-text {
+  font-size: 22rpx;
+  font-weight: $font-weight-bold;
+  color: $color-gold-deep;
+}
+
 // ===== 分组菜单（原型对齐：组标题 + 卡片 + 图标圆） =====
 .mine-menu-group {
   margin: 32rpx $spacing-xl 0;
@@ -433,6 +548,15 @@
 .mine-menu-group-title {
   font-size: 24rpx;
   font-weight: $font-weight-semibold;
+  color: $color-text-tertiary;
+}
+
+// 组标题右侧的引导小字（v2 的 .sec-head .more「点进档案 ›」）：
+// 纯展示、不可点（整行菜单才是入口），靠 margin-left:auto 顶到右边
+.mine-menu-group-more {
+  margin-left: auto;
+  padding-right: 8rpx;
+  font-size: 22rpx;
   color: $color-text-tertiary;
 }
 
@@ -489,7 +613,9 @@
   font-weight: $font-weight-medium;
 }
 
-.mine-menu-theme-desc {
+// 菜单行的副标题（2026-09-12 本批由 `.mine-menu-theme-desc` 改名复用）：
+// 「宠物档案」行显示当前宠物身份（可乐 · 橘猫 · 3岁）、「主题皮肤」行显示「跟随季节」
+.mine-menu-desc {
   display: block;
   font-size: 22rpx;
   color: $color-text-tertiary;
@@ -614,9 +740,13 @@
 // 【这是既有全站缺陷】不是本页引入：全局修复要动 100+ 个页面、需整体回归，属另案。
 // 【做法】沿用宠物档案页已验证的**页面级兜底**：在"浅底卡片作用域"内把卡内 token
 //   钉回浅色取值（底色是浅的，因此必须配深色文字）。只影响本页这几类卡。
+//   · `.mine-statbar` 于 2026-09-12 本批新加入本清单：它的卡底是 --glass-bg（0.72 白），
+//     星空主题下依然是一块浅底 → 标签（--text-tertiary）必须钉回深色，否则白标签压浅底。
+//   · `.mine-memcard` **不列入**：它自带金/橙渐变，卡内文字是写死的白色，不依赖 --text-*。
 .mine-page.theme-starry {
   .mine-card,
   .mine-menu-card,
+  .mine-statbar,
   .mine-family-card,
   .mine-logout-btn,
   .mine-theme-panel {

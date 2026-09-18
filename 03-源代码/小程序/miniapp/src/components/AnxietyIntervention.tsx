@@ -1,6 +1,13 @@
 /**
  * 焦虑干预组件
  * 针对宠物健康焦虑和新手养宠焦虑提供分步引导，包含护理计划和危机转介
+ *
+ * 【IA：`找附近医院` 为什么跳团团】（2026-09-12 收口批次 §2）
+ * 判断标准：**需要 AI 推理的能力**（食物安全查询 / 症状初筛 / 附近医院 / AI 取名 / AI 记忆）
+ * 入口统一先跳团团；**纯记录 / 查询类**（打卡 / 品种 / 疫苗 / 时光）保留原位。
+ * 本组件里只有 `hospital`（附近医院）属 AI 推理类 → 收拢到团团；
+ * 其余动作 `trends`（趋势）/ `checkin`（打卡）/ `vaccine`（疫苗）是纯记录查询类，
+ * **保持原路径直达**，不要顺手一起改。
  */
 import { View, Text } from '@tarojs/components'
 import { useState, useCallback, useEffect, useMemo } from 'react'
@@ -19,6 +26,7 @@ import {
 import { trackEmotionEvent, type EmotionSeverity } from '../services/emotionTrackingService'
 import { useAnalytics } from '../hooks/useAnalytics'
 import { AnalyticsEventName } from '../types/analyticsTypes'
+import { buildAiEntryUrl } from '../utils/aiEntry'
 import './AnxietyIntervention.scss'
 
 interface AnxietyInterventionProps {
@@ -189,7 +197,8 @@ export default function AnxietyIntervention({
         break
       case 'hospital':
         onDismiss()
-        Taro.navigateTo({ url: '/pagesPet/hospital/index' })
+        // 附近医院属 AI 推理类能力 → 跳团团并自动打开该能力（上面 trends/checkin/vaccine 不动）
+        Taro.navigateTo({ url: buildAiEntryUrl('hospital') })
         break
       case 'care_plan':
         setShowCarePlan(true)

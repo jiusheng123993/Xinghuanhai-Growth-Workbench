@@ -178,4 +178,38 @@ describe('themeStore', () => {
       expect(useThemeStore.getState().petWallpaper).toBe('wxfile://tmp/restored.png')
     })
   })
+
+  /**
+   * 默认主题（本地存储没存过主题时用哪套配色）
+   *
+   * 【为什么单开这一组】2026-09-12 用户要求「把春季主题设为默认」，但此前**没有任何用例**
+   * 守过这条默认值 —— 谁把它改回 autumn 也不会有测试变红。这里锁三件事：
+   *   ① 没存过 → 落默认主题（春季）；
+   *   ② 存过 → 原样恢复，**老用户不会被改默认值波及**；
+   *   ③ 存了非法值 → 回退默认主题（本地存储可能残留旧版本写的值）。
+   *
+   * 用 loadTheme() 断言（app.js 启动时调的就是它，见 src/app.js 的 useLaunch），
+   * 而**不是**断言模块加载时的初值：初值取决于用例执行顺序，一重排就会假红。
+   */
+  describe('默认主题（本地存储没存过时用哪套）', () => {
+    it('没存过主题 → 落到默认主题「春」（2026-09-12 用户要求）', () => {
+      useThemeStore.getState().loadTheme()
+
+      expect(useThemeStore.getState().current).toBe('spring')
+    })
+
+    it('存过主题 → 原样恢复，不被默认值覆盖（老用户不换主题）', () => {
+      storage.set('xhh_theme', 'starry')
+      useThemeStore.getState().loadTheme()
+
+      expect(useThemeStore.getState().current).toBe('starry')
+    })
+
+    it('存的主题 key 非法 → 回退默认主题「春」，不抛错', () => {
+      storage.set('xhh_theme', 'not-a-theme')
+      useThemeStore.getState().loadTheme()
+
+      expect(useThemeStore.getState().current).toBe('spring')
+    })
+  })
 })

@@ -1,163 +1,416 @@
 @import '../../styles/_theme';
 @import '../../styles/_animations';
 
+// ============================================
+// 新手引导（高保真 v2 · 2026-09-12 重做）
+// ============================================
+// 设计主张：这是用户第一次见到这个产品，所以三屏只干三件事 ——
+//   ① 让他知道「星河宠记」是什么（品牌字 + 油画 IP 画布）
+//   ② 让他知道每天要用它干哪三件事（三张卡）
+//   ③ 让他加上第一只宠物（主 CTA）
+// 参照物：`10/11/12-onboarding-*.png` 三张整屏截图（750×1624）+ 原型 screenOnboarding()。
+// 数值换算：原型按 px 写，本仓按 rpx，一律 ×2（15px → 30rpx）。
+//
+// 【主题安全】颜色一律走 _theme.scss 的 $color-* 变量（本身是 var(--x, 回退值)）；
+// 半透明主题色用 rgba(var(--x-rgb), α) 通道写法 —— 直接写 rgba(var(--x), α) 是非法 CSS，
+// 整条声明会被端上丢弃（见项目 skill「小程序样式陷阱」）。
+// 唯一的字面色是 CTA 上的 #FFFFFF：它压在**永远饱和的主题渐变**上，
+// 用 $color-text-inverse 反而会在星空主题下变成深蓝字（对比度崩掉）。
+// ============================================
+
+// CTA 呼吸光环：对应原型的 .cta::after pulse（外扩的暖金光圈）
+// 本仓全局 @keyframes 里没有「外扩 + 淡出」这一款，故在本页自建一个（只产出一份，约 0.2KB）
+@keyframes onb-cta-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(var(--gold-rgb, 255, 176, 32), 0.5); }
+  70%  { box-shadow: 0 0 0 28rpx rgba(var(--gold-rgb, 255, 176, 32), 0); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--gold-rgb, 255, 176, 32), 0); }
+}
+
+// ============================================
+// 页面骨架：可滚动（内容在矮屏上会超出 812pt 的设计高度）
+// ============================================
+// 用 ScrollView 而不是固定 100vh 的 View：v2 原型自己就是 overflow-y:auto 的，
+// 且引导页在 iPhone SE（667pt）这类矮屏上，第 3 屏内容会高出屏幕，必须能滚。
 .onboarding-page {
-  min-height: 100vh;
-  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  height: 100vh;
+  /* 背景统一由 <PageBackground /> 渲染（含光斑/星点/格纹/照片壁纸），此处保持透明 */
   background: transparent;
+  position: relative;
+}
+
+.onboarding-page__inner {
+  // min-height 而不是 height：内容超出时让它自然长高，交给 ScrollView 滚
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 0 24px;
+  // 左右 36rpx = 原型的 18px 页边距；底部留 26px + 安全区（v2 底部 padding 是 26px）
+  padding: 0 36rpx calc(52rpx + constant(safe-area-inset-bottom));
+  padding: 0 36rpx calc(52rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
-  animation: pageEnter 0.5s ease-out;
-  position: relative;
+}
+
+// 每一步的内容容器：撑满剩余高度，内部用 .onb-grow 把按钮推到底
+.onb-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  // 切步时整块重挂载（key={step}）→ 这行动画会重放，形成「翻页」感
+  animation: fadeInUp 0.35s ease-out;
+}
+
+/* 弹性占位：把上方内容顶到顶部、或把下方内容压到底部 */
+.onb-grow {
+  flex: 1;
+}
+
+// 两端对齐：左边「上一步」（第 2 屏起才有）、右边「跳过 / 先逛逛」
+// 【胶囊避让】本页是 navigationStyle: 'custom'，页面从屏幕顶端开始渲染，
+// 右上角的「跳过」会落进状态栏/微信胶囊那一条里被压住 → 顶部起点必须由页面自己算：
+// tsx 里给这一行挂了**内联 padding-top**（= Taro.getMenuButtonBoundingClientRect().bottom + 8px，
+// 取不到时兜底 88px，单位是 px）。内联 style 优先级高于本文件，所以这里的
+// padding-top: 8rpx 只是内联样式缺失时的保守回退，正常渲染下不生效。
+.onb-topbar {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 8rpx;
+  // 负外边距把两侧热区往页面边上各外扩 8px，文字仍对齐原型的位置（距边 18px），
+  // 但可点区域从「24px 宽的文字」变成「56px 宽 × 43px 高」，手指点得着
+  margin: 0 -16rpx;
+}
+
+.onb-topbar__hit {
+  padding: 28rpx 16rpx;
+  @include press-feedback;
+}
+
+.onb-topbar__label {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+}
+
+// ============================================
+// 品牌区（第 1 屏）：渐变字标题 + 一句副标题
+// ============================================
+.onb-brand {
+  padding-top: 12rpx;
+  text-align: center;
+}
+
+// 品牌名用「主色亮 → 主色深」的渐变字（原型是 #FF8A5C → #F04E1D）
+// 走主题变量：换主题时品牌字跟着走，不会出现深色主题下一块橙字
+.onb-brand__name {
+  display: block;
+  font-size: 60rpx;
+  font-weight: 800;
+  letter-spacing: 2rpx;
+  line-height: 1.25;
+  background: linear-gradient(135deg, var(--primary-light, #FFA082), var(--primary-dark, #F04E1D));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.onb-brand__sub {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: $color-text-secondary;
+}
+
+// ============================================
+// 插画画框
+// ============================================
+// 两种尺寸都做成**正方形**：v2 这两屏的源图（today-brand / pet-profile hero）
+// 服务器上都是 1254×1254 方图，方框 + aspectFill 才能既不裁主体、也不留白边。
+.onb-art {
+  border-radius: 48rpx;
   overflow: hidden;
+  background: $color-bg-secondary;
+  box-shadow: $shadow-card;
+}
 
-  // —— 背景装饰光晕 ——
-  &::before {
-    content: '';
-    position: absolute;
-    top: 20%;
-    left: -60px;
-    width: 200px;
-    height: 200px;
-    background: radial-gradient(circle, rgba(var(--primary-rgb, 255, 107, 61), 0.05) 0%, transparent 70%);
-    border-radius: 50%;
-    pointer-events: none;
-    animation: warmBreathe 5s ease-in-out infinite;
+.onb-art__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 第 1 屏品牌画布：占满内容宽（750rpx - 两侧 36rpx = 678rpx），方框 */
+.onb-art--brand {
+  margin-top: 28rpx;
+  width: 100%;
+  height: 678rpx;
+}
+
+/* 第 3 屏画框：刻意比第 1 屏小且居中 —— 这一屏下面还要放标题、两行副文案、
+   两个入口和主 CTA，画框再占满就会把内容顶出屏幕 */
+.onb-art--pet {
+  margin: 4rpx auto 0;
+  width: 560rpx;
+  height: 560rpx;
+}
+
+// ============================================
+// 文案区
+// ============================================
+.onb-copy {
+  padding: 36rpx 16rpx 0;
+  text-align: center;
+}
+
+/* 第 1 屏第一句：加粗、两行 */
+.onb-copy__lead {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 700;
+  line-height: 1.5;
+  color: $color-text-primary;
+}
+
+/* 第 3 屏主标题 */
+.onb-copy__title {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 700;
+  line-height: 1.35;
+  color: $color-text-primary;
+}
+
+/* 副文案：两行一组，第一行用 --gap 与上一块拉开距离 */
+.onb-copy__sub {
+  display: block;
+  font-size: 23rpx;
+  line-height: 1.7;
+  color: $color-text-secondary;
+}
+
+.onb-copy__sub--gap {
+  margin-top: 16rpx;
+}
+
+// ============================================
+// 第 2 屏：标题 + 三张「三件事」卡片
+// ============================================
+.onb-head {
+  padding-top: 12rpx;
+}
+
+.onb-head__line {
+  display: block;
+  font-size: 40rpx;
+  font-weight: 800;
+  line-height: 1.45;
+  color: $color-text-primary;
+}
+
+.onb-tiles {
+  padding-top: 32rpx;
+}
+
+// 卡片底用 glow-card（白玻璃 0.72 + 白描边 + 主题辉光），与 v2 的 .card 同一套语言
+.onb-tile {
+  @include glow-card;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+
+  &:last-child {
+    margin-bottom: 0;
   }
+}
 
+.onb-tile__icon {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 28rpx;
+  flex: 0 0 auto;
+  @include flex-center;
+}
+
+// 图标底色三档（对应原型 tone-a / tone-c / tone-d）
+.onb-tile__icon--a {
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.10);
+}
+
+.onb-tile__icon--c {
+  background: rgba(var(--teal-rgb, 79, 163, 227), 0.14);
+}
+
+.onb-tile__icon--d {
+  background: rgba(var(--gold-rgb, 255, 176, 32), 0.10);
+}
+
+.onb-tile__body {
+  flex: 1;
+  // min-width:0 才能让内部长文案在 flex 里正常换行，而把容器撑破
+  min-width: 0;
+}
+
+.onb-tile__title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: $color-text-primary;
+}
+
+.onb-tile__desc {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 21rpx;
+  line-height: 1.6;
+  color: $color-text-tertiary;
+}
+
+// ============================================
+// 第 3 屏：两个添加入口（白底列表卡）
+// ============================================
+.onb-menu {
+  @include glow-card;
+  margin-top: 32rpx;
+  padding: 8rpx 0;
+}
+
+.onb-menu__row {
+  display: flex;
+  align-items: center;
+  gap: 22rpx;
+  padding: 24rpx 28rpx;
+  @include press-feedback;
+}
+
+// 行间分隔线：只加在「后一行」上，避免卡片上下边缘也多一条
+.onb-menu__row + .onb-menu__row {
+  border-top: 1rpx solid $color-border;
+}
+
+.onb-menu__icon {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 20rpx;
+  flex: 0 0 auto;
+  @include flex-center;
+}
+
+.onb-menu__icon--a {
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.10);
+}
+
+.onb-menu__icon--c {
+  background: rgba(var(--teal-rgb, 79, 163, 227), 0.14);
+}
+
+.onb-menu__label {
+  flex: 1;
+  min-width: 0;
+  font-size: 26rpx;
+  color: $color-text-primary;
+}
+
+.onb-menu__chev {
+  flex: 0 0 auto;
+}
+
+// ============================================
+// 底部：步骤点 + 主 CTA（+ 第 3 屏尾注）
+// ============================================
+// 原型底部左右是 22px（比正文的 18px 略宽），这里在容器 36rpx 基础上再补 8rpx
+.onb-bottom {
+  padding: 0 8rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.onb-dots {
+  display: flex;
+  justify-content: center;
+  gap: 12rpx;
+  margin-bottom: 28rpx;
+}
+
+.onb-dots__dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 999rpx;
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.14);
+  transition: width 0.2s ease;
+}
+
+/* 当前步：拉长成短横条（v2 的进度表达方式，比纯变色更容易看出"走到第几步"） */
+.onb-dots__dot--on {
+  width: 36rpx;
+  background: $color-primary;
+}
+
+.onb-cta {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 30rpx 32rpx;
+  border-radius: 40rpx;
+  background: $gradient-gold;
+  box-shadow: 0 20rpx 48rpx -16rpx rgba(var(--gold-deep-rgb, 232, 146, 10), 0.55);
+  @include press-feedback;
+
+  // 呼吸光环（原型 .cta::after）：单独一层，不参与布局，也不吃点击
   &::after {
     content: '';
     position: absolute;
-    bottom: 25%;
-    right: -40px;
-    width: 180px;
-    height: 180px;
-    background: radial-gradient(circle, rgba(var(--primary-light-rgb, 255, 160, 130), 0.04) 0%, transparent 70%);
-    border-radius: 50%;
+    inset: 0;
+    border-radius: 40rpx;
     pointer-events: none;
-    animation: warmBreathe 5s ease-in-out 1.5s infinite;
+    animation: onb-cta-ring 3.2s ease-out infinite;
   }
+}
 
-  &__skip {
-    align-self: flex-end;
-    padding: 48px 0 16px;
-    position: relative;
-    z-index: 1;
-    @include press-feedback;
-  }
+.onb-cta__ico {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.28);
+  flex: 0 0 auto;
+  @include flex-center;
+}
 
-  &__skip-text {
-    font-size: 14px;
-    color: $color-text-tertiary;
-  }
+.onb-cta__txt {
+  flex: 1;
+  min-width: 0;
+}
 
-  &__content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 0 20px;
-    position: relative;
-    z-index: 1;
-    animation: fadeInScale 0.4s ease-out;
-  }
+/* 字面白：见文件头「主题安全」说明 */
+.onb-cta__title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 800;
+  letter-spacing: 1rpx;
+  color: #FFFFFF;
+}
 
-  &__icon {
-    width: 120px;
-    height: 120px;
-    border-radius: 30px;
-    background: $color-bg-card;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 8px 32px rgba(var(--primary-rgb, 255, 107, 61), 0.08);
-    margin-bottom: 32px;
-    border: 1px solid $color-border;
-    animation: popupBounceIn 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
-    @include breathe-glow;
-  }
+.onb-cta__sub {
+  display: block;
+  font-size: 21rpx;
+  opacity: 0.92;
+  color: #FFFFFF;
+}
 
-  &__icon-emoji {
-    font-size: 56px;
-    animation: heartbeat 2s ease-in-out infinite;
-  }
+/* 右侧胶囊动作字 */
+.onb-cta__go {
+  flex: 0 0 auto;
+  padding: 12rpx 20rpx;
+  border-radius: 22rpx;
+  font-size: 22rpx;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.26);
+  color: #FFFFFF;
+}
 
-  &__title {
-    display: block;
-    font-size: 24px;
-    font-weight: 700;
-    color: $color-text-primary;
-    text-align: center;
-    margin-bottom: 16px;
-    animation: fadeInUp 0.4s ease-out 0.1s both;
-  }
-
-  &__description {
-    display: block;
-    font-size: 15px;
-    color: $color-text-secondary;
-    text-align: center;
-    line-height: 1.6;
-    max-width: 280px;
-    animation: fadeInUp 0.4s ease-out 0.2s both;
-  }
-
-  &__dots {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 32px;
-    position: relative;
-    z-index: 1;
-  }
-
-  &__dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 4px;
-    background: $color-border;
-    transition: all 0.3s ease;
-
-    &--active {
-      width: 24px;
-      background: $color-primary;
-      box-shadow: 0 0 8rpx rgba(var(--primary-rgb, 255, 107, 61), 0.4);
-    }
-  }
-
-  &__actions {
-    padding-bottom: 60px;
-    position: relative;
-    z-index: 1;
-  }
-
-  &__btn {
-    border-radius: 24px;
-    padding: 14px 0;
-    text-align: center;
-    @include press-feedback;
-
-    &--next {
-      background: $color-bg-card;
-      border: 1px solid $color-border;
-    }
-
-    &--start {
-      background: $gradient-warm;
-      box-shadow: 0 4px 12px rgba(var(--primary-rgb, 255, 107, 61), 0.3);
-    }
-  }
-
-  &__btn-text {
-    font-size: 16px;
-    font-weight: 600;
-    color: $color-text-primary;
-
-    .onboarding-page__btn--start & {
-      color: $color-text-inverse;
-    }
-  }
+.onb-footnote {
+  display: block;
+  margin-top: 24rpx;
+  text-align: center;
+  font-size: 20rpx;
+  color: $color-text-tertiary;
 }

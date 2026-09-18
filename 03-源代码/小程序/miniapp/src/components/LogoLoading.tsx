@@ -10,10 +10,12 @@
  */
 import { View, Text, Image } from '@tarojs/components'
 // 品牌 IP 原为 WebP，微信安卓真机对 webp 解码兼容性差（真机不显示、模拟器正常），已改位图格式。
-// 2026-09-11 换为毛毡质感版：与全站 24 张插画质感统一（详见 02-UI设计/插画系统/）。
-// 扩展名 .jpg 与真实字节一致 —— 此前 assets 下 auth-hero.png/login-hero.png 是
-// JPEG 字节配 .png 扩展名，属资产管线遗留问题，新资产不再沿用。
-import logoCatdog from '../assets/logo-catdog-felt.jpg'
+// 2026-09-12 换成新 IP 油画版；旧毡毛版（logo-catdog-felt.jpg）是早期 IP、与全站插画不同族，已弃用。
+// 插画系统的画风口径见 02-UI设计/插画系统/。
+// 扩展名一律与真实字节一致 —— 此前 assets 下曾出现「内容其实是 JPEG、文件名却写 .png」
+// 的资产管线遗留（auth-hero.png 等，已随 2026-09-12 这轮换图清理；根因是当年的生成脚本
+// 把 Seedream 返回的 JPEG 字节直接按 .png 落盘）。此后新资产一律按真实格式命名，不再沿用。
+import logoCatdog from '../assets/logo-catdog-oil.jpg'
 import './LogoLoading.scss'
 
 export default function LogoLoading() {

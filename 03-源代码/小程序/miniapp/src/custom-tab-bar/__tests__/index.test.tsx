@@ -38,7 +38,7 @@ const { handlers, mockSwitchTab, mockNavigateTo, mockOn, mockOff, router } = vi.
 
 vi.mock('@tarojs/taro', () => ({
   default: {
-    // themeStore 初始化时会读本地存储：mock 成没存过 → 落到默认主题 autumn
+    // themeStore 初始化时会读本地存储：mock 成没存过 → 落到默认主题 spring（2026-09-12 起）
     getStorageSync: vi.fn(() => null),
     setStorageSync: vi.fn(),
     setNavigationBarColor: vi.fn(() => Promise.resolve()),
@@ -198,13 +198,16 @@ describe('custom-tab-bar 自定义底部导航', () => {
     expect(second.container.querySelector('.custom-tab-bar__slot--active')?.textContent).toBe('今天')
   })
 
-  it('点中心圆钮 → AI 路径当前仍是 tab 页，走 switchTab（不误用 navigateTo）', () => {
+  it('点中心圆钮 → AI 路径不是 tab 页，走 navigateTo（不误用 switchTab）', () => {
+    // 【为什么这条断言反过来】2026-09-12 IA 第 4 批把 AI 对话搬到 `pagesYuantuan/agent`，
+    // 中心按钮的 `TAB_BAR_AI_PATH` 随之从「首页（tab 页）」改成「团团页（非 tab 页）」。
+    // 组件是按「是不是 tab 页」自动选 API 的，所以这条断言同时守住了那个分支逻辑。
     const { container } = render(<CustomTabBar />)
 
     fireEvent.click(container.querySelector('.custom-tab-bar__ai') as Element)
 
-    expect(mockSwitchTab).toHaveBeenCalledWith({ url: '/pages/index/index' })
-    expect(mockNavigateTo).not.toHaveBeenCalled()
+    expect(mockNavigateTo).toHaveBeenCalledWith({ url: '/pagesYuantuan/agent/index' })
+    expect(mockSwitchTab).not.toHaveBeenCalled()
   })
 
   it('卸载时解绑 themeChange 与 tabBarSelect（防内存泄漏 / 防旧实例继续收事件）', () => {

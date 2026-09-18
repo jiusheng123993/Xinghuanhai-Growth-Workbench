@@ -33,6 +33,8 @@ import { EVENT } from '../../constants/analyticsEvents'
 import { getActiveBreeds } from '../../data/petKnowledge/breeds'
 import type { Checkin } from '../../types'
 import type { AnomalyItem } from '../../memory-body/types/memoryBodyTypes'
+// AI 能力入口统一走团团：打卡后「查食物」引导按钮的 URL 由它拼装（带 capability 参数）
+import { buildAiEntryUrl } from '../../utils/aiEntry'
 import './index.scss'
 import PageBackground from '../../components/PageBackground'
 
@@ -957,7 +959,9 @@ export default function PetCheckin() {
             <View className='pet-checkin__feedback-actions'>
               <View
                 className='pet-checkin__feedback-btn pet-checkin__feedback-btn--food'
-                onClick={() => { setFeedbackResult(null); Taro.navigateTo({ url: '/pagesPet/food-query/index' }) }}
+                // 食物安全查询属 AI 推理类能力 → 按 IA 口径收拢到团团（由舰长授权，2026-09-12 收口批次 §2）。
+                // 带 capability=food 参数，团团进页自动打开食物查询流程，用户仍是一步到位。
+                onClick={() => { setFeedbackResult(null); Taro.navigateTo({ url: buildAiEntryUrl('food') }) }}
               >
                 <Text className='pet-checkin__feedback-btn-text'>查食物</Text>
               </View>

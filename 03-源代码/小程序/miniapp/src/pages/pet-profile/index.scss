@@ -1,20 +1,26 @@
 @import '../../styles/_theme';
-@import '../../styles/_animations';
-// 手账皮肤公共 mixin（本页用 journal-idcard 让形象卡与档案卡同一套卡纸语言）
-// 顺序不能反：先 _theme 再 _journal（_journal 不自带主题，避免主题块被打进产物两遍）
-@import '../../styles/_journal';
 
 // ============================================
-// 宠物档案 — 视觉方向 C「温暖手账」
+// 宠物档案 — 高保真 v2（屏 06）
 // ============================================
-// 设计主张：这个产品的内核是"给毛孩子留一本回忆录"，所以宠物页像一本手账而不是后台表单。
-// 全部装饰用纯 CSS 实现（双层描边 / 虚线便签 / 贴纸胶带 / 旋转图章），不引入位图素材、不依赖网络。
+// 结构只有三块：宽幅页头（IP 插画 + 宠物身份）/ 两组 menulist / （在这之后才是 v2 之外的
+// 既有能力区：健康指标、基础档案、健康备忘、品种特征、它的小习惯、标记离世）。
+// v2 的数值口径（原型 index.html 的 .whero / .cap3 / .sec-head / .menulist / .mrow / .tone-*）
+// 换算到 750rpx 设计宽度：1px = 2rpx。列表行高、图标块等比放大了一点，方便真机点击。
 //
-// 【主题安全】颜色一律走 _theme.scss 的 $color-* 变量（本身是 var(--x, 回退值)）；
-// 淡色底/描边用 rgba(var(--x-rgb), α) 通道写法 —— 直接写 rgba(var(--x), α) 在部分端上
-// 属非法 CSS，整条声明会被丢弃（见项目 skill「小程序样式陷阱」）。
-// 【图标】功能性图标全部走 <Icon>（面性 Phosphor），emoji 只保留在情绪/标签位。
-// ============================================
+// 【主题安全】颜色一律走 _theme.scss 的 $color-*（本身是 var(--x, 回退值)）；
+// 淡色底一律用 rgba(var(--x-rgb, 回退), α) 通道写法 —— 直接写 rgba(var(--x), α) 在部分端上
+// 属非法 CSS、整条声明会被丢掉（见项目 skill「小程序样式陷阱」）。
+// 【图标】功能性图标全部走 <Icon>（面性 Phosphor + 少数线形），emoji 只保留在物种占位位上。
+//
+// 【页头叠字的墨色：为什么不用 $color-text-primary】
+// 页头插画是与主题无关的固定浅暖图（四季只是换色系，底子恒为浅奶油 + 暖橙；实测四张的
+// 右边缘都在 #F8C69F~#FDD1AE 一带）。而深色主题（星空银河）会把 --text-primary 变成**白色**，
+// 白字压浅图直接看不见。所以这里把浅色主题的正文墨色钉成页头专用常量，不随主题翻色。
+$pf-hero-ink: #40281c;
+// 叠字小字的墨色：2026-09-12 实机复核把 0.72 判成「可读性偏弱」（浅色插画 + 灰棕小字），
+// 提到 0.86 并配一层极淡白描边（text-shadow），既不改变色相也不糊字。
+$pf-hero-ink-soft: rgba(64, 40, 28, 0.86);
 
 .profile-page {
   min-height: 100vh;
@@ -26,458 +32,118 @@
 }
 
 // ============================================
-// 手账页头：日期小字 + 衬线大标题 + 圆形虚线编辑纽
+// ① 宽幅页头（v2 的 .whero + .cap3）
 // ============================================
-.pf-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding: 8rpx 36rpx 24rpx;
-}
-
-/* 日期行：字距拉开、字号压小，像日记本顶端的日期 */
-.pf-head-date {
-  display: block;
-  font-size: 21rpx;
-  font-weight: 600;
-  letter-spacing: 2rpx;
-  color: $color-text-secondary;
-  opacity: 0.9;
-}
-
-/* 标题用衬线（宋体族）：制造"纸与墨"的调性；安卓无宋体时回退黑体，观感仍成立 */
-.pf-head-title {
-  display: block;
-  margin-top: 6rpx;
-  font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
-  font-size: 52rpx;
-  font-weight: 700;
-  letter-spacing: 4rpx;
-  line-height: 1.2;
-  color: $color-text-primary;
-}
-
-.pf-edit-pill {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  height: 72rpx;
-  padding: 0 26rpx;
-  border-radius: $radius-round;
-  background: $color-bg-card;
-  /* 虚线边而不是实线：手账里"贴上去的"东西都是虚线的 */
-  border: 2rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.5);
-  box-shadow: $shadow-xs;
-  flex-shrink: 0;
-  @include press-feedback;
-}
-
-/* 主色小字压白底对比度只有约 2.8:1，改主色深阶（浅色主题 #F04E1D / 星空 #5A6BE8，均 ≈4.3:1 以上） */
-.pf-edit-pill-text {
-  font-size: 23rpx;
-  font-weight: 700;
-  color: $color-primary-dark;
-}
-
-// ============================================
-// 宠物身份证：整页主角（双层描边 + 拍立得 + 编号 + 图章）
-// ============================================
-.pf-idcard {
+.pf-hero {
   position: relative;
-  margin: 0 32rpx 22rpx;
-  padding: 26rpx 26rpx 20rpx;
-  border-radius: 44rpx;
-  background: #fffdf8;
-  /* 双层描边：外圈实线 + 内圈一圈极淡的描边，做出证件/卡纸的压印感 */
-  border: 2rpx solid rgba(var(--gold-rgb, 255, 176, 32), 0.55);
-  box-shadow:
-    inset 0 0 0 8rpx #fffdf8,
-    inset 0 0 0 10rpx rgba(var(--gold-rgb, 255, 176, 32), 0.26),
-    0 10rpx 30rpx -18rpx rgba(61, 33, 18, 0.35);
+  margin: 12rpx 32rpx 0;
+  border-radius: 40rpx;
+  overflow: hidden;
+  // 兜底高度：插画是 widthFix（高度由图片自己算），图加载失败时卡片会塌成 0 高、
+  // 只剩绝对定位的文字浮在页面上 —— 给一个下限，让页头最差也是一张暖色卡 + 身份文字。
+  min-height: 460rpx;
+  // 底色的作用：插画没加载出来（弱网/失败）时页头也不会塌成空白 ——
+  // 取实测的插画右边缘暖橙，与图片本体是同色系，加载完成时不会出现「先白后橙」的跳色
+  background: linear-gradient(135deg, #f8c69f 0%, #fddcc2 55%, #fff4e9 100%);
+  box-shadow: $shadow-card, $glow-sm;
   animation: fadeInUp 0.5s ease-out;
 }
 
-// —— 模块 1：形象卡（用户 2026-09-11 反馈："头像很突兀，能不能做成方卡片、跟档案一样的效果"）——
-// 改版前是"宽幅拍立得"（1.5:1 + 微旋转 + 胶带），与下面那张双层金描边的档案卡是两种语言：
-// 宽幅还把方形的形象图裁成"脸偏左、右半边一片虚化"，所以看着跳。
-// 现在改成：**与 .pf-idcard 同一套卡纸语言**（journal-idcard 双层描边 + 同款圆角/纸色），
-// 照片改成**居中的 1:1 方卡**（证件照），并去掉歪斜与胶带 —— 两张卡读起来是一套。
-.pf-polaroid {
-  @include journal-idcard(gold, 0.55);
-  position: relative;
-  padding: 26rpx 26rpx 22rpx;
-  text-align: center;
-}
-
-/* 胶带：与"证件卡"语言冲突（歪斜 + 撕口是拍立得的语汇），本次隐去。
-   保留规则而不删，是为了万一要退回拍立得风格时一行即可恢复。 */
-.pf-polaroid-tape {
-  display: none;
-}
-
-/* 照片区：1:1 方卡（证件照）。
-   为什么改成方：① 品牌预设形象是 256×256 方图，方框能**零裁切**铺满，不再需要靠模糊层补左右留白；
-   ② 竖版/横版用户照片在方框里只裁两侧，脸部位置比 1.5:1 横幅更稳；
-   ③ 方卡与档案卡并排时，两张卡的"证件感"统一，这是用户这次提的核心诉求。
-   尺寸 360rpx（≈180px）居中：整宽会到 700rpx（约 350px）太高，把下面的档案卡挤出首屏。 */
-.pf-polaroid-frame {
-  position: relative;
-  width: 360rpx;
-  height: 360rpx;
-  margin: 0 auto;
-  border-radius: 20rpx;
-  overflow: hidden;
-  background: #fff3e7;
-}
-
-/* 环境层：**已停用**（2026-09-11 用户实机反馈后）。
-   它原本是给 aspectFit 的留白托底用的：主图等比缩放进相纸后会留白，
-   用「同图放大 + 高斯模糊」把留白填成图片自身颜色，避免硬接缝。
-   但用户看到的是"头像一团圆晕、要方的、就一层" —— 品牌形象的主体本身就画在圆里，
-   再叠一层同图模糊就糊成大圆晕。
-   现在主图改成 aspectFill 铺满方框（证件照式裁切），留白不存在，这层停用。
-   规则保留而非删除：要退回旧观感时，把 tsx 里对应的 <Image className='pf-polaroid-ambient'> 加回来即可。 */
-.pf-polaroid-ambient {
-  display: none;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-/* 品牌插画铺满方框：只在"没有任何自有形象 / 形象加载失败"时出现（由 tsx 的 cover.showIllustration 控制） */
-.pf-polaroid-art {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-/* 真实照片 / AI 形象 / 品牌预设小图：**铺满方框**（mode='aspectFill'，等比 + 裁切，不拉伸）。
-   【2026-09-11 用户反馈后改】原来用 aspectFit 等比缩放居中、靠上面那层模糊环境色补留白，
-   实机观感是"一团圆晕"；现在改成铺满 —— 方框里就是一张干净的方形照片（证件照逻辑）。
-   scale(1.18)：品牌/AI 形象图是"猫画在圆形柔光底上"的构图，铺满方框后四角仍是那圈柔光，
-   看着还是圆的。放大 18% 把那圈柔光裁到框外，观感就是纯粹的方形照片（脸部占比也更像证件照）。
-   1.18 是按当前形象图的留白量取的：猫身约占画面 70%，裁掉四边各 9% 不会切到耳朵。
-   想退回"完整不裁"改回 scale(1) 即可。 */
-.pf-polaroid-img {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  transform: scale(1.18);
-}
-
-/* 相纸下沿留白：名字写在留白处，像照片背面随手写的那一笔 */
-.pf-polaroid-caption {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14rpx 6rpx 16rpx;
-}
-
-.pf-polaroid-name {
-  font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
-  font-size: 36rpx;
-  font-weight: 700;
-  letter-spacing: 2rpx;
-  color: $color-text-primary;
-}
-
-.pf-polaroid-shoot {
-  display: flex;
-  align-items: center;
-  gap: 6rpx;
-  height: 48rpx;
-  padding: 0 18rpx;
-  border-radius: $radius-round;
-  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
-  border: 2rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.45);
-  @include press-feedback;
-}
-
-.pf-polaroid-shoot-text {
-  font-size: 21rpx;
-  font-weight: 700;
-  color: $color-primary-dark;
-}
-
-// —— 模块 2：证件正文（品种行 + 两列字段 + 编号/图章） ——
-.pf-idcard-body {
-  padding: 20rpx 6rpx 0;
-}
-
-.pf-idcard-line {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8rpx;
-  margin-bottom: 16rpx;
-}
-
-.pf-idcard-breed {
-  font-size: 26rpx;
-  font-weight: 700;
-  color: $color-text-primary;
-}
-
-.pf-idcard-dot {
-  font-size: 22rpx;
-  color: $color-text-tertiary;
-}
-
-.pf-idcard-meta {
-  font-size: 24rpx;
-  color: $color-text-secondary;
-}
-
-.pf-idcard-badge {
-  display: flex;
-  align-items: center;
-  gap: 4rpx;
-  height: 36rpx;
-  padding: 0 14rpx;
-  margin-left: 4rpx;
-  border-radius: $radius-round;
-  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
-  border: 2rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.45);
-}
-
-.pf-idcard-badge-text {
-  font-size: 19rpx;
-  font-weight: 700;
-  color: $color-primary-dark;
-}
-
-.pf-idcard-grid {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-/* 两列字段：靠内边距与虚线分隔成表格感，而不是画一堆边框 */
-.pf-field {
-  width: 50%;
-  padding: 12rpx 0;
-  border-bottom: 2rpx dashed rgba(243, 226, 210, 0.95);
-}
-
-.pf-field-label {
+// 插画：宽度铺满卡片、高度按原图比例（widthFix 由 jsx 指定），不裁切主体
+.pf-hero__art {
   display: block;
-  font-size: 20rpx;
-  font-weight: 600;
-  letter-spacing: 1rpx;
-  color: $color-text-tertiary;
+  width: 100%;
 }
 
-.pf-field-value {
-  display: block;
-  margin-top: 4rpx;
-  font-size: 26rpx;
-  font-weight: 700;
-  color: $color-text-primary;
+// 叠字承托层：只盖右半张，最右端约 0.5 白，向左淡出到完全透明。
+// 为什么需要：v2 原图没有蒙版，复核时「浅色插画 + 深棕小字」被判可读性偏弱（冬图雪花尤其花）。
+.pf-hero__scrim {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 58%;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.34) 42%,
+    rgba(255, 255, 255, 0.62) 100%
+  );
 }
 
-/* "还没填"的值一律降权：不假装有数据，也不让它抢走真实信息的注意力 */
-.pf-field-value--off {
-  font-weight: 600;
-  color: $color-text-tertiary;
-}
-
-.pf-idcard-foot {
+// 身份区：右侧 46%，与 v2 的 .cap3 同宽（插画主体都在左侧，这半边是留白）
+.pf-hero__cap {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 46%;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 16rpx;
-  padding-top: 14rpx;
-}
-
-/* 编号：等宽字距 + 小字号，像卡纸上打的钢印 */
-.pf-idcard-no {
-  font-size: 20rpx;
-  font-weight: 700;
-  letter-spacing: 2rpx;
-  color: $color-text-tertiary;
-}
-
-.pf-idcard-note {
-  font-size: 20rpx;
-  font-weight: 600;
-  color: $color-text-tertiary;
-}
-
-/* 图章：外圈实线 + 内圈虚线 + 微旋转，模拟盖章；不填色，避免盖过照片 */
-.pf-stamp {
-  position: relative;
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-  width: 116rpx;
-  height: 116rpx;
-  border-radius: 50%;
-  border: 3rpx solid rgba(var(--primary-dark-rgb, 240, 78, 29), 0.62);
-  transform: rotate(-11deg);
-  opacity: 0.92;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 6rpx;
-    left: 6rpx;
-    right: 6rpx;
-    bottom: 6rpx;
-    border: 2rpx dashed rgba(var(--primary-dark-rgb, 240, 78, 29), 0.45);
-    border-radius: 50%;
-  }
+  align-items: flex-start;
+  padding: 0 26rpx 0 8rpx;
 }
 
-/* 已离世用静默的紫灰，避免和"已绝育"的暖色混淆 */
-.pf-stamp--deceased {
-  border-color: rgba(107, 91, 123, 0.62);
-
-  &::before {
-    border-color: rgba(107, 91, 123, 0.42);
-  }
-
-  .pf-stamp-text {
-    color: rgba(107, 91, 123, 0.95);
-  }
-}
-
-.pf-stamp-text {
-  font-size: 22rpx;
+// 宠物名：v2 页头身份区的第一行。
+// 2026-09-12 收口撤掉了原来压在它上面的头像圆钮（v2 没画），所以这里不再需要 margin-top ——
+// 身份区是 justify-content:center 的竖排，上边距会把「名字 + 身份行」整组往下顶偏。
+.pf-hero__name {
+  font-size: 40rpx;
   font-weight: 800;
+  line-height: 1.25;
   letter-spacing: 1rpx;
-  color: rgba(var(--primary-dark-rgb, 240, 78, 29), 0.95);
+  color: $pf-hero-ink;
+  // 插画再干净也是位图，给字加一层几乎看不见的白描边，保证任何一块底色上都读得清
+  text-shadow: 0 1rpx 6rpx rgba(255, 255, 255, 0.9);
 }
 
-// ============================================
-// 模块 3：贴纸数据（三张微旋转、带胶带）
-// ============================================
-.pf-stickers {
+.pf-hero__meta {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: $pf-hero-ink-soft;
+  text-shadow: 0 1rpx 6rpx rgba(255, 255, 255, 0.9);
+  // 【为什么必须 keep-all】宽度只有卡片的 46%，19 个字的身份行必然要折行；
+  // 默认的中文折行会在词中间断开，实机复核拍到的就是「已陪 / 伴43天」这种断词。
+  // keep-all 只允许在空格与「·」处断行，于是折出来是「中华田园猫 · 1个月 ·」/「已陪伴 43 天」。
+  word-break: keep-all;
+}
+
+// 状态小徽章（已安息 / 家庭共养）：白底胶囊，压在页头留白上不抢主体
+.pf-hero__badge {
   display: flex;
-  gap: 16rpx;
-  margin: 0 32rpx 22rpx;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 12rpx;
+  padding: 6rpx 18rpx;
+  border-radius: $radius-round;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1rpx solid rgba(64, 40, 28, 0.12);
 }
 
-.pf-sticker {
-  position: relative;
-  flex: 1;
-  padding: 26rpx 12rpx 18rpx;
-  border-radius: 24rpx;
-  background: $color-bg-card;
-  border: 2rpx solid $color-border;
-  box-shadow: 0 10rpx 22rpx -16rpx rgba(61, 33, 18, 0.55);
-  text-align: center;
-}
-
-/* 三张贴纸各自微旋转：手账里贴上去的东西不会严格对齐 */
-.pf-sticker:nth-child(1) { transform: rotate(-1.6deg); }
-.pf-sticker:nth-child(2) { transform: rotate(0.9deg); }
-.pf-sticker:nth-child(3) { transform: rotate(-0.7deg); }
-
-/* 胶带压在贴纸顶边 */
-.pf-sticker::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: -12rpx;
-  width: 88rpx;
-  height: 26rpx;
-  transform: translateX(-50%) rotate(-3deg);
-  background: rgba(255, 214, 150, 0.8);
-  border-left: 2rpx dashed rgba(255, 255, 255, 0.9);
-  border-right: 2rpx dashed rgba(255, 255, 255, 0.9);
-}
-
-/* 提示类文字统一 secondary：tertiary 压白底只有约 2.6:1，低于可读门槛 */
-.pf-sticker-label {
-  display: block;
+.pf-hero__badge-text {
   font-size: 20rpx;
-  font-weight: 700;
-  letter-spacing: 1rpx;
-  color: $color-text-secondary;
+  font-weight: 600;
+  color: $pf-hero-ink;
 }
 
-.pf-sticker-value {
-  display: block;
-  margin-top: 8rpx;
-  font-size: 46rpx;
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -1rpx;
-  color: $color-text-primary;
-}
-
-.pf-sticker-value--primary { color: $color-primary; }
-.pf-sticker-value--gold { color: $color-gold-deep; }
-.pf-sticker-value--success { color: $color-success; }
-
-.pf-sticker-unit {
-  margin-left: 2rpx;
-  font-size: 21rpx;
-  font-weight: 700;
-  color: $color-text-secondary;
-}
-
-/* 无数据时给"下一步动作"，比显示「--」明确得多（旧版四格里两格是 --，整页像坏了） */
-.pf-sticker-empty {
-  display: block;
-  margin-top: 8rpx;
-  height: 53rpx;
-  line-height: 53rpx;
-  font-size: 22rpx;
-  font-weight: 700;
-  color: $color-text-secondary;
-}
-
-.pf-sticker-track {
-  width: 108rpx;
-  height: 8rpx;
-  margin: 14rpx auto 0;
-  border-radius: $radius-round;
-  overflow: hidden;
-  background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
-}
-
-/* 无数据时那张贴纸的进度位改成"虚线空槽"：手账里没填的格子本来就是虚线的，
-   比留一条 0% 的实心轨道更像"还没写"，也不会被误读成"进度为零" */
-.pf-sticker-slot {
-  width: 108rpx;
-  height: 8rpx;
-  margin: 14rpx auto 0;
-  border-radius: $radius-round;
-  border-bottom: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.35);
-}
-
-.pf-sticker-fill {
-  height: 100%;
-  border-radius: $radius-round;
-  background: $gradient-gold;
-}
-
-.pf-sticker-fill--success {
-  background: $color-success;
-}
-
-.pf-sticker-foot {
-  display: block;
-  margin-top: 13rpx;
-  font-size: 18rpx;
-  color: $color-text-secondary;
+// 家庭共养徽章的图标跟着主色走，文字仍用页头墨色（保证压在插画上也读得清）
+.pf-hero__badge-text--co {
+  color: $pf-hero-ink-soft;
 }
 
 // ============================================
-// 模块 4：多宠物切换（手账标签）
+// 多宠物切换（v2 没画；两只以上才渲染）
 // ============================================
 .pf-switcher {
-  margin: 0 0 22rpx;
+  width: 100%;
+  margin-top: 22rpx;
   white-space: nowrap;
 }
 
-.pf-switcher-inner {
+.pf-switcher__inner {
   display: inline-flex;
   align-items: center;
   gap: 16rpx;
@@ -485,276 +151,305 @@
 }
 
 .pf-switch-chip {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 10rpx;
-  height: 68rpx;
-  padding: 0 22rpx 0 12rpx;
+  height: 64rpx;
+  padding: 0 24rpx 0 10rpx;
   border-radius: $radius-round;
-  background: $color-bg-card;
-  border: 2rpx dashed $color-border;
+  background: $glass-bg;
+  border: 1rpx solid $glass-border;
   box-shadow: $shadow-xs;
-  @include press-feedback;
 }
 
-/* 选中态：实线边 + 主色淡底，与"虚线 = 未选中"形成明确对比 */
+// 当前宠物：主色淡底 + 主色描边（只靠底色区分，避免字重跳变引起横向抖动）
 .pf-switch-chip--on {
-  border-style: solid;
-  border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.55);
-  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+  border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.42);
 }
 
 .pf-switch-name {
   font-size: 24rpx;
-  font-weight: 700;
   color: $color-text-secondary;
 }
 
-.pf-switch-chip--on .pf-switch-name {
-  color: $color-primary-dark;
+// ============================================
+// 分区（v2 的 .sec + .sec-head）
+// ============================================
+.pf-sec {
+  margin: 32rpx 32rpx 0;
+  animation: fadeInUp 0.45s ease-out 0.08s both;
 }
 
-// ============================================
-// 模块 5：虚线便签（健康备忘 / 品种特征 / 小习惯共用）
-// ============================================
-.pf-note {
-  position: relative;
-  margin: 0 32rpx 22rpx;
-  padding: 22rpx 26rpx 18rpx;
-  border-radius: 36rpx;
-  background: #fffdf8;
-  border: 3rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.42);
-  box-shadow: $shadow-xs;
-  animation: fadeInUp 0.4s ease-out;
-}
-
-.pf-note-head {
+.pf-sec__head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 8rpx;
+  align-items: center;
+  gap: 12rpx;
+  padding: 0 8rpx;
+  margin-bottom: 16rpx;
 }
 
-.pf-note-title {
-  font-family: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
+// 标题前的色点：v2 的 .sec-head .dot（5px → 12rpx）
+.pf-sec__dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: $color-primary;
+  flex-shrink: 0;
+}
+
+.pf-sec__title {
   font-size: 30rpx;
-  font-weight: 700;
-  letter-spacing: 2rpx;
+  font-weight: 800;
+  letter-spacing: 0.6rpx;
   color: $color-text-primary;
 }
 
-.pf-note-hint {
+// 标题右侧小字（v2 的 .more 位置）：纯展示，不带点击
+.pf-sec__hint {
+  margin-left: auto;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+// v2 组头右侧的「全部 ›」：这是**真入口**（区别于上面的纯展示小字），
+// 目前只有「健康档案」组有（落点 = 该组第一条的趋势页）。
+// 用 margin-left:auto 顶到最右：组头是 flex 行，标题之后的空间由它吃掉。
+.pf-sec__more {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  // 点击热区补到 44rpx 高：文字只有 22rpx，不补的话真机上很难点中
+  padding: 6rpx 10rpx;
+  border-radius: $radius-round;
+  transition: background 0.15s ease;
+
+  &--hover {
+    background: $color-primary-bg;
+  }
+}
+
+.pf-sec__more-text {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+// ============================================
+// menulist（v2 的 .card.menulist + .mrow + .mi）
+// ============================================
+.pf-menu {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card, $glow-sm;
+  overflow: hidden;
+}
+
+.pf-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 26rpx 28rpx;
+  border-bottom: 1rpx solid $color-border;
+  transition: background 0.15s ease;
+
+  &:active {
+    background: $color-primary-bg;
+  }
+}
+
+.pf-menu__item--last {
+  border-bottom: none;
+}
+
+// 只读行（过敏/用药/慢病、品种特征）：不接点击，也就不该有按压反馈
+.pf-menu__item--static {
+  &:active {
+    background: transparent;
+  }
+
+  // 只读行是「标签 + 值」两段：标签不抢宽度，值占满剩下的空间并右对齐
+  .pf-menu__label {
+    flex: 0 0 auto;
+  }
+}
+
+// 行首图标块：v2 的 .mi（30px 圆角方块 → 64rpx），底色与图标 tone 同源、组间区分
+.pf-menu__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 20rpx;
+  flex-shrink: 0;
+
+  &--primary { background: rgba(var(--primary-rgb, 255, 107, 61), 0.12); }
+  &--teal { background: rgba(var(--teal-rgb, 79, 163, 227), 0.14); }
+  &--sage { background: rgba(var(--sage-rgb, 47, 201, 142), 0.14); }
+  &--gold-deep { background: rgba(var(--gold-rgb, 255, 176, 32), 0.18); }
+  &--danger { background: rgba(var(--danger-rgb, 255, 90, 95), 0.12); }
+}
+
+.pf-menu__label {
+  flex: 1;
+  min-width: 0;
+  font-size: 28rpx;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+}
+
+// 只读行的值（可换行，长文本如「过敏史：花生、牛肉」不会溢出）
+.pf-menu__value {
+  flex: 1;
+  min-width: 0;
+  font-size: 24rpx;
+  line-height: 1.5;
+  text-align: right;
+  color: $color-text-secondary;
+}
+
+// 空值降权：还没填的字段不假装有数据
+.pf-menu__value--off {
+  color: $color-text-placeholder;
+}
+
+// ============================================
+// 健康指标三格（v2 没画；真实数据）
+// ============================================
+.pf-metrics {
+  display: flex;
+  align-items: stretch;
+  padding: 26rpx 0;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card, $glow-sm;
+  overflow: hidden;
+}
+
+.pf-metric {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8rpx;
+}
+
+// 格与格之间一条竖分隔线（比给每格加边框更干净）
+.pf-metric + .pf-metric {
+  border-left: 1rpx solid $color-border;
+}
+
+.pf-metric__label {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.pf-metric__value {
+  margin-top: 10rpx;
+  font-size: 42rpx;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.pf-metric__value--primary { color: $color-primary-dark; }
+.pf-metric__value--gold { color: $color-gold-deep; }
+.pf-metric__value--sage { color: $color-sage; }
+
+.pf-metric__unit {
+  margin-left: 2rpx;
   font-size: 20rpx;
   font-weight: 600;
   color: $color-text-tertiary;
 }
 
+// 没数据时给下一步动作而不是「--」
+.pf-metric__empty {
+  margin-top: 14rpx;
+  font-size: 22rpx;
+  color: $color-text-placeholder;
+}
+
 // ============================================
-// 模块 6：便签内的图标行
+// 基础档案两列字段（v2 没画；原「宠物身份证」卡的字段）
 // ============================================
-.pf-row {
+.pf-fields {
   display: flex;
-  align-items: center;
-  gap: 18rpx;
-  padding: 16rpx 0;
-  border-bottom: 2rpx dashed rgba(243, 226, 210, 0.95);
+  flex-wrap: wrap;
+  padding: 8rpx 0;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card, $glow-sm;
 }
 
-.pf-row--last {
-  border-bottom: 0;
-  padding-bottom: 2rpx;
+.pf-field {
+  width: 50%;
+  box-sizing: border-box;
+  padding: 20rpx 28rpx;
 }
 
-.pf-row-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 52rpx;
-  height: 52rpx;
-  border-radius: 16rpx;
-  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
-  flex-shrink: 0;
-}
-
-/* min-width 而非固定宽度：系统放大字号时不会挤字 */
-.pf-row-label {
-  flex: 0 0 auto;
-  min-width: 156rpx;
-  font-size: 25rpx;
-  font-weight: 600;
-  color: $color-text-secondary;
-}
-
-.pf-row-value {
-  flex: 1;
-  font-size: 26rpx;
-  font-weight: 700;
-  color: $color-text-primary;
-  text-align: right;
-}
-
-/* "无 / 未录入"这类空值降权，避免和真实数据抢注意力 */
-.pf-row-value--off {
-  font-weight: 600;
+.pf-field__label {
+  display: block;
+  font-size: 22rpx;
   color: $color-text-tertiary;
 }
 
+.pf-field__value {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 26rpx;
+  color: $color-text-primary;
+  // 芯片号一类的长串不换行、超出省略，避免把两列网格撑歪
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pf-field__value--off {
+  color: $color-text-placeholder;
+}
+
 // ============================================
-// 模块 7：小习惯（便签格 2 列）
+// 它的小习惯（v2 没画；getPetFacts 的真实数据）
 // ============================================
 .pf-facts {
   display: flex;
   flex-wrap: wrap;
-  gap: 12rpx;
-  padding-top: 10rpx;
+  gap: 16rpx;
 }
 
 .pf-fact {
   display: flex;
   align-items: center;
   gap: 10rpx;
-  width: calc(50% - 6rpx);
-  padding: 14rpx 16rpx;
-  border-radius: 18rpx;
-  background: #fff6ea;
-}
-
-.pf-fact-text {
-  flex: 1;
-  font-size: 23rpx;
-  font-weight: 600;
-  color: $color-text-primary;
-}
-
-// ============================================
-// 模块 8：功能入口（便签方块 2×2，比一行四个更像手账贴纸）
-// ============================================
-.pf-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16rpx;
-  margin: 0 32rpx 22rpx;
-}
-
-.pf-grid-item {
-  display: flex;
-  align-items: center;
-  gap: 14rpx;
-  width: calc(50% - 8rpx);
-  padding: 18rpx 18rpx;
-  border-radius: 26rpx;
-  background: #fffdf8;
-  border: 2rpx solid $color-border;
-  box-shadow: $shadow-xs;
-  @include press-feedback;
-}
-
-.pf-grid-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 60rpx;
-  height: 60rpx;
-  border-radius: 20rpx;
-  flex-shrink: 0;
-}
-
-/* 图标色与底色同源：底走 rgba(--x-rgb, α)，图标走对应 tone（写死 hex 会出现"底变色、图标不变"） */
-.pf-grid-icon--coral {
-  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
-}
-
-.pf-grid-icon--gold {
-  background: rgba(var(--gold-rgb, 255, 176, 32), 0.16);
-}
-
-.pf-grid-icon--sage {
-  background: rgba(var(--sage-rgb, 47, 201, 142), 0.14);
-}
-
-.pf-grid-icon--teal {
-  background: rgba(var(--teal-rgb, 79, 163, 227), 0.14);
-}
-
-.pf-grid-text {
-  font-size: 25rpx;
-  font-weight: 700;
-  color: $color-text-primary;
-}
-
-// ============================================
-// 模块 9：次级入口（虚线胶囊一行三个）
-// ============================================
-.pf-links {
-  display: flex;
-  gap: 14rpx;
-  margin: 0 32rpx 22rpx;
-}
-
-.pf-link {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6rpx;
-  height: 104rpx;
-  border-radius: 24rpx;
-  /* 玻璃底走主题变量：深色主题（星空银河）下 --glass-bg 是 12% 白，
-     写死 rgba(255,255,255,.75) 会在深底上糊出一排亮块 */
+  max-width: 100%;
+  padding: 14rpx 24rpx;
+  border-radius: $radius-round;
   background: $glass-bg;
-  border: 2rpx dashed $color-border;
-  @include press-feedback;
+  border: 1rpx solid $glass-border;
+  box-shadow: $shadow-xs;
 }
 
-.pf-link-text {
-  font-size: 22rpx;
-  font-weight: 700;
+.pf-fact__text {
+  font-size: 24rpx;
   color: $color-text-secondary;
 }
 
 // ============================================
-// 模块 10：危险操作（降权成一行弱提示，旧版是全宽实心按钮，误触代价高）
+// 危险操作（v2 没画；降权为一行弱提示，避免误触）
 // ============================================
 .pf-danger {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8rpx;
-  /* padding 抬到 24rpx：可点区域从 72rpx（36px）提到约 88rpx（44px 等效下限） */
-  margin: 0 32rpx;
-  padding: 24rpx;
-  @include press-feedback;
+  gap: 10rpx;
+  margin: 44rpx 32rpx 0;
+  padding: 22rpx;
 }
 
-/* 弱化但可读：tertiary 压页面底色只有约 2.5:1，这是本页唯一的离世入口，改 secondary（≈4.7:1） */
-.pf-danger-text {
-  font-size: 23rpx;
-  color: $color-text-secondary;
-  text-decoration: underline;
-}
-
-// ============================================
-// 深色主题（星空银河）下的页面级兜底
-// ============================================
-// _theme.scss 的 .theme-starry 把 --text-* 整体转成白色（--text-primary: #FFFFFF …），
-// 但 --bg-card 仍是 #FFFFFF —— 既有主题体系只换变量、没有"卡内文字色"这一层，
-// 于是白卡/纸卡里就是白字压白底（对比度 1.0:1，审查有实测截图：整卡只剩图标没有文字）。
-// 本页的身份证/便签/贴纸/宫格都是"纸"，本质是浅色面，所以在这些作用域内把
-// "卡内 token" 钉回浅色主题取值。作用域仅限本页：全局修复会动到全仓 100+ 页，需整体回归，另案处理。
-.pf-idcard,
-.pf-note,
-.pf-sticker,
-.pf-grid-item,
-.pf-switch-chip,
-.pf-polaroid {
-  --text-primary: #40281c;
-  --text-secondary: #8b6e58;
-  --text-tertiary: #a98d74;
-  --text-placeholder: #cbb49e;
-  --bg-secondary: #fffdf9;
-  --border: #f3e2d2;
-  --border-light: rgba(243, 226, 210, 0.5);
+.pf-danger__text {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
 }
 
 // ============================================
@@ -766,8 +461,10 @@
   padding: 120rpx $spacing-xl;
 }
 
+// 底部留白 + 全面屏安全区
+// 本页是**普通页面**（2026-09-12 IA 第 3 批已退出 tabBar），页面下方没有自定义 tabBar 覆盖层，
+// 所以不需要按 tabBar 高度让位；但仍要留出滚动末端的呼吸位与 iPhone 底部指示条的空间，
+// 否则最后一行「标记宠物离世」会贴着屏幕底边。
 .profile-bottom-safe {
-  /* 底部呼吸位 + 全面屏安全区：小程序原生 tabBar 在 webview 之外，这里只需留出滚动末端的余量；
-     env() 兜住 iPhone 底部指示条（项目内已有 3 处同款用法）。 */
-  height: calc(60rpx + env(safe-area-inset-bottom));
+  height: calc(80rpx + env(safe-area-inset-bottom));
 }

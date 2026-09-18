@@ -68,10 +68,17 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 120rpx 48rpx;
+    // 上下留白由 120rpx 收到 72rpx：原来的 18px 图标要这么宽的留白才撑得起版面，
+    // 换成 132px 插画后本身就占位了，留太多会把下面推空。
+    padding: 72rpx 48rpx;
 
-    &-emoji {
-      font-size: 96rpx;
+    /*
+     * 插画外边距（对齐 components/EmptyState.scss 的 .empty-state__illus 口径）。
+     * 父级是 flex + align-items:center，插画不用再写 margin:0 auto。
+     * 原来的 `&-emoji { font-size: 96rpx }` 随那个 <Icon> 一起删除 ——
+     * Icon 走内联 width/height，font-size 对它从来没有生效过（实际渲染是 18px）。
+     */
+    &-illus {
       margin-bottom: 24rpx;
     }
 

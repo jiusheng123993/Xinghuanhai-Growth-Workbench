@@ -64,6 +64,15 @@ const QUICK_CATEGORIES = [
 ]
 
 export default function PetFoodQuery() {
+  /**
+   * 主题类名：**必须挂在页面自己的根节点上**（本页三个渲染分支都挂）
+   *
+   * 为什么：小程序端每个页面独立渲染，app 组件的 JSX 不包裹页面节点，挂在 app 层的
+   * `.theme-*` 传不进页面；不挂就会永远吃 styles/_theme.scss 里 page{} 的秋季基线变量，
+   * 用户切主题后本页看不出变化。口径与 pages/creative、pages/mine 一致。
+   * （本页文件顶部原本就 import 了 useThemeClass 却从未调用，这里把它接上。）
+   */
+  const themeClass = useThemeClass()
   const { pets, currentPet, switchPet, isLoading: petLoading, initUser: initPetUser } = usePet()
   const { lastResult, history, stats, queryFood, fetchHistory, fetchStats, isLoading: queryLoading } = useFoodQuery()
   const { isMember, checkAccess, shouldShowPaywall, markPaywallShown, initUser: initMembership } = useMembership()
@@ -249,7 +258,7 @@ export default function PetFoodQuery() {
 
   if (isLoading && pets.length === 0) {
     return (
-      <View className='pet-food-query'>
+      <View className={`pet-food-query ${themeClass}`}>
         <PageLoading />
       </View>
     )
@@ -257,14 +266,14 @@ export default function PetFoodQuery() {
 
   if (error && pets.length === 0) {
     return (
-      <View className='pet-food-query'>
+      <View className={`pet-food-query ${themeClass}`}>
         <PageError message={error} onRetry={loadInitialData} />
       </View>
     )
   }
 
   return (
-    <View className='pet-food-query'>
+    <View className={`pet-food-query ${themeClass}`}>
       {/* 全屏动态背景光斑层 */}
       <PageBackground />
 

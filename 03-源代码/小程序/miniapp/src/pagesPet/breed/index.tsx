@@ -12,7 +12,7 @@ import { useAnalytics, usePageView } from '../../hooks/useAnalytics'
 import { chooseImageWithPrivacy } from '../../utils/privacy'
 import { recognizeBreed, matchBreedInData, syncBreedKnowledge, type BreedRecognizeResult } from '../../services/breedService'
 import './index.scss'
-import { PageBackground, Icon  } from '../../components'
+import { PageBackground, Icon, Illustration } from '../../components'
 
 const disclaimerText = new MedicalDisclaimer().getDisclaimer('green', 'breed')
 
@@ -291,7 +291,11 @@ export default function PetBreed() {
 
         {filteredBreeds.length === 0 && (
           <View className='breed-page__empty'>
-            <Icon name='magnifying-glass' size={18} tone='muted' className='breed-page__empty-icon' />
+            {/* 空态插画：`empty-search` 的画面是「猫狗一起低头看一枚立在地上的空放大镜」，
+                与本处「搜索无果」逐字对应（服务器 /uploads/illustrations/empty-search.jpg，HEAD 200）。
+                为什么替换掉原来的 18px 小图标：`.breed-page__empty` 上下各留 80px，
+                18px 图标在那个留白里几乎看不见，和全站空态口径（EmptyState 统一 132px 插画）也不成比例。 */}
+            <Illustration name='empty-search' size={132} className='breed-page__empty-illus' />
             <Text className='breed-page__empty-text'>未找到匹配的品种</Text>
           </View>
         )}

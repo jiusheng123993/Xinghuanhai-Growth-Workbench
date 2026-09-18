@@ -1,7 +1,8 @@
 /** 健康趋势页面单元测试 */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import React from 'react'
-import { render, fireEvent, waitFor } from '@testing-library/react'
+// screen：心情筛选那组用例按文案点胶囊（同一份文案在多处出现时用 class 定位更稳）
+import { render, fireEvent, waitFor, screen } from '@testing-library/react'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Import the mocked modules and the component
@@ -27,6 +28,16 @@ import type { TrendDataPoint } from '../../../services/trendService'
 // ═══════════════════════════════════════════════════════════════════════════
 // Hoisted variables used in vi.mock factories
 // ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * 打卡记录服务（2026-09-12 第 4 波：趋势页新增「打卡记录」分区后需要 mock）
+ *
+ * 【为什么要 mock 而不是让它真跑】真实现会走 api.get 去要 token，在 jsdom 里必然抛错，
+ * 页面 catch 后退化成空态 —— 那样「有记录时的列表 / 截断提示 / 空态」三条分支全都测不到。
+ */
+const { mockGetCheckins } = vi.hoisted(() => ({
+  mockGetCheckins: vi.fn(async (..._args: unknown[]) => [] as any[]),
+}))
 
 const { mockSwitchPet, mockFetchPets } = vi.hoisted(() => ({
   mockSwitchPet: vi.fn(),
@@ -168,6 +179,10 @@ vi.mock('../../../hooks/useAnalytics', () => ({
 vi.mock('../../../types/analyticsTypes', () => ({ AnalyticsEventName: { ShareAction: 'share_action' } }))
 
 vi.mock('../../index.scss', () => ({}))
+
+vi.mock('../../../services/checkinService', () => ({
+  getCheckins: (petId: string, userId: string) => mockGetCheckins(petId, userId),
+}))
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Helper: build a TrendDataPoint with defaults
@@ -1362,5 +1377,176 @@ describe('健康趋势页 - 健康报告明细（异常记录 / 用药史）', (
     expect(container.querySelector('.trends-report-locked')).toBeTruthy()
     expect(container.querySelectorAll('.trends-report-item').length).toBe(0)
     expect(mockedGenerate).not.toHaveBeenCalled()
+  })
+})
+
+/**
+ * 打卡记录分区（2026-09-12 第 4 波：原始打卡明细从时光页迁入健康档案页）
+ *
+ * 用户原话：「打卡记录和日记/时光不是一个东西，你塞在一起了」。
+ * 这组用例锁三件事：① 列表每一行都来自真实记录（日期 + 大便/小便/食欲/精神/体重）；
+ * ② 到达 30 条上限时界面**如实说明**（不许让用户以为只有这些）；③ 没有记录时给真实空态。
+ */
+describe('健康趋势页 - 打卡记录分区（2026-09-12 第 4 波迁入）', () => {
+  /** 构造一条打卡记录（字段对齐 checkinService 返回的 PetHealthEntry） */
+  function makeCheckin(overrides: Record<string, unknown> = {}) {
+    return {
+      id: 'ck-1',
+      petId: 'pet-1',
+      userId: 'user-1',
+      poopLevel: 3,
+      appetiteLevel: 3,
+      spiritLevel: 3,
+      exerciseLevel: 2,
+      weight: 12.5,
+      hasAnomaly: false,
+      anomalyItems: [],
+      riskLevel: 'low',
+      note: '',
+      createdAt: '2026-09-10T04:00:00.000Z',
+      ...overrides,
+    }
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockGetCheckins.mockResolvedValue([])
+  })
+
+  it('按日期倒序列出真实打卡记录：日期 + 大便/小便/食欲/精神 + 体重都来自记录本身', async () => {
+    mockGetCheckins.mockResolvedValue([
+      makeCheckin({ id: 'ck-new', createdAt: '2026-09-11T04:00:00.000Z', poopLevel: 4, note: '小便: 颜色偏黄' }),
+      makeCheckin({ id: 'ck-old', createdAt: '2026-09-09T04:00:00.000Z', weight: undefined }),
+    ])
+
+    const { container } = render(React.createElement(PetTrendsPage))
+
+    await waitFor(() => expect(container.querySelectorAll('.trends-checkin-item').length).toBe(2))
+    // 倒序：新的（09-11）在前
+    const dates = Array.from(container.querySelectorAll('.trends-checkin-item__date')).map((el) => el.textContent)
+    expect(dates[0]).toBe('2026-09-11')
+    expect(dates[1]).toBe('2026-09-09')
+
+    const first = container.querySelectorAll('.trends-checkin-item')[0]
+    const values = Array.from(first.querySelectorAll('.trends-checkin-tag__value')).map((el) => el.textContent)
+    // 大便 4 → 偏软；小便取自 note 里那句；食欲/精神 3 → 正常
+    expect(values).toEqual(['偏软', '颜色偏黄', '正常', '正常'])
+    // 体重只在真的有值的那条上显示（09-09 那条没称）
+    expect(first.querySelector('.trends-checkin-item__weight-text')?.textContent).toBe('12.5 kg')
+    expect(container.querySelectorAll('.trends-checkin-item__weight').length).toBe(1)
+    // 头部计数是全量条数
+    expect(container.textContent).toContain('共 2 条')
+  })
+
+  it('超过 30 条时只渲染最近 30 条，并在界面上如实写明「仅显示最近 30 条（共 M 条）」', async () => {
+    // 造 35 条：2026-09-01 ~ 2026-09-05 各 7 条，日期倒序后可验证截断口径
+    const entries = []
+    for (let i = 0; i < 35; i += 1) {
+      entries.push(makeCheckin({
+        id: 'ck-' + i,
+        // 从 09-05 往前每天递减（字符串可直接排序），保证首条是 09-05
+        createdAt: '2026-09-' + String(5 - Math.floor(i / 7)).padStart(2, '0') + 'T04:00:00.000Z',
+      }))
+    }
+    mockGetCheckins.mockResolvedValue(entries)
+
+    const { container } = render(React.createElement(PetTrendsPage))
+
+    await waitFor(() => expect(container.querySelectorAll('.trends-checkin-item').length).toBe(30))
+    // 如实告知上限：这句必须出现，且带上全量条数
+    expect(container.querySelector('.trends-checkin-limit')?.textContent).toBe('仅显示最近 30 条（共 35 条）')
+    expect(container.textContent).toContain('共 35 条')
+  })
+
+  /**
+   * 读当前列表里每行的心情中文名（角标文案形如「💩 开心」，这里取后半段）
+   * @param container - 渲染容器
+   * @returns 与 .trends-checkin-item 一一对应的心情名；没有日记块的行给 null
+   */
+  function rowMoodLabels(container: HTMLElement): (string | null)[] {
+    return Array.from(container.querySelectorAll('.trends-checkin-item')).map((item) => {
+      const text = item.querySelector('.trends-checkin-diary__mood-text')?.textContent || ''
+      return text ? text.replace(/^\S+\s*/, '') : null
+    })
+  }
+
+  it('每条打卡下面显示它自己那句自动生成的日记与心情档位，卡片顶部写明句子来源', async () => {
+    mockGetCheckins.mockResolvedValue([makeCheckin({ id: 'ck-1', note: '今天去公园了' })])
+
+    const { container } = render(React.createElement(PetTrendsPage))
+    await waitFor(() => expect(container.querySelectorAll('.trends-checkin-item').length).toBe(1))
+
+    // 来源说明：必须让用户看懂这些句子不是自己写的（否则又变回我哪有填这么多）
+    const source = container.querySelector('.trends-checkin-source')?.textContent || ''
+    expect(source).toContain('团团根据这条打卡自动写的')
+
+    // 每行都有日记块：正文非空，且不是把打卡备注复读一遍（证明走的是 diaryEngine 的模板文案）
+    expect(container.querySelectorAll('.trends-checkin-diary').length).toBe(1)
+    const diaryText = container.querySelector('.trends-checkin-diary__text')?.textContent || ''
+    expect(diaryText.length).toBeGreaterThan(0)
+    expect(diaryText).not.toBe('今天去公园了')
+    // 心情角标（心情筛选的取值来源）—— 5 档之一
+    expect(container.querySelector('.trends-checkin-diary__mood-text')?.textContent || '').toMatch(
+      /开心|平静|疲惫|不舒服|骄傲/,
+    )
+    // 用户自己填的备注仍然照常展示（它和自动生成的句子是两回事）
+    expect(container.querySelector('.trends-checkin-item__note')?.textContent).toContain('今天去公园了')
+  })
+
+  it('6 档心情筛选：按每条打卡自动生成的心情筛记录，点「全部」恢复', async () => {
+    mockGetCheckins.mockResolvedValue([
+      makeCheckin({ id: 'ck-1', createdAt: '2026-09-10T04:00:00.000Z' }),
+      makeCheckin({
+        id: 'ck-2',
+        createdAt: '2026-09-11T04:00:00.000Z',
+        poopLevel: 1,
+        appetiteLevel: 1,
+        spiritLevel: 1,
+        note: '今天不太舒服',
+      }),
+    ])
+
+    const { container } = render(React.createElement(PetTrendsPage))
+    await waitFor(() => expect(container.querySelectorAll('.trends-checkin-item').length).toBe(2))
+
+    // 6 档胶囊都在（全部 + 5 种心情）
+    const chips = Array.from(
+      container.querySelectorAll('.trends-checkin-filter__list .trends-checkin-chip__text'),
+    ).map((el) => el.textContent)
+    expect(chips).toEqual(['全部', '开心', '平静', '疲惫', '不舒服', '骄傲'])
+
+    // 【为什么按渲染出来的心情现算期望值】心情由 diaryEngine 按记录内容算出来，
+    // 在用例里写死具体档位会让测试依赖它的内部规则；这里验证的是**筛选行为本身**：
+    // 选某个心情 → 屏幕上只剩这个心情的记录，且条数与计数一致。
+    const moods = rowMoodLabels(container)
+    const target = moods[0]
+    expect(target).toBeTruthy()
+    const expectedCount = moods.filter((m) => m === target).length
+
+    fireEvent.click(screen.getByText(target as string))
+    await waitFor(() => expect(container.querySelectorAll('.trends-checkin-item').length).toBe(expectedCount))
+    expect(rowMoodLabels(container).every((m) => m === target)).toBe(true)
+    expect(container.querySelector('.trends-checkin-filter__count')?.textContent).toBe(`筛出 ${expectedCount} 条`)
+
+    fireEvent.click(screen.getByText('全部'))
+    await waitFor(() => expect(container.querySelectorAll('.trends-checkin-item').length).toBe(2))
+  })
+
+  it('该心情下一条记录都没有时给轻量空态（不是 0 行表格，也不与没有记录那句打架）', async () => {
+    mockGetCheckins.mockResolvedValue([makeCheckin({ id: 'ck-1' })])
+
+    const { container } = render(React.createElement(PetTrendsPage))
+    await waitFor(() => expect(container.querySelectorAll('.trends-checkin-item').length).toBe(1))
+
+    // 挑一个这条记录**没有**的心情档位（5 档里至少缺一个，因为只有一条记录）
+    const moods = rowMoodLabels(container)
+    const missing = ['开心', '平静', '疲惫', '不舒服', '骄傲'].find((m) => !moods.includes(m))
+    if (!missing) throw new Error('这条打卡把 5 种心情都占了，用例前提不成立')
+
+    fireEvent.click(screen.getByText(missing))
+    await waitFor(() => expect(container.textContent).toContain('这个心情下暂时没有打卡记录'))
+    expect(container.querySelectorAll('.trends-checkin-item').length).toBe(0)
+    // 两个空态不能同时出现（一个说没有记录、一个说这个心情下没有，会互相打架）
+    expect(container.textContent).not.toContain('这只毛孩子还没有打卡记录')
   })
 })

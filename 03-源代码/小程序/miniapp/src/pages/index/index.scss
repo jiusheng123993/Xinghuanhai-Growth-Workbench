@@ -2,30 +2,28 @@
 @import '../../styles/_animations';
 
 // ============================================
-// AI 对话首页 — 温馨家庭主题 + 丰富动效
+// 今天（首页）· 健康管家看板
+//
+// 【IA 第 4 批重做（2026-09-12）】本文件原先装着整页 AI 对话的全部样式（2315 行）；
+// AI 对话搬去 pagesYuantuan/agent 之后，对话相关规则（消息气泡 / 输入区 / 加号面板 /
+// 结果卡片 / 命名弹层 / 会话抽屉 …）已随页面一起搬走，留在主包只会白占体积。
+// 现在这里只剩今天看板自己的样式 + 空态（空态与团团页共用同一套外观）。
+//
+// 视觉基准：《星河宠记-高保真原型 v2》第 1 屏（outputs/原型-v2/index.html）。
+//
+// ⚠️ 本仓库旧坑：不要写 rgba(var(--x), α) —— 小程序 WXSS 解析不了这种写法，
+// 要么用带通道的 var(--x-rgb, R,G,B)，要么写字面量。
 // ============================================
 
 // ===== 页面容器 =====
-// 【自定义 tabBar 的底部让位（IA 第 3 批：原生 tabBar → 自定义 tabBar）】
-// 原生 tabBar 在 webview **之外**，页面视口本来就不含它；改成自定义 tabBar 之后，
-// 底栏变成**覆盖在页面之上的固定层**（100rpx 底板 + 约 40rpx 中心凸起圆钮区 + 底部安全区），
-// 页面内容会钻到它下面。
-// 本页最底下那条是 `.chat-input-area`（输入框 / 发送键），不减高就会被底栏整个盖住。
-//
-// 【为什么本页不能用 `page { padding-bottom }`】本页是"视口锁定"布局：根容器 min-height:100vh
-// 撑满一屏，滚动发生在**内部的 `.chat-msg-list`**（flex:1 + overflow-y:auto），
-// 输入区又贴着视口底部（它自己的 sticky 让位见下方 `.chat-input-area` 段）。
-// 给 page 加底部内边距只会在整页下方多出
-// 160rpx 可滚动空白，输入区位置一点不动 —— 必须把根容器**减掉**底栏高度，
-// 让 flex 列整体上移，输入区与滚动区才一起抬到底栏之上。
-//
-// 数值口径：100rpx 底栏底板 + 约 40rpx 中心「团团」凸起圆钮区 + 安全区 + 20rpx 呼吸位
-// = 160rpx + 安全区（中心圆钮直径 124rpx、向上凸出底栏上沿，真实遮挡高度不是 100rpx），
-// 与 src/custom-tab-bar 的底栏高度约定必须一致（两行都写：前一行给老基础库兜底）。
-.chat-home-page {
+// 【自定义 tabBar 的底部让位】本页是 tab 页，底栏是覆盖在页面之上的固定层
+// （100rpx 底板 + 约 40rpx 中心凸起圆钮 + 安全区），所以根容器要**减掉** 160rpx + 安全区，
+// 让整列内容（含内部滚动区）一起抬到底栏之上。
+// 数值口径与 src/custom-tab-bar 的底栏高度约定必须一致；两行都写：前一行给老基础库兜底。
+.today-page {
   min-height: calc(100vh - 160rpx - constant(safe-area-inset-bottom));
   min-height: calc(100vh - 160rpx - env(safe-area-inset-bottom));
-  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  // 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明
   background: transparent;
   display: flex;
   flex-direction: column;
@@ -33,484 +31,10 @@
   animation: pageEnter 0.4s ease-out;
 }
 
-// ===== 爪印粒子装饰 =====
-.chat-paw-particles {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.chat-paw {
-  position: absolute;
-  font-size: 32rpx;
-  opacity: 0;
-
-  &--1 { bottom: 20%; left: 8%; animation: pawFloat1 5s ease-out infinite; animation-delay: 0s; }
-  &--2 { bottom: 30%; right: 10%; animation: pawFloat2 6s ease-out infinite; animation-delay: 2s; }
-  &--3 { bottom: 15%; left: 45%; animation: pawFloat3 4.5s ease-out infinite; animation-delay: 1s; }
-  &--4 { bottom: 25%; right: 30%; animation: pawFloat1 5.5s ease-out infinite; animation-delay: 3s; }
-  &--5 { bottom: 10%; left: 25%; animation: pawFloat2 4.8s ease-out infinite; animation-delay: 0.5s; }
-  &--6 { bottom: 35%; left: 60%; animation: pawFloat3 5.2s ease-out infinite; animation-delay: 2.5s; }
-}
-
-// ===== 星星装饰 =====
-.chat-stars {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.chat-star {
-  position: absolute;
-  font-size: 16rpx;
-  opacity: 0.25;
-
-  &--1 { top: 8%; right: 12%; animation: starTwinkle1 2.5s ease-in-out infinite; }
-  &--2 { top: 15%; left: 8%; animation: starTwinkle2 3s ease-in-out infinite; animation-delay: 0.8s; }
-  &--3 { top: 22%; right: 25%; animation: starTwinkle3 2.8s ease-in-out infinite; animation-delay: 1.6s; }
-  &--4 { top: 5%; left: 35%; animation: starTwinkle1 3.2s ease-in-out infinite; animation-delay: 0.4s; }
-  &--5 { top: 18%; left: 55%; animation: starTwinkle2 2.4s ease-in-out infinite; animation-delay: 1.2s; }
-  &--6 { top: 10%; right: 40%; animation: starTwinkle3 3.5s ease-in-out infinite; animation-delay: 2s; }
-}
-
-// ===== 顶部栏 =====
-.chat-top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24rpx 32rpx;
-  background: rgba(var(--bg-page-rgb, 255, 246, 238), 0.94);
-  backdrop-filter: blur(24rpx);
-  border-bottom: 1rpx solid $color-border-light;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  // 进入页面时品牌栏轻缓滑入，避免内容瞬间出现（ease-out，仅 transform/opacity）
-  animation: topBarEnter 0.28s cubic-bezier(0.22, 0.61, 0.36, 1) both;
-}
-
-/* 多成员共同养宠：情侣引导横幅（2026-08-24） */
-.home-co-care-tip {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  margin: 16rpx 32rpx 0;
-  padding: 20rpx 24rpx;
-  border-radius: 20rpx;
-  background: $gradient-card;
-  border: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.25);
-  animation: fadeInUp 0.3s ease-out;
-}
-
-.home-co-care-tip__icon {
-  font-size: 30rpx;
-}
-
-.home-co-care-tip__text {
-  flex: 1;
-  font-size: $font-size-md;
-  color: $color-text-primary;
-}
-
-.home-co-care-tip__close {
-  font-size: 28rpx;
-  color: $color-text-tertiary;
-  padding: 4rpx 8rpx;
-}
-
-.chat-top-left {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-}
-
-.chat-top-brand {
-  display: flex;
-  align-items: baseline;
-  gap: 12rpx;
-}
-
-.chat-pet-avatar {
-  width: 76rpx;
-  height: 76rpx;
-  border-radius: 50%;
-  background: $gradient-warm;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 38rpx;
-  box-shadow: 0 0 20rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
-  @include breathe-glow;
-}
-
-.chat-top-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.chat-pet-name {
-  font-size: 40rpx;
-  font-weight: $font-weight-bold;
-  line-height: 1;
-  background: linear-gradient(135deg, $color-primary-light, $color-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.chat-pet-detail {
-  font-size: 22rpx;
-  line-height: 1;
-  color: $color-text-tertiary;
-  margin-top: 2rpx;
-}
-
-// 顶部右侧：新建对话 + 历史 + 记忆纠错入口
-.chat-top-right {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-/* 新建对话主入口：顶部常驻渐变胶囊（用户反馈「放历史里找不到」，
-   对齐豆包式一屏可见），与「历史/记忆」次级描边入口形成层级对比 */
-.chat-top-new-btn {
-  display: flex;
-  align-items: center;
-  gap: 6rpx;
-  padding: 12rpx 22rpx;
-  margin-right: 12rpx;
-  border-radius: 999rpx;
-  background: linear-gradient(135deg, #ff8a5c, #ff6b3d);
-  box-shadow: 0 4rpx 12rpx rgba(255, 107, 61, 0.26);
-  transition: all 0.2s ease;
-
-  &:active {
-    transform: scale(0.95);
-    box-shadow: 0 2rpx 6rpx rgba(255, 107, 61, 0.2);
-  }
-}
-
-.chat-top-new-text {
-  font-size: 24rpx;
-  font-weight: 600;
-  color: #fff;
-}
-
-.chat-top-memory-btn {
-  display: flex;
-  align-items: center;
-  gap: 6rpx;
-  padding: 10rpx 20rpx;
-  border-radius: 20rpx;
-  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
-  border: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.15);
-  transition: all 0.2s ease;
-
-  &:active {
-    background: rgba(var(--primary-rgb, 255, 107, 61), 0.15);
-    transform: scale(0.95);
-  }
-}
-
-.chat-top-memory-icon {
-  font-size: 24rpx;
-}
-
-.chat-top-memory-text {
-  font-size: 22rpx;
-  color: $color-primary;
-  font-weight: 500;
-}
-
-.chat-switch-btn {
-  background: $color-primary-bg;
-  border: 1rpx solid $color-border;
-  border-radius: 24rpx;
-  padding: 8rpx 24rpx;
-  font-size: 24rpx;
-  color: $color-primary-light;
-  transition: all 0.2s ease;
-  @include press-feedback;
-}
-
-// ===== 消息列表 =====
-.chat-msg-list {
-  flex: 1;
-  overflow-y: auto;
-  position: relative;
-  z-index: 1;
-}
-
-// scroll-view 上不支持 padding（webview 渲染模式），间距放到内部容器
-.chat-msg-list__inner {
-  padding: 32rpx;
-}
-
-// ===== 消息行 =====
-.msg-row {
-  display: flex;
-  gap: 20rpx;
-  margin-bottom: 28rpx;
-  animation: msgBounceIn 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-
-.msg-row.ai {
-  align-self: flex-start;
-  max-width: 88%;
-}
-
-.msg-row.user {
-  align-self: flex-end;
-  max-width: 80%;
-  flex-direction: row-reverse;
-}
-
-// ===== 头像 =====
-.msg-avatar {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 50%;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32rpx;
-}
-
-.msg-row.ai .msg-avatar {
-  background: $gradient-warm;
-  box-shadow: 0 0 16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
-  overflow: hidden;
-}
-
-/* AI 管家头像图片：铺满圆形 */
-.msg-avatar-img {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-}
-
-/* AI 管家头像加载失败回退 emoji */
-.msg-avatar-emoji {
-  font-size: 32rpx;
-  line-height: 1;
-}
-
-.msg-row.user .msg-avatar {
-  background: $gradient-warm;
-  box-shadow: 0 0 16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
-}
-
-// ===== 气泡 =====
-.msg-bubble-wrap {
-  flex: 1;
-  min-width: 0;
-}
-
-.msg-bubble {
-  padding: 24rpx 32rpx;
-  border-radius: 32rpx;
-  font-size: 28rpx;
-  line-height: 1.7;
-  color: $color-text-primary;
-  word-break: break-all;
-}
-
-.msg-row.ai .msg-bubble {
-  background: $color-bg-card;
-  border-top-left-radius: 8rpx;
-  border: 1rpx solid $color-border-light;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
-}
-
-.msg-row.user .msg-bubble {
-  background: $color-primary;
-  border-top-right-radius: 8rpx;
-  border: 1rpx solid $color-primary;
-  color: $color-text-inverse;
-}
-
-// ===== AI 欢迎消息能力高亮 =====
-.msg-bubble-highlight {
-  font-weight: $font-weight-semibold;
-  color: $color-primary;
-}
-
-// ===== 流式打字机效果 =====
-.msg-bubble--streaming {
-  cursor: pointer;
-  position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 3rpx;
-    background: linear-gradient(90deg, transparent, $color-primary, transparent);
-    border-radius: 0 0 16rpx 16rpx;
-    animation: streamingGlow 1.5s ease-in-out infinite;
-  }
-}
-
-@keyframes streamingGlow {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.8; }
-}
-
-.streaming-cursor {
-  display: inline-block;
-  margin-left: 4rpx;
-  color: $color-primary;
-  animation: cursorBlink 0.8s step-end infinite;
-  font-weight: bold;
-}
-
-@keyframes cursorBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-.streaming-hint {
-  display: block;
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  color: $color-text-secondary;
-  text-align: right;
-  opacity: 0.7;
-  animation: fadeInUp 0.3s ease-out;
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-// ===== 快捷操作按钮（对齐原型：圆角边框 pill） =====
-.msg-quick-actions {
-  display: flex;
-  gap: 16rpx;
-  flex-wrap: wrap;
-  margin-top: 18rpx;
-  animation: fadeInUp 0.35s ease-out 0.1s both;
-}
-
-.msg-quick-btn {
-  /* 图标与文字水平排列（原来 emoji 是内联在文字串里的，改用 Icon 组件后需要 flex） */
-  display: inline-flex;
-  align-items: center;
-  gap: 8rpx;
-  background: $color-bg-card;
-  border: 1rpx solid $color-primary;
-  color: $color-primary;
-  padding: 14rpx 28rpx;
-  border-radius: 999rpx;
-  font-size: 24rpx;
-  font-weight: $font-weight-medium;
-  transition: all 0.2s cubic-bezier(0.22, 0.61, 0.36, 1);
-  @include press-feedback;
-
-  &:active {
-    background: $color-primary-bg;
-    border-color: $color-primary;
-    box-shadow: 0 0 16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.2);
-  }
-}
-
-// ===== 选项列表 =====
-.msg-options-list {
-  margin-top: 18rpx;
-  animation: fadeInUp 0.35s ease-out 0.05s both;
-}
-
-.msg-option {
-  display: block;
-  width: 100%;
-  text-align: left;
-  background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.8);
-  border: 1rpx solid $color-border;
-  color: $color-text-primary;
-  padding: 26rpx 32rpx;
-  border-radius: 24rpx;
-  font-size: 28rpx;
-  margin-bottom: 16rpx;
-  transition: all 0.2s cubic-bezier(0.22, 0.61, 0.36, 1);
-
-  &:active {
-    background: $color-primary-bg;
-    border-color: $color-primary;
-    transform: scale(0.98);
-    box-shadow: 0 0 16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.15);
-  }
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-// ===== 打字指示器 =====
-.typing-bubble {
-  padding: 16rpx 32rpx;
-}
-
-.typing-dots {
-  display: flex;
-  gap: 8rpx;
-  padding: 8rpx 0;
-  align-items: center;
-}
-
-.typing-dot {
-  width: 12rpx;
-  height: 12rpx;
-  border-radius: 50%;
-  background: $color-primary-light;
-  animation: dotBounce 1.4s ease-in-out infinite both;
-
-  &:nth-child(1) { animation-delay: 0s; }
-  &:nth-child(2) { animation-delay: 0.2s; }
-  &:nth-child(3) { animation-delay: 0.4s; }
-}
-
-// ===== Agent 工具调用状态 =====
-.agent-status-bubble {
-  padding: 14rpx 28rpx;
-  background: rgba(var(--primary-light-rgb, 255, 160, 130), 0.08);
-  border: 1rpx solid rgba(var(--primary-light-rgb, 255, 160, 130), 0.15);
-  border-radius: 20rpx;
-  animation: statusPulse 2s ease-in-out infinite;
-}
-
-.agent-status-text {
-  font-size: 24rpx;
-  color: $color-primary;
-  line-height: 1.4;
-  white-space: nowrap;
-}
-
-@keyframes statusPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
-// ===== 底部间距 =====
-.chat-bottom-spacer {
-  height: 80rpx;
-}
-
-// ===== 空状态（无宠物） =====
+// ===== 空状态（无宠物）=====
+// 与团团页的空态是同一套外观（同一个品牌主视觉 + 同一句 slogan），
+// 两个包各留一份样式：小程序里跨分包引用样式文件会让维护边界变模糊，
+// 而这段只有 100 行、几乎不会变。
 .chat-empty {
   display: flex;
   flex-direction: column;
@@ -520,12 +44,13 @@
   padding: 0 60rpx;
   animation: fadeInUp 0.6s ease-out;
 
-  /* 猫狗 IP 主视觉：空态最需要情感锚点（原来是 120rpx 的浅色爪印，太弱） */
   .chat-empty-mascot {
     position: relative;
     width: 280rpx;
     height: 280rpx;
     margin-bottom: 12rpx;
+    // ⚠️ floaty 这个 keyframes 全站并未定义（app.scss 里只有 xhh-breathe），
+    //    所以这条动画实际不生效 —— 历史遗留，本批次不动它（改它会顺带改变空态观感）。
     animation: floaty 4.5s ease-in-out infinite;
   }
 
@@ -552,7 +77,6 @@
     border-radius: 50%;
   }
 
-  /* 品牌 slogan：两侧小星星点缀 */
   .chat-empty-slogan {
     display: flex;
     align-items: center;
@@ -596,14 +120,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    /* 图标与文字间距（原按钮是「+ 添加宠物」的纯文字） */
     gap: 8rpx;
     padding: 24rpx 80rpx;
     border-radius: $radius-full;
     background: $gradient-gold;
     transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease, box-shadow 0.3s ease;
     @include press-feedback;
-    /* 可见动效：主按钮呼吸光晕 */
+    // 可见动效：主按钮呼吸光晕（xhh-breathe 定义在 app.scss，全局可见）
     animation: xhh-breathe 2.4s ease-in-out infinite;
 
     .chat-empty-btn-text {
@@ -614,1702 +137,779 @@
   }
 }
 
-// ===== 输入区域 =====
-.chat-input-area {
-  position: sticky;
-  // 【自定义 tabBar 覆盖层：吸底输入区必须整体抬到底栏之上（本页最高危的一处）】
-  // sticky 的吸附基准是**滚动视口**，不是页面内容的末端 —— 所以"根容器减高 / 给 page 加
-  // 底部内边距"这两种让位都改变不了它的吸附位置：只要它开始吸附，就仍会贴在视口底部，
-  // 被自定义 tabBar 压住。本页是 AI 对话页，输入框被压住＝用户打不了字，故必须单独抬。
-  // 140rpx = 100rpx 底栏底板 + 约 40rpx 中心「团团」凸起圆钮区（圆钮直径 124rpx、
-  // 向上凸出底栏上沿）；全面屏安全区由下面 `.chat-input-safe` 负责，**不要合并到这里**
-  // —— 它管的是另一个维度（安全区），本行管的是"底栏让位"。
-  // 与 `.chat-home-page` 的减高配合说明：正常情况下输入区的自然位置已在底栏之上
-  // （减了 160rpx + 安全区），本行不产生位移；它是"内容超屏、整页真的滚动起来"时的兜底。
-  // 两行都写：前一行给老基础库兜底。
-  bottom: calc(140rpx + constant(safe-area-inset-bottom));
-  bottom: calc(140rpx + env(safe-area-inset-bottom));
-  padding: 20rpx 32rpx 0;
-  background: rgba(var(--bg-page-rgb, 255, 246, 238), 0.96);
-  backdrop-filter: blur(24rpx);
-  z-index: 99;
-}
-
-.chat-input-safe {
-  height: constant(safe-area-inset-bottom);
-  height: env(safe-area-inset-bottom);
-  min-height: 24rpx;
-}
-
-// ===== 待发送图片附件条（发图带文字：选图后先预览，可补充文字/取消） =====
-.chat-attach-bar {
+// ===== ① 顶栏 =====
+.today-topbar {
   display: flex;
   align-items: center;
-  gap: 16rpx;
-  padding: 0 6rpx 16rpx;
-  animation: attach-in 0.2s ease;
-}
-
-@keyframes attach-in {
-  from {
-    opacity: 0;
-    transform: translateY(12rpx);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.chat-attach-thumb-wrap {
+  justify-content: space-between;
+  padding: 20rpx 32rpx 12rpx;
   position: relative;
-  flex-shrink: 0;
-}
+  z-index: 50;
+  animation: topBarEnter 0.28s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 
-.chat-attach-thumb {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 16rpx;
-  border: 1rpx solid $color-border;
-  background: rgba(var(--border-rgb, 243, 226, 210), 0.4);
-}
+  &__greet {
+    display: flex;
+    align-items: baseline;
+    gap: 12rpx;
+    min-width: 0;
+  }
 
-.chat-attach-remove {
-  position: absolute;
-  top: -16rpx;
-  right: -16rpx;
-  // 48rpx 热区（视觉 40rpx 圆 + 命中区外扩），对齐微信 44px 最小触控建议的等比口径
-  width: 48rpx;
-  height: 48rpx;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+  // 时段问候（如「早上好，不忘」）。
+  // 【为什么这里不再是品牌名】原生导航栏标题已是「星河宠记」，顶栏再写一遍
+  // 就是同一屏两次同样的四个字；品牌归导航栏，这行归"与人有关"的信息。
+  &__hello {
+    font-size: 34rpx;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+    letter-spacing: 0.5rpx;
+    // 昵称很长时截断，不许把右侧两个图标挤出去
+    max-width: 420rpx;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
 
-.chat-attach-remove-icon {
-  color: #fff;
-  font-size: 28rpx;
-  line-height: 1;
-}
-
-.chat-attach-hint {
-  font-size: 24rpx;
-  color: $color-text-secondary;
-  line-height: 1.5;
-}
-
-// ===== 微信风格输入行（胶囊圆角，对齐设计稿） =====
-.chat-input-row {
-  display: flex;
-  align-items: center;
-  gap: 14rpx;
-  background: $color-bg-card;
-  border-radius: $radius-round;
-  padding: 10rpx 14rpx;
-  border: 1rpx solid $color-border;
-  box-shadow: $shadow-card;
-  transition: all 0.25s ease;
-
-  &:focus-within {
-    border-color: $color-primary;
-    box-shadow: $shadow-button;
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+    flex-shrink: 0;
   }
 }
 
-// ===== 语音/文字切换按钮 =====
-.wx-toggle-btn {
-  width: 60rpx;
-  height: 60rpx;
+// 顶栏圆形图标按钮（通知 / 设置）
+.today-icon-btn {
+  width: 68rpx;
+  height: 68rpx;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.2s;
-
-  &:active {
-    background: rgba(var(--primary-rgb, 255, 107, 61), 0.15);
-  }
-
-  &--active {
-    background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
-  }
-}
-
-.wx-toggle-icon {
-  font-size: 32rpx;
-  line-height: 1;
-}
-
-// ===== 输入框 =====
-.chat-input-field {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: $color-text-primary;
-  font-size: 28rpx;
-  padding: 8rpx 0;
-  height: 60rpx;
-  line-height: 60rpx;
-}
-
-// ===== 按住说话（胶囊圆角） =====
-.wx-hold-talk {
-  flex: 1;
-  height: 72rpx;
-  border-radius: $radius-round;
-  background: $color-primary-bg;
-  border: 1rpx solid $color-border;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-
-  &:active {
-    background: rgba(var(--primary-rgb, 255, 107, 61), 0.15);
-  }
-
-  &--recording {
-    background: linear-gradient(135deg, $color-danger, $color-danger);
-    border-color: $color-danger;
-    animation: voicePulse 1.2s ease-in-out infinite;
-  }
-
-  &--processing {
-    background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
-    border-color: $color-primary;
-    opacity: 0.7;
-  }
-}
-
-.wx-hold-talk-text {
-  font-size: 28rpx;
-  color: $color-text-secondary;
-}
-
-.wx-hold-talk-recording {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-}
-
-.wx-hold-talk-wave {
-  display: flex;
-  align-items: flex-end;
-  gap: 4rpx;
-  height: 20rpx;
-}
-
-.wx-hold-talk-wave-bar {
-  width: 4rpx;
-  border-radius: 2rpx;
-  background: #fff;
-  animation: waveBar 0.8s ease-in-out infinite;
-
-  &:nth-child(1) {
-    height: 10rpx;
-    animation-delay: 0s;
-  }
-  &:nth-child(2) {
-    height: 18rpx;
-    animation-delay: 0.15s;
-  }
-  &:nth-child(3) {
-    height: 12rpx;
-    animation-delay: 0.3s;
-  }
-}
-
-.wx-hold-talk-duration {
-  font-size: 20rpx;
-  color: #fff;
-  font-weight: 600;
-}
-
-// ===== 图标按钮（照片） =====
-.wx-icon-btn {
-  width: 60rpx;
-  height: 60rpx;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.15s;
-
-  &:active {
-    background: rgba(var(--primary-rgb, 255, 107, 61), 0.15);
-    transform: scale(0.9);
-  }
-}
-
-.wx-icon-text {
-  font-size: 32rpx;
-  line-height: 1;
-}
-
-// ===== + 按钮 =====
-.wx-plus-btn {
-  width: 60rpx;
-  height: 60rpx;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
-
-  &:active {
-    background: rgba(var(--primary-rgb, 255, 107, 61), 0.15);
-    transform: rotate(90deg) scale(0.9);
-  }
-
-  &--active {
-    background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
-    transform: rotate(45deg);
-  }
-}
-
-.wx-plus-text {
-  font-size: 40rpx;
-  color: $color-primary-light;
-  line-height: 1;
-  font-weight: 300;
-}
-
-// ===== 发送按钮 =====
-.wx-send-btn {
-  width: 60rpx;
-  height: 60rpx;
-  border-radius: 50%;
-  background: $gradient-gold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.15s;
-  box-shadow: 0 2rpx 12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
-
-  &:active {
-    transform: scale(0.88);
-  }
-}
-
-.wx-send-text {
-  font-size: 32rpx;
-  color: $color-text-inverse;
-  font-weight: 700;
-  line-height: 1;
-}
-
-@keyframes voicePulse {
-  0%, 100% {
-    box-shadow: 0 0 24rpx rgba(255, 107, 107, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 40rpx rgba(255, 107, 107, 0.8);
-  }
-}
-
-@keyframes waveBar {
-  0%, 100% {
-    transform: scaleY(0.6);
-  }
-  50% {
-    transform: scaleY(1.2);
-  }
-}
-
-// ===== 加号菜单遮罩 =====
-.chat-plus-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 99;
-  animation: fadeIn 0.2s ease-out;
-}
-
-// ===== 加号面板（微信风格九宫格） =====
-.chat-plus-panel {
-  position: absolute;
-  bottom: 110rpx;
-  left: 16rpx;
-  right: 16rpx;
-  background: $color-bg-card;
-  border-radius: 24rpx;
-  padding: 24rpx 16rpx;
-  border: 1rpx solid $color-border;
-  box-shadow: 0 -4rpx 32rpx rgba(0, 0, 0, 0.15);
-  animation: popupBounceIn 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
-  z-index: 100;
-}
-
-.chat-plus-panel-grid {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.plus-panel-item {
-  width: 25%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 16rpx 4rpx;
-  transition: all 0.15s ease;
+  background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.72);
+  box-shadow: 0 2rpx 12rpx rgba(61, 33, 18, 0.06);
+  transition: transform 140ms ease;
 
   &--hover {
     transform: scale(0.92);
-    opacity: 0.7;
   }
 }
 
-.plus-panel-icon-wrap {
-  width: 88rpx;
-  height: 88rpx;
-  border-radius: 24rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-bottom: 10rpx;
-}
-
-.plus-panel-icon {
-  font-size: 40rpx;
-  line-height: 1;
-}
-
-.plus-panel-label {
-  font-size: 22rpx;
-  color: $color-text-secondary;
-  text-align: center;
-  line-height: 1.4;
-}
-
-// ===== 旧版加号菜单（保留兼容） =====
-.chat-plus-menu {
-  position: absolute;
-  bottom: 130rpx;
-  left: 32rpx;
-  right: 32rpx;
-  background: $color-bg-card;
-  border-radius: 32rpx;
-  padding: 16rpx;
-  border: 1rpx solid $color-border;
-  box-shadow: 0 16rpx 64rpx rgba(0, 0, 0, 0.5);
-  animation: popupBounceIn 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
-  z-index: 100;
-}
-
-.plus-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 24rpx;
-  padding: 24rpx 32rpx;
-  border-radius: 24rpx;
-  transition: all 0.15s ease;
-
-  &:active {
-    background: $color-primary-bg;
-    transform: scale(0.98);
-  }
-}
-
-.plus-menu-icon-wrap {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 20rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.plus-menu-icon {
-  font-size: 36rpx;
-}
-
-.plus-menu-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.plus-menu-label {
-  font-size: 28rpx;
-  color: $color-text-primary;
-  font-weight: 500;
-}
-
-.plus-menu-sub {
-  font-size: 22rpx;
-  color: $color-text-hint;
-  margin-top: 4rpx;
-}
-
-// ===== 结构化结果卡片 =====
-.msg-card {
-  background: $color-primary-bg;
-  border: 1rpx solid $color-border;
-  border-radius: 24rpx;
-  padding: 24rpx;
-  margin-top: 16rpx;
-  animation: fadeInUp 0.4s ease-out 0.05s both;
-  @include breathe-glow;
-}
-
-.msg-card-title {
-  font-size: 26rpx;
-  font-weight: 600;
-  color: $color-primary-light;
-  margin-bottom: 12rpx;
-  display: block;
-}
-
-.msg-card-text {
-  font-size: 24rpx;
-  color: $color-text-hint;
-  line-height: 1.6;
-  display: block;
-}
-
-.msg-card-stat {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8rpx 0;
-  font-size: 24rpx;
-}
-
-.msg-card-stat-label {
-  color: $color-text-hint;
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-}
-
-.msg-card-stat-val {
-  color: $color-primary-light;
-  font-weight: 600;
-}
-
-// ===== 评分星星 =====
-.score-stars {
-  color: $color-primary;
-  font-size: 32rpx;
-  letter-spacing: 4rpx;
-  margin-bottom: 16rpx;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-// ===== 危险/安全提示条 =====
-.msg-card-alert {
-  margin-top: 16rpx;
-  padding: 16rpx 20rpx;
-  border-radius: 16rpx;
-  font-size: 24rpx;
-  line-height: 1.6;
-
-  &--danger {
-    background: $color-danger-light;
-    border: 1rpx solid rgba(var(--danger-rgb, 255, 90, 95), 0.3);
-    color: $color-danger;
-  }
-
-  &--safe {
-    background: rgba(var(--sage-rgb, 47, 201, 142), 0.1);
-    border: 1rpx solid rgba(var(--sage-rgb, 47, 201, 142), 0.3);
-    color: $color-sage;
-  }
-}
-
-// ===== 附近医院卡片 =====
-.msg-card-hospital {
-  margin-top: 16rpx;
-  padding: 20rpx;
-  background: rgba(var(--danger-rgb, 255, 90, 95), 0.08);
-  border: 1rpx solid rgba(var(--danger-rgb, 255, 90, 95), 0.25);
-  border-radius: 24rpx;
-  text-align: center;
-}
-
-.msg-card-hospital-title {
-  font-size: 26rpx;
-  color: $color-danger;
-  font-weight: 600;
-  margin-bottom: 12rpx;
-  display: block;
-}
-
-.msg-card-hospital-item {
-  font-size: 24rpx;
-  color: $color-text-hint;
-  line-height: 1.8;
-  display: block;
-}
-
-// ===== 名字卡片（富文本） =====
-.msg-naming-card {
-  margin-top: 16rpx;
-  background: $color-primary-bg;
-  border: 1rpx solid $color-border;
-  border-radius: 24rpx;
-  padding: 24rpx;
-  position: relative;
-  animation: fadeInUp 0.4s ease-out 0.05s both;
-}
-
-.msg-naming-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12rpx;
-}
-
-.msg-naming-name {
-  font-size: 40rpx;
-  font-weight: 700;
-  color: $color-primary-light;
-  letter-spacing: 4rpx;
-}
-
-.msg-naming-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10rpx;
-  margin-bottom: 12rpx;
-}
-
-.msg-naming-tag {
-  font-size: 22rpx;
-  padding: 4rpx 14rpx;
-  border-radius: 12rpx;
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-.msg-naming-tag--wuxing {
-  background: rgba(91, 154, 155, 0.15);
-  color: #5b9a9b;
-}
-
-.msg-naming-tag--star {
-  background: rgba(166, 143, 120, 0.15);
-  color: #a68f78;
-}
-
-.msg-naming-source {
-  font-size: 22rpx;
-  color: #8a7a6a;
-  line-height: 1.5;
-  display: block;
-  margin-bottom: 8rpx;
-  padding: 8rpx 12rpx;
-  background: rgba(166, 143, 120, 0.08);
-  border-radius: 10rpx;
-  border-left: 3rpx solid #a68f78;
-  font-style: italic;
-}
-
-.msg-naming-meaning {
-  font-size: 24rpx;
-  color: $color-text-hint;
-  line-height: 1.7;
-  display: block;
-}
-
-.msg-naming-badge {
-  position: absolute;
-  top: 16rpx;
-  right: 20rpx;
-  padding: 4rpx 14rpx;
-  background: $gradient-gold;
-  color: $color-text-inverse;
-  font-size: 20rpx;
-  font-weight: 600;
-  border-radius: 14rpx;
-  box-shadow: 0 2rpx 8rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
-}
-
-// 可点击样式
-.msg-naming-card--clickable {
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:active {
-    transform: scale(0.98);
-    background: rgba(255, 215, 176, 0.5);
-    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.4);
-  }
-}
-
-.msg-naming-card--hover {
-  transform: scale(0.98);
-  background: rgba(255, 215, 176, 0.45);
-  border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.35);
-}
-
-// 点击查看详情提示
-.msg-naming-detail-hint {
-  margin-top: 12rpx;
-  padding-top: 10rpx;
-  border-top: 1rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.2);
-  text-align: right;
-
-  text {
-    font-size: 22rpx;
-    color: $color-primary;
-    font-weight: 500;
-  }
-}
-
-// ===== 换一批按钮 =====
-.msg-naming-refresh-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 20rpx;
-  padding: 20rpx;
-  background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.06), rgba(var(--primary-rgb, 255, 107, 61), 0.12));
-  border: 1rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.3);
-  border-radius: 16rpx;
-  transition: all 0.2s;
-
-  &--hover {
-    background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.12), rgba(var(--primary-rgb, 255, 107, 61), 0.2));
-    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.5);
-    transform: scale(0.98);
-  }
-}
-
-.msg-naming-refresh-icon {
-  font-size: 28rpx;
-  margin-right: 12rpx;
-}
-
-.msg-naming-refresh-label {
-  font-size: 26rpx;
-  color: $color-primary;
-  font-weight: 500;
-}
-
-// ===== 换一批加载态 =====
-.msg-naming-refreshing {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48rpx 32rpx;
-  background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.04), rgba(var(--primary-rgb, 255, 107, 61), 0.08));
-  border-radius: 20rpx;
-  border: 1rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.2);
-}
-
-.msg-naming-refreshing-text {
-  font-size: 26rpx;
-  color: $color-text-secondary;
-  margin-bottom: 20rpx;
-}
-
-.msg-naming-refreshing-dots {
-  display: flex;
-  gap: 12rpx;
-}
-
-.msg-naming-dot {
-  width: 14rpx;
-  height: 14rpx;
-  border-radius: 50%;
-  background: $color-primary;
-  animation: namingDotPulse 1.2s infinite ease-in-out;
-
-  &:nth-child(2) {
-    animation-delay: 0.2s;
-  }
-
-  &:nth-child(3) {
-    animation-delay: 0.4s;
-  }
-}
-
-@keyframes namingDotPulse {
-  0%, 80%, 100% {
-    opacity: 0.3;
-    transform: scale(0.8);
-  }
-  40% {
-    opacity: 1;
-    transform: scale(1.2);
-  }
-}
-
-// ===== 命理详情卡片 =====
-.msg-naming-detail {
-  margin-top: 16rpx;
-  background: linear-gradient(135deg, #fdf8f0 0%, #faf3e8 50%, #fef9f3 100%);
-  border: 1rpx solid rgba(166, 143, 120, 0.25);
-  border-radius: 24rpx;
-  padding: 28rpx;
-  position: relative;
-  overflow: hidden;
-  animation: fadeInUp 0.5s ease-out;
-
-  // 装饰边框
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4rpx;
-    background: linear-gradient(90deg, #c9a96e, #e8c97a, #d4a85c, #e8c97a, #c9a96e);
-  }
-}
-
-.msg-naming-detail-header {
-  text-align: center;
-  padding: 16rpx 0 24rpx;
-  margin-bottom: 20rpx;
-  border-bottom: 1rpx solid rgba(166, 143, 120, 0.2);
-}
-
-.msg-naming-detail-name {
-  font-size: 52rpx;
-  font-weight: 800;
-  color: #5b3a1a;
-  letter-spacing: 8rpx;
-  display: block;
-  // 文字阴影增加质感
-  text-shadow: 1rpx 1rpx 0 rgba(201, 169, 110, 0.3);
-}
-
-.msg-naming-detail-subtitle {
-  font-size: 24rpx;
-  color: #a68f78;
-  letter-spacing: 6rpx;
-  margin-top: 8rpx;
-  display: block;
-}
-
-.msg-naming-detail-section {
-  margin-bottom: 20rpx;
-  padding: 16rpx;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 16rpx;
-  border: 1rpx solid rgba(166, 143, 120, 0.12);
-
-  &--fortune {
-    background: linear-gradient(135deg, rgba(255, 215, 176, 0.2), rgba(255, 255, 255, 0.6));
-    border-color: rgba(201, 169, 110, 0.3);
-  }
-
-  &--summary {
-    background: linear-gradient(135deg, rgba(232, 168, 56, 0.1), rgba(255, 255, 255, 0.7));
-    border-color: rgba(232, 168, 56, 0.25);
-    margin-bottom: 0;
-  }
-}
-
-.msg-naming-detail-section-title {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  margin-bottom: 10rpx;
-
-  text {
-    font-size: 26rpx;
-    font-weight: 600;
-    color: #5b3a1a;
-  }
-}
-
-.msg-naming-detail-icon {
-  font-size: 28rpx;
-}
-
-.msg-naming-detail-text {
-  font-size: 24rpx;
-  color: #6b5b4a;
-  line-height: 1.8;
-  display: block;
-
-  &--summary {
-    font-size: 26rpx;
-    color: #5b3a1a;
-    font-weight: 500;
-    font-style: italic;
-    line-height: 1.9;
-  }
-}
-
-// 吉祥三宝
-.msg-naming-detail-lucky {
-  display: flex;
-  gap: 12rpx;
-}
-
-.msg-naming-detail-lucky-item {
+// ===== 内部滚动区 =====
+.today-scroll {
   flex: 1;
-  text-align: center;
-  padding: 16rpx 8rpx;
-  background: linear-gradient(135deg, rgba(255, 215, 176, 0.2), rgba(255, 255, 255, 0.5));
-  border-radius: 14rpx;
-  border: 1rpx solid rgba(201, 169, 110, 0.2);
+  overflow-y: auto;
+  position: relative;
+  z-index: 1;
 }
 
-.msg-naming-detail-lucky-label {
-  font-size: 20rpx;
-  color: #a68f78;
-  display: block;
-  margin-bottom: 6rpx;
+// scroll-view 上不支持 padding（webview 渲染模式），间距放到内部容器
+.today-scroll__inner {
+  // 36rpx 底部留白：根容器已减掉底栏高度，这里只负责卡片与滚动区边缘的呼吸位
+  padding: 8rpx 32rpx 36rpx;
 }
 
-.msg-naming-detail-lucky-val {
-  font-size: 26rpx;
-  font-weight: 700;
-  color: #5b3a1a;
-  display: block;
-}
+// ===== ② 宠物切换卡（**旧样式，2026-09-12 已并入插画卡**） =====
+// ⚠️ 这里的 `.today-petcard` 独立白卡样式**已废弃**：宠物卡现在压在插画下沿，
+// 是 `.today-hero` 里的身份条，样式在下面「③ {宠物名} 的今天」那一节。
+// 本文件里同名规则只允许存在一份 —— 前一版这里是白卡版、下面是压图版，
+// 两套同名互相覆盖，谁生效取决于编译后的顺序（本仓踩过这个坑），故整块删除。
+// 保留此注释是为了让"曾有一张独立宠物卡"这段历史可追（选择器名沿用，单测未改）。
 
-// ===== 取名流程操作按钮 =====
-.msg-naming-actions {
-  display: flex;
-  gap: 16rpx;
+// 切换器面板：PetSwitcher 外层的白卡（组件自带横向滚动与选中态）
+.today-petswitch {
   margin-top: 16rpx;
-  padding: 0 4rpx;
-}
-
-.msg-naming-action-btn {
-  flex: 1;
-  text-align: center;
-  padding: 18rpx 24rpx;
-  border-radius: 18rpx;
-  font-size: 26rpx;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.msg-naming-action-btn--upload {
-  background: $gradient-gold;
-  color: $color-text-inverse;
-  box-shadow: 0 4rpx 12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.25);
-}
-
-.msg-naming-action-btn--upload:active {
-  opacity: 0.85;
-  transform: scale(0.97);
-}
-
-.msg-naming-action-btn--skip {
-  background: $color-primary-bg;
-  border: 1rpx solid $color-border;
-  color: $color-text-hint;
-}
-
-.msg-naming-action-btn--skip:active {
-  background: rgba(0, 0, 0, 0.03);
-  transform: scale(0.97);
-}
-
-// 回忆流程 - 照片预览
-.msg-memory-photo-preview {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  padding: 12rpx;
-  background: $color-bg-secondary;
-  border-radius: 18rpx;
+  padding: 8rpx 4rpx;
+  border-radius: 28rpx;
+  background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.72);
   border: 1rpx solid $color-border-light;
+  animation: fadeInUp 0.24s ease-out;
 }
 
-.msg-memory-photo-img {
-  width: 100rpx;
-  height: 100rpx;
-  border-radius: 12rpx;
+// ===== 多成员共同养宠：邀请 TA 一起养宠 横幅 =====
+// 【位置变更 2026-09-12】它原先贴在宠物卡内部，把 v2 首屏的「今日健康摘要」挤出第一屏；
+// 现在排在打卡 CTA 之后（v2 `screenToday()` 首屏为 宠物卡 → 品牌 Hero → 今日健康摘要 → 打卡 CTA）。
+// 因此上边距从 16rpx 提到 24rpx：它现在是 .today-cta / .today-hero 的兄弟块，
+// 与那两块同一档间距；比 .today-sec 的 32rpx 紧一档 —— 它是提示条，不是分区。
+.home-co-care-tip {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 24rpx;
+  padding: 18rpx 24rpx;
+  border-radius: 24rpx;
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
+  border: 1rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.3);
+}
+
+.home-co-care-tip__icon {
   flex-shrink: 0;
 }
 
-.msg-memory-photo-info {
+.home-co-care-tip__text {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8rpx;
-}
-
-.msg-memory-photo-label {
   font-size: 24rpx;
-  color: $color-text-secondary;
-  font-weight: 500;
+  color: $color-text-hint;
+  line-height: 1.5;
 }
 
-.msg-memory-photo-actions {
-  display: flex;
-  gap: 12rpx;
+.home-co-care-tip__close {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  // 点击热区：视觉小、命中区大（避免误触关闭不到）
+  padding: 8rpx 4rpx 8rpx 16rpx;
 }
 
-// ===== 命理详情悬浮弹窗 =====
-.naming-popup-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.55);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: namingPopupFadeIn 0.3s ease-out;
-}
-
-@keyframes namingPopupFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.naming-popup-card {
-  width: 650rpx;
-  max-height: 90%;
-  background: linear-gradient(180deg, #fef9f3 0%, #faf3e8 30%, #fdf8f0 100%);
+// ===== ③ 「{宠物名} 的今天」：插画 + 压在画上的身份条 =====
+// 【2026-09-12 重构】原来是两张卡上下叠着（一张只写宠物名的白卡 + 一整块方插画配一句口号），
+// 用户评价"布局僵硬、看起来像广告"—— 方图 + 大标题 + 没有可操作的东西，正是广告位的观感。
+// 现在：插画是这张卡的背景，身份条压在它下沿，整卡可点（展开宠物切换器）。
+// 【为什么高度改成「由宽度撑出的 1:1 比例盒」—— 用户真机投诉的那圈白留白带】
+// 用户原话：「**这个图片要放满整个控件**」——插画四周露出一圈白色留白带。
+// 根因：卡片宽度 = 屏宽 750rpx − 左右各 32rpx（= `.today-scroll__inner` 的横向内边距，见本文件 :208）
+//   = **686rpx**（口径校验：本文件「⑦ 快捷功能」那一小节里也写过「686rpx 内容宽」，指的是同一个数；
+//      ⚠️ 这里刻意不写行号 —— 行号会随上方注释增删而失效，本文件已经因它踩过一次），
+//   而插画框原来被写死 `height: 750rpx`
+//   → 图框是 **686×750**，根本不是正方形；插画组件在非正方框里按 `aspectFit` 等比适配，
+//     只能渲染 686×686 并**垂直居中**，于是上下各空出 32rpx
+//     （下方那条被压在图上的身份条 `.today-petcard` 挡住了，所以真机上只看得见上面那条）。
+// 现在改成的写法：
+//   · `height: 0`        —— 盒子高度的**唯一来源**是下面那行 padding-top，不再有第二个高度口径；
+//   · `padding-top: 100%` —— ⚠️ 关键：百分比内边距**按「包含块宽度」解析，不是按高度**！
+//                           这里包含块就是卡片自身宽度 686rpx → 盒高 = 686rpx，与宽度相等
+//                           （border-box 还要算上卡片那 1rpx×2 边框 = **688rpx**）。
+//                           卡片是 `view`，app.scss 里 `view` 统一 `box-sizing: border-box`，
+//                           所以宽度撑满容器、高度由这行 padding 撑出 —— **屏宽变了高度自动跟着变**，
+//                           以后不会再出现"改了外边距/内边距、图片就露白带"的同类问题。
+//   · 插画同时从"普通流里的方块"改成**绝对定位铺满整张卡**（见下面 `&__art`），
+//     配合 index.tsx 里的 `mode='aspectFill'` → **留白在数学上不可能出现**（aspectFill 从不留白）。
+//
+// 【事实依据】线上 today-brand 插画**五个季版本**（`uploads/illustrations/seasonal/`
+//   `today-brand-spring|summer|autumn|winter|starry.jpg`）于 **2026-09-12 逐张实测，
+//   全部 1254×1254（严格 1:1）**。容器是 1:1、资产也是 1:1 → `aspectFill` = 铺满且**零裁切**
+//   （只吸收边框带来的 1rpx 级误差，见下条）。
+//
+// 【为什么必须用 aspectFill，而不是接着用 aspectFit】
+//   ① 上面那 1rpx 级误差是真实存在的：卡片有 `1rpx` 边框，而绝对定位子元素的包含块是
+//      卡片的 **padding box = 684×686rpx**，并非数学上的绝对正方。`aspectFill` 会把这点误差
+//      吸收成约 1rpx/侧的裁切（肉眼不可见，也不裁主体）；`aspectFit` 则会把它**重新变回白带** ——
+//      而用户这次投诉的正是白带，所以这里不能再留一个"允许留白"的 mode。
+//   ② 抗未来换图：哪天有人把某一季换成非正方图，`aspectFit` 会立刻把白带放大回可见级，
+//      `aspectFill` 至少保证"永远铺满"。
+//   ③ 历史教训（同一批图踩过两次，**别退回去**）：
+//      · 写 380rpx（≈1.97，按 16:9 猜的）配 `aspectFit` → 方图被等比缩小、**两侧各留白约 25%**（真机取图发现过）；
+//      · 改成宽横幅配 `aspectFill` → 会**裁掉约四成高度**、把猫狗的头切掉（18 号已证伪过那个方案）。
+//      这两次说明：**"框的比例"和"图的比例"必须对齐**，剩下的交给 fill 逻辑。
+//
+// ⚠️ 【将来换成非 1:1 的素材时，本写法必须一起改】现在是「1:1 比例盒 + aspectFill」，
+//    这套组合**只在资产是 1:1 时才成立**。若以后把 today-brand 换成 4:3 / 16:9 之类的图，
+//    **必须**改成"按原比例取景"的写法，**不能**继续用 1:1 比例盒 + aspectFill ——
+//    否则图会按最大边被裁切、把主体（猫狗的头）切掉（上面 ③ 的第二条就是这么翻车的）。
+//    "按原比例取景"二选一：
+//      ① 容器跟着资产比例走：把 `padding-top: 100%` 换成资产的「高 ÷ 宽 × 100%」（例如 4:3 → 75%）；
+//      ② 交给组件按图自身比例算：`Illustration` 的 `mode='heightFix'` / `'widthFix'`
+//         （宽或高由 CSS 定、另一边按图片自身比例算，零留白也零裁切；组件注释里记了这条判定口径），
+//         此时要一并去掉这里的 `height: 0` + `padding-top: 100%`，否则盒子高度会和图打架。
+.today-hero {
+  margin-top: 24rpx;
   border-radius: 32rpx;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 24rpx 80rpx rgba(0, 0, 0, 0.3);
-  animation: namingPopupSlideUp 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
-  display: flex;
-  flex-direction: column;
+  background: $color-bg-card;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $color-border-light;
 
-  &::before {
-    content: '';
+  // 高度来源：由宽度撑出 1:1（含义见上方注释）。
+  // ⚠️ 不要再在这里补 height 数值（750rpx / 686rpx 之类）—— 那会重新制造"框不是正方"的隐患。
+  height: 0;
+  padding-top: 100%;
+
+  // 整卡可点（展开切换器）→ 给按压反馈，让"能点"这件事看得出来
+  &--hover {
+    transform: scale(0.99);
+  }
+
+  // 插画：绝对定位铺满整张卡。
+  // 【为什么必须绝对定位】卡片高度已改由 `padding-top` 撑出，插画若仍留在普通流里，
+  // 它的高度就会反过来参与卡片高度计算（老写法就是这么把 750rpx 顶出来的）。
+  // top/left 的 0 与 width/height 的 100% 都相对**卡片的 padding box**（= 内边框以内那块）解析，
+  // 所以插画正好盖满卡片可见区域，不会溢出、也不会在小数像素上留缝。
+  &__art {
     position: absolute;
     top: 0;
     left: 0;
-    right: 0;
-    height: 6rpx;
-    background: $gradient-gold;
-    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: block;
   }
 }
 
-@keyframes namingPopupSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(60rpx) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.naming-popup-close {
+// 身份条：压在插画**下沿**（不是另起一张白卡）
+// 遮罩按"文字起始位置"定：底部一条 180deg 的深色渐变，越往下越实 —— 文字所在区域接近全实，
+// 才能保证白字在**任意季节**的插画上都读得清（春夏明亮的天空、冬季浅色雪地都验过这个做法）。
+.today-petcard {
   position: absolute;
-  top: 20rpx;
-  right: 20rpx;
-  width: 56rpx;
-  height: 56rpx;
-  border-radius: 50%;
-  background: rgba(166, 143, 120, 0.15);
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 2;
-  transition: all 0.2s ease;
-
-  text {
-    font-size: 28rpx;
-    color: #8b7355;
-    font-weight: 700;
-  }
-
-  &:active {
-    background: rgba(166, 143, 120, 0.3);
-    transform: scale(0.92);
-  }
+  gap: 20rpx;
+  padding: 56rpx 28rpx 24rpx;
+  background: linear-gradient(180deg, rgba(24, 12, 6, 0) 0%, rgba(24, 12, 6, 0.42) 46%, rgba(24, 12, 6, 0.72) 100%);
 }
 
-.naming-popup-body {
-  flex: 1;
-  height: 0;
-  min-height: 0;
-  padding: 0 28rpx 28rpx;
-}
-
-.naming-popup-card .msg-naming-detail-header {
-  padding: 36rpx 28rpx 20rpx;
-  flex-shrink: 0;
-  background: linear-gradient(180deg, #fef9f3 0%, rgba(254, 249, 243, 0.95) 100%);
-  position: relative;
-  z-index: 1;
-}
-
-.naming-popup-card .msg-naming-detail-name {
-  font-size: 48rpx;
-}
-
-.naming-popup-card .msg-naming-detail-subtitle {
-  font-size: 26rpx;
-  color: #a68f78;
-  margin-top: 4rpx;
-}
-
-.naming-popup-card .msg-naming-detail-section {
-  padding: 20rpx;
-  margin-bottom: 12rpx;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 16rpx;
-  border: 1rpx solid rgba(166, 143, 120, 0.12);
-}
-
-.naming-popup-card .msg-naming-detail-section--fortune {
-  background: linear-gradient(135deg, rgba(255, 215, 176, 0.25), rgba(255, 255, 255, 0.5));
-  border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.2);
-}
-
-.naming-popup-card .msg-naming-detail-section--summary {
-  background: linear-gradient(135deg, rgba(255, 215, 176, 0.3), rgba(255, 240, 220, 0.5));
-  border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.25);
-  margin-bottom: 0;
-  padding-bottom: 28rpx;
-}
-
-.naming-popup-card .msg-naming-detail-lucky {
-  margin-bottom: 0;
-}
-
-// ===== 命理详情弹窗 - 加载骨架屏 =====
-.naming-popup-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 60rpx 20rpx;
-}
-
-.naming-popup-spinner {
-  width: 100rpx;
-  height: 100rpx;
-  border-radius: 50%;
-  background: conic-gradient(from 0deg, $color-primary, #f5d5a0, $color-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: spinnerRotate 1.2s linear infinite;
-  margin-bottom: 28rpx;
-
-  &::before {
-    content: '';
-    position: absolute;
-    width: 84rpx;
-    height: 84rpx;
-    border-radius: 50%;
-    background: $color-bg-page;
-  }
-}
-
-.naming-popup-spinner-icon {
-  font-size: 40rpx;
-  z-index: 1;
-  animation: spinnerPulse 1.2s ease-in-out infinite;
-}
-
-@keyframes spinnerRotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes spinnerPulse {
-  0%, 100% { opacity: 0.6; transform: scale(0.95); }
-  50% { opacity: 1; transform: scale(1.05); }
-}
-
-.naming-popup-loading-text {
-  font-size: 28rpx;
-  color: #8b7355;
-  text-align: center;
-  margin-bottom: 36rpx;
-  animation: shimmerText 1.8s ease-in-out infinite;
-}
-
-@keyframes shimmerText {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
-
-.naming-popup-skeleton {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-}
-
-.naming-popup-skeleton-line {
-  height: 28rpx;
-  background: linear-gradient(
-    90deg,
-    rgba(166, 143, 120, 0.1) 0%,
-    rgba(166, 143, 120, 0.25) 50%,
-    rgba(166, 143, 120, 0.1) 100%
-  );
-  background-size: 200% 100%;
-  border-radius: 8rpx;
-  animation: skeletonShimmer 1.5s ease-in-out infinite;
-}
-
-@keyframes skeletonShimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-// ============================================
-// 命理详情弹窗 · 「就用这个名字」按钮（2026-09-10 结果闭环）
-// 主色渐变，与站内主按钮语言一致；卡片内吸底留白
-// ============================================
-
-.naming-popup-apply {
-  margin: 8rpx 0 16rpx;
-  padding: 24rpx 0;
-  border-radius: $radius-lg;
-  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
-  box-shadow: 0 8rpx 20rpx rgba(198, 138, 74, 0.28);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  @include press-feedback;
-}
-
-.naming-popup-apply--hover {
-  opacity: 0.9;
-  transform: scale(0.985);
-}
-
-.naming-popup-apply-text {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #ffffff;
-  letter-spacing: 1rpx;
-}
-
-// ============================================
-// 首页顶部区块（对齐设计稿 home.html）
-// 健康摘要卡 / 宠物的话 / 3秒打卡按钮
-// ============================================
-
-// —— 今日健康摘要卡 ——
-.home-summary-card {
-  background: $color-bg-card;
-  border-radius: $radius-lg;
-  border: 1rpx solid $color-border;
-  box-shadow: $shadow-card, $glow-sm;
-  padding: 28rpx 32rpx;
-  margin-bottom: 20rpx;
-  @include press-feedback;
-  // 与顶部栏错开 80ms 入场，形成轻微层次感
-  animation: fadeInUp 0.32s cubic-bezier(0.22, 0.61, 0.36, 1) 0.08s both;
-}
-
-.home-summary-main {
-  display: flex;
-  align-items: center;
-  gap: 24rpx;
-}
-
-.home-summary-avatar {
-  width: 112rpx;
-  height: 112rpx;
-  border-radius: 50%;
-  background: $gradient-warm;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 56rpx;
-  flex-shrink: 0;
+.today-petcard__avatar {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: $radius-round;
   overflow: hidden;
-  box-shadow: 0 0 24rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3), 0 0 60rpx rgba(var(--primary-rgb, 255, 107, 61), 0.18), 0 0 110rpx rgba(var(--gold-rgb, 255, 176, 32), 0.12);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $glass-bg;
+  // 白描边：压在插画上时与背景分离，头像不会"糊"在图里
+  border: 2rpx solid rgba(255, 255, 255, 0.85);
 }
 
-/* 宠物真实头像（与档案页一致）：圆角裁切 */
-.home-summary-avatar-img {
+.today-petcard__avatar-img {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
+  display: block;
 }
 
-.home-summary-info {
+.today-petcard__avatar-emoji {
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+// 文字区：min-width: 0 防长宠物名把这一栏撑破、把右侧箭头挤出卡片
+.today-petcard__info {
   flex: 1;
   min-width: 0;
 }
 
-.home-summary-title {
+.today-petcard__name {
   display: block;
-  font-size: 30rpx;
+  font-size: 34rpx;
+  font-weight: $font-weight-bold;
+  // 白字 + 深遮罩：不随主题变（底色是插画，不是主题背景），所以这里写死白色是有意的
+  color: #FFFFFF;
+  line-height: 1.35;
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.35);
+}
+
+.today-petcard__meta {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 23rpx;
+  color: rgba(255, 255, 255, 0.86);
+  line-height: 1.4;
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.35);
+}
+
+.today-petcard__chev {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+
+  &--open {
+    transform: rotate(180deg);
+  }
+}
+
+// ===== 区块通用外壳（标题行：橙点 + 标题 + 右侧动作） =====
+.today-sec {
+  margin-top: 32rpx;
+}
+
+.today-sec__head {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 18rpx;
+}
+
+// 标题前的橙色小圆点（原型里的"分区记号"）
+.today-sec__dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: $color-primary;
+}
+
+.today-sec__title {
+  font-size: 32rpx;
   font-weight: $font-weight-semibold;
   color: $color-text-primary;
-  margin-bottom: 10rpx;
 }
 
-.home-summary-stats {
+// 右侧「健康档案 ›」入口
+.today-sec__more {
+  margin-left: auto;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8rpx 24rpx;
+  align-items: center;
+  gap: 4rpx;
+  // 热区：文字右侧再补一点内边距，避免"点字缝没反应"
+  padding: 8rpx 0 8rpx 16rpx;
+
+  &--hover {
+    opacity: 0.7;
+  }
 }
 
-.home-summary-stat {
-  font-size: 22rpx;
+.today-sec__more-text {
+  font-size: 24rpx;
   color: $color-text-secondary;
 }
 
-.home-summary-stat-val {
-  font-weight: $font-weight-bold;
-  margin-left: 4rpx;
-
-  &--coral {
-    color: $color-primary;
-    // 沉浸光感：暖色统计数字辉光
-    text-shadow: 0 0 12rpx rgba(var(--primary-rgb), 0.35), 0 0 34rpx rgba(255, 176, 32, 0.18);
-  }
-
-  &--success {
-    color: $color-success;
-  }
-}
-
-.home-summary-hint {
-  display: block;
-  margin-top: 10rpx;
-  font-size: 20rpx;
-  color: $color-text-tertiary;
-}
-
-.home-summary-go {
-  font-size: 40rpx;
-  color: $color-text-tertiary;
-  flex-shrink: 0;
-  margin-left: 8rpx;
-}
-
-// —— 宠物的话（暖金横幅） ——
-.home-pet-quote {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  background: $color-gold-bg;
-  border-radius: $radius-md;
-  padding: 22rpx 28rpx;
-  margin-bottom: 20rpx;
-}
-
-.home-pet-quote-icon {
-  font-size: 28rpx;
-  flex-shrink: 0;
-  color: $color-gold-deep;
-}
-
-.home-pet-quote-text {
-  flex: 1;
-  min-width: 0;
-  font-size: 24rpx;
-  color: $color-text-primary;
-  line-height: 1.6;
-}
-
-.home-pet-quote-author {
-  flex-shrink: 0;
+// 右侧说明文案（如「AI 的都收进团团了」）——纯文字，不可点
+.today-sec__note {
+  margin-left: auto;
   font-size: 22rpx;
-  font-weight: $font-weight-semibold;
-  color: $color-gold-deep;
+  color: $color-text-tertiary;
 }
 
-// —— 3秒健康打卡主按钮 ——
-.home-checkin-cta {
+// ===== ④ 今日健康摘要 =====
+.today-health {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 28rpx;
+  padding: 28rpx 30rpx;
+  border-radius: 32rpx;
+  background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.72);
+  border: 1rpx solid $color-border-light;
+  box-shadow: $shadow-card;
+  transition: transform 0.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  &--hover {
+    transform: scale(0.985);
+  }
+
+  // 健康分光环：conic-gradient 画进度，内圈白底盖出"环"的效果
+  // （conic-gradient 在本项目已有先例：命名弹层的 spinner 同样用它）
+  &__ring {
+    width: 148rpx;
+    height: 148rpx;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__ring-inner {
+    width: 116rpx;
+    height: 116rpx;
+    border-radius: 50%;
+    background: $color-bg-card;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__score {
+    font-size: 40rpx;
+    font-weight: 700;
+    color: $color-primary;
+  }
+
+  &__list {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14rpx;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10rpx;
+    font-size: 26rpx;
+  }
+
+  &__label {
+    font-size: 26rpx;
+    color: $color-text-secondary;
+  }
+
+  &__val {
+    font-size: 26rpx;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+  }
+
+  // 便便性状标签（正常 / 腹泻 / 偏软…）
+  &__tag {
+    font-size: 20rpx;
+    padding: 2rpx 12rpx;
+    border-radius: 10rpx;
+    line-height: 1.6;
+    color: $color-sage;
+    background: rgba(var(--sage-rgb, 47, 201, 142), 0.14);
+  }
+
+  &__sep {
+    font-size: 24rpx;
+    color: $color-text-tertiary;
+  }
+
+  // 体重较上周：涨=主色（值得注意），跌=次级色；不涨不跌时保持中性
+  &__delta {
+    font-size: 26rpx;
+    font-weight: $font-weight-semibold;
+    color: $color-text-secondary;
+
+    &--up {
+      color: $color-primary;
+    }
+  }
+}
+
+.today-health__hint {
+  display: block;
+  margin: 16rpx 4rpx 0;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+// ===== ⑤ 健康打卡主 CTA =====
+.today-cta {
+  display: flex;
+  align-items: center;
   gap: 20rpx;
-  background: $gradient-gold;
-  border-radius: $radius-lg;
-  padding: 28rpx 32rpx;
-  margin-bottom: 28rpx;
-  position: relative;
-  box-shadow: $shadow-button, 0 0 30rpx rgba(var(--primary-rgb, 255, 107, 61), 0.35), 0 0 80rpx rgba(var(--gold-rgb, 255, 176, 32), 0.2);
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease, box-shadow 0.3s ease;
+  margin-top: 24rpx;
+  padding: 26rpx 30rpx;
+  border-radius: 32rpx;
+  // 【2026-09-12 对比度修复：与时光页 `.timeline-cta` 同一处方，两处口径保持一致】
+  // 改前：linear-gradient(135deg, $color-primary-light, $color-primary 55%, $color-primary-dark)
+  //   —— **三档、最亮的 --primary-light 打头**，而本卡两行文字当时写死白色
+  //   → spring 下就是「白字压 1.78:1 的浅绿」，比时光页改前的写死橙（2.32:1）还差。
+  //   （首页是用户第一眼看的页面，本批第 1 条诉求也正是这张大卡，故顺带按同一口径治。）
+  // 改后：**两档、锚定暗端** —— 去掉最亮的 --primary-light 这个元凶。
+  // 【实测对比度（直接引用审-1 的 WCAG 相对亮度复算表，基准为纯白字）】
+  //   | 主题                                 | vs --primary-light | vs --primary | vs --primary-dark |
+  //   | spring（用户当时用的）               | 1.78:1             | 2.60:1       | 3.55:1            |
+  //   | summer                               | 1.88:1             | 2.66:1       | 4.31:1            |
+  //   | autumn / grid                        | 1.98:1             | 2.83:1       | 3.61:1            |
+  //   | winter                               | 2.05:1             | 3.63:1       | 5.82:1            |
+  //   | starry（文字是深藏青 #1B2450，非白） | 7.23:1             | 4.96:1       | 3.32:1            |
+  // ⚠️ 【如实交代，不许写成「对比度都够」】上表最右那列（vs --primary-dark）的 3.55~5.82:1 是**渐变最暗端**的值；
+  //   本卡是横排（图标在左、两行文字紧随、`开始`药丸在最右），文字落在 135deg 渐变的**前 1/3** 一带
+  //   （按卡片几何折算约 t≈0.20~0.26；越往右底越暗，最右端的药丸才到上面那个暗端），这一带的白字实测只有
+  //   spring **约 2.9:1**、autumn / grid ≈3.1、summer ≈3.1~3.2、winter ≈4.2~4.4（白字沿渐变逐点复算）。
+  //   也就是说 **spring 甚至略低于 AA 大字阈值 3:1**，autumn / grid 也只压在 3:1 上 —— 这四个主题
+  //   **都没达到正文 4.5:1**；这与本仓既有主按钮口径一致，属**已知取舍，不是已达标**。
+  //   真要抬到 4.5:1 得改全站主色或给两行文字加一层深色胶囊，那是另案（会牵动 100+ 页面）。
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark 62%);
+  // 投影本来就是**通道变量**写法（--primary-rgb 的值是 「R, G, B」三个数字），本次无需改动。
+  // ⚠️ 别退成 rgba(var(--primary), 0.6)：那是非法 CSS，整条声明会被丢掉（本仓踩过这个坑）。
+  box-shadow: 0 12rpx 32rpx -12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.6);
+  transition: transform 0.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  &--hover {
+    transform: scale(0.98);
+  }
+
+  &__icon {
+    width: 72rpx;
+    height: 72rpx;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  &__texts {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6rpx;
+  }
+
+  // 【本包唯一需要判断的地方：文字色是「保留写死白」还是「改用 token $color-text-inverse」】
+  // 先把两种口径的真实差别写清楚（starry 是唯一深色主题，它的 --text-inverse 是深藏青 #1B2450，不是白）：
+  //   · 口径 A（保留写死白）：starry 下白字压蓝紫渐变「看着还行」，所以**不需要** starry 专用覆盖 ——
+  //     但实测白字压 starry 主色 #7A8CFF 只有 **2.99:1**、压最亮的 --primary-light #A5B1F7 只有 2.05:1，
+  //     也就是说「压蓝紫不糊」不等于「达标」，starry 依旧够不上正文 4.5:1。
+  //   · 口径 B（改用 $color-text-inverse = var(--text-inverse, #FFFFFF)，本卡采用）：字色交给主题给 ——
+  //     浅色四季 / grid 下它本来就等于白（与改前**视觉零变化**），starry 下它翻成深藏青；
+  //     再照本块开头那句「与时光页 `.timeline-cta` 同一处方」的做法，补一条 `.theme-starry .today-cta`
+  //     （见紧接本块之后那一条）把渐变回退到亮端，
+  //     starry 就落到 **4.96~7.23:1** —— 是全表唯一能过正文 4.5:1 的组合。
+  // 【为什么选 B】① 与时光页那同类「主行动块」同一口径：全站约定是「压在主色上的文字 = --text-inverse」，
+  //   本卡原先写死白正是这个约定的例外，也是本批缺陷的同源成因；
+  //   ② starry 下 B 明显比 A 清楚（4.96~7.23:1 vs 2.99~4.47:1），A 只是「没那么糊」而已。
+  // 【选 B 的代价，一并如实记】starry 下本卡会由「深色块」翻成「亮紫块」，卡内白色图标牌与 go 药丸
+  //   （下面 `&__icon` / `&__go`，都按写死白取值、与主题无关）与底色的**分离度**都下降 ——
+  //   按各自落点逐个复算（starry 覆盖后底 = #A5B1F7 → #7A8CFF 62%）：
+  //     · 图标牌（白 22%，落在卡片左段）：牌面 vs 底约 **1.2:1**（改前那版深底上也只有约 1.3:1，两版都不高）；
+  //     · go 药丸（白 92%，落在卡片最右端、已过 62% 拐点）：药丸面 vs 底约 **2.77:1**，
+  //       **比改前的约 4.04:1 掉了约 31%** —— 这是本处方**新引入**的形态变化，
+  //       药丸在亮紫底上会明显变「淡」，真机需目视确认是否可接受。
+  //   （原先那句「约 2.05:1」只是「白 vs `--primary-light` 裸色」这一个口径的数，不能代表卡内这两个元素。）
+  //   本处方与时光页已过审的那条完全一致，但未另外采样真机观感。
+  &__title {
+    font-size: 34rpx;
+    font-weight: 700;
+    color: $color-text-inverse;
+  }
+
+  &__sub {
+    font-size: 22rpx;
+    // 次要感用 token + opacity 表达（**不能**写成 rgba(var(--text-inverse), .85)：那是非法 CSS，整条会丢）
+    // ⚠️ 0.85 的不透明度比时光页说明行的 0.92 再淡一档 → 它的实际对比度还会比上表数值更低一点（未单独折算）。
+    color: $color-text-inverse;
+    opacity: 0.85;
+  }
+
+  &__go {
+    flex-shrink: 0;
+    padding: 12rpx 26rpx;
+    border-radius: $radius-round;
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  &__go-text {
+    font-size: 24rpx;
+    font-weight: $font-weight-semibold;
+    color: $color-primary;
+  }
+}
+
+// 星空银河（唯一深色主题）：它的 `--text-inverse` 是**深藏青 #1B2450**（不是白），
+// 压在暗端反而更糊（--primary-dark 只有 3.32:1）→ 这里回退到**亮端**，保住深藏青压蓝紫的 4.96~7.23:1。
+// ⚠️ 选择器必须写 `.theme-starry .today-cta`（特指度 0,2,0）才稳定压过上面的 `.today-cta`（0,1,0）；
+//    写成 `&.theme-starry` 是「同一个元素上的两个类」，实际命不中 —— 主题类是挂在页面根 `.today-page` 上的
+//    （index.tsx 里 `className={`today-page ${themeClass}`}` 那段）。本条与时光页 `.theme-starry .timeline-cta` 同做法。
+.theme-starry .today-cta {
+  background: linear-gradient(135deg, $color-primary-light, $color-primary 62%);
+}
+
+// ===== ⑥ 今天还有这些事（待办） =====
+.today-todo {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 22rpx 26rpx;
+  border-radius: 28rpx;
+  background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.72);
+  border: 1rpx solid $color-border-light;
+  margin-bottom: 16rpx;
+  transition: transform 0.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &--hover {
+    transform: scale(0.985);
+  }
+
+  &__icon {
+    width: 64rpx;
+    height: 64rpx;
+    border-radius: 20rpx;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+
+    // 逾期项用金色调，与「提前提醒」区分开（颜色是这一块唯一的紧急度信号）
+    &--overdue {
+      background: rgba(var(--gold-deep-rgb, 232, 146, 10), 0.14);
+    }
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6rpx;
+  }
+
+  &__title {
+    font-size: 28rpx;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+  }
+
+  &__sub {
+    font-size: 22rpx;
+    color: $color-text-secondary;
+  }
+
+  &__tag {
+    flex-shrink: 0;
+    font-size: 20rpx;
+    padding: 4rpx 16rpx;
+    border-radius: $radius-round;
+    // 即将到期：中性蓝提示（原型里「提前提醒」就是这个色）
+    color: #2c7db8;
+    background: rgba(79, 163, 227, 0.16);
+
+    &--overdue {
+      color: $color-primary-dark;
+      background: rgba(var(--primary-rgb, 255, 107, 61), 0.14);
+    }
+  }
+}
+
+// ===== ⑦ 快捷功能（非 AI 的日常动作） =====
+// 【视觉基准】高保真原型 v2 `screenToday()` 的「快捷功能」区块：
+//   原型 .grid{grid-template-columns:1fr 1fr;gap:10px} + .gtile{flex 行、padding:11px 12px}
+//   + .gtile .gi{36px 见方、圆角 12px、font-size 18px} + .gtile b{13px/700} + .gtile span{9.5px}
+//   尺寸按 1px = 2rpx 换算：四格高 22+72+22 = 116rpx(=58px)，与原型等高。
+//   四色淡底取原型的 tone-a/b/c/d 色板，但**分配顺序不同**（见 .today-grid__icon 处注释）。
+//
+// 【为什么不用 grid】仓库既有约定：微信 WXSS 对 grid 支持不稳（老基础库直接不生效），
+//   两列一律用 flex + `calc(50% - 半间隙)` —— 同 pages/timeline 的
+//   `.timeline-achv-grid` / `.timeline-achv-tile`（gap 16rpx + calc(50% - 8rpx)，扣减口径一致）。
+//   （pagesMemoir 的 `.mhall-grid2` 用的是 grid，属既有例外，不照抄。）
+//
+// 【为什么是两列】通栏一行一个时，686rpx 内容宽下每格右侧空出近一半，四个动作还要扫四行；
+//   两个一行才贴合原型，也恢复"一眼扫完四个日常动作"的作用。
+//   四格恰好两行，不会出现末行单格被拉宽的问题（width 是定值，容器也没写 justify-content）。
+.today-grid {
+  display: flex;
+  flex-wrap: wrap;
+  // 原型间隙 10px = 20rpx
+  gap: 20rpx;
+}
+
+.today-grid__item {
+  // 两列：减去中间 20rpx 间隙再对半
+  width: calc(50% - 10rpx);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  // 原型 11px 12px；上下 padding+图标底 = 11+36+11 = 58px，与原型等高
+  padding: 22rpx 24rpx;
+  border-radius: 28rpx;
+  background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.72);
+  border: 1rpx solid $color-border-light;
+  // 比 $shadow-card 轻得多：那套带主色辉光，用在大摘要卡上；四宫格逐格发光会显脏
+  box-shadow: 0 6rpx 18rpx -10rpx rgba(61, 33, 18, 0.12);
+  transition: transform 0.2s cubic-bezier(0.22, 0.61, 0.36, 1);
 
   &--hover {
     transform: scale(0.97);
-    opacity: 0.92;
   }
 }
 
-// 扩散光晕环（仿鸿蒙"充电光晕"脉冲）：渐变主按钮自带呼吸辉光
-.home-checkin-cta::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0);
-  animation: xhh-pulse-ring 3.2s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
-  pointer-events: none;
-}
-
-.home-checkin-cta-left {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-  min-width: 0;
-}
-
-.home-checkin-cta-icon {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.22);
+// 图标底：原型 .gtile .gi（36px 见方、圆角 12px）
+// 【底与图标必须成对，且都走主题变量】底用 `rgba(var(--x-rgb), α)`、图标用同色系 tone，
+//   切换主题时两者一起变；写死 hex 会出现「底变色、图标不变」的违和（仓库既有约定）。
+//   四色的**分配**沿用本页各格原有的图标 tone（健康趋势=primary / 宠物档案=gold-deep /
+//   时光=sage / 做回忆录=teal），因此顺序是原型色板的 a→d→b→c，不是原型的 a→b→c→d；
+//   金色与原型一致只作底色、图标仍取深一档的 gold-deep（原型 .tone-d 也是这个配法）。
+.today-grid__icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 24rpx;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40rpx;
-  flex-shrink: 0;
-}
+  // 默认 tone-a（主色淡底）；其余三色由下面的修饰类覆盖
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
 
-.home-checkin-cta-texts {
-  min-width: 0;
-}
+  // 原型 tone-b：绿
+  &--sage {
+    background: rgba(var(--sage-rgb, 47, 201, 142), 0.13);
+  }
 
-.home-checkin-cta-title {
-  display: block;
-  font-size: 32rpx;
-  font-weight: $font-weight-bold;
-  color: $color-text-inverse;
-  line-height: 1.3;
-}
+  // 原型 tone-c：蓝
+  &--teal {
+    background: rgba(var(--teal-rgb, 79, 163, 227), 0.14);
+  }
 
-.home-checkin-cta-sub {
-  display: block;
-  font-size: 20rpx;
-  margin-top: 4rpx;
-  color: rgba(255, 255, 255, 0.85);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.home-checkin-cta-arrow {
-  font-size: 36rpx;
-  color: $color-text-inverse;
-  flex-shrink: 0;
-}
-
-// ============================================
-// 快捷功能网格 2x2（对齐设计稿 home.html）
-// ============================================
-.home-shortcuts {
-  margin-top: 8rpx;
-}
-
-.home-shortcuts-title {
-  display: block;
-  font-size: 28rpx;
-  font-weight: $font-weight-semibold;
-  color: $color-text-secondary;
-  margin-bottom: 20rpx;
-}
-
-.home-shortcuts-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20rpx;
-}
-
-.home-shortcut {
-  width: calc((100% - 40rpx) / 3);
-  background: $color-bg-card;
-  border-radius: $radius-lg;
-  border: 1rpx solid $color-border;
-  box-shadow: $shadow-card, $glow-sm;
-  padding: 24rpx;
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
-  @include press-feedback;
-
-  &--hover {
-    transform: translateY(-4rpx) scale(0.98);
-    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.35);
-    box-shadow: $shadow-md;
+  // 原型 tone-d：金。α 比其他三格低一档（0.12）：金色明度最高，
+  // 同 α 下观感会明显重于其它三格（原型给 tint-gold 的也是最低的 0.10）
+  &--gold {
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.12);
   }
 }
 
-.home-shortcut-icon {
-  position: relative;
-  width: 76rpx;
-  height: 76rpx;
-  border-radius: 50%;
+.today-grid__texts {
+  flex: 1;
+  min-width: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 36rpx;
-  margin-bottom: 16rpx;
-
-  &--coral { background: rgba(var(--primary-rgb, 255, 107, 61), 0.12); }
-  &--gold { background: rgba(var(--gold-deep-rgb, 232, 146, 10), 0.14); }
-  &--sage { background: rgba(var(--sage-rgb, 47, 201, 142), 0.14); }
-  &--teal { background: rgba(var(--teal-rgb, 79, 163, 227), 0.14); }
+  flex-direction: column;
+  gap: 4rpx;
 }
 
-/* 慢性病风险角标（红色数字徽标，右上角） */
-.home-shortcut-badge {
-  position: absolute;
-  top: -8rpx;
-  right: -8rpx;
-  min-width: 32rpx;
-  height: 32rpx;
-  padding: 0 8rpx;
-  border-radius: 16rpx;
-  background: $color-danger;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2rpx solid #fff;
-}
-
-.home-shortcut-badge-text {
-  font-size: 20rpx;
-  color: #fff;
-  font-weight: $font-weight-semibold;
-}
-
-.home-shortcut-label {
+.today-grid__title {
+  // display: block 是显式写法（父级已是 column flex，不写也生效）——与
+  // pages/timeline 的 .timeline-achv-title 保持一致，避免依赖父级布局的隐式行为
   display: block;
-  font-size: 28rpx;
+  font-size: 26rpx;
   font-weight: $font-weight-semibold;
   color: $color-text-primary;
-  margin-bottom: 4rpx;
 }
 
-.home-shortcut-desc {
+.today-grid__desc {
   display: block;
   font-size: 20rpx;
   color: $color-text-tertiary;
-  line-height: 1.5;
-}
-
-// 减少动态效果偏好：入场只保留淡入，去掉位移动画
-@media (prefers-reduced-motion: reduce) {
-  .chat-top-bar,
-  .home-summary-card,
-  .msg-quick-actions,
-  .chat-empty {
-    animation: fadeIn 0.2s ease both;
-  }
-}
-
-/* ===== 长对话软提示（多会话：满 30 轮建议新建，不强制） ===== */
-.chat-long-tip {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  margin: 12rpx 0 20rpx;
-  padding: 20rpx 24rpx;
-  background: linear-gradient(135deg, #fff7ed, #ffedd5);
-  border: 1rpx solid #ffd9b0;
-  border-radius: 20rpx;
-}
-
-.chat-long-tip-icon { font-size: 30rpx; }
-
-.chat-long-tip-text {
-  flex: 1;
-  font-size: 24rpx;
-  color: #a06a3f;
-}
-
-.chat-long-tip-action {
-  flex-shrink: 0;
-  font-size: 24rpx;
-  font-weight: 600;
-  color: #ff6b3d;
-  padding: 8rpx 16rpx;
-  background: #fff;
-  border-radius: 999rpx;
-}
-
-/* ===== 会话列表抽屉（多会话「历史对话」，豆包式新建/切换/删除） ===== */
-.session-drawer-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.45);
-  z-index: 1000;
-  display: flex;
-  align-items: flex-end;
-}
-
-.session-drawer {
-  width: 100%;
-  max-height: 70vh;
-  background: #fff;
-  border-radius: 32rpx 32rpx 0 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.session-drawer-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 28rpx 32rpx 20rpx;
-  border-bottom: 1rpx solid #f3ece4;
-}
-
-.session-drawer-title {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: #4a3728;
-}
-
-.session-drawer-new {
-  display: flex;
-  align-items: center;
-  gap: 6rpx;
-  padding: 10rpx 20rpx;
-  background: linear-gradient(135deg, #ff8a5c, #ff6b3d);
-  border-radius: 999rpx;
-}
-
-.session-drawer-new-icon { font-size: 26rpx; color: #fff; font-weight: 700; }
-.session-drawer-new-text { font-size: 24rpx; color: #fff; }
-
-.session-drawer-list { max-height: 56vh; }
-
-.session-drawer-empty {
-  padding: 80rpx 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16rpx;
-}
-
-.session-drawer-empty-icon { font-size: 64rpx; }
-.session-drawer-empty-text { font-size: 24rpx; color: #b6a594; }
-
-.session-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24rpx 32rpx;
-  border-bottom: 1rpx solid #f7f1ea;
-}
-
-.session-item--active { background: #fff7ed; }
-
-.session-item-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6rpx;
-}
-
-.session-item-title {
-  font-size: 28rpx;
-  color: #4a3728;
+  // 两列下每格只剩 193rpx 文字宽：现有四条文案最宽只占 73%（实测 140rpx / 193rpx），
+  // 但微信「字体大小」调大、或以后换更长的文案时会撑破格子 —— 留着省略号兜底。
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.session-item-meta { font-size: 22rpx; color: #b6a594; }
-
-.session-item-current {
-  flex-shrink: 0;
-  font-size: 20rpx;
-  color: #ff6b3d;
-  padding: 4rpx 14rpx;
-  background: #ffedd5;
-  border-radius: 999rpx;
+// ===== 跟随系统「减少动态效果」 =====
+// 本页动效全是"入场/按压反馈"这类装饰，关掉不影响功能；仓库既有约定，各页自己声明。
+@media (prefers-reduced-motion: reduce) {
+  .today-page,
+  .today-topbar,
+  .today-petcard,
+  .today-hero,
+  .today-health,
+  .today-cta,
+  .today-todo,
+  .today-grid__item,
+  .chat-empty {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
-/* ============================================
-   品牌 Hero：情绪 slogan + 猫狗 IP 主视觉
-   首页主体是对话流，Hero 刻意做得克制 ——
-   只负责在首屏建立品牌感与「这是谁的家」的情感锚点，不抢占消息列表的空间
-   ============================================ */
-.home-hero {
-  position: relative;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 24rpx 48rpx 8rpx;
-}
-
-/* 散落星点：绝对定位铺在 Hero 内，用闪烁动画呼应「星河」，同时填掉大片留白 */
-.home-hero__spark {
-  position: absolute;
-  animation: home-hero-twinkle 3.2s ease-in-out infinite;
-}
-
-.home-hero__spark--1 { top: 26rpx; left: 11%; animation-delay: 0s; }
-.home-hero__spark--2 { top: 128rpx; left: 5%; animation-delay: 0.6s; }
-.home-hero__spark--3 { top: 56rpx; right: 9%; animation-delay: 1.2s; }
-.home-hero__spark--4 { top: 196rpx; right: 4%; animation-delay: 0.3s; }
-.home-hero__spark--5 { top: 262rpx; left: 8%; animation-delay: 0.9s; }
-.home-hero__spark--6 { top: 312rpx; right: 13%; animation-delay: 1.5s; }
-
-@keyframes home-hero-twinkle {
-  0%, 100% { opacity: 0.3; transform: scale(0.88); }
-  50% { opacity: 1; transform: scale(1.12); }
-}
-
-.home-hero__slogan {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4rpx;
-  font-size: 40rpx;
-  font-weight: $font-weight-bold;
-  line-height: 1.45;
-  letter-spacing: -0.01em;
-  color: $color-text-primary;
-  text-align: center;
-}
-
-/* 每行：文字与星星用 flex 排列（Icon 是 Image 组件，不能塞进 <Text>） */
-.home-hero__line {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-}
-
-.home-hero__star {
-  flex-shrink: 0;
-}
-
-/* 行末补缀的那颗略靠外一点，避免贴着文字 */
-.home-hero__star--end {
-  margin-left: 6rpx;
-}
-
-.home-hero__line-text {
-  display: block;
-}
-
-/* 「星河」二字用主色点出，呼应品牌名 */
-.home-hero__accent {
-  color: $color-primary;
-}
-
-.home-hero__mascot {
-  position: relative;
-  z-index: 1;
-  /* 280rpx：原来 168/220rpx 在 375px 屏上只有 84/110px，Hero 显得空；
-     放大后吉祥物成为真正的视觉主角，同时把上下留白压下去 */
-  width: 280rpx;
-  height: 280rpx;
-  margin-top: 10rpx;
+// ===== 星空银河（唯一的深色主题）页面级兜底 =====
+// 【问题】`.theme-starry` 把 `--text-*` 整体翻成白色，而 `--bg-card` 仍是 `#FFFFFF`
+//   —— 「白卡 + 主题文字色」的组合变成白底白字。本页受累的浅色纸面有七处：
+//   · 顶栏圆形按钮 `.today-icon-btn`      · 宠物卡 `.today-petcard`
+//   · 品牌 Hero 卡 `.today-hero`（底色 $color-bg-card，标题吃 --text-primary）
+//   · 切换器面板 `.today-petswitch`       · 今日健康摘要 `.today-health`
+//   · 待办行 `.today-todo`                · 快捷功能格 `.today-grid__item`
+//   （`.today-cta` 是主色渐变、文字走 `$color-text-inverse`，starry 下由紧挨 `.today-cta` 的那条
+//     `.theme-starry .today-cta` 单独覆盖（回退亮端 + 深藏青字）；`.home-co-care-tip` 是主色淡底。
+//     两者的 token 都不受这里影响，故不列入本清单。）
+// 【这是既有全站缺陷，不是本次改动引入】全局修复要动 100+ 个页面、需整体回归，属另案。
+// 【做法】沿用时光页 / 宠物档案页 / 我的页已用的**页面级兜底**：在「浅底纸面」作用域内
+//   把卡内 token 钉回浅色取值（底色是浅的，就必须配深色文字）。只影响本页。
+//   前置条件已满足：页面根节点带了 useThemeClass() 的返回值（index.tsx 的 today-page）。
+.today-page.theme-starry {
+  .today-icon-btn,
+  .today-petcard,
+  .today-hero,
+  .today-petswitch,
+  .today-health,
+  .today-todo,
+  .today-grid__item {
+    --text-primary: #40281C;
+    --text-secondary: #8B6E58;
+    --text-tertiary: #B69B83;
+    --border-light: rgba(243, 226, 210, 0.5);
+  }
 }

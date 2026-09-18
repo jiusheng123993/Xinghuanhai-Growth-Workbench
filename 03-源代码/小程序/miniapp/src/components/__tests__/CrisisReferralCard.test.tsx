@@ -5,10 +5,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import CrisisReferralCard from '../CrisisReferralCard'
 
-const { mockMakePhoneCall, mockDismiss, mockTrackEvent } = vi.hoisted(() => ({
+const { mockMakePhoneCall, mockDismiss, mockTrackEvent, mockNavigateTo } = vi.hoisted(() => ({
   mockMakePhoneCall: vi.fn(),
   mockDismiss: vi.fn(),
   mockTrackEvent: vi.fn(),
+  mockNavigateTo: vi.fn(),
 }))
 
 vi.mock('@tarojs/components', () => ({
@@ -23,7 +24,7 @@ vi.mock('@tarojs/components', () => ({
 vi.mock('@tarojs/taro', () => ({
   default: {
     makePhoneCall: mockMakePhoneCall,
-    navigateTo: vi.fn(),
+    navigateTo: mockNavigateTo,
     setStorageSync: vi.fn(),
     getStorageSync: vi.fn(),
   },
@@ -84,5 +85,17 @@ describe('CrisisReferralCard', () => {
     fireEvent.click(contactedBtn)
     expect(mockFollowUp).toHaveBeenCalledWith('contacted')
     expect(mockDismiss).toHaveBeenCalled()
+  })
+
+  it('emergency "find hospital" item opens the hospital capability in 团团', () => {
+    render(<CrisisReferralCard message='test' onDismiss={mockDismiss} />)
+    fireEvent.click(screen.getByText('找宠物医院'))
+    // 2026-09-12 收口批次 §2：附近医院属 AI 推理类能力 → 收拢到团团 + 带 capability 自动打开。
+    // 改之前这里写的是「找宠物医院」却跳 /pagesPet/symptom-check/index（文案与去处对不上），
+    // 这条断言同时锁住「不再跳症状初筛页」。
+    expect(mockNavigateTo).toHaveBeenCalledWith({
+      url: '/pagesYuantuan/agent/index?capability=hospital',
+    })
+    expect(mockNavigateTo).not.toHaveBeenCalledWith({ url: '/pagesPet/symptom-check/index' })
   })
 })

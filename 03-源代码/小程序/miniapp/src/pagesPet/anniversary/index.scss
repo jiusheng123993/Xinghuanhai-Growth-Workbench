@@ -1,0 +1,260 @@
+@import '../../styles/_theme';
+
+// ============================================
+// 生日与纪念日页（pagesPet/anniversary）
+// ============================================
+// 本页只有「页头（文字 + 一张方插画）+ 两张日期卡 + 说明 + 编辑入口」，样式刻意做得轻：
+// 卡片沿用全站 $shadow-card + $glow-sm 的软阴影，间距用 32rpx 与档案页对齐（同一屏的延伸）。
+//
+// 【主题安全】颜色一律走 _theme.scss 的 $color-* / $glass-*；淡色底用
+// rgba(var(--x-rgb, 回退), α) 通道写法 —— 直接写 rgba(var(--x), α) 在部分端上属非法 CSS，
+// 整条声明会被丢掉（见项目 skill「小程序样式陷阱」）。
+// 【图标】功能性图标全部走 <Icon>（面性 Phosphor + info/pencil 两个线形），不引入 emoji。
+// 【图片资源】只引用一张插画 key（页头的 `moment-anniversary`），且是**服务器远程图**，
+// 包内零新增位图（主包体积不受影响）。
+
+.anniv-page {
+  min-height: 100vh;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
+  position: relative;
+  overflow: hidden;
+  animation: pageEnter 0.4s ease-out;
+}
+
+// ============================================
+// 页头：宠物名 + 数据来源一句话
+// ============================================
+.anniv-hero {
+  margin: 24rpx 32rpx 0;
+  padding: 32rpx 36rpx;
+  border-radius: $radius-md;
+  background: $color-bg-card;
+  box-shadow: $shadow-card, $glow-sm;
+  animation: fadeInUp 0.5s ease-out;
+  // 标题区与右侧插画并排（插画是 600×600 方图，不参与纵向拉伸）
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+// 左栏：文字全在这边。min-width: 0 是 flex 子项的老坑 ——
+// 不写它，长宠物名会把这一栏撑破、把右侧插画挤出卡片（flex 子项默认 min-width: auto）
+.anniv-hero__main {
+  flex: 1;
+  min-width: 0;
+}
+
+// 页头插画（moment-anniversary）。只给圆角、不加底色：图本身是暖橙毡毛风，
+// 圆角把它收成「一张小卡」而不是一块贴上去的方补丁。
+// ⚠️ 尺寸必须写在 CSS 里（组件用 `fill`，不写内联宽高）：`<Illustration size={n}>` 的内联尺寸是
+// **写死的 px、不参与 rpx 换算**（22 号 在 dist 编译产物里核实过），于是"容器随屏宽缩放、图不缩"，
+// 宽屏上会露出容器的底色。这里用 rpx，与全站一致；`fill` 也让方图在方形容器里正好铺满。
+// 【尺寸为什么是 260rpx 而不是更大】它是**并排布局**，会直接吃掉左栏宽度：
+// 卡片内容宽 614rpx（750 − 32×2 页边距 − 36×2 卡片内边距），减去 gap 24rpx 与这张图，
+// 才是标题可用宽度。取 352rpx 时左栏只剩 238rpx，而 40rpx 的「可乐 的重要日子」要约 300rpx
+// —— 实测会把末尾「日子」两个字单独折到第二行（验收取图 f1）。260rpx 给到 330rpx，
+// 3 字宠物名（最常见）留 24rpx 余量；更长的名字仍会折行，但那时是正常的均衡换行、不会孤字。
+.anniv-hero__art {
+  width: 260rpx;
+  height: 260rpx;
+  flex-shrink: 0;
+  border-radius: $radius-md;
+}
+
+.anniv-hero__name {
+  display: block;
+  // 36rpx（原 40rpx）：与右侧插画并排后左栏只有约 330rpx，40rpx 的「{名} 的重要日子」
+  // 在 3 字宠物名上就要 300rpx、遇 4 字名必折行且容易孤字；36rpx 后 3 字名约 270rpx。
+  // 详见上面 `.anniv-hero__art` 注释里的宽度算式。
+  font-size: 36rpx;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: 1rpx;
+  color: $color-text-primary;
+}
+
+.anniv-hero__desc {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: $color-text-secondary;
+}
+
+// 已安息徽章：浅主色底 + 主色描边，压在卡片上不抢标题
+.anniv-hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 16rpx;
+  padding: 6rpx 18rpx;
+  border-radius: $radius-round;
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+  border: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.24);
+}
+
+.anniv-hero__badge-text {
+  font-size: 20rpx;
+  font-weight: 600;
+  color: $color-primary-dark;
+}
+
+// ============================================
+// 分区（标题行 + 卡片）
+// ============================================
+.anniv-sec {
+  margin: 32rpx 32rpx 0;
+  animation: fadeInUp 0.45s ease-out 0.08s both;
+}
+
+.anniv-sec__head {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 0 8rpx;
+  margin-bottom: 16rpx;
+}
+
+// 标题前的色点：与档案页 .pf-sec__dot 同一视觉（两页互为上下游，保持连续）
+.anniv-sec__dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: $color-primary;
+  flex-shrink: 0;
+}
+
+.anniv-sec__title {
+  font-size: 30rpx;
+  font-weight: 800;
+  letter-spacing: 0.6rpx;
+  color: $color-text-primary;
+}
+
+// 标题右侧小字（如「下一个生日满 4 岁」）：纯展示，不带点击
+.anniv-sec__hint {
+  margin-left: auto;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.anniv-card {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card, $glow-sm;
+  overflow: hidden;
+}
+
+// 空态卡片：EmptyState 自带内边距，这里只补一层卡片底与上下留白
+.anniv-card--empty {
+  padding: 16rpx 0 32rpx;
+}
+
+// ============================================
+// 日期行：图标 + 标签 + 值（值右对齐、可换行）
+// ============================================
+.anniv-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 26rpx 28rpx;
+  border-bottom: 1rpx solid $color-border;
+}
+
+.anniv-row--last {
+  border-bottom: none;
+}
+
+.anniv-row__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 18rpx;
+  flex-shrink: 0;
+
+  &--primary { background: rgba(var(--primary-rgb, 255, 107, 61), 0.12); }
+  &--teal { background: rgba(var(--teal-rgb, 79, 163, 227), 0.14); }
+  &--sage { background: rgba(var(--sage-rgb, 47, 201, 142), 0.14); }
+  &--gold-deep { background: rgba(var(--gold-rgb, 255, 176, 32), 0.18); }
+}
+
+.anniv-row__label {
+  flex: 0 0 auto;
+  font-size: 26rpx;
+  color: $color-text-secondary;
+}
+
+// 值：占满剩余宽度并右对齐；长值（如「第 1 周年 · 2026-09-12」）换行而不是溢出
+.anniv-row__value {
+  flex: 1;
+  min-width: 0;
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: right;
+  color: $color-text-primary;
+}
+
+// ============================================
+// 说明 + 编辑入口
+// ============================================
+.anniv-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  margin: 32rpx 32rpx 0;
+  padding: 24rpx 28rpx;
+  border-radius: $radius-sm;
+  background: $glass-bg;
+  border: 1rpx solid $glass-border;
+  box-shadow: $shadow-xs;
+}
+
+.anniv-note__icon {
+  flex-shrink: 0;
+  // 与首行文字视觉居中对齐（图标 14px，行高 1.7×22rpx，肉眼对齐靠这 4rpx）
+  margin-top: 4rpx;
+}
+
+.anniv-note__text {
+  flex: 1;
+  min-width: 0;
+  font-size: 22rpx;
+  line-height: 1.7;
+  color: $color-text-secondary;
+}
+
+.anniv-edit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  margin: 32rpx 32rpx 0;
+  padding: 26rpx;
+  border-radius: $radius-round;
+  background: $gradient-gold;
+  box-shadow: $shadow-button;
+  transition: transform 0.15s ease;
+
+  &--hover {
+    transform: scale(0.97);
+  }
+}
+
+.anniv-edit__text {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: $color-text-inverse;
+}
+
+// ============================================
+// 其它
+// ============================================
+// 底部留白 + 全面屏安全区：本页是分包普通页面（不在 tabBar 里），
+// 没有自定义 tabBar 覆盖层要让位，但滚动末端仍要留出呼吸位，否则「编辑档案」贴着屏幕底边。
+.anniv-bottom-safe {
+  height: calc(80rpx + env(safe-area-inset-bottom));
+}

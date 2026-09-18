@@ -6,9 +6,10 @@
  * - 头像：button open-type="chooseAvatar"，选择器第一项就是当前微信头像，点一下即用
  * - 昵称：input type="nickname"，键盘上方直接出现微信昵称，点一下即填
  *
- * 触发链路：微信登录成功且资料未完善（无头像或无昵称）时，登录页 reLaunch 到本页；
- * 保存成功后 switchTab 回首页；「暂不绑定」记录跳过标记，下次登录不再打断。
- * 之后仍可随时在「我的 → 个人资料」页修改。
+ * 触发链路：微信登录成功且资料未完善（无头像或无昵称）时，登录页 navigateTo 到本页；
+ * 保存成功 / 「暂不绑定」两条分支都走统一出口 `utils/onboardingGate.goAfterAuthEntry()`
+ * ——首次用户接着看新手引导，已看过的老用户直接进首页。
+ * 之后仍可随时在「我的 → 设置 → 个人资料」页修改。
  */
 import { View, Text, Button, Input, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
@@ -18,6 +19,8 @@ import { isWeapp } from '../../platform'
 import { api } from '../../services/api'
 import { chooseImageWithPrivacy } from '../../utils/privacy'
 import { bindSkippedKey } from './guide'
+// 绑定资料完成/跳过后的统一出口（首次进新手引导，老用户直接进首页）
+import { goAfterAuthEntry } from '../../utils/onboardingGate'
 import './index.scss'
 import { Icon } from '../../components'
 import PageBackground from '../../components/PageBackground'
@@ -32,7 +35,9 @@ export default function BindWechat() {
   const [saving, setSaving] = useState(false)
 
   // 进入页面时用已登录用户的资料回填昵称草稿（老用户改资料时也能看到原昵称）；
-  // 未登录时（深链防御，正常只会从登录流程 reLaunch 进入）直接回首页
+  // 未登录时（深链防御，正常只会从登录流程进入）直接回首页。
+  // 注意：这里刻意**不走** goAfterAuthEntry —— 未登录时把用户丢进新手引导毫无意义
+  // （引导的出口是「添加宠物」，那一步需要登录态），故保持原有的清栈回首页。
   useEffect(() => {
     if (!useAuthStore.getState().user) {
       Taro.reLaunch({ url: '/pages/index/index' })
@@ -95,7 +100,9 @@ export default function BindWechat() {
       await updateProfile(nickname, avatarUrl)
       // 已完成绑定：资料已完善，登录判断自然不再触发引导
       Taro.showToast({ title: '绑定成功', icon: 'success' })
-      setTimeout(() => Taro.switchTab({ url: '/pages/index/index' }), 600)
+      // 补完资料后走统一出口：首次用户接着看新手引导，看过引导的老用户直接进首页。
+      // 延迟 600ms 让"绑定成功"的 toast 先被看到，再发生页面跳转（与改动前一致）
+      setTimeout(() => goAfterAuthEntry(), 600)
     } catch (err) {
       setSaving(false)
       Taro.showToast({
@@ -106,15 +113,20 @@ export default function BindWechat() {
   }
 
   /**
-   * 暂不绑定：记录跳过标记（下次登录不再打断），直接回首页；
-   * 用户之后可随时在「我的 → 个人资料」绑定
+   * 暂不绑定：记录跳过标记（下次登录不再打断），然后走统一出口回首页 / 进新手引导；
+   * 用户之后可随时在「我的 → 设置 → 个人资料」绑定
+   *
+   * 【为什么跳过绑定仍可能进引导】跳过只代表"这次不补资料"，与"看没看过新手引导"
+   * 是两件事：首次用户跳过绑定后仍应看到引导（否则引导对新用户又没机会露脸）。
+   * 跳过标记本身保持原样写入，语义与改动前完全一致（下次登录不再打断补资料）。
+   *
    * 注意：用裸 Taro 存储而非 utils/storage（后者带 userId 前缀，登录页读取时机
    * 与绑定页写入时机 _currentUserId 不一致会导致键前缀错位、标记读不到）；
    * key 追加 userId 后缀做账号隔离（同设备多账号互不影响）
    */
   const handleSkip = () => {
     Taro.setStorageSync(bindSkippedKey(user?.id), true)
-    Taro.switchTab({ url: '/pages/index/index' })
+    goAfterAuthEntry()
   }
 
   return (

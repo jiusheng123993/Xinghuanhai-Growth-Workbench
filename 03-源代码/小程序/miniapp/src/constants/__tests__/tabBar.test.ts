@@ -59,12 +59,14 @@ describe('constants/tabBar', () => {
     expect(TAB_BAR_TABS.slice(TAB_BAR_AI_SLOT)).toHaveLength(2)
   })
 
-  it('中心按钮当前指向首页（AI 对话暂时仍挂在首页），因此走 switchTab 而非 navigateTo', () => {
-    // ⚠️ 第 4 批「团团全屏态」上线后这里会改成团团页路径，届时本条断言要一起改 ——
-    // 故意写死，好让改的人被强制想一次「新路径是不是 tab 页、该用哪个跳转 API」。
-    // 组件侧靠 tabIndexByPath 自动在 switchTab / navigateTo 间切换，组件本身不用动。
-    expect(TAB_BAR_AI_PATH).toBe('/pages/index/index')
-    expect(tabIndexByPath(TAB_BAR_AI_PATH)).toBeGreaterThanOrEqual(0)
+  it('中心按钮指向「团团」全屏页，且它不是 tab 页（所以组件走 navigateTo）', () => {
+    // 【这条断言被"故意写死"过一次，现在按注释的约定改了】上一版写死 `/pages/index/index`
+    // 并留言「第 4 批团团全屏态上线后要一起改，好让改的人被强制想一次跳转 API」——
+    // 2026-09-12 IA 第 4 批落地，AI 对话搬到 `pagesYuantuan/agent`，这里同步改成新路径。
+    expect(TAB_BAR_AI_PATH).toBe('/pagesYuantuan/agent/index')
+    // 关键：团团页**不是** tabBar 页 → tabIndexByPath 必须返回 -1，
+    // 组件正是靠这个判断选 navigateTo（用 switchTab 打开非 tab 页会静默失败）。
+    expect(tabIndexByPath(TAB_BAR_AI_PATH)).toBe(-1)
   })
 
   it('4 个 tab 的图标名与各主题图标目录能拼出成套文件名（拼错名字就是真机裂图）', () => {

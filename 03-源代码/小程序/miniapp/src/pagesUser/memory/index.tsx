@@ -20,7 +20,7 @@ import { usePet } from '../../hooks/usePet'
 import { useAuthStore } from '../../stores/authStore'
 import { useAnalytics } from '../../hooks/useAnalytics'
 import { useThemeClass } from '../../hooks/useThemeClass'
-import { Icon, type FillIconName } from '../../components'
+import { Icon, Illustration, type FillIconName } from '../../components'
 import PageLoading from '../../components/PageLoading'
 import PageError from '../../components/PageError'
 import {
@@ -250,11 +250,17 @@ export default function MemoryPage() {
         <PageError message={error} onRetry={handleRetry} />
       ) : filteredMemories.length === 0 ? (
         <View className='memory-page__empty'>
-          <Icon
-            name={activeCategory ? 'magnifying-glass' : 'chat-circle'}
-            size={18}
-            tone='muted'
-            className='memory-page__empty-emoji'
+          {/* 空态插画（两个分支各一张，与原图标语义一一对应，不是随手换图）：
+              · 分类筛选无结果 → `empty-search`（猫狗一起看一枚空放大镜），对应原来的 magnifying-glass；
+              · 完全没有 AI 记忆 → `empty-message`（猫狗一起看一个空白的对话气泡），对应原来的 chat-circle。
+              两张图都在服务器上实测 HEAD 200（/uploads/illustrations/）。
+              为什么要换：这里原来是 `size={18}` 的图标（Icon 走内联 width/height，
+              scss 里的 96rpx 字号对它无效），而容器上下各留 120rpx —— 18px 图标在那么大的
+              留白里几乎看不见，和全站空态口径（EmptyState 统一 132px 插画）严重不成比例。 */}
+          <Illustration
+            name={activeCategory ? 'empty-search' : 'empty-message'}
+            size={132}
+            className='memory-page__empty-illus'
           />
           <Text className='memory-page__empty-title'>
             {activeCategory ? '该分类暂无记忆' : '暂无 AI 记忆'}

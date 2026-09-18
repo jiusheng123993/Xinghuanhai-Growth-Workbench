@@ -19,7 +19,7 @@ import {
   HospitalInfo,
 } from '../../services/hospitalService'
 import './index.scss'
-import { PageBackground, Icon  } from '../../components'
+import { PageBackground, Icon, Illustration } from '../../components'
 
 const FILTER_TABS = [
   { key: 'all', label: '全部' },
@@ -44,6 +44,15 @@ const TYPE_COLORS: Record<string, string> = {
 }
 
 export default function HospitalPage() {
+  /**
+   * 主题类名：**必须挂在页面自己的根节点上**
+   *
+   * 为什么：小程序端每个页面独立渲染，app 组件的 JSX 不包裹页面节点，挂在 app 层的
+   * `.theme-*` 传不进页面；不挂就会永远吃 styles/_theme.scss 里 page{} 的秋季基线变量，
+   * 用户切主题后本页仍是一片秋色。口径与 pages/creative、pages/mine 一致。
+   * （本页文件顶部原本就 import 了 useThemeClass 却从未调用，这里把它接上。）
+   */
+  const themeClass = useThemeClass()
   const { trackEvent } = useAnalytics()
   const [searchText, setSearchText] = useState('')
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all')
@@ -154,7 +163,7 @@ export default function HospitalPage() {
   }, [hospitals])
 
   return (
-    <View className='hospital-page'>
+    <View className={`hospital-page ${themeClass}`}>
       <PageBackground />
       <View className='hospital-page__search'>
         <View className='hospital-page__search-input-wrap'>
@@ -205,7 +214,10 @@ export default function HospitalPage() {
         <PageLoading text='正在加载医院信息...' />
       ) : filteredHospitals.length === 0 ? (
         <View className='hospital-page__empty'>
-          <Icon name='hospital' size={48} tone='primary' className='hospital-page__empty-icon' />
+          {/* 空态插画：`empty-search`（猫狗一起看一枚空放大镜）对应本处「筛选/搜索后无匹配结果」——
+              文案本身就是「尝试更换筛选条件或搜索关键词」，所以放大镜语义比原来的医院图标更贴。
+              同时这张空态上下各留 160rpx，48px 的图标在其中偏小，换成 132px 插画（全站空态口径）更平衡。 */}
+          <Illustration name='empty-search' size={132} className='hospital-page__empty-illus' />
           <Text className='hospital-page__empty-text'>暂无符合条件的医院</Text>
           <Text className='hospital-page__empty-hint'>尝试更换筛选条件或搜索关键词</Text>
         </View>

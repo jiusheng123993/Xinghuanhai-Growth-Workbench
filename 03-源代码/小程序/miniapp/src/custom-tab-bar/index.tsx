@@ -43,8 +43,8 @@ import {
 } from '../constants/tabBar'
 import { useThemeStore, getThemeMeta, getTabBarIconDir } from '../stores/themeStore'
 import type { ThemeKey } from '../stores/themeStore'
-// 中心圆钮的头像：现成资产，本任务不新增任何图片文件
-import aiManager from '../assets/ai-avatar/ai-manager.png'
+// 中心圆钮的头像：复用「首页 AI 管家」的同一份品牌资产（2026-09-12 起为真 .jpg），不新增图片
+import aiManager from '../assets/ai-avatar/ai-manager.jpg'
 import './index.scss'
 
 /** 拿不到路由时的兜底下标：按第一个 tab 高亮（宁可高亮错一个，也不要 5 个全灭） */

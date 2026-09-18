@@ -37,26 +37,194 @@
 // （flex-shrink: 0 / z-index: 10）随顶部宠物切换条一起移除 ——
 // 2026-09-11 共用回忆录改造后本页不再有 .pet-switcher，留着就是永不匹配的死样式。
 
-// ===== 固定顶部区域 =====
-// 原来装的是全宽页头（自带 40rpx 左右内边距），所以这里不设左右 padding；
-// 现在改由 <PageHero>（有 36rpx 圆角卡片）承担，必须补上左右内边距，否则卡片会顶到屏幕边。
-.timeline-fixed-top {
+// ===== 固定顶部条（v2 屏 02 的 topbar）=====
+// 2026-09-12（v2 第 2 波 · 屏 02）：原固定层装的是 <PageHero>（156rpx 插画卡），
+// 现按原型换成这条 104rpx 的文字顶栏，PageHero 挪进滚动区当品牌横幅。
+// 背景用页面渐变而不是透明：滚动区内容会从这条下面滑过，透明就会看到卡片穿透顶栏。
+.timeline-topbar {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 104rpx;
+  padding: 0 32rpx;
   background: $gradient-page;
-  padding: 16rpx 28rpx 0;
   z-index: 10;
+}
 
-  // 卡片自带 margin-bottom，固定区里不需要（避免页头与滚动区之间空太多）
-  .page-hero {
-    margin-bottom: 12rpx;
+.timeline-topbar-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12rpx;
+  min-width: 0;
+}
+
+// 「时光」：原型是渐变文字（background-clip:text），但 WXSS 对小程序的
+// `-webkit-background-clip: text` 支持不稳（真机偶发整块透明），所以退一级：
+// 用主题主色的实色粗体，字号/字重/字距与原型一致。
+.timeline-topbar-brand {
+  font-size: 40rpx;
+  font-weight: 800;
+  letter-spacing: 1rpx;
+  color: $color-primary-dark;
+}
+
+.timeline-topbar-sub {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  letter-spacing: 0.5rpx;
+}
+
+// 爪印圆钮：进宠物档案。68rpx 是原型的尺寸，点击热区再靠 padding 撑到 ~88rpx
+.timeline-topbar-btn {
+  width: 68rpx;
+  height: 68rpx;
+  flex-shrink: 0;
+  border-radius: 24rpx;
+  background: $glass-bg;
+  border: 1px solid $glass-border;
+  box-shadow: $shadow-card;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease;
+
+  &:active {
+    transform: scale(0.92);
   }
 }
 
 // ===== 头部 =====
 // 2026-09-11：原「{宠物名}的时光线 + 副标题 + 记录按钮」这一整套页头已删除，
 // 与滚动区里的 <PageHero> 合并为唯一页头（用户反馈「冲突了 融合一下」；
-// 且多宠物场景下标题不该挂具体宠物名）。原 .timeline-header / -title / -subtitle /
-// -add-btn 四组样式随之废弃，改由组件 PageHero 承担。
+// 且多宠物场景下标题不该挂具体宠物名）。
+// 2026-09-12（v2 屏 02）：PageHero 整体挪进滚动区（品牌横幅位），
+// 固定层改由上面的 .timeline-topbar 承担 —— 全页仍然只有一套标题。
+
+// ===== 「记一条」写入口（v2 屏 02 的主 CTA）=====
+// 【历史决策（本文件早期）】这条 CTA 的配色原本取原型那条渐变的写死三档橙
+// （135deg / #FF8A5C → #FF6B3D 55% → #F04E1D），并刻意不换成主题色。当时的理由是：
+// 它是**主行动色**，四季主题都保持同一支橙（与底栏中心「团团」圆钮同一族），
+// 若换成主题暖色渐变，会在春/夏主题下变成绿色/蓝色，担心"反而不再像主按钮"。
+// 【本次推翻（2026-09-12 用户真机反馈）】用户原话：「这条卡片没有和对应的主题做适配」，
+// 当时用的正是**春季（绿色）主题** —— 一屏绿里怼着一整块写死橙，视觉上直接跳出主题之外；
+// 实测下来"主题不一致"比"不够像主按钮"严重得多，故上面的历史判断作废。
+// 【现在怎么做】主行动感改由**主题主色承担**：渐变走 $color-primary → $color-primary-dark（两档、锚定暗端），
+// 投影走主色通道变量。也就是说"主按钮"的识别不再靠固定橙色，而是靠主题深色底 + 主色发光 + 文字色。
+// 【2026-09-12 独立审查（审-1）推翻了本段原先"对比度都够"的结论】原文写「各主题的主色都足够深，
+//   白字压在主色渐变上对比度都够，不需要按主题另配文字色」—— 实测不成立，两条事实：
+//   ① **各主题的文字并不都是白色**：.timeline-cta-title / -desc / -go-text 三处都取 $color-text-inverse
+//      （= `var(--text-inverse, #FFFFFF)`），spring / summer / autumn / winter / grid 下它是 #FFFFFF，
+//      而**星空银河（starry，全站唯一深色主题）下它是深藏青 #1B2450**（`_theme.scss` 的 `.theme-starry`）
+//      → starry 上压的是一行**深色字**，"白字"这个前提从根上就不对。
+//   ② 白字对主色三档的实测对比度（审-1 按 WCAG 相对亮度公式现算；标题 32rpx/800、说明 21rpx/opacity .92
+//      都不满足 WCAG 的"大字"豁免条件 ≥18.66px 粗体，所以要求是正文级 4.5:1）：
+//        | 主题                              | 白字 vs --primary | 白字 vs --primary-dark |
+//        | spring                            | 2.60:1            | 3.55:1                 |
+//        | summer                            | 2.66:1            | 4.31:1                 |
+//        | autumn / grid（继承基线橙）        | 2.83:1            | 3.61:1                 |
+//        | winter                            | 3.63:1            | 5.82:1                 |
+//        | starry（文字是深藏青 #1B2450，非白）| 4.96:1            | 3.32:1                 |
+//      最亮的 --primary-light 那一档更差：spring 1.78:1 / summer 1.88:1 / autumn·grid 1.98:1 / winter 2.05:1。
+// 【因此本次的做法（两处）】
+//   · 渐变**只留两档并锚定暗端**（primary → primary-dark 62%）—— 去掉最亮的 --primary-light，
+//     把这批浅色主题从 **1.78~2.05:1 抬到 3.55~5.82:1**（后者是**渐变最暗端**的值，见下面那条交代）。
+//   · starry 单开一条覆盖回到亮端（见紧接着的 `.theme-starry .timeline-cta`）：它的字是深藏青，
+//     压暗反而更糊（--primary-dark 只有 3.32:1）。
+// 【如实交代：这不是"已经达标"，是已知取舍】上表那组 3.55~5.82:1 是**渐变最暗端**（≥62%，即 --primary-dark）的值；
+//   本卡是横排（图标在左、两行文字紧随、`开始`药丸在最右），文字落在 135deg 渐变的**前 1/4 ~ 1/3** 一带
+//   （按卡片实测几何折算约 t≈0.24~0.29；越往右底越暗，最右端的药丸才到上面那个暗端），这一带白字实测只有
+//   spring **约 2.9~3.0:1**、autumn / grid ≈3.1~3.2、summer ≈3.2~3.3、winter ≈4.4~4.5（白字沿渐变逐点复算）
+//   —— spring 与 autumn / grid 就压在 AA **大字**阈值 3:1 的临界线上（spring 还略低一点），
+//   **四个主题都没有达到正文 4.5:1**。这与本仓既有主按钮口径一致 ——
+//   本条改前那条写死橙渐变（#FF8A5C → #FF6B3D → #F04E1D）本身就是 2.32~3.61:1。
+//   **不要再写任何"对比度都够 / 已达标"这类把取舍说成结论的话**；真要抬到 4.5:1，
+//   得改全站主色或给三段文字加一层深色胶囊，属另案（会牵动 100+ 页面）。
+// 【未变的既有事实】图标牌仍是纯白 28% 打底（.timeline-cta-icon-wrap、.timeline-cta-go），
+//   它与主题无关，直接写字面量；文字色仍取 $color-text-inverse —— 它在各主题下就是"压在主色上的那一种颜色"
+//   （spring 下白、starry 下深藏青），正是我们要的，故三处文字色一律不动。
+.timeline-cta {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  margin: 8rpx 32rpx 28rpx;
+  padding: 30rpx 32rpx;
+  border-radius: $radius-lg;
+  // 主题主色渐变（不再写死橙色）：**两档、锚定暗端**，由 _theme.scss 的 --primary / --primary-dark 提供。
+  // 为什么去掉原三档里最亮的 --primary-light：它是 1.78~2.05:1 的元凶（实测表见本块上方那段注释），
+  // 去掉后同一批浅色主题的**暗端**为 3.55~5.82:1；starry 的深藏青字反着来，由下面的专用覆盖处理。
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark 62%);
+  // 投影跟着主色走：必须用**通道变量** --primary-rgb（值是 "R, G, B" 三个通道数字）进 rgba()。
+  // 写成 rgba(var(--primary), 0.5) 是非法 CSS，小程序 WXSS 会把整条声明丢掉（本仓库既有坑）；
+  // 兜底字面量 255, 107, 61 是暖橙主题的通道值，只在变量缺失时生效。
+  box-shadow: 0 20rpx 48rpx -16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.5);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.94;
+  }
+}
+
+// 星空银河是唯一深色主题：它的 --text-inverse 翻成深藏青 #1B2450（不是白字），
+// 压暗反而让深字更糊 —— 所以这里回到亮端，保持深藏青压蓝紫的 4.96~7.23:1。
+// ⚠️ 选择器必须写成 `.theme-starry .timeline-cta`（特指度 0,2,0）才稳定压过上面的 `.timeline-cta`（0,1,0）；
+//    写成 `&.theme-starry` 是同一个元素上的两个类，实际不会命中（主题类挂在页面根容器 .timeline-page 上）。
+.theme-starry .timeline-cta {
+  background: linear-gradient(135deg, $color-primary-light, $color-primary 62%);
+}
+
+.timeline-cta-icon-wrap {
+  width: 88rpx;
+  height: 88rpx;
+  flex-shrink: 0;
+  border-radius: 28rpx;
+  // 白 28% 叠在渐变上：不能写 rgba(var(--x), α) 那种非法 CSS，
+  // 这里是纯白透明度，与主题无关，直接写字面量
+  background: rgba(255, 255, 255, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timeline-cta-icon {
+  font-size: 44rpx;
+  line-height: 1;
+}
+
+.timeline-cta-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.timeline-cta-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 800;
+  letter-spacing: 1rpx;
+  color: $color-text-inverse;
+}
+
+.timeline-cta-desc {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 21rpx;
+  color: $color-text-inverse;
+  opacity: 0.92;
+}
+
+.timeline-cta-go {
+  flex-shrink: 0;
+  padding: 12rpx 22rpx;
+  border-radius: 22rpx;
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.timeline-cta-go-text {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: $color-text-inverse;
+}
 
 // ===== 时光速览（原「回忆精选」位置，改为真实数据摘要） =====
 // 「回忆精选」三张卡已整体移除（回忆录类入口统一收口到「创作 → 回忆录馆」），
@@ -101,43 +269,18 @@
   background: $color-border;
 }
 
-// ===== 添加时光记录主按钮（原型对齐：全宽圆角渐变） =====
-.timeline-add-main-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16rpx;
-  height: 112rpx;
-  border-radius: 999rpx;
-  margin: 48rpx 40rpx 0;
-  background: linear-gradient(135deg, $color-primary-light, $color-primary);
-  box-shadow: $shadow-button;
-  transition: transform 0.15s ease, opacity 0.15s ease;
-
-  &:active {
-    transform: scale(0.98);
-    opacity: 0.92;
-  }
-}
-
-.timeline-add-main-icon {
-  font-size: 40rpx;
-  color: $color-text-inverse;
-  font-weight: 400;
-  line-height: 1;
-}
-
-.timeline-add-main-text {
-  font-size: 30rpx;
-  font-weight: $font-weight-semibold;
-  color: $color-text-inverse;
-}
+// 【已删除】`.timeline-add-main-btn` / `-icon` / `-text` 三组样式
+// （2026-09-12 v2 屏 02）：那条"滚动区最底部"的通栏写入口已按原型
+// 上移到页头下方（`.timeline-cta`），底部不再有第二个写入口 → 这三组是死 CSS。
 
 // ===== 可滚动区域 =====
 .timeline-scroll {
   flex: 1;
   overflow-y: scroll;
   -webkit-overflow-scrolling: touch;
+  // 顶部留白：固定顶栏只有 104rpx，品牌横幅要离它远一点才不显得贴边
+  // （原来这份间距在 .timeline-fixed-top 的 padding 里，随固定层一起改到这边）
+  padding-top: 16rpx;
 }
 
 // ===== 横幅 =====
@@ -217,16 +360,185 @@
 }
 
 // ===== 时间线列表 =====
+// 【已删除】`.timeline-list-title`（「时光足迹」大标题）：2026-09-12 v2 屏 02
+// 改成按月分组后，每个分组自带「● 2026 年 9 月 ——— 3 条」小标题，
+// 上面再挂一个笼统的大标题就是两层标题打架（正是当初"冲突了"那类问题）。
 .timeline-list {
   padding: 0 32rpx;
 }
 
-.timeline-list-title {
+// 时光线容器（照片回忆 + 日记混排后的那条流）
+// 【为什么需要它】2026-09-12 第 4 波把日记并进同一条流后，这条流与上面的心情筛选行是兄弟节点；
+// 给它一个独立容器（而不是把月份分组直接摊在 .timeline-list 里）便于后续按流做整体样式。
+.timeline-feed {
+  padding: 0;
+}
+
+// ===== 月份分组（v2 屏 02）=====
+// 原型：橙色小圆点 + 「2026 年 9 月」+ 右对齐的「3 条」
+.timeline-month {
+  margin-bottom: 24rpx;
+}
+
+.timeline-month-head {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin: 0 4rpx 20rpx;
+}
+
+.timeline-month-dot {
+  width: 10rpx;
+  height: 10rpx;
+  flex-shrink: 0;
+  border-radius: $radius-full;
+  background: $color-primary;
+}
+
+.timeline-month-title {
+  font-size: 28rpx;
+  font-weight: 800;
+  letter-spacing: 0.5rpx;
+  color: $color-text-primary;
+}
+
+// 月份标题右侧的「N 条」（行尾、小字、弱色）
+// 【第 4b 波】原来这里还有一个 `.timeline-sec-count` 别名，给日记分区标题行的「共 N 篇」用；
+// 那个标题行随日记搬走后它没有任何使用者，一并删除（保留只会是死样式）。
+.timeline-month-count {
+  // margin-left:auto 把它推到行尾（原型就是右对齐的条数）
+  margin-left: auto;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+// ===== 区块标题（「● 标题」写法，当前唯一使用者是成就分区）=====
+// 2026-09-12 抽出：原先只有日记分区有一份「区块标题行」，成就分区再加一份
+// 就是同一种东西两套写法，改一处必漏一处。
+// 【第 4b 波】日记分区撤走后它成了成就分区的专用写法；保留通用命名，
+// 因为本页将来再分区（例如把速览拆开）仍会用到同一种标题行。
+.timeline-sec-head {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 20rpx;
+}
+
+.timeline-sec-dot {
+  width: 10rpx;
+  height: 10rpx;
+  flex-shrink: 0;
+  border-radius: $radius-full;
+  background: $color-primary;
+}
+
+.timeline-sec-title {
+  font-size: 30rpx;
+  font-weight: 800;
+  letter-spacing: 0.5rpx;
+  color: $color-text-primary;
+}
+
+// ===== 成就分区（v2 屏 02：原「成就墙」独立页降级成的展示分区）=====
+.timeline-achv {
+  padding: 0 32rpx;
+  margin-top: 8rpx;
+}
+
+// 两列宫格（原型 .grid：grid-template-columns 1fr 1fr + 10px 间隙）
+// ⚠️ 微信 WXSS 对 grid 的支持不稳（老基础库直接不生效），这里用 flex + 50% 基线
+// 实现同样的两列，与全仓其它宫格写法保持一致。
+.timeline-achv-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.timeline-achv-tile {
+  // 两列：(100% - 16rpx 间隙) / 2
+  width: calc(50% - 8rpx);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 22rpx 24rpx;
+  border-radius: $radius-md;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  box-shadow: $shadow-card;
+}
+
+// 图标底：原型 tone-a（主色淡底）/ tone-c（蓝调淡底）
+.timeline-achv-icon {
+  width: 64rpx;
+  height: 64rpx;
+  flex-shrink: 0;
+  border-radius: 22rpx;
+  background: $color-primary-bg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  // 2026-09-12（第一格改插画）新增：给绝对定位的插画当锚点，并让圆角裁掉溢出的图角。
+  // ⚠️ 这两条对第二格（emoji）无影响：它仍是 flex 居中的普通子节点，不会被裁到。
+  position: relative;
+  overflow: hidden;
+
+  &--alt {
+    background: rgba(var(--teal-rgb, 79, 163, 227), 0.14);
+  }
+}
+
+.timeline-achv-icon-text {
+  font-size: 34rpx;
+  line-height: 1;
+}
+
+/**
+ * 成就第一格的**插画层**（v2 屏 02：原型 L800 那格用的是 ipCard('achievement') 插画，
+ * 尺寸 36px / 圆角 12px / object-fit:cover；第二格 v2 仍是 emoji，故不动）。
+ *
+ * 【为什么用 fill + 绝对定位，而不是 `<Illustration size={32} />`】
+ *   实测编译产物（dist/common.js）里 `size` 是**写死的 px**：
+ *   `style:{width:"".concat(k,"px"),height:"".concat(Z,"px")}` —— Taro 只对 CSS 做 px→rpx，
+ *   内联 style 的 px 原样进 wxml，是固定 CSS px，不随屏宽缩放。
+ *   而这个图标底是 64rpx（会随屏宽缩放）。两者在 375pt 屏上恰好都是 32px，
+ *   但在 414pt 屏上底会变成 35.3px、图还停在 32px → 右上会露出一圈主色淡底的边。
+ *   用 `fill`（组件此时不写内联尺寸，尺寸全交给 CSS）+ 100% 铺满，任何屏宽都严丝合缝。
+ *   （同页的 PageHero 也是 `fill`，这是本仓处理"铺满容器"的既有写法。）
+ *
+ * ⚠️ 必须写成「双类名」：components/Illustration.scss 的 `.illustration--fill` 自带
+ *   `border-radius:0`，单类名谁生效取决于跨文件 CSS 拼接顺序（不可控）；
+ *   写成后代选择器（特指度 0,2,0 > 0,1,0）才能稳定压回本页图标底的 22rpx 圆角。
+ */
+.timeline-achv-icon .timeline-achv-icon-illus {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 22rpx;
+}
+
+.timeline-achv-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.timeline-achv-title {
   display: block;
-  font-size: 36rpx;
+  font-size: 26rpx;
   font-weight: 700;
   color: $color-text-primary;
-  margin-bottom: 32rpx;
+  // 长成就名（如「月度之星」）在窄格里可能换行，行高收紧一点更像一格标题
+  line-height: 1.3;
+}
+
+.timeline-achv-sub {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  line-height: 1.35;
 }
 
 .timeline-item {
@@ -255,11 +567,8 @@
   z-index: 1;
   border: 2rpx solid $color-bg-page;
 
-  &--milestone {
-    background: $gradient-gold;
-    box-shadow: 0 0 20rpx rgba(var(--primary-rgb, 255, 107, 61), 0.5);
-    animation: rootGlow 2.5s ease-in-out infinite;
-  }
+  // 【已删除】&--milestone：打卡里程碑（type 'milestone'）已在第 4 波整批撤出时光线，
+  // 这个圆点变体再也没有产出方 —— 留着只会让人以为线上还有里程碑卡片。
 
   &--memory {
     background: linear-gradient(135deg, $color-coral, $color-primary-dark);
@@ -339,18 +648,8 @@
   color: $color-text-secondary;
 }
 
-.timeline-milestone-badge {
-  padding: 4rpx 14rpx;
-  border-radius: 20rpx;
-  background: $color-primary-bg;
-  border: 1px solid $color-border;
-}
-
-.timeline-milestone-badge-text {
-  font-size: 20rpx;
-  color: $color-primary;
-  font-weight: 600;
-}
+// 【已删除】.timeline-milestone-badge / -text：随「里程碑卡片」一起撤出（2026-09-12 第 4 波），
+// tsx 里已经没有任何地方渲染这个角标。
 
 .timeline-flashback-badge {
   padding: 4rpx 14rpx;
@@ -440,147 +739,23 @@
   color: $color-text-tertiary;
 }
 
+// 底部呼吸位：滚动区高度只减掉了自定义 tabBar 的 160rpx（见 .timeline-page），
+// 这条是最后一张卡与底栏之间的余量。2026-09-12 v2 屏 02 把这格从 60rpx 提到 80rpx：
+// 写入口上移后底部少了那个通栏按钮，最后一张卡直接贴到底栏上沿会显得被切掉。
 .timeline-bottom-safe {
-  height: 60rpx;
+  height: 80rpx;
 }
 
-// ===== 宠物日记（2026-09-12 IA 第 2c 批：原「宠物日记」页并入本页）=====
-// 这里只写「本页原有词汇里没有」的部分：区块标题行、心情筛选行、心情角标、正文/备注/分享、空态。
-// 卡片、时间轴、圆点、宠物标签一律复用上面的 .timeline-item / .timeline-dot / .timeline-card /
-// .timeline-pet-tag —— 另造一套会让同一屏的两个分区看起来像两个页面。
-.timeline-diary {
-  padding: 0 32rpx;
-  margin-top: 16rpx;
-}
-
-.timeline-diary-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 20rpx;
-}
-
-.timeline-diary-title {
-  font-size: 36rpx;
-  font-weight: 700;
-  color: $color-text-primary;
-}
-
-.timeline-diary-count {
-  font-size: 24rpx;
-  color: $color-text-tertiary;
-}
-
-// 心情筛选行：照「新增回忆弹窗」里那套横滑胶囊的写法（父级 nowrap + 子级 inline-flex）。
-// 坑点：不能给胶囊直接加 display: flex —— 那会让它变成整行宽、竖着堆起来（本项目已踩过）。
-.timeline-diary-filter-scroll {
-  width: 100%;
-  white-space: nowrap;
-  margin-bottom: 24rpx;
-}
-
-.timeline-diary-filter-list {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 12rpx;
-}
-
-// 心情角标：底色由 tsx 按心情内联给（心情是语义色，不跟主题走），这里只管形状与文字
-.timeline-diary-mood {
-  padding: 4rpx 14rpx;
-  border-radius: 20rpx;
-  flex-shrink: 0;
-}
-
-.timeline-diary-mood-text {
-  font-size: 20rpx;
-  font-weight: $font-weight-semibold;
-  color: #FFFFFF;
-}
-
-// 日记正文：卡片主内容，比回忆描述（.timeline-card-desc，24rpx）略大一档
-.timeline-diary-text {
-  display: block;
-  font-size: 26rpx;
-  line-height: 1.8;
-  color: $color-text-primary;
-}
-
-// 备注块：复用打卡记录自带的 note（原 diary 页也是把它显示在正文下面）
-.timeline-diary-note {
-  margin-top: 16rpx;
-  padding: 16rpx 20rpx;
-  border-radius: 16rpx;
-  background: $color-bg-secondary;
-}
-
-.timeline-diary-note-label {
-  display: block;
-  font-size: 22rpx;
-  color: $color-text-tertiary;
-  margin-bottom: 4rpx;
-}
-
-.timeline-diary-note-text {
-  font-size: 22rpx;
-  line-height: 1.6;
-  color: $color-text-secondary;
-}
-
-.timeline-diary-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 16rpx;
-}
-
-.timeline-diary-share {
-  padding: 8rpx 24rpx;
-  border-radius: $radius-round;
-  background: $color-primary-bg;
-
-  &:active {
-    opacity: 0.8;
-  }
-}
-
-.timeline-diary-share-text {
-  font-size: 20rpx;
-  font-weight: $font-weight-medium;
-  color: $color-primary;
-}
-
-// 日记卡：系统生成的内容用虚线边，与用户手记的实线回忆卡区分（沿用全站手账便签语言）
-.timeline-card--diary {
-  border-style: dashed;
-}
-
-// 日记圆点：底色由心情内联给，这里只补一圈柔光，让它在时间轴上站得住
-.timeline-dot--diary {
-  box-shadow: 0 0 14rpx rgba(var(--primary-rgb, 255, 107, 61), 0.32);
-}
-
-// 日记空态：轻量提示（本页上方可能已经有一个大插画空态，不再上第二个插画）
-.timeline-diary-empty {
-  padding: 56rpx 40rpx;
-  border-radius: $radius-md;
-  background: $color-bg-secondary;
-  border: 1rpx dashed $color-border;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8rpx;
-}
-
-.timeline-diary-empty-text {
-  font-size: 26rpx;
-  color: $color-text-secondary;
-}
-
-.timeline-diary-empty-hint {
-  font-size: 22rpx;
-  color: $color-text-tertiary;
-}
+// ===== 【已删除】心情筛选行与「宠物日记」卡片的全部样式（2026-09-12 第 4b 波）=====
+// 删掉的是这一组类：.timeline-feed-filter / -scroll / -list / -hint（心情筛选行）、
+// .timeline-diary-mood / -text / -note / -actions / -share（日记卡内部）、
+// .timeline-card--diary / .timeline-dot--diary（日记卡与它的时间轴圆点）、
+// .timeline-diary-empty / -text / -hint（「该心情下暂无日记」次级空态）。
+// 【为什么整组删掉而不是留着】它们服务的渲染分支（日记卡 + 心情筛选）已经整块搬到
+// 健康档案页 pagesPet/trends 的「打卡记录」分区，tsx 里再也找不到这些类名 —— 留着就是死样式，
+// 还会让后来人以为本页仍有日记卡（以及曾有一个筛不动任何东西的筛选器）。
+// 新样式在 trends/index.scss 里按那边的卡片语言重写，两边不是同一套 DOM。
+//
 
 // ===== 年度回忆模态 =====
 .timeline-review-overlay {
@@ -1001,9 +1176,10 @@
 //   · 速览卡 `.timeline-overview`（白底 + 主文字色的三个数字）
 //   · 时间线卡片 `.timeline-card`（白底，含新增的宠物标签 `.timeline-pet-tag-text`）
 //   · 两个弹窗 `.timeline-add-memory-modal` / `.timeline-detail-modal`（白纸，含新增的宠物胶囊）
-//   · 固定页头里的 `<PageHero>`（自带硬编码浅奶油底，标题却吃主题文字色）
-//   · 心情筛选胶囊 `.timeline-diary .timeline-pet-chip` 与日记空态 `.timeline-diary-empty`
-//     （2026-09-12 并入日记分区后新增：胶囊是白底 + 次级文字色，空态是浅纸底 + 次级文字色）
+//   · 顶栏（v2 屏 02 起固定层是 `.timeline-topbar`，品牌字吃 --primary-dark）
+//   · 新增的成就格子 `.timeline-achv-tile`（白底 + 主/次级文字色）
+//   · （第 4b 波删掉一条）原第 6 处是「心情筛选胶囊 + 日记空态」，两者已随日记搬去健康档案页，
+//     本页不再有这两个类，兜底清单里也就没有它们了。
 //   实测（2026-09-11 审查 P1-2）：星空主题下速览数字与宠物标签直接看不见。
 // 【这是既有全站缺陷】不是本页引入：全局修复要动 100+ 个页面、需整体回归，属另案。
 // 【做法】沿用宠物档案页/打卡页/我的页已用的**页面级兜底**：在"浅底纸面"作用域内把
@@ -1011,14 +1187,16 @@
 .timeline-page.theme-starry {
   .timeline-overview,
   .timeline-card,
+  .timeline-achv-tile,
   .timeline-add-memory-modal,
   .timeline-detail-modal,
-  // 【2026-09-12 并入日记分区后新增】心情筛选胶囊与日记空态坐在页面背景上、
-  //   不在弹窗纸面作用域里：胶囊底色是 --bg-card（星空下仍是 #FFFFFF），文字却吃
-  //   --text-secondary（星空下是白色 74%）→ 不钉回来就是白底白字。
-  .timeline-diary .timeline-pet-chip,
-  .timeline-diary-empty,
-  .timeline-fixed-top .page-hero {
+  // 【已删除】原来这里还钉了 `.timeline-feed-filter .timeline-pet-chip` 与 `.timeline-diary-empty`
+  // 两处（第 4 波并入日记分区时加的星空兜底）：第 4b 波它们随日记一起搬走，
+  // 本页再没有这两个类，钉回来反而是死样式（tsx 里 grep 不到）。
+  // 品牌横幅：v2 屏 02 起 PageHero 从固定层挪进滚动区，类名路径随之改变
+  //（原来是 `.timeline-fixed-top .page-hero`）。PageHero 自带硬编码浅奶油底，
+  // 标题却吃主题文字色 —— 星空下正是"浅底白字"。
+  .timeline-scroll .page-hero {
     --text-primary: #40281C;
     --text-secondary: #8B6E58;
     --text-tertiary: #B69B83;

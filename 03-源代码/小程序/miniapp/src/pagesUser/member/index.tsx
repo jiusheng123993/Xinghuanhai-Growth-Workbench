@@ -6,6 +6,7 @@ import { View, Text, ScrollView, Input } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useEffect, useState } from 'react'
 // 会员中心页迁入 pagesUser 分包（主包瘦身）；分包页与主包页同深度，仍用 ../../ 访问 src 根
+import { useThemeClass } from '../../hooks/useThemeClass'
 import { useAuthStore } from '../../stores/authStore'
 import { useMembershipStore } from '../../stores/membershipStore'
 import { api } from '../../services/api'
@@ -62,6 +63,14 @@ function remainingDays(endDate: string): number {
 }
 
 export default function Member() {
+  /**
+   * 主题类名：**必须挂在页面自己的根节点上**
+   *
+   * 为什么：小程序端每个页面独立渲染，app 组件的 JSX 不包裹页面节点，挂在 app 层的
+   * `.theme-*` 传不进页面；不挂就会永远吃 styles/_theme.scss 里 page{} 的秋季基线变量，
+   * 用户切主题后本页仍是一片秋色。口径与 pages/creative、pages/mine 一致。
+   */
+  const themeClass = useThemeClass()
   const user = useAuthStore(state => state.user)
   const isAuthenticated = useAuthStore(state => state.isAuthenticated)
   const isInitialized = useAuthStore(state => state.isInitialized)
@@ -157,7 +166,7 @@ export default function Member() {
   const endDateText = membership?.endDate ? formatDate(membership.endDate) : '—'
 
   return (
-    <View className='member-page'>
+    <View className={`member-page ${themeClass}`}>
       {/* 全屏动态背景层 */}
       <PageBackground />
 

@@ -12,7 +12,7 @@
  * - 三档价格：确认页三档卡，价格取自 membership 端点 memoirPrices 表（会员/非会员分价）
  * - 剧本确认闸门保留（立项 v0.2 P0-2）：分镜生成后等待确认，确认后才烧视频成本
  */
-import { View, Text, ScrollView, Image, Textarea } from '@tarojs/components'
+import { View, Text, ScrollView, Image, Textarea, Video } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { CONFIG } from '../../config'
@@ -55,7 +55,8 @@ import {
   type MemoirTier,
 } from '../../utils/memoirTier'
 import './index.scss'
-import { PageBackground, Icon  } from '../../components'
+import { PageBackground, Icon, Illustration } from '../../components'
+import { useThemeClass } from '../../hooks/useThemeClass'
 
 // ==================== 类型定义 ====================
 
@@ -136,7 +137,11 @@ const STYLE_OPTIONS: Array<{ key: string; emoji: string; name: string; desc: str
   { key: 'warmheal', emoji: '🌤️', name: '温暖治愈', desc: '暖调柔光·抚慰治愈' },
 ]
 
-/** 顶部参考样例视频（2026-09-09）：用户提供成品视频 URL 后填入即可在顶部播放；为空显示占位 */
+/**
+ * 顶部参考样例视频（2026-09-09；2026-09-13 改为顶部内联播放）
+ * 与轻纪念页用的是同一个公网文件（memoir-sample/sample-light-1.mp4，实测 960×720 / 4:3）。
+ * 为空时比例盒只剩深色底（不再有占位横幅），点「全屏播放」提示制作中。
+ */
 const SAMPLE_VIDEO_URL = 'https://api.xinghuanhai.com/uploads/memoir-sample/sample-light-1.mp4'
 
 /** 选照片步骤的两个 tab */
@@ -145,6 +150,17 @@ type PhotoTab = 'local' | 'pool'
 // ==================== 组件 ====================
 
 export default function MemoirVlog() {
+  /**
+   * 主题类名：必须挂在页面自己的根节点上（2026-09-13 修复「标准/完整档没有跟随主题」）
+   *
+   * 为什么不能只靠 app.js 那层：小程序端每个页面是独立渲染的，app 组件的 JSX
+   * 并不包裹页面节点，`.theme-starry` 这类类名的 CSS 变量根本传不到页面里；
+   * 本页 index.scss 的配色又全部取 $color-* token（编译后即 var(--*)），没挂类就只能吃到基线
+   * （秋·暖阳珊瑚橙）兜底色。写法与 creative / mine / pet-profile 三页一致：
+   * 顶层无条件调用 + 根节点拼类名。本页只有一个根节点（loading / 剧本确认卡都在根节点内），
+   * 所以只需挂一次。
+   */
+  const themeClass = useThemeClass()
   const router = Taro.getCurrentInstance().router
   const routerParams = router?.params as Record<string, string> | undefined
   // 本页服务的档位：显式 ?tier= 优先、路由名兜底（判定顺序见 utils/memoirTier.resolveMemoirTier）；
@@ -1026,25 +1042,75 @@ export default function MemoirVlog() {
 
   // ==================== 渲染参考样例视频区（顶部，2026-09-09） ====================
 
+  /**
+   * 全屏播放顶部样例视频（沿用改造前样例卡的做法：Taro.previewMedia 唤起系统全屏播放器）。
+   * 页面内嵌的 <Video> 负责「就地看看」，这个显式入口负责「全屏看完整片」，
+   * 两端机型能力下用户都有路可走（写法与轻纪念页 handlePlaySample 一致）。
+   * @returns 无返回值；播放失败在 catch 里弹 toast，不向上抛错
+   */
+  const handlePlaySample = useCallback(() => {
+    // 样例地址待配置时不做静默失败：给明确提示（沿用旧占位横幅的兜底文案）
+    if (!SAMPLE_VIDEO_URL) {
+      Taro.showToast({ title: '示例视频制作中，敬请期待', icon: 'none' })
+      return
+    }
+    Taro.previewMedia({ sources: [{ url: SAMPLE_VIDEO_URL, type: 'video' }] }).catch(() => {
+      Taro.showToast({ title: '视频播放失败，请重试', icon: 'none' })
+    })
+  }, [])
+
+  /** 样例视频加载失败提示：域名白名单/网络问题都让用户看得见，不静默留一个黑框（口径同轻纪念页） */
+  const handleSampleError = useCallback(() => {
+    Taro.showToast({ title: '样例视频加载失败，可点「全屏播放」重试', icon: 'none' })
+  }, [])
+
+  /**
+   * 顶部参考样例区（2026-09-13 对齐轻纪念页的「内联视频 + 比例盒」写法）
+   *
+   * 结构自上而下三行，与轻纪念页 .memoir__hero 同构：
+   *   说明行（左「样例预览」＋右卖点角标）→ 比例盒（视频铺满）→ 底行（左成片说明＋右全屏播放）
+   * - 说明行与底行都排在视频**之外**：少数未开同层渲染的机型上，原生 video 会盖住绝对定位的兄弟节点
+   * - 封面用视频自身首帧（不设 poster）→ 不新增任何图片/字体/视频资源
+   * - 文案与轻纪念页逐字一致（用户要求三档「同一套样式」）：🎬 样例预览 / ✨ AI 时光电影 / 5-30 秒 · 真实成片
+   */
   const renderSampleVideo = () => (
-    <View
-      className='memoir-vlog__sample'
-      onClick={() => {
-        if (SAMPLE_VIDEO_URL) {
-          Taro.previewMedia({ sources: [{ url: SAMPLE_VIDEO_URL, type: 'video' }] }).catch(() => {})
-        } else {
-          Taro.showToast({ title: '示例视频制作中，敬请期待', icon: 'none' })
-        }
-      }}
-    >
-      <View className='memoir-vlog__sample-glow' />
-        <PageBackground />
-      <View className='memoir-vlog__sample-fallback'>
-        <Text className='memoir-vlog__sample-emoji'>🎞️</Text>
-        <Text className='memoir-vlog__sample-label'>参考样例 · AI 时光电影</Text>
-        <Text className='memoir-vlog__sample-hint'>点击观看示例成片</Text>
+    <View className='memoir-vlog__sample'>
+      {/* 全站页面背景层：position: fixed + z-index: -1 铺满视口，放这里只是因为本块是页面第一个子元素
+          （组件使用约定即「根容器第一个子元素」，见 components/PageBackground.tsx）。
+          它是页面级背景、不是样例的装饰层 —— 别当死代码删掉。 */}
+      <PageBackground />
+
+      {/* 说明行：左「样例预览」，右卖点角标 */}
+      <View className='memoir-vlog__sample-head'>
+        <Text className='memoir-vlog__sample-label'>🎬 样例预览</Text>
+        <View className='memoir-vlog__sample-badge'>
+          <Text className='memoir-vlog__sample-badge-text'>✨ AI 时光电影</Text>
+        </View>
       </View>
-      <View className='memoir-vlog__sample-play'><Text>▶</Text></View>
+
+      {/* 比例盒：高度由宽度按片源比例撑出（padding-top: 75% 即 4:3），视频绝对定位铺满它。
+          换 4:3 以外的片源，必须同步改 index.scss 里 .memoir-vlog__sample-frame 的 padding-top（那里有换算口径）。 */}
+      <View className='memoir-vlog__sample-frame'>
+        <Video
+          className='memoir-vlog__sample-video'
+          src={SAMPLE_VIDEO_URL}
+          objectFit='contain'
+          controls
+          showCenterPlayBtn
+          showPlayBtn
+          showProgress
+          showFullscreenBtn
+          onError={handleSampleError}
+        />
+      </View>
+
+      {/* 底行：左侧成片说明，右侧全屏入口（内联可播 + 显式全屏入口，两者不冲突） */}
+      <View className='memoir-vlog__sample-foot'>
+        <Text className='memoir-vlog__sample-caption'>5-30 秒 · 真实成片</Text>
+        <View className='memoir-vlog__sample-fullscreen' onClick={handlePlaySample}>
+          <Text className='memoir-vlog__sample-fullscreen-text'>⛶ 全屏播放</Text>
+        </View>
+      </View>
     </View>
   )
 
@@ -1234,7 +1300,14 @@ export default function MemoirVlog() {
               </View>
             )}
             {!loadingPool && !poolLoadFailed && photoPool && photoPool.profile_photos.length === 0 && photoPool.moment_photos.length === 0 && (
-              <Text className='memoir-vlog__pool-empty'>库里还没有照片，先在本地上传吧</Text>
+              /* 空态插画：`empty-photo`（猫狗一起看一个空相框）对应本处「库里还没有照片」，
+                 服务器实测 HEAD 200（/uploads/illustrations/empty-photo.jpg）。
+                 改成插画的原因：这里原来只有一行居中文字，而同一面板右侧就是「本地上传」按钮 ——
+                 没有任何视觉锚点，用户容易直接跳过这一块。 */
+              <View className='memoir-vlog__pool-empty'>
+                <Illustration name='empty-photo' size={132} className='memoir-vlog__pool-empty-illus' />
+                <Text className='memoir-vlog__pool-empty-text'>库里还没有照片，先在本地上传吧</Text>
+              </View>
             )}
             {photoPool && photoPool.profile_photos.length > 0 && (
               <>
@@ -1782,8 +1855,10 @@ export default function MemoirVlog() {
 
   // ==================== 主渲染 ====================
 
+  // 主题类挂在页面根节点上（写法照抄 creative / mine / pet-profile）：
+  // 本页配色全部走 $color-* token，靠这一层把主题 CSS 变量接进页面作用域。
   return (
-    <View className='memoir-vlog'>
+    <View className={`memoir-vlog ${themeClass}`}>
       {renderSampleVideo()}
       {renderStepIndicator()}
 

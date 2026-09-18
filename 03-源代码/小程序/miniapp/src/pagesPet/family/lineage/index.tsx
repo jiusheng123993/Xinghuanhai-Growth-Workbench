@@ -1,6 +1,10 @@
 /**
- * 家族图谱页面
+ * 血缘图谱页面
  * 展示宠物家族血缘关系树，支持添加/删除父母/子女关系
+ *
+ * 命名口径（2026-09-12）：本页统一叫「血缘图谱」（导航标题、页内大标题、我的页入口三处一致）。
+ * 它只管**宠物之间**的血缘（父母/祖辈/配偶/兄弟姐妹）；「家庭成员（人）之间的关系」
+ * （情侣/父女/母子… 8 种）不在这里 —— 那份能力归 pages/family/index 的「共同养宠 → 设置关系」。
  *
  * 数据流：
  *   1. 从 currentFamily(useFamilyStore) 获取 familyId
@@ -486,7 +490,9 @@ export default function LineagePage() {
           <Text className='lineage-empty-icon'>🏡</Text>
           <Text className='lineage-empty-text'>还没有创建家庭</Text>
           <Text className='lineage-empty-hint'>创建家庭后，可以添加毛孩子并建立家族血缘关系</Text>
-          <View className='lineage-empty-btn' onClick={() => Taro.navigateTo({ url: '/pagesPet/family/dashboard/index' })}>
+          {/* 去家庭页创建：2026-09-12「家庭看板」（family/dashboard）并入 pages/family 后已下线，
+              这里必须改指家庭页，否则空态按钮点了没反应 */}
+          <View className='lineage-empty-btn' onClick={() => Taro.navigateTo({ url: '/pages/family/index' })}>
             <Text>前往创建家庭</Text>
           </View>
         </View>
@@ -501,9 +507,10 @@ export default function LineagePage() {
         <View className='lineage-empty'>
           <Text className='lineage-empty-icon'>🧬</Text>
           <Text className='lineage-empty-text'>还没有家庭成员</Text>
-          <Text className='lineage-empty-hint'>请先在家庭看板中添加宠物成员</Text>
-          <View className='lineage-empty-btn' onClick={() => Taro.navigateTo({ url: '/pagesPet/family/dashboard/index' })}>
-            <Text>前往添加成员</Text>
+          {/* 提示语与跳转同步改口：成员是在家庭页「成员宠物」区加入的（原指向已下线的家庭看板） */}
+          <Text className='lineage-empty-hint'>请先在家庭页的「成员宠物」里把毛孩子加入家庭</Text>
+          <View className='lineage-empty-btn' onClick={() => Taro.navigateTo({ url: '/pages/family/index' })}>
+            <Text>前往家庭页</Text>
           </View>
         </View>
       </View>
@@ -514,7 +521,7 @@ export default function LineagePage() {
     <View className={`lineage-page ${themeClass}`}>
       <View className='lineage-header'>
         <View className='lineage-header-top'>
-          <Text className='lineage-header-title'>🧬 家族图谱</Text>
+          <Text className='lineage-header-title'>🧬 血缘图谱</Text>
           <View className='lineage-view-toggle'>
             <Text
               className={`lineage-view-toggle-btn ${viewMode === 'single' ? 'lineage-view-toggle-btn--active' : ''}`}

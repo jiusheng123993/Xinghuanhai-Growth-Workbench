@@ -1,11 +1,21 @@
 /**
  * 危机转介卡片组件
  * 提供心理援助热线拨打、紧急就医引导及后续跟进功能
+ *
+ * 【IA：`找宠物医院` 为什么跳团团】（2026-09-12 收口批次 §2）
+ * 判断标准：**需要 AI 推理的能力**（食物安全查询 / 症状初筛 / 附近医院 / AI 取名 / AI 记忆）
+ * 入口统一先跳团团；**纯记录 / 查询类**（打卡 / 品种 / 疫苗 / 时光）保留原位。
+ * 「找宠物医院」= 附近医院，属 AI 推理类 → 收拢到团团。
+ *
+ * ⚠️ 顺带修掉一个标签与落地页不一致的旧问题：改之前这一项写的是「找宠物医院」，
+ * 跳的却是 `/pagesPet/symptom-check/index`（症状初筛），文案与去处对不上；
+ * 收拢到团团后，团团的能力条里「附近医院」与「症状初筛」是两个正确入口，用户不会再被送错。
  */
 import { View, Text } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useCallback } from 'react'
 import { HOTLINE_NUMBER } from '../constants'
+import { buildAiEntryUrl } from '../utils/aiEntry'
 import type { CrisisTriggerSource } from '../engines/emotion'
 import { trackEvent as trackEventService } from '../services/analyticsService'
 import './CrisisReferralCard.scss'
@@ -32,6 +42,17 @@ export default function CrisisReferralCard({ message, onDismiss, severity = 'sev
     onDismiss()
   }, [onFollowUp, onDismiss, triggerSource])
 
+  /**
+   * 打开「附近医院」（AI 推理类能力）
+   *
+   * 为什么先跳团团：IA 定「团团 = 全站 AI 能力唯一入口」，附近医院属 AI 推理类；
+   * 带 `capability=hospital` 参数后团团会**进页自动打开**该能力，用户仍是一步到位。
+   * 契约见 `utils/aiEntry.ts`。
+   */
+  const handleFindHospital = useCallback(() => {
+    Taro.navigateTo({ url: buildAiEntryUrl('hospital') })
+  }, [])
+
   const isSevere = severity === 'severe'
 
   return (
@@ -50,7 +71,7 @@ export default function CrisisReferralCard({ message, onDismiss, severity = 'sev
 
         {isSevere && (
           <View className='crisis-referral__emergency-section'>
-            <View className='crisis-referral__emergency-item' onClick={() => Taro.navigateTo({ url: '/pagesPet/symptom-check/index' })}>
+            <View className='crisis-referral__emergency-item' onClick={handleFindHospital}>
               <Text className='crisis-referral__emergency-icon'>🏥</Text>
               <Text className='crisis-referral__emergency-text'>找宠物医院</Text>
             </View>

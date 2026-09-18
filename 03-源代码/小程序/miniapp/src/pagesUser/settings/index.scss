@@ -1,169 +1,487 @@
 @import '../../styles/_theme';
 
+// ============================================
+// 设置页（高保真 v2「屏 09 设置」）
+// ============================================
+// 【本文件与 v2 的对应关系（改样式前先看这张表）】
+//   v2 的类名            → 本页类名
+//   .sec-head/.dot/h3    → &__sec-head / &__sec-dot / &__sec-title
+//   .card（白玻璃）       → &__card（@include glow-card：--glass-bg + 1rpx 白描边 + 软阴影）
+//   .menulist/.mrow      → &__card 的 padding + &__row
+//   .mrow .mi（30px 圆角块）→ &__row-icon（72rpx，四套 tone 底色）
+//   .mrow .chev          → &__row-arrow
+//   .themerow/.tpill     → &__theme-head / &__theme-picker / &__tpill
+//
+// 【尺寸换算】v2 的 CSS 是 375pt 基准的 px，本页是 750rpx 基准 → 一律 ×2
+//   （例：13px 行文字 → 26rpx；30px 图标块 → 60~72rpx；12px 行内边距 → 24rpx）
+//
+// ⚠️ 本文件里原来的 `$color-*` 曾被批量误替换成 `\-*`（27 处声明集体失效），
+//    已由舰长修复；**改样式时不要写回坏写法，也不要把这些声明删掉**。
+// ============================================
+
 .settings-page {
   min-height: 100vh;
   background-color: $color-bg-page;
   padding-bottom: env(safe-area-inset-bottom);
 
-  &__section {
-    margin-top: 24rpx;
-    @include card-base;
-    padding: 0 32rpx;
-    border-radius: 24rpx;
-    margin-left: 24rpx;
-    margin-right: 24rpx;
-    box-shadow: $shadow-sm;
+  // 卡片容器：v2 的内容区就是一条纵向流（.screen + .sec 各自 margin-top）
+  // 这里用 flex 列只是为了让「个人资料」卡能用 order 排到最前（见 &__profile-card）
+  &__inner {
+    display: flex;
+    flex-direction: column;
+  }
 
-    &:first-child {
-      margin-top: 24rpx;
-    }
+  // ===== 分组标题（v2 的 .sec-head：同色小圆点 + 标题）=====
+  &__sec-head {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+    margin: 28rpx 28rpx 16rpx;
 
-    &-title {
-      display: block;
-      padding: 24rpx 0 8rpx;
-      font-size: 24rpx;
-      color: $color-text-tertiary;
-      letter-spacing: 1rpx;
-      font-weight: 500;
+    // 卡片内部用的分组标题（「个人资料」）：去掉外边距，靠卡片自身的 padding 定位
+    &--inset {
+      margin: 0 0 16rpx;
     }
   }
 
-  &__item {
+  // 小圆点：v2 的 .dot 是 5px 实心主色圆；这里同样走主题变量，四季切换跟着变色
+  &__sec-dot {
+    width: 10rpx;
+    height: 10rpx;
+    border-radius: 50%;
+    background: $color-primary;
+    flex: 0 0 auto;
+  }
+
+  &__sec-title {
+    font-size: 28rpx;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+    letter-spacing: 0.6rpx;
+  }
+
+  // ===== 卡片（v2 的 .card：白玻璃 + 1rpx 白描边 + 软阴影）=====
+  &__card {
+    margin: 0 24rpx;
+    padding: 8rpx 0;
+    @include glow-card;
+    // 行与行之间的分隔线、行的左右内边距都由 &__row 负责，
+    // 卡片只留 8rpx 上下呼吸位（v2 的 .menulist padding:4px 0 → 8rpx）
+  }
+
+  // 个人资料卡：视觉上排到「账号」分组之前（v2 没有这张卡，但它是全站唯一资料编辑区）
+  // order 取 -2 而不是 -1：注销倒计时提示也吃 order:-1，两者若同号就要靠 DOM 顺序决胜负
+  // （而它的 JSX 在文件末尾，会意外排到资料卡上面），错开一档就没有这种隐式依赖。
+  &__profile-card {
+    order: -2;
+    margin-top: 20rpx;
+    padding: 24rpx 28rpx;
+  }
+
+  // ===== 菜单行（v2 的 .mrow：图标块 + 文案 + 右侧值/箭头）=====
+  &__row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 28rpx 0;
-    border-bottom: 1rpx solid $color-divider;
+    gap: 22rpx;
+    padding: 24rpx 28rpx;
+    // 行与行之间用 **border-top** 画分隔线（与 v2 的 `.mrow+.mrow{border-top}` 同款视觉）。
+    // ⚠️ 不用 `& + &` 相邻兄弟选择器：本页有几行的内容区里还挂着展开面板，
+    //    相邻选择器一遇到"中间插了别的元素"就会断线；改成"每行都吃顶线、
+    //    再由 :first-child 去掉卡片第一行的顶线"，线与线的位置永远可预测。
+    border-top: 1rpx solid $color-divider;
     transition: background 0.25s ease;
-
-    &:last-child {
-      border-bottom: none;
-    }
 
     &:active {
       background: $color-primary-bg;
     }
 
-    &-label {
-      font-size: 28rpx;
-      color: $color-text-primary;
-      font-weight: 500;
-
-      &--danger {
-        color: $color-danger;
-      }
+    // 卡片第一行：不吃顶部分隔线（卡片顶部不该有一条横线）
+    &:first-child {
+      border-top: none;
     }
 
-    &-value {
-      font-size: 28rpx;
-      color: $color-text-tertiary;
-
-      &--bound {
-        color: $color-primary;
-      }
-    }
-
-    &-arrow {
-      font-size: 32rpx;
-      color: $color-text-tertiary;
-      margin-left: 16rpx;
-    }
-
-    &-badge {
-      font-size: 20rpx;
-      color: $color-primary;
-      background-color: $color-primary-bg;
-      padding: 4rpx 12rpx;
-      border-radius: 8rpx;
-      margin-left: 16rpx;
-    }
-
-    &-loading {
-      font-size: 24rpx;
-      color: $color-primary;
-      margin-left: 16rpx;
+    // 顶部对齐的行（主题皮肤 / 提醒）：内容区可能有两行以上，图标与首行文字居中对齐
+    &--top {
+      align-items: flex-start;
     }
   }
 
-  &__deletion-notice {
-    margin: 24rpx;
-    padding: 24rpx 32rpx;
-    background: $color-danger-bg;
-    border-radius: 16rpx;
-    border: 2rpx solid rgba(224, 133, 107, 0.3);
+  // ===== 当前主题预览（v2 的 .brandip：图在上、说明条在下）=====
+  // 【2026-09-12 合并重构】原先是「星空银河」专属的**独立一张卡**（&__star-preview），
+  // 与下面主题皮肤的胶囊排并列 → 同一个能力在同一屏两个入口，用户不知道在哪儿换主题。
+  // 现在它是主题卡内部的"当前主题预览"：切哪套主题就显示哪套的图与说明，
+  // 那些只有星空用得上的样式（顶部色条 / 「当前主题」徽标 / --current 辉光）随之删除 ——
+  // 选中态本来就由胶囊排表达，不必在预览上再说一遍。
+  &__theme-preview {
+    margin-top: 18rpx;
+    border-radius: 32rpx;
+    overflow: hidden;
+    // 说明条底色比卡底再淡一档（v2 的 cap2 用 --g86，本页同款口径）
+    background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.56);
+    border: 1rpx solid $color-divider;
+  }
 
-    .deletion-notice__title {
-      display: block;
-      font-size: 28rpx;
-      font-weight: 600;
-      color: $color-danger;
-      margin-bottom: 8rpx;
-    }
+  // 图片区：固定高度 + 兜底色（采样自插画边缘 #FDD9BC），
+  // 保证插画加载失败（Illustration 整块不渲染）时不会塌成 0 高
+  &__theme-preview-art {
+    position: relative;
+    width: 100%;
+    height: 420rpx;
+    background: #FDD9BC;
 
-    .deletion-notice__desc {
-      display: block;
-      font-size: 24rpx;
-      color: $color-text-secondary;
-      line-height: 1.5;
-      margin-bottom: 16rpx;
-    }
-
-    .deletion-notice__action {
-      display: inline-block;
-      padding: 8rpx 24rpx;
-      background: $color-bg-card;
-      border-radius: 24rpx;
-      border: 2rpx solid $color-danger;
-      @include press-feedback;
-    }
-
-    .deletion-notice__cancel {
-      font-size: 24rpx;
-      color: $color-danger;
-      font-weight: 500;
+    // 奶油格纹没有专属品牌图（按季节回退会拿秋季风景配"奶油底色 · 细格纹"的说明，图文对不上），
+    // 所以这一套改画它自己的**格纹底**：底色取该主题注册的 navbarBg，格纹做法沿用
+    // components/PageBackground.scss 的 `.xhh-bg__grid`（1px 主色淡线 + 34px 网格）。
+    // ⚠️ 格线在这里**故意画得比真背景重**（真背景 alpha 0.045、线宽 1px）：
+    //    那是铺满全屏的底纹，缩到 420rpx 的预览框里就完全看不见了，整块会像"空占位"。
+    //    预览是色卡，宁可让纹理在框里可辨识 —— 但**不改真背景那套值**，两者不共用变量。
+    &--grid {
+      background-color: #FFF9F0;
+      background-image:
+        linear-gradient(rgba(255, 107, 61, 0.14) 2rpx, transparent 2rpx),
+        linear-gradient(90deg, rgba(255, 107, 61, 0.14) 2rpx, transparent 2rpx);
+      background-size: 56rpx 56rpx;
     }
   }
 
-  &__logout {
-    margin: 48rpx 24rpx;
-    padding: 24rpx 0;
-    text-align: center;
-    @include card-base;
-    border-radius: 48rpx;
-    box-shadow: $shadow-sm;
-    transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+  &__theme-preview-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  // 说明条：v2 的 .cap2（padding 12px 15px 15px / 顶部 1px 白分隔线）
+  &__theme-preview-body {
+    padding: 22rpx 26rpx 26rpx;
+    background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.56);
+    border-top: 1rpx solid rgba(255, 255, 255, 0.9);
+  }
+
+  &__theme-preview-title {
+    display: block;
+    font-size: 30rpx;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+    letter-spacing: 0.6rpx;
+  }
+
+  &__theme-preview-desc {
+    display: block;
+    margin-top: 6rpx;
+    font-size: 21rpx;
+    color: $color-text-secondary;
+  }
+
+  // 图标圆角块：v2 的 .mi 是 30×30px / radius 10px；本页行高更高，取 72rpx
+  &__row-icon {
+    width: 72rpx;
+    height: 72rpx;
+    border-radius: 22rpx;
+    @include flex-center;
+    flex: 0 0 auto;
+
+    // 四套 tone：底色与图标同源（Icon 组件读同一套语义色板），避免"底变色不变"
+    // 底色用 rgba(var(--*-rgb), α) —— ⚠️ 不能写 rgba(var(--primary), α)，那是非法 CSS
+    &--primary {
+      background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+    }
+
+    &--gold {
+      background: rgba(var(--gold-rgb, 255, 176, 32), 0.14);
+    }
+
+    &--teal {
+      background: rgba(var(--teal-rgb, 79, 163, 227), 0.14);
+    }
+
+    &--danger {
+      background: rgba(var(--danger-rgb, 255, 90, 95), 0.12);
+    }
+  }
+
+  // 行内文案列（主 + 副）
+  &__row-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__row-label {
+    font-size: 28rpx;
+    font-weight: $font-weight-medium;
+    color: $color-text-primary;
+
+    // 危险操作（删除云端数据 / 注销账号 / 退出登录）
+    &--danger {
+      color: $color-danger;
+    }
+  }
+
+  &__row-sub {
+    display: block;
+    margin-top: 6rpx;
+    font-size: 22rpx;
+    color: $color-text-tertiary;
+  }
+
+  &__row-value {
+    font-size: 26rpx;
+    color: $color-text-tertiary;
+    flex: 0 0 auto;
+    max-width: 320rpx;
+    @include text-ellipsis;
+
+    &--danger {
+      color: $color-danger;
+    }
+  }
+
+  &__row-arrow {
+    font-size: 32rpx;
+    line-height: 1;
+    color: $color-text-tertiary;
+    flex: 0 0 auto;
+  }
+
+  // 卡片底部的说明小字（v2 卡下那行 9.5px IA 注释的位置，本页放真实提示）
+  &__hint {
+    display: block;
+    padding: 4rpx 28rpx 20rpx;
+    font-size: 22rpx;
+    color: $color-text-tertiary;
+    line-height: 1.5;
+  }
+
+  // ===== 账号卡里的头像（与资料卡的头像同一套方形圆角语言，尺寸小一档）=====
+  &__avatar {
+    width: 88rpx;
+    height: 88rpx;
+    border-radius: 26rpx;
+    flex: 0 0 auto;
+    display: block;
+
+    // 没有头像时的图标占位（底色走主色 tint，图标用主色）
+    &--placeholder {
+      @include flex-center;
+      background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+    }
+  }
+
+  // ===== 主题皮肤行（v2 的 .themerow / .themerow-top / .themepick / .tpill）=====
+  // 标题行：左边「主题皮肤」，右边显示当前配色名（v2 的 .now）
+  &__theme-head {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+  }
+
+  &__theme-now {
+    margin-left: auto;
+    font-size: 22rpx;
+    font-weight: $font-weight-bold;
+    color: $color-primary;
+    flex: 0 0 auto;
+  }
+
+  // 四季胶囊排（v2 的 .themepick：flex + gap 7px + margin-top 9px）
+  &__theme-picker {
+    display: flex;
+    gap: 14rpx;
+    margin-top: 18rpx;
+  }
+
+  // 非四季的两套（星空银河 / 奶油格纹）：紧接着四季胶囊排一行，与四季**同属主题**。
+  // 用横向 ppill（色点 + 全名）而不是 tpill：四个字的标签挤进等宽胶囊会被压变形，
+  // 且这两枚本来就该"看得出来跟四季是一伙的、但不是季节"。
+  &__theme-extra {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14rpx;
+    margin-top: 14rpx;
+  }
+
+  // 单枚胶囊（v2 的 .tpill：等宽、纵向、色点在上文字在下、1.5px 透明描边）
+  // 选中态不只换底色：描边与文字色由 JSX 内联注入该季节的深色档（v2 的 --primary-deep），
+  // 因为 WXSS 里拿不到"每个季节各自的深色档"（本页的 --primary 只反映当前主题）。
+  &__tpill {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10rpx;
+    padding: 14rpx 0 12rpx;
+    border-radius: 26rpx;
+    background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.56);
+    border: 3rpx solid transparent;
+    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
     @include press-feedback;
+  }
 
-    &-text {
-      font-size: 30rpx;
-      color: $color-primary;
-      font-weight: 600;
+  // 色点：v2 的 .tpill i（13px 圆 + 白色内描边；选中时外圈再补一圈同色环）
+  &__tpill-dot {
+    width: 26rpx;
+    height: 26rpx;
+    border-radius: 50%;
+    transition: box-shadow 0.18s ease;
+  }
+
+  &__tpill-label {
+    font-size: 22rpx;
+    font-weight: $font-weight-bold;
+    color: $color-text-secondary;
+  }
+
+  // 选中态的胶囊文字加深（底色/描边由内联样式给，这里只管文字）
+  // ⚠️ 必须写全 `.settings-page__tpill-label` 后代选择器：
+  //    `&__tpill--on &__tpill-label` 会被编译成 `.x__tpill--on.x__tpill-label`
+  //    （同一个元素要有两个类）→ 永不命中，是个"看着像生效其实没生效"的死规则。
+  // 本选择器也给选中态留一条**不依赖内联样式**的底线：描边与字重即使内联色值没生效，
+  // 也能看出选的是谁（内联只负责"哪一季的颜色"）。
+  &__tpill--on {
+    border-color: $color-primary;
+    font-weight: $font-weight-bold;
+
+    .settings-page__tpill-label {
+      color: inherit;
     }
   }
 
-  &__modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: $color-bg-overlay;
+  // ===== 「宠物照片壁纸」展开入口（v2 没有，是本页保留能力的折叠开关）=====
+  // 【2026-09-12 合并重构后只剩壁纸】原先这里叫「更多背景与壁纸」，里面装着
+  // 星空银河 / 奶油格纹两套背景 + 照片壁纸；那两套背景已上移到主题胶囊排（主题必须一眼看全），
+  // 所以折叠里只剩照片壁纸 —— 它是"主题之外的另一种背景来源"。
+  &__expand {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    gap: 8rpx;
+    margin-top: 18rpx;
+    padding: 12rpx 0;
+    border-radius: 999rpx;
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
+    @include press-feedback;
   }
 
-  &__modal-content {
-    width: 90%;
-    max-height: 80vh;
-    background: $color-bg-card;
+  &__expand-text {
+    font-size: 22rpx;
+    color: $color-primary;
+    font-weight: $font-weight-medium;
+  }
+
+  &__expand-caret {
+    font-size: 26rpx;
+    line-height: 1;
+    color: $color-primary;
+    transition: transform 0.2s ease;
+    transform: rotate(90deg);
+
+    // 展开时箭头朝下（rotate 90 → 270），与「收起」文案同向
+    &--open {
+      transform: rotate(270deg);
+    }
+  }
+
+  // ===== 展开面板（主题皮肤行 / 提醒行共用）=====
+  &__panel {
+    margin-top: 20rpx;
+    padding: 20rpx;
     border-radius: 24rpx;
-    overflow-y: auto;
+    // 面板底色比卡片再淡一档（v2 的 --g56 用法：卡内嵌块比卡底更透）
+    background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.56);
+    border: 1rpx solid $color-divider;
   }
 
-  // ===== 个人资料区块（2026-09-12 IA 第 2a 批，原 pagesUser 分包的 profile 页并入）=====
-  // 只用本页已有的卡片语言（section 卡片 + 内边距），不引入 profile 页的独立卡片/水墨背景装饰
+  &__panel-label {
+    display: block;
+    font-size: 22rpx;
+    color: $color-text-tertiary;
+    margin-bottom: 12rpx;
+  }
+
+  &__panel-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14rpx;
+    margin-bottom: 20rpx;
+  }
+
+  // 面板里的胶囊（非四季背景 / 壁纸操作）：横向排列，图标或色点 + 文字
+  &__ppill {
+    display: flex;
+    align-items: center;
+    gap: 10rpx;
+    padding: 12rpx 22rpx;
+    border-radius: 999rpx;
+    background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.9);
+    border: 3rpx solid transparent;
+    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+    @include press-feedback;
+
+    &--on {
+      // 选中态：主色 tint 底（描边与文字色由内联样式按主题注入）
+      background: $color-primary-bg;
+    }
+
+    &--danger {
+      background: $color-danger-light;
+    }
+  }
+
+  &__ppill-dot {
+    width: 22rpx;
+    height: 22rpx;
+    border-radius: 50%;
+    flex: 0 0 auto;
+  }
+
+  &__ppill-label {
+    font-size: 24rpx;
+    font-weight: $font-weight-medium;
+    color: $color-text-secondary;
+  }
+
+  // 面板胶囊选中态的文字色（同上：必须写全类名，否则 `&__ppill--on &__ppill-label` 编译成双类死规则）
+  &__ppill--on {
+    .settings-page__ppill-label {
+      color: inherit;
+    }
+  }
+
+  &__panel-hint {
+    display: block;
+    font-size: 20rpx;
+    color: $color-text-tertiary;
+    line-height: 1.5;
+  }
+
+  // ===== 提醒面板里的单条开关行 =====
+  &__notify-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16rpx 0;
+
+    & + & {
+      border-top: 1rpx solid $color-divider;
+    }
+  }
+
+  &__notify-label {
+    font-size: 26rpx;
+    color: $color-text-primary;
+  }
+
+  // ===== 个人资料卡内部（沿用 IA 第 2a 批搬过来的类名，只调间距与底色）=====
+  // 高亮脉冲：从「账号」卡的「头像与昵称」行跳上来时，给这张卡一圈呼吸描边，
+  // 让用户知道"要改的东西就是这张卡"（否则滚回顶部只是一个普通卡片，看不出重点）
+  &__profile {
+    border-radius: 24rpx;
+    transition: box-shadow 0.3s ease;
+
+    &--highlight {
+      animation: settingsProfilePulse 0.8s ease-in-out 2;
+    }
+  }
+
   &__profile-row {
     display: flex;
     align-items: center;
@@ -207,7 +525,9 @@
   &__profile-nickname-input {
     flex: 1;
     height: 88rpx;
-    background: $color-bg-secondary;
+    // 输入框底色与卡片同族（卡片已是 0.72 白玻璃，输入框再淡一档即可看出边界）
+    background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.9);
+    border: 1rpx solid $color-divider;
     border-radius: 16rpx;
     padding: 0 24rpx;
     font-size: 28rpx;
@@ -221,9 +541,9 @@
     color: $color-text-secondary;
   }
 
-  // 保存按钮：沿用本页主色块语言（胶囊圆角 + 主题渐变），与退出登录按钮同一视觉族
+  // 保存按钮：沿用本页主色块语言（胶囊圆角 + 主题渐变），与退出登录同一视觉族
   &__save-btn {
-    margin: 24rpx 0 32rpx;
+    margin: 24rpx 0 8rpx;
     height: 84rpx;
     border-radius: 42rpx;
     background: $gradient-gold;
@@ -240,71 +560,92 @@
     }
   }
 
-  // 主题 / 背景选择的样式已迁至 components/BackgroundPicker.scss
-  // （设置页改为复用 BackgroundPicker 组件，样式随组件走，避免两处维护）
-}
-// ===== 账号卡（原型 1:1） =====
-.settings-account-card {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-  padding: 32rpx;
-  margin: 24rpx;
-  background: \-bg-card;
-  border-radius: 24rpx;
-  box-shadow: \-card;
+  // 注销倒计时提示（只有"已申请注销"的用户看得到）
+  &__deletion-notice {
+    margin: 24rpx;
+    padding: 24rpx 32rpx;
+    background: $color-danger-bg;
+    border-radius: 16rpx;
+    border: 2rpx solid rgba(224, 133, 107, 0.3);
+
+    // 账号即将被永久删除属高危状态：排到「个人资料」卡之后、所有设置组之前
+    // （order 与 &__profile-card 配对：资料卡 -2、本提示 -1，负号组内按数值升序排列）
+    &--notice-first {
+      order: -1;
+    }
+
+    .deletion-notice__title {
+      display: block;
+      font-size: 28rpx;
+      font-weight: 600;
+      color: $color-danger;
+      margin-bottom: 8rpx;
+    }
+
+    .deletion-notice__desc {
+      display: block;
+      font-size: 24rpx;
+      color: $color-text-secondary;
+      line-height: 1.5;
+      margin-bottom: 16rpx;
+    }
+
+    .deletion-notice__action {
+      display: inline-block;
+      padding: 8rpx 24rpx;
+      background: $color-bg-card;
+      border-radius: 24rpx;
+      border: 2rpx solid $color-danger;
+      @include press-feedback;
+    }
+
+    .deletion-notice__cancel {
+      font-size: 24rpx;
+      color: $color-danger;
+      font-weight: 500;
+    }
+  }
+
+  &__modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: $color-bg-overlay;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  &__modal-content {
+    width: 90%;
+    max-height: 80vh;
+    background: $color-bg-card;
+    border-radius: 24rpx;
+    overflow-y: auto;
+  }
+
+  // 底部安全区：本页是普通页面（不是 tab 页）→ 不需要给自定义 tabBar 让位
+  &__safe-bottom {
+    height: constant(safe-area-inset-bottom);
+    height: env(safe-area-inset-bottom);
+    min-height: 24rpx;
+  }
+
+  // 主题 / 背景选择的样式已迁至本页（主题皮肤行 + 展开面板）
+  // —— 原 components/BackgroundPicker.scss 仍存在且组件仍可用，但本页不再引用它（见 tsx 注释）
 }
 
-.settings-account-card__avatar {
-  width: 104rpx;
-  height: 104rpx;
-  border-radius: 50%;
-  background: linear-gradient(135deg, \-primary-light, \-primary);
-  @include flex-center;
-  flex-shrink: 0;
-  box-shadow: \-button;
-}
+// 个人资料卡高亮脉冲：描边呼吸两轮（1.6s，与 tsx 里的 setTimeout 对齐）
+@keyframes settingsProfilePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--primary-rgb, 255, 107, 61), 0);
+  }
 
-.settings-account-card__avatar-emoji {
-  font-size: 48rpx;
-  line-height: 1;
-}
-
-.settings-account-card__info {
-  flex: 1;
-  min-width: 0;
-}
-
-.settings-account-card__name {
-  display: block;
-  font-size: \-size-lg;
-  font-weight: \-weight-bold;
-  color: \-text-primary;
-  @include text-ellipsis;
-}
-
-.settings-account-card__phone {
-  display: block;
-  font-size: 22rpx;
-  color: \-text-secondary;
-  margin-top: 6rpx;
-  @include text-ellipsis;
-}
-
-.settings-account-card__edit {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 50%;
-  background: \-primary-bg;
-  @include flex-center;
-  flex-shrink: 0;
-}
-
-.settings-account-card__edit:active {
-  opacity: 0.8;
-}
-
-.settings-account-card__edit-icon {
-  font-size: 28rpx;
-  line-height: 1;
+  50% {
+    box-shadow: 0 0 0 8rpx rgba(var(--primary-rgb, 255, 107, 61), 0.28);
+  }
 }

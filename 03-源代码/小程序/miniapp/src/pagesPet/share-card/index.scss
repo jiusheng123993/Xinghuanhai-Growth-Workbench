@@ -471,8 +471,8 @@
   padding: 48rpx 40rpx;
   margin: 24rpx;
   border-radius: 48rpx;
-  background: linear-gradient(135deg, \-primary-light, \-primary);
-  box-shadow: \-button;
+  background: linear-gradient(135deg, $color-primary-light, $color-primary);
+  box-shadow: $shadow-button;
 }
 
 .share-hero__icon {
@@ -490,7 +490,7 @@
 
 .share-hero__title {
   font-size: 40rpx;
-  font-weight: \-weight-bold;
+  font-weight: $font-weight-bold;
   color: #FFFDF8;
 }
 
@@ -504,7 +504,7 @@
   height: 88rpx;
   padding: 0 64rpx;
   border-radius: 999rpx;
-  background: \-bg-card;
+  background: $color-bg-card;
   @include flex-center;
 
   &:active {
@@ -513,9 +513,9 @@
 }
 
 .share-hero__btn-text {
-  font-size: \-size-md;
-  font-weight: \-weight-bold;
-  color: \-primary;
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
 }
 
 // ===== 模板网格 =====
@@ -533,14 +533,14 @@
   gap: 12rpx;
   padding: 28rpx 8rpx;
   border-radius: 32rpx;
-  background: \-bg-card;
-  border: 2rpx solid \-border;
-  box-shadow: \-card;
-  transition: all \-fast;
+  background: $color-bg-card;
+  border: 2rpx solid $color-border;
+  box-shadow: $shadow-card;
+  transition: all $transition-fast;
 
   &--active {
-    border-color: \-primary;
-    background: \-primary-bg;
+    border-color: $color-primary;
+    background: $color-primary-bg;
   }
 }
 
@@ -548,7 +548,7 @@
   width: 80rpx;
   height: 80rpx;
   border-radius: 28rpx;
-  background: \-primary-bg;
+  background: $color-primary-bg;
   @include flex-center;
 }
 
@@ -559,8 +559,8 @@
 
 .template-item__label {
   font-size: 22rpx;
-  font-weight: \-weight-medium;
-  color: \-text-secondary;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
 }
 
 // ============================================

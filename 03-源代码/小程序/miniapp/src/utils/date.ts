@@ -122,7 +122,10 @@ export interface PetAgeFormatOptions {
  *     原唯一产出方 `pages/product/index.tsx` 已随 2026-09-12「IA 落地第 1 批」删除，
  *     现消费方只剩 `petProducts.ts` 自身的打分逻辑（经 `hooks/useProductCommission` 调用），
  *     且已无页面写入该字段 —— 此处仅作类型口径记录，不代表还有页面在用。
- *   - `pagesPet/achievement` 的「今年X岁了」：生日成就卡语境，是"今年满 X 岁"而非当前精确年龄
+ *   - 「今年满 X 岁」这类**只精确到"岁"**的生日语境文案：原唯一产出方 `pagesPet/achievement`
+ *     的生日成就卡已随 2026-09-12 收口批次整页删除（全仓现无消费方）。但那条口径本身是对的：
+ *     生日成就说的是"今年满 X 岁"，不是"当前精确年龄"——将来若再做生日卡语境，
+ *     别顺手换成 `formatPetAge` 的 `X岁Y个月`（同上条，此处保留的是**理由**，不是还活着的消费方）。
  *   - `pages/mine` 的「养宠 N 个月 / N 年」：算的是用户养宠时长，起算点与宠物年龄不同
  *
  * 规则（本案定版）：
@@ -189,4 +192,24 @@ export function localDateString(input: string | number | Date | null | undefined
 export function localMonthDay(input: string | null | undefined): string | null {
   // 复用上面的日期键实现，避免"两套取本地日期"的写法再次分叉
   return localDateString(input)?.slice(5) ?? null
+}
+
+/**
+ * 按时段给一句问候语（早上好 / 下午好 / 晚上好）
+ *
+ * 【为什么放在这里而不各页各写一份】最初只有团团页在用（欢迎语第一句）；
+ * 2026-09-12 今天页顶栏也用它（顶栏原来重复显示品牌名「星河宠记」，与原生导航栏标题撞车，
+ * 改成问候语）→ 同一件事两处用就必须只有一处实现，否则"几点算早上"会出现两套口径。
+ *
+ * 分档：< 11 早上好 ／ < 18 下午好 ／ 其余晚上好 —— 三档覆盖 0~23 点，
+ * 不会出现"凌晨说晚上好"，也不会有时刻落不进任何档位。
+ *
+ * @param now - 参照时刻（测试注入固定时间用），默认当前时间
+ * @returns 问候语（不含标点，调用方自己接「，」或「呀」）
+ */
+export function greetingByHour(now: Date = new Date()): string {
+  const h = now.getHours()
+  if (h < 11) return '早上好'
+  if (h < 18) return '下午好'
+  return '晚上好'
 }

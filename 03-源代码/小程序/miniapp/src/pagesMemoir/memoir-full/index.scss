@@ -2,12 +2,32 @@
 @import '../../styles/_animations';
 
 // ============================================
-// 纪念Vlog - 轻奢紫金风格
+// 纪念Vlog（标准档 / 完整档共用本页，靠 ?tier= 定档）
+//
+// 【配色口径·2026-09-13 本包改】页面配色**全部跟随主题**，走 styles/_theme 的 token：
+//   · 珊瑚橙族（原 #FF9A62 / #D2703A / rgba(255,154,98,·)）→ --primary / --primary-dark / --primary-rgb
+//   · 沙金驼族（原 #E8C8A0 / #E8D0A8 / #D8B8A0 / rgba(216,184,160,·) / rgba(232,200,160,·)）
+//     → --gold / --gold-soft / --gold-deep / --gold-rgb
+//   · 墨字 #40281C → --text-primary；浅底上的金族文字改用 --gold-deep（gold/gold-soft 在浅底上会糊）
+//   主题类由 index.tsx 用 useThemeClass() 挂在页面根节点 `.memoir-vlog` 上；没有这一层，
+//   token 只会吃到基线（秋·暖阳珊瑚橙）兜底色 —— 这正是用户反馈「标准/完整档没有跟随主题」的成因。
+//
+// 【刻意不跟主题的固定色（不是漏改）】
+//   · 压在照片/视频上的**黑色遮罩** rgba(0,0,0,.55/.6) 与其上的**纯白文字** #fff
+//     （上传状态徽标、照片池日期条）：对照物是画面，不是页面主题。
+//     遮罩上的**墨色/金色字仍走 token**（删除钮的 ✕ = --text-primary、上传徽标 = --gold-soft）：
+//     token 在黑遮罩上翻浅色只会更清楚，且浅色主题下与原值一模一样（零观感变化）。
+//   · 语义固定的状态色：失败红 rgba(200,80,80,.75)、成功绿 #3fae72、档位不可用提示 rgba(200,120,120,.9)。
+//   · 压在主题色块上的**半透明白高光** rgba(255,255,255,.2/.25)（参考样例横幅的光晕与播放圆底）。
+//   · 半透明白纸面 rgba(255,255,255,.6/.7)（分镜卡 / 画风胶囊 / 修改输入框）：
+//     深色主题下卡片仍是白底的既有约定，所以纸面保持浅色，只把**卡内文字**钉回深色（见文件末尾）。
+//   · 剧本确认卡的近黑卡底 rgba(26,20,24,.96)：**存疑未改**，理由见该处注释。
 // ============================================
 
 .memoir-vlog {
   min-height: 100vh;
-  background: linear-gradient(180deg, #FFFDF9 0%, #FFF6EE 30%, #FFEDE0 70%, #FFE6D8 100%);
+  // 页面底色跟随主题（原为写死的暖白四段渐变）
+  background: $gradient-page;
   display: flex;
   flex-direction: column;
   animation: pageEnter 0.4s ease-out;
@@ -34,13 +54,13 @@
     width: 32rpx;
     height: 8rpx;
     border-radius: 4rpx;
-    background: linear-gradient(90deg, #FF9A62, #E8C8A0);
+    background: linear-gradient(90deg, $color-primary, $color-gold);
     opacity: 1;
-    box-shadow: 0 0 12rpx rgba(255, 154, 98, 0.4);
+    box-shadow: 0 0 12rpx rgba(var(--primary-rgb, 255, 107, 61), 0.4);
   }
 
   &--done {
-    background: rgba(255, 154, 98, 0.5);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.5);
     opacity: 0.6;
   }
 }
@@ -48,7 +68,7 @@
 .memoir-vlog__step-connector {
   width: 20rpx;
   height: 2rpx;
-  background: rgba(255, 154, 98, 0.15);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.15);
 }
 
 // ==================== 步骤容器 ====================
@@ -64,7 +84,13 @@
 }
 
 // ==================== 公共标题样式 ====================
+// ⚠️ 这两条都必须显式 `display: block`：小程序的 `<Text>` **默认是 inline**，
+// 而用到它们的步骤页里，标题与 `.memoir-vlog__hint` 是**两个并列的 `<Text>`**
+// → 不加这条，标题（「开始前，先看看 你们的素材」）会和灰字说明**挤在同一行**、
+// 还会把词拆断（28 号 复核取图时发现；本仓其它页面的同类位置都写了 display: block，这里是漏写）。
+// 另外 inline 元素上的 padding-top / margin-bottom 也不按预期生效，一并因这条修好。
 .memoir-vlog__title {
+  display: block;
   font-size: $font-size-xl;
   font-weight: $font-weight-semibold;
   color: $color-text-primary;
@@ -73,7 +99,7 @@
   margin-bottom: 8rpx;
 
   .gold-accent {
-    background: linear-gradient(135deg, #D8B8A0, #E8D0A8);
+    background: linear-gradient(135deg, $color-gold, $color-gold-soft);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -81,6 +107,7 @@
 }
 
 .memoir-vlog__hint {
+  display: block;
   font-size: $font-size-sm;
   color: $color-text-tertiary;
   margin-bottom: 28rpx;
@@ -110,15 +137,15 @@
   border-radius: 999rpx;
   font-size: $font-size-sm;
   color: $color-text-secondary;
-  background: rgba(255, 154, 98, 0.06);
-  border: 1rpx solid rgba(255, 154, 98, 0.18);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
+  border: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.18);
   transition: all 0.2s ease;
 }
 
 .memoir-vlog__tag--active {
-  color: #FF9A62;
-  background: rgba(255, 154, 98, 0.14);
-  border-color: rgba(255, 154, 98, 0.55);
+  color: $color-primary;
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.14);
+  border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.55);
   font-weight: 600;
 }
 
@@ -133,9 +160,9 @@
 
 .memoir-vlog__photo-count {
   font-size: $font-size-sm;
-  color: #D8B8A0;
-  background: rgba(255, 154, 98, 0.1);
-  border: 1rpx solid rgba(216, 184, 160, 0.2);
+  color: $color-gold-deep;
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.1);
+  border: 1rpx solid rgba(var(--gold-rgb, 255, 176, 32), 0.2);
   padding: 6rpx 18rpx;
   border-radius: 20rpx;
 }
@@ -152,7 +179,7 @@
   border-radius: $radius-xl;
   overflow: hidden;
   @include card-base;
-  border-color: rgba(255, 154, 98, 0.2);
+  border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.2);
   animation: fadeInScale 0.3s ease-out;
 }
 
@@ -172,7 +199,7 @@
   background: rgba(0, 0, 0, 0.55);
   @include flex-center;
   font-size: 22rpx;
-  color: #40281C;
+  color: $color-text-primary;
   z-index: 2;
   @include press-feedback;
 }
@@ -180,8 +207,8 @@
 .memoir-vlog__photo-add {
   aspect-ratio: 1;
   border-radius: $radius-xl;
-  border: 2rpx dashed rgba(255, 154, 98, 0.25);
-  background: rgba(255, 154, 98, 0.03);
+  border: 2rpx dashed rgba(var(--primary-rgb, 255, 107, 61), 0.25);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.03);
   @include flex-center;
   flex-direction: column;
   gap: 8rpx;
@@ -189,19 +216,19 @@
   @include press-feedback;
 
   &:active {
-    border-color: #D8B8A0;
-    background: rgba(255, 154, 98, 0.08);
+    border-color: $color-gold;
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
   }
 }
 
 .memoir-vlog__photo-add-icon {
   font-size: 48rpx;
-  color: #D2703A;
+  color: $color-primary-dark;
 }
 
 .memoir-vlog__photo-add-text {
   font-size: 22rpx;
-  color: #D2703A;
+  color: $color-primary-dark;
 }
 
 // ==================== 步骤二：写叙事文字 ====================
@@ -210,8 +237,8 @@
   min-height: 280rpx;
   padding: 28rpx 24rpx;
   border-radius: $radius-xl;
-  background: rgba(255, 154, 98, 0.04);
-  border: 1rpx solid rgba(255, 154, 98, 0.15);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.04);
+  border: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.15);
   color: $color-text-primary;
   font-size: $font-size-md;
   line-height: 1.8;
@@ -225,8 +252,8 @@
   }
 
   &:focus {
-    border-color: rgba(216, 184, 160, 0.4);
-    box-shadow: 0 0 20rpx rgba(255, 154, 98, 0.08);
+    border-color: rgba(var(--gold-rgb, 255, 176, 32), 0.4);
+    box-shadow: 0 0 20rpx rgba(var(--primary-rgb, 255, 107, 61), 0.08);
   }
 }
 
@@ -239,7 +266,7 @@
 
 .memoir-vlog__bgm-card {
   @include card-base;
-  border-color: rgba(255, 154, 98, 0.12);
+  border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
   padding: 24rpx 24rpx;
   border-radius: $radius-xl;
   display: flex;
@@ -250,9 +277,9 @@
   position: relative;
 
   &--active {
-    border-color: #D8B8A0;
-    background: rgba(255, 154, 98, 0.08);
-    box-shadow: 0 4rpx 24rpx rgba(255, 154, 98, 0.15), inset 0 0 0 1rpx rgba(216, 184, 160, 0.1);
+    border-color: $color-gold;
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
+    box-shadow: 0 4rpx 24rpx rgba(var(--primary-rgb, 255, 107, 61), 0.15), inset 0 0 0 1rpx rgba(var(--gold-rgb, 255, 176, 32), 0.1);
 
     .memoir-vlog__bgm-card-emoji {
       transform: scale(1.1);
@@ -265,7 +292,7 @@
   width: 72rpx;
   height: 72rpx;
   @include flex-center;
-  background: rgba(255, 154, 98, 0.06);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
   border-radius: $radius-lg;
   flex-shrink: 0;
   transition: transform 0.25s ease;
@@ -287,8 +314,8 @@
 
 .memoir-vlog__bgm-card-tag {
   font-size: 20rpx;
-  color: #D2703A;
-  background: rgba(255, 154, 98, 0.08);
+  color: $color-primary-dark;
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
   padding: 2rpx 14rpx;
   border-radius: $radius-full;
   display: inline-block;
@@ -299,7 +326,7 @@
   width: 56rpx;
   height: 56rpx;
   border-radius: 50%;
-  background: rgba(216, 184, 160, 0.1);
+  background: rgba(var(--gold-rgb, 255, 176, 32), 0.1);
   @include flex-center;
   font-size: 24rpx;
   flex-shrink: 0;
@@ -307,13 +334,13 @@
   @include press-feedback;
 
   &:active {
-    background: rgba(216, 184, 160, 0.2);
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.2);
     transform: scale(0.92);
   }
 
   // 播放中态：高亮 + 呼吸动效（审查 P3：此前 tsx 引用但样式缺失，播放无视觉反馈）
   &--playing {
-    background: rgba(232, 200, 160, 0.25);
+    background: rgba(var(--gold-rgb, 255, 176, 32), 0.25);
     animation: floatPulse 1.2s ease-in-out infinite;
   }
 }
@@ -325,17 +352,17 @@
   width: 32rpx;
   height: 32rpx;
   border-radius: 50%;
-  border: 2rpx solid rgba(255, 154, 98, 0.2);
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.2);
   @include flex-center;
   transition: all 0.25s ease;
 
   .memoir-vlog__bgm-card--active & {
-    background: linear-gradient(135deg, #FF9A62, #D8B8A0);
-    border-color: #D8B8A0;
+    background: linear-gradient(135deg, $color-primary, $color-primary-dark 62%);
+    border-color: $color-gold;
   }
 
   &--checked {
-    color: #40281C;
+    color: $color-text-primary;
     font-size: 18rpx;
   }
 }
@@ -343,7 +370,7 @@
 // ==================== 步骤四：确认与支付 ====================
 .memoir-vlog__confirm-summary {
   @include card-base;
-  border-color: rgba(255, 154, 98, 0.15);
+  border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.15);
   padding: 28rpx 24rpx;
   border-radius: $radius-xl;
   margin-bottom: 32rpx;
@@ -356,7 +383,7 @@
   padding: 16rpx 0;
 
   & + & {
-    border-top: 1rpx solid rgba(255, 154, 98, 0.06);
+    border-top: 1rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.06);
   }
 }
 
@@ -385,7 +412,7 @@
   border-radius: $radius-xl;
   overflow: hidden;
   @include card-base;
-  border-color: rgba(255, 154, 98, 0.2);
+  border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.2);
   margin-bottom: 32rpx;
   @include flex-center;
   position: relative;
@@ -422,10 +449,10 @@
   width: 100rpx;
   height: 100rpx;
   border-radius: 50%;
-  background: rgba(216, 184, 160, 0.9);
+  background: rgba(var(--gold-rgb, 255, 176, 32), 0.9);
   @include flex-center;
   font-size: 44rpx;
-  box-shadow: 0 8rpx 32rpx rgba(255, 154, 98, 0.3);
+  box-shadow: 0 8rpx 32rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
   @include press-feedback;
 }
 
@@ -453,8 +480,8 @@
 .memoir-vlog__loading-spinner {
   width: 80rpx;
   height: 80rpx;
-  border: 6rpx solid rgba(255, 154, 98, 0.15);
-  border-top-color: #D8B8A0;
+  border: 6rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.15);
+  border-top-color: $color-gold;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -480,7 +507,7 @@
 
   &--active {
     opacity: 1;
-    color: #D8B8A0;
+    color: $color-gold-soft;
   }
 
   &--done {
@@ -499,7 +526,9 @@
   align-items: center;
   gap: 20rpx;
   padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
-  background: linear-gradient(0deg, #FFF6EE 60%, transparent);
+  // 让位渐变用**主题页面底色**：原来写死暖白 #FFF6EE，深色主题下会在底部留一条亮带；
+  // 这里只取颜色，仍是"由页面底色渐隐到透明"的同一形态。
+  background: linear-gradient(0deg, $color-bg-page 60%, transparent);
   z-index: 10;
 }
 
@@ -520,9 +549,9 @@
   }
 
   &--primary {
-    background: linear-gradient(135deg, #FF9A62, #D8B8A0);
-    color: #40281C;
-    box-shadow: 0 8rpx 32rpx rgba(255, 154, 98, 0.3);
+    background: linear-gradient(135deg, $color-primary, $color-primary-dark 62%);
+    color: $color-text-primary;
+    box-shadow: 0 8rpx 32rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
     letter-spacing: 2rpx;
   }
 
@@ -532,23 +561,23 @@
   }
 
   &--secondary {
-    background: rgba(255, 154, 98, 0.06);
-    border: 2rpx solid rgba(255, 154, 98, 0.15);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
+    border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.15);
     color: $color-text-secondary;
   }
 
   // 弱化描边按钮（上一步回退；此前 tsx 引用但 scss 缺失，渲染成纯文字——复验 P1 修复）
   &--ghost {
-    background: rgba(255, 154, 98, 0.06);
-    border: 2rpx solid rgba(255, 154, 98, 0.2);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
+    border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.2);
     color: $color-text-secondary;
     font-weight: normal;
   }
 
   &--gold {
-    background: linear-gradient(135deg, #D8B8A0, #E8D0A8);
-    color: #40281C;
-    box-shadow: 0 8rpx 32rpx rgba(216, 184, 160, 0.3);
+    background: linear-gradient(135deg, $color-gold, $color-gold-soft);
+    color: $color-text-primary;
+    box-shadow: 0 8rpx 32rpx rgba(var(--gold-rgb, 255, 176, 32), 0.3);
     letter-spacing: 2rpx;
   }
 }
@@ -578,8 +607,13 @@
 .memoir-vlog__script-card {
   width: 100%;
   max-height: 80vh;
+  // ⚠️【存疑·本包未改】近黑色卡底是写死值，卡内文字却取 $color-text-primary
+  //   → 浅色四季主题下是"深棕字压近黑底"（对比度约 1.1:1，基本读不出来），
+  //     只有星空银河主题（文字翻白）才正常。这**不是本包引入**的，也与"跟不跟主题"无关，
+  //     但改法有两种（① 卡底改 $color-bg-card 走白纸卡；② 卡内文字改浅色），都会改变这块的观感/设计意图，
+  //     超出"挂主题类 + 换色"范围，故留原样并在 23 号自述里登记为存疑项，供后续决策。
   background: rgba(26, 20, 24, 0.96);
-  border: 2rpx solid rgba(255, 154, 98, 0.2);
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.2);
   border-radius: $radius-lg;
   padding: 40rpx 32rpx 32rpx;
   display: flex;
@@ -607,7 +641,7 @@
 }
 
 .memoir-vlog__script-seg {
-  background: rgba(255, 154, 98, 0.06);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
   border-radius: $radius-md;
   padding: 20rpx 24rpx;
   display: flex;
@@ -617,7 +651,7 @@
 
 .memoir-vlog__script-seg-head {
   font-size: 22rpx;
-  color: #D8B8A0;
+  color: $color-gold-soft;
   font-weight: $font-weight-bold;
 }
 
@@ -652,14 +686,14 @@
   @include press-feedback;
 
   &--primary {
-    background: linear-gradient(135deg, #FF9A62, #D8B8A0);
-    color: #40281C;
-    box-shadow: 0 8rpx 32rpx rgba(255, 154, 98, 0.3);
+    background: linear-gradient(135deg, $color-primary, $color-primary-dark 62%);
+    color: $color-text-primary;
+    box-shadow: 0 8rpx 32rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
   }
 
   &--ghost {
-    background: rgba(255, 154, 98, 0.06);
-    border: 2rpx solid rgba(255, 154, 98, 0.15);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
+    border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.15);
     color: $color-text-secondary;
   }
 }
@@ -667,7 +701,7 @@
 .memoir-vlog__script-btn-text {
   font-size: $font-size-md;
   font-weight: $font-weight-bold;
-  color: #40281C;
+  color: $color-text-primary;
 
   &--ghost {
     color: $color-text-secondary;
@@ -704,8 +738,8 @@
   flex: 1;
   padding: 28rpx 12rpx;
   border-radius: $radius-lg;
-  background: rgba(255, 154, 98, 0.08);
-  border: 2rpx solid rgba(255, 154, 98, 0.15);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.15);
   text-align: center;
 }
 
@@ -713,7 +747,7 @@
   display: block;
   font-size: 48rpx;
   font-weight: $font-weight-bold;
-  background: linear-gradient(135deg, #E8C8A0, #FF9A62);
+  background: linear-gradient(135deg, $color-gold, $color-primary);
   -webkit-background-clip: text;
   color: transparent;
 }
@@ -730,15 +764,15 @@
   margin-top: 28rpx;
   padding: 28rpx;
   border-radius: $radius-lg;
-  background: linear-gradient(135deg, rgba(232, 200, 160, 0.12), rgba(255, 154, 98, 0.12));
-  border: 2rpx solid rgba(232, 200, 160, 0.25);
+  background: linear-gradient(135deg, rgba(var(--gold-rgb, 255, 176, 32), 0.12), rgba(var(--primary-rgb, 255, 107, 61), 0.12));
+  border: 2rpx solid rgba(var(--gold-rgb, 255, 176, 32), 0.25);
 }
 
 .memoir-vlog__material-suggest-title {
   display: block;
   font-size: $font-size-md;
   font-weight: $font-weight-bold;
-  color: #E8C8A0;
+  color: $color-gold-deep;
 }
 
 .memoir-vlog__material-suggest-reason {
@@ -775,16 +809,16 @@
   height: 76rpx;
   border-radius: $radius-round;
   @include flex-center;
-  background: rgba(255, 154, 98, 0.06);
-  border: 2rpx solid rgba(255, 154, 98, 0.15);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.15);
   color: $color-text-secondary;
   font-size: $font-size-sm;
   @include press-feedback;
 
   &--active {
-    background: linear-gradient(135deg, rgba(255, 154, 98, 0.25), rgba(232, 200, 160, 0.25));
-    border-color: rgba(232, 200, 160, 0.5);
-    color: #E8C8A0;
+    background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.25), rgba(var(--gold-rgb, 255, 176, 32), 0.25));
+    border-color: rgba(var(--gold-rgb, 255, 176, 32), 0.5);
+    color: $color-gold-deep;
     font-weight: $font-weight-bold;
   }
 }
@@ -801,7 +835,7 @@
 
   &--uploading {
     background: rgba(0, 0, 0, 0.55);
-    color: #E8C8A0;
+    color: $color-gold-soft;
   }
 
   &--failed {
@@ -818,6 +852,21 @@
   text-align: center;
   font-size: $font-size-sm;
   color: $color-text-tertiary;
+}
+
+/*
+ * 空态插画（empty-photo）。
+ * ⚠️ 必须写 margin:0 auto —— components/Illustration.scss 把插画设成了 display:block，
+ * 它不参与文字排版，父级的 text-align:center 对它无效，不写就会贴左。
+ * 这条规则是 2026-09-12 加插画时新增的（此前这里只有一行 <Text>，只有 text-align 就够）。
+ */
+.memoir-vlog__pool-empty-illus {
+  margin: 0 auto 24rpx;
+}
+
+/* 文案单独一条：Taro 下 <Text> 默认内联，显式 block 才不会和上面的插画挤在同一行盒里 */
+.memoir-vlog__pool-empty-text {
+  display: block;
 }
 
 .memoir-vlog__pool-section {
@@ -844,8 +893,8 @@
   @include press-feedback;
 
   &--selected {
-    border-color: #E8C8A0;
-    box-shadow: 0 0 16rpx rgba(232, 200, 160, 0.4);
+    border-color: $color-gold;
+    box-shadow: 0 0 16rpx rgba(var(--gold-rgb, 255, 176, 32), 0.4);
   }
 }
 
@@ -873,8 +922,8 @@
   height: 40rpx;
   border-radius: 50%;
   @include flex-center;
-  background: #E8C8A0;
-  color: #40281C;
+  background: $color-gold;
+  color: $color-text-primary;
   font-size: 24rpx;
   font-weight: $font-weight-bold;
 }
@@ -887,7 +936,7 @@
 
 .memoir-vlog__pool-retry-text {
   font-size: $font-size-sm;
-  color: #E8C8A0;
+  color: $color-gold-deep;
 }
 
 // ==================== 步骤2：选记忆（B2 新增） ====================
@@ -921,13 +970,13 @@
   gap: 20rpx;
   padding: 24rpx;
   border-radius: $radius-lg;
-  background: rgba(255, 154, 98, 0.06);
-  border: 2rpx solid rgba(255, 154, 98, 0.15);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.15);
   @include press-feedback;
 
   &--active {
-    background: linear-gradient(135deg, rgba(255, 154, 98, 0.18), rgba(232, 200, 160, 0.14));
-    border-color: rgba(232, 200, 160, 0.45);
+    background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.18), rgba(var(--gold-rgb, 255, 176, 32), 0.14));
+    border-color: rgba(var(--gold-rgb, 255, 176, 32), 0.45);
   }
 }
 
@@ -938,14 +987,14 @@
   margin-top: 4rpx;
   border-radius: 50%;
   @include flex-center;
-  border: 2rpx solid rgba(255, 154, 98, 0.4);
-  color: #40281C;
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.4);
+  color: $color-text-primary;
   font-size: 24rpx;
   font-weight: $font-weight-bold;
 
   &--on {
-    background: #E8C8A0;
-    border-color: #E8C8A0;
+    background: $color-gold;
+    border-color: $color-gold;
   }
 }
 
@@ -975,7 +1024,7 @@
 
 .memoir-vlog__moment-photo {
   font-size: 22rpx;
-  color: #E8C8A0;
+  color: $color-gold-deep;
 }
 
 // ==================== 步骤5：三档卡（B2 新增） ====================
@@ -990,14 +1039,14 @@
   position: relative;
   padding: 28rpx;
   border-radius: $radius-lg;
-  background: rgba(255, 154, 98, 0.06);
-  border: 2rpx solid rgba(255, 154, 98, 0.15);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.15);
   @include press-feedback;
 
   &--active {
-    background: linear-gradient(135deg, rgba(255, 154, 98, 0.2), rgba(232, 200, 160, 0.16));
-    border-color: #E8C8A0;
-    box-shadow: 0 8rpx 32rpx rgba(232, 200, 160, 0.2);
+    background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.2), rgba(var(--gold-rgb, 255, 176, 32), 0.16));
+    border-color: $color-gold;
+    box-shadow: 0 8rpx 32rpx rgba(var(--gold-rgb, 255, 176, 32), 0.2);
   }
 
   &--disabled {
@@ -1020,7 +1069,7 @@
 .memoir-vlog__tier-price {
   font-size: 36rpx;
   font-weight: $font-weight-bold;
-  background: linear-gradient(135deg, #E8C8A0, #D8B8A0);
+  background: linear-gradient(135deg, $color-gold, $color-gold-soft);
   -webkit-background-clip: text;
   color: transparent;
 }
@@ -1052,8 +1101,8 @@
   padding: 4rpx 14rpx;
   border-radius: $radius-round;
   font-size: 20rpx;
-  background: linear-gradient(135deg, #E8C8A0, #FF9A62);
-  color: #40281C;
+  background: linear-gradient(135deg, $color-gold, $color-primary);
+  color: $color-text-primary;
   font-weight: $font-weight-bold;
 }
 
@@ -1062,15 +1111,15 @@
   margin: 16rpx 0 8rpx;
   padding: 20rpx 24rpx;
   border-radius: $radius-lg;
-  background: rgba(255, 154, 98, 0.06);
-  border: 2rpx solid rgba(255, 154, 98, 0.22);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.06);
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.22);
 }
 
 .memoir-vlog__pick-guide-title {
   display: block;
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
-  color: #D2703A;
+  color: $color-primary-dark;
   margin-bottom: 10rpx;
 }
 
@@ -1086,8 +1135,8 @@
   margin-top: 24rpx;
   padding: 24rpx;
   border-radius: $radius-xl;
-  background: rgba(255, 154, 98, 0.05);
-  border: 2rpx solid rgba(255, 154, 98, 0.22);
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.05);
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.22);
 }
 
 .memoir-vlog__prompt-confirm-head {
@@ -1100,7 +1149,7 @@
 .memoir-vlog__prompt-confirm-title {
   font-size: $font-size-md;
   font-weight: $font-weight-bold;
-  color: #D2703A;
+  color: $color-primary-dark;
 }
 
 .memoir-vlog__prompt-confirm-version {
@@ -1136,13 +1185,13 @@
   padding: 16rpx 18rpx;
   border-radius: $radius-md;
   background: rgba(255, 255, 255, 0.6);
-  border: 2rpx solid rgba(255, 154, 98, 0.12);
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.12);
 }
 
 .memoir-vlog__prompt-segment-label {
   font-size: $font-size-xs;
   font-weight: $font-weight-bold;
-  color: #D2703A;
+  color: $color-primary-dark;
   margin-bottom: 6rpx;
 }
 
@@ -1179,15 +1228,15 @@
   @include press-feedback;
 
   &--ghost {
-    background: rgba(255, 154, 98, 0.08);
-    border: 2rpx solid rgba(255, 154, 98, 0.3);
-    color: #D2703A;
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.08);
+    border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.3);
+    color: $color-primary-dark;
   }
 
   &--gold {
-    background: linear-gradient(135deg, #FF9A62, #D2703A);
-    color: #fff;
-    box-shadow: 0 8rpx 24rpx rgba(255, 154, 98, 0.3);
+    background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+    color: $color-text-inverse;
+    box-shadow: 0 8rpx 24rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
   }
 }
 
@@ -1214,7 +1263,7 @@
   padding: 16rpx 20rpx;
   border-radius: $radius-md;
   background: rgba(255, 255, 255, 0.7);
-  border: 2rpx solid rgba(255, 154, 98, 0.2);
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.2);
   font-size: $font-size-sm;
   color: $color-text-primary;
   box-sizing: border-box;
@@ -1228,7 +1277,7 @@
 .memoir-vlog__style-section {
   margin-top: 32rpx;
   padding-top: 28rpx;
-  border-top: 2rpx solid rgba(255, 154, 98, 0.15);
+  border-top: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.15);
 }
 
 .memoir-vlog__style-title {
@@ -1249,13 +1298,13 @@
   padding: 20rpx 22rpx;
   border-radius: $radius-lg;
   background: rgba(255, 255, 255, 0.6);
-  border: 2rpx solid rgba(255, 154, 98, 0.18);
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.18);
   transition: all 0.2s ease;
   @include press-feedback;
 
   &--active {
-    background: rgba(255, 154, 98, 0.12);
-    border-color: rgba(255, 154, 98, 0.55);
+    background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+    border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.55);
   }
 }
 
@@ -1282,75 +1331,215 @@
 // BGM 用户导入卡片（2026-09-09 版权归用户）+ 导入按钮
 .memoir-vlog__bgm-card--custom {
   border-style: dashed;
-  border-color: rgba(255, 154, 98, 0.4);
+  border-color: rgba(var(--primary-rgb, 255, 107, 61), 0.4);
 }
 
 .memoir-vlog__bgm-btn {
   flex-shrink: 0;
   padding: 12rpx 24rpx;
   border-radius: $radius-round;
-  background: rgba(255, 154, 98, 0.12);
-  border: 2rpx solid rgba(255, 154, 98, 0.4);
-  color: #D2703A;
+  background: rgba(var(--primary-rgb, 255, 107, 61), 0.12);
+  border: 2rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.4);
+  color: $color-primary-dark;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   @include press-feedback;
 }
 
-// ==================== 顶部参考样例视频区（2026-09-09） ====================
+// ==================== 顶部参考样例视频区（2026-09-09；2026-09-13 对齐轻纪念页） ====================
+// 【位置】本块是页面根节点 `.memoir-vlog` 的**第一个子元素**（见 index.tsx 主渲染）→ 它就贴在整页最顶部，
+//   所以下面那条 `position: relative` 比轻纪念页更要紧：视频一旦逃出卡片，盖住的不是标题一行，而是下方整条流程。
+// 【结构】自上而下三行，与轻纪念页 `.memoir__hero` 同构：
+//   说明行（左「样例预览」＋右卖点角标）→ 比例盒（视频铺满）→ 底行（左成片说明＋右全屏播放）。
+//   · 说明行与底行都排在视频**之外**：少数未开同层渲染的机型上，原生 video 会盖住绝对定位的兄弟节点
+//   · 封面直接用视频自身首帧（不设 poster）→ 不新增任何图片/字体/视频资源
+// 【2026-09-13（25号）删掉的旧占位样式】`.memoir-vlog__sample-glow`（光晕）/ `-fallback` / `-emoji`
+//   （🎞️）/ `-hint`（「点击观看示例成片」）/ `-play`（▶ 播放圆钮）：样例改成内联视频后不再有这几个节点，
+//   播放钮由原生 <Video> 的 controls + showCenterPlayBtn 提供。卡片也从「主色渐变横幅 + 居中占位文案」
+//   换成与轻纪念页一致的「浅色渐变卡 + 三行结构」（卡上不再有压在主色上的白字，故末尾 starry 那条兜底同步删除）。
 .memoir-vlog__sample {
+  // 【2026-09-13（25号，口径照抄轻纪念页 24号注释）】position: relative 必须留着，别再删：
+  //   H5 构建里 Taro 的 <Video> 宿主元素自带 `position: absolute; top: 0; left: 0; width: 100%`
+  //   （见 node_modules/@tarojs/components/dist/collection/components/video/video.js 里 Host 的
+  //     class 为 taro-video-container，以及该组件样式表里的 .taro-video-container 规则）。
+  //   祖先里一个定位元素都没有时，它以**视口**为包含块 → width:100% 解析成整屏宽，
+  //   视频会冲出卡片、盖住下方全部内容（步骤条 / 照片选择 / 底部按钮）。
+  //   有这一行，本卡片就是它的包含块；overflow: hidden 再兜一道：真逃逸也裁在卡片圆角内。
+  //   这条对小程序是纯防御（原生 <Video> 没有那套 absolute 样式），两端都安全。
+  // 顺带说明：卡片自己不再带 press-feedback —— 它已经不是整块可点的按钮（点击交给视频和全屏入口），
+  //   少了 transform 也就不会把内部 fixed 的页面背景层变成自己的包含块（那种情况下背景会跟着缩放）。
   position: relative;
   overflow: hidden;
+  // 上边距与页面其它区块同节奏（左 24rpx 与全页左右留白一致）
   margin: 16rpx 24rpx 0;
-  min-height: 180rpx;
-  border-radius: $radius-xl;
-  background: linear-gradient(135deg, #FF9A62, #D2703A);
-  @include flex-center;
-  gap: 16rpx;
-  padding: 24rpx;
-  @include press-feedback;
-}
-
-.memoir-vlog__sample-glow {
-  position: absolute;
-  top: -40rpx;
-  right: -40rpx;
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  filter: blur(40rpx);
-}
-
-.memoir-vlog__sample-fallback {
-  flex: 1;
+  border-radius: $radius-md;
+  background-image: linear-gradient(135deg, $color-primary-bg, $color-gold-bg);
+  box-shadow: $shadow-card;
+  padding: $spacing-md;
   display: flex;
   flex-direction: column;
-  gap: 6rpx;
+  gap: $spacing-md;
 }
 
-.memoir-vlog__sample-emoji {
-  font-size: 40rpx;
+// 顶部一行：左「样例预览」说明，右卖点角标。
+// 角标特意放在视频之外：少数未开同层渲染的机型上，原生 video 会盖住绝对定位的兄弟节点。
+// 【2026-09-13（25号）】显式抬到 video 之上：H5 的 video 是绝对定位元素，绝对定位默认画在静态兄弟之上，
+//   不抬层级就可能重演「video 盖住说明/角标」（.memoir-vlog__sample-foot 同理）。
+//   ⚠️ z-index 只管 web 层：未开同层渲染的机型上原生 video 会盖住一切，那种机型靠结构保护
+//      —— 说明行与底行都排在 video 之外的独立行里（结构注释见 index.tsx 的样例区块）。
+.memoir-vlog__sample-head {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
 }
 
 .memoir-vlog__sample-label {
-  font-size: $font-size-md;
-  font-weight: $font-weight-bold;
-  color: #fff;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
 }
 
-.memoir-vlog__sample-hint {
+.memoir-vlog__sample-badge {
+  padding: 6rpx $spacing-md;
+  border-radius: $radius-round;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.memoir-vlog__sample-badge-text {
   font-size: $font-size-xs;
-  color: rgba(255, 255, 255, 0.85);
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
 }
 
-.memoir-vlog__sample-play {
+// 样例视频的画面盒：**比例盒**（高度由宽度按片源比例撑出）+ 视频绝对定位铺满 → 两端零黑边。
+// 【片源比例 = 4:3（960×720）】2026-09-13 实测来源：本页样例与轻纪念页的 sample-light-1.mp4 是**同一个文件**
+//   （api.xinghuanhai.com/uploads/memoir-sample/sample-light-1.mp4）。24 号跑 H5 验收时浏览器把它落盘到
+//   …\.work-tmp\ui-b4\h5\.edge-cdp-profile\Default\Cache\Cache_Data\f_000004，ffprobe 读出 960×720 / h264 / 24fps / 10.04s。
+// 【换片源必改这里】padding-top 的百分比按**包含块宽度**解析，取值 = 高 ÷ 宽 × 100%：
+//   4:3 → 75%（现值）；16:9 → 56.25%；1:1 → 100%（写法与 pages/index/index.scss 的 .today-hero 同款）。
+//   片源比例变了却不改这一行，就会退回「宽扁框里塞方片、左右各留大半屏黑边」的老毛病。
+// objectFit 用 contain（见 index.tsx）：宁可留黑边，也不把毛孩子的头裁掉。
+// 深色底与轻纪念页同色；封面直接用视频自身首帧，不额外引入封面图。
+.memoir-vlog__sample-frame {
+  position: relative;
+  height: 0;
+  padding-top: 75%;
+  overflow: hidden;
+  border-radius: $radius-sm;
+  background: #1A1410;
+}
+
+// 视频本体：铺满上面的比例盒。
+// - 小程序：<Video> 是原生组件、没有 Taro H5 那套 absolute 样式，靠这里的 position/宽高撑满盒子；
+// - H5：Taro 给宿主元素自带的正是同一套值（absolute + top/left: 0 + 100% 宽高），这边写等价值，
+//   唯一变化是包含块从视口变成了 .memoir-vlog__sample-frame（因为它 position: relative）→ 视频被关进框里。
+// 这里故意不依赖级联先后：写的值要么与 Taro 相同、要么本就只有我们声明，谁赢结果都一样。（口径照抄轻纪念页）
+// 圆角两端都写：原生 video 不保证被父级 overflow: hidden 裁切，写在自身更稳。
+.memoir-vlog__sample-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: $radius-sm;
+  background: #1A1410;
+}
+
+// 底部一行：左侧成片说明，右侧全屏入口
+.memoir-vlog__sample-foot {
+  // 与 .memoir-vlog__sample-head 同理：显式抬到绝对定位的 video 之上（见上方注释）
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+}
+
+.memoir-vlog__sample-caption {
+  flex: 1;
+  min-width: 0;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.memoir-vlog__sample-fullscreen {
   flex-shrink: 0;
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 50%;
-  @include flex-center;
-  background: rgba(255, 255, 255, 0.25);
-  color: #fff;
-  font-size: 28rpx;
+  padding: 10rpx $spacing-md;
+  border-radius: $radius-round;
+  background: $color-bg-card;
+  border: 1rpx solid $color-border;
+  @include press-feedback;
+}
+
+.memoir-vlog__sample-fullscreen-text {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+// ==================== 深色主题（星空银河）自保 + 对比度核对 ====================
+//
+// 【问题】`.theme-starry` 把 `--text-*` 整体翻成白色，而 `--bg-card` 仍是 `#FFFFFF`
+//   —— 本页几处"白纸面"会变成**白底白字**：BGM 卡 `.memoir-vlog__bgm-card`、
+//   确认摘要 `.memoir-vlog__confirm-summary`、结果预览 `.memoir-vlog__result-preview`，
+//   以及三块**写死的半透明白纸**：分镜卡 `.memoir-vlog__prompt-segment`、
+//   画风胶囊 `.memoir-vlog__style-chip`、修改输入框 `.memoir-vlog__prompt-input`
+//   （白纸面在深色主题下仍保持浅色，是"卡片恒为白底"这条既有约定的延伸，故纸面不动、只钉字色）。
+// 【这是既有全站缺陷】不是本页引入：全局修复要动 100+ 个页面、需整体回归，属另案。
+// 【做法】沿用时光线页 / 我的页 / 今天页已验证的**页面级兜底**：在"浅底纸面"作用域内把卡内
+//   token 钉回浅色取值（底色是浅的，就必须配深色文字）。只影响本页这几类面。
+//   ⚠️ 不能钉在页面根 `.memoir-vlog` 上：页面底色、主色淡底卡、loading/剧本遮罩都是**跟着主题变深**的，
+//      一起钉浅就会出现"深色主题下反而写成白字压深底"的反向问题。
+//   ⚠️ 彩色按钮/金色小圆点（主色渐变按钮、支付金按钮、会员角标、勾选圆点、播放圆钮）单列：
+//      它们本来就是"浅色渐变面上压深墨字"，深色主题下 `--text-primary` 翻白会变成白字压浅金，
+//      所以把这些元素自己钉成深墨字（#40281C），与浅色主题观感一致。
+.memoir-vlog.theme-starry {
+  .memoir-vlog__bgm-card,
+  .memoir-vlog__confirm-summary,
+  .memoir-vlog__result-preview,
+  .memoir-vlog__prompt-segment,
+  .memoir-vlog__style-chip,
+  .memoir-vlog__prompt-input {
+    --text-primary: #40281C;
+    --text-secondary: #8B6E58;
+    --text-tertiary: #B69B83;
+    --border: #F3E2D2;
+    --border-light: rgba(243, 226, 210, 0.5);
+  }
+
+  .memoir-vlog__btn--primary,
+  .memoir-vlog__btn--gold,
+  .memoir-vlog__script-btn--primary,
+  .memoir-vlog__tier-member-tag,
+  .memoir-vlog__pool-check,
+  .memoir-vlog__moment-check {
+    --text-primary: #40281C;
+  }
+}
+
+// 【对比度核对】压在主色渐变上、文字取 `$color-text-inverse` 的「提示词·确认采用」按钮：
+//   星空主题下 `--text-inverse` 是**深藏青 #1B2450 而不是白**，压暗端（--primary-dark #5A6BE8）只有约 3.3:1。
+//   处理与时光线页 `.timeline-cta` / 今天页 `.today-cta` **同一处方**：starry 下把渐变回到亮端，
+//   深藏青压 --primary-light→--primary 约 4.96~7.23:1（口径见 pages/timeline/index.scss 那段实测表）。
+//   ⚠️ 选择器必须写 `.theme-starry .x`（0,2,0）才压得过 `.x`（0,1,0）——主题类挂在页面根 `.memoir-vlog` 上。
+// 【2026-09-13（25号）】原选择器列表里的 `.theme-starry .memoir-vlog__sample` 已删除：
+//   样例改成「浅色卡 + 内联视频」后，卡上文字取 --text-secondary / --primary（不再有 --text-inverse
+//   压主色渐变那对组合），这条兜底反而会把整张卡染成饱和主色，让浅色系文字压在 starry 的 --primary
+//   （#7A8CFF）上失读。卡片底色本身已改走 --primary-bg / --gold-bg 两个主题 token，无需再兜底。
+.theme-starry .memoir-vlog__prompt-btn--gold {
+  background: linear-gradient(135deg, $color-primary-light, $color-primary 62%);
+}
+
+// 【对比度核对】三处"金色渐变字"（档位价 / 素材数量 / 标题里的金色强调）压在白纸面上：
+//   四季主题的 --gold / --gold-soft 本来就偏亮（秋 #FFB020 / #FFD068），星空主题更亮（#FFD068 / #FFE29A），
+//   压白卡几乎看不见 → starry 下改用"主色深档 → 主色"的同族渐变（#5A6BE8 → #7A8CFF），保住可读性。
+//   （四季主题不改：那里的金色渐变字是原设计的一部分，只做了 token 化。）
+.theme-starry .memoir-vlog__tier-price,
+.theme-starry .memoir-vlog__material-num,
+.theme-starry .memoir-vlog .gold-accent {
+  background: linear-gradient(135deg, $color-primary-dark, $color-primary);
 }

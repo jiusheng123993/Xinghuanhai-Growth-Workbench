@@ -82,7 +82,9 @@ const Studio = () => {
           <Text className='stu-mini-title'>形象生成</Text>
           <Text className='stu-mini-desc'>文字/照片 → 头像+四视图设定图</Text>
         </View>
-        <View className='stu-mini' onClick={() => go('/pagesPet/family/dashboard/index')}>
+        {/* 全家福：2026-09-12「家庭看板」（family/dashboard）已并入家庭页，
+            这里必须改指家庭页（全家福生成器 + 相册都在该页的「全家福 / 全家福相册」两张卡里） */}
+        <View className='stu-mini' onClick={() => go('/pages/family/index')}>
           <Text className='stu-mini-em'>👨‍👩‍👧‍👦</Text>
           <Text className='stu-mini-title'>全家福</Text>
           <Text className='stu-mini-desc'>多宠合拍 · 22 场景 · 节日限定</Text>

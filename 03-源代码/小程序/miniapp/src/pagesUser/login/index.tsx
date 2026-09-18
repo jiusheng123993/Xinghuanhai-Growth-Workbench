@@ -5,18 +5,25 @@
 import { View, Text, Button, Input, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useState, useEffect, useCallback } from 'react'
+import { useThemeClass } from '../../hooks/useThemeClass'
 // 登录页迁入 pagesUser 分包（主包瘦身）；分包页与主包页同深度，仍用 ../../ 访问 src 根
 import { useAuthStore } from '../../stores/authStore'
 import { isWeapp, sendSmsCode, isApp, API_BASE_URL } from '../../platform'
 // 登录后是否引导绑定微信头像昵称的判断 + 跳过标记 key 构造（纯函数，见 guide.ts 单测；
 // 用裸 Taro 存储，utils/storage 带 userId 前缀会与绑定页写入时机错位）
 import { shouldGuideWechatBind, bindSkippedKey } from '../bind-wechat/guide'
+// 登录成功后的唯一出口：未看过新手引导先去引导页，看过则与原行为一致直接进首页。
+// 【为什么必须走统一出口】2026-09-12 复核发现"登录 → 引导 → 首页"这条链事实上不存在
+// （两处登录成功都是直接 reLaunch 首页，引导页全仓没有入口、用户永远看不到）。
+import { goAfterAuthEntry } from '../../utils/onboardingGate'
 // 登录主视觉图片随页面一起迁入分包，避免占用主包体积。
 // 原为 webp，微信安卓真机对 webp（尤其 VP8X+ALPH 带透明通道）解码兼容性差，
-// 真机/体验版不显示（模拟器正常），已统一转 PNG 保证全端稳定显示。
-import loginHero from './assets/login-hero.png'
-// 品牌 logo：猫狗大头像，2026-09-11 换毛毡质感版（与全站插画质感统一）
-import brandLogo from '../../assets/logo-catdog-felt.jpg'
+// 真机/体验版不显示（模拟器正常），故改用真位图（JPEG）保证全端稳定显示。
+// 2026-09-12 换成新 IP 油画版 700×700 JPEG，按真实字节命名为 .jpg；
+// 同目录旧的 login-hero.png（1024×1024 的真 PNG）暂留不删，待构建验证通过后统一清理。
+import loginHero from './assets/login-hero.jpg'
+// 品牌 logo：猫狗大头像，2026-09-12 换成新 IP 油画版；旧毡毛版是早期 IP、与全站插画不同族，已弃用。
+import brandLogo from '../../assets/logo-catdog-oil.jpg'
 import './index.scss'
 import PageBackground from '../../components/PageBackground'
 
@@ -28,6 +35,19 @@ const FEATURES = [
 ]
 
 export default function Login() {
+  /**
+   * 主题类名：**必须挂在页面自己的根节点上**
+   *
+   * 为什么：小程序端每个页面独立渲染，app 组件的 JSX 不包裹页面节点，挂在 app 层的
+   * `.theme-*` 传不进页面；不挂就会永远吃 styles/_theme.scss 里 page{} 的秋季基线变量。
+   *
+   * 【登录前读主题可靠吗】可靠：useThemeClass → useThemeKey 只依赖 themeStore（值来自本地
+   * 存储 xhh_theme，读不到就回退默认主题），**完全不依赖登录态**；`src/app.js` 的 useLaunch
+   * 在进入登录页之前就已经 loadTheme()。而且本页渲染的 <PageBackground /> 内部本来就在调
+   * useThemeKey()，说明登录前读主题这条链路早已在跑。挂上后还能跟 app.config.ts 的春季
+   * 窗口底色首帧连贯。
+   */
+  const themeClass = useThemeClass()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [agreed, setAgreed] = useState(false)
@@ -63,7 +83,8 @@ export default function Login() {
     try {
       await wechatLogin()
       // 微信已禁止静默获取真实头像昵称，登录后引导用户走官方「头像昵称填写能力」绑定：
-      // 资料未完善（无头像或无昵称）且未点过"暂不绑定"时，跳绑定引导页；否则直接进首页。
+      // 资料未完善（无头像或无昵称）且未点过"暂不绑定"时，跳绑定引导页；否则走统一出口
+      // （首次进新手引导页，老用户直接进首页——判定逻辑见 utils/onboardingGate）。
       const user = useAuthStore.getState().user
       const needBind = shouldGuideWechatBind({
         isWeapp: isWeapp(),
@@ -74,10 +95,11 @@ export default function Login() {
       if (needBind) {
         // 用 navigateTo 而非 reLaunch：bind-wechat 与登录页同属 pagesUser 分包，
         // 分包已加载时导航无懒加载竞态（reLaunch 到分包页在 lazyCodeLoading 下偶发
-        // "routeDone with a webviewId not found" 路由错误）；保存/跳过均 switchTab 首页清栈
+        // "routeDone with a webviewId not found" 路由错误）；保存/跳过均走
+        // goAfterAuthEntry（引导或首页），不再是 switchTab 首页
         Taro.navigateTo({ url: '/pagesUser/bind-wechat/index' })
       } else {
-        Taro.reLaunch({ url: '/pages/index/index' })
+        goAfterAuthEntry()
       }
     } catch (err: any) {
       setError(err.message || '登录失败，请重试')
@@ -123,7 +145,9 @@ export default function Login() {
     setError('')
     try {
       await phoneLogin(phone, smsCode)
-      Taro.reLaunch({ url: '/pages/index/index' })
+      // 短信登录没有"绑定微信资料"这一步，直接走统一出口：
+      // 首次登录进新手引导页，看过引导的老用户与原行为一致直接进首页
+      goAfterAuthEntry()
     } catch (err: any) {
       setError(err.message || '登录失败')
     } finally {
@@ -137,7 +161,7 @@ export default function Login() {
   }, [])
 
   return (
-    <View className='login-page'>
+    <View className={`login-page ${themeClass}`}>
       {/* 全屏动态背景层 */}
       <PageBackground />
 

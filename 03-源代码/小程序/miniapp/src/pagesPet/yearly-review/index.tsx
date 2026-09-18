@@ -3,6 +3,7 @@
  * 珊瑚渐变头部 + 年度数据 + AI 年度总结 + 年度视频
  */
 import { useEffect, useState, useCallback } from 'react'
+import { useThemeClass } from '../../hooks/useThemeClass'
 import { View, Text, Video, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { usePetStore } from '../../stores/petStore'
@@ -31,6 +32,14 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 export default function YearlyReviewPage() {
+  /**
+   * 主题类名：**必须挂在页面自己的根节点上**（本页两个渲染分支都挂）
+   *
+   * 为什么：小程序端每个页面独立渲染，app 组件的 JSX 不包裹页面节点，挂在 app 层的
+   * `.theme-*` 传不进页面；不挂就会永远吃 styles/_theme.scss 里 page{} 的秋季基线变量，
+   * 用户切主题后本页仍是一片秋色。口径与 pages/creative、pages/mine 一致。
+   */
+  const themeClass = useThemeClass()
   // userId 从 petStore 取（与其它页一致）；本页要它才能本地计算年度数据
   const { pets, fetchPets, currentPet, userId } = usePetStore()
   const { isMember } = useMembership()
@@ -136,7 +145,7 @@ export default function YearlyReviewPage() {
 
   if (loading) {
     return (
-      <View className='review-page'>
+      <View className={`review-page ${themeClass}`}>
         <View className='review-page__loading'>
           <View className='review-page__spinner' />
           <Text className='review-page__loading-text'>加载年度回忆中...</Text>
@@ -146,7 +155,7 @@ export default function YearlyReviewPage() {
   }
 
   return (
-    <View className='review-page'>
+    <View className={`review-page ${themeClass}`}>
       {/* 全屏动态背景层 */}
       <PageBackground />
 

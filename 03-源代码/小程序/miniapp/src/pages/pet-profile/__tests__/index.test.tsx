@@ -1,39 +1,31 @@
 /**
- * 宠物档案页（视觉方向 C · 温暖手账）单元测试
+ * 宠物档案页（高保真 v2 · 屏 06）单元测试
  *
  * 覆盖三层：
- *  1) 纯函数：封面图解析规则（照片 > AI 形象 > 品牌预设小图，永远非空）、封面渲染判定
- *     （有图就不渲染插画、加载失败退回插画、无图退回插画）、日期与年龄格式化；
- *  2) 渲染冒烟：无数据时数据带给出"下一步动作"而不是「--」、多宠物才出现切换器、
- *     危险操作仍在（改版不能把「标记宠物离世」这条通路弄丢）、功能性图标走 Icon 而不是 emoji；
- *  3) 关键交互：空态、登录守卫、品种特征匹配、标记离世的"两次确认 + 输入宠物名比对"。
+ *  1) 纯函数：日期与年龄格式化（口径见 utils/date 的 formatPetAge）；
+ *  2) v2 结构：宽幅页头（品牌 IP 插画 + 宠物身份三段式）、两组 menulist 的 8 条文案、
+ *     组头「全部 ›」、健康数据缺失时给下一步动作而不是 --；
+ *  3) 必须保住的能力与关键交互：换头像入口（第二组那一行）、真实路由跳转、多宠物切换、品种特征匹配、
+ *     它的小习惯、标记离世的两次确认 + 输入宠物名比对、登录守卫、空态、加载态。
  *
- * 【夹具注意】涉及"当前时间"的用例一律先把日号设成 15 再回退月份：
- * 直接 setMonth(-5) 在 7/29~7/31 这类日期会溢出到下月 1 号，期望值随日历变化而失败
- * （审查实测 2026 年有 8 个日期必然变红）。
+ * 【为什么逐条断言路由】本页 8 条清单**全部**指向分包页，路由写错在测试里不会报错、
+ * 在真机上却是「点了没反应」（微信对不存在的路由只会静默失败）。
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 // vi.mock 会被 vitest 提升到所有 import 之前，因此这里可以正常把页面放在顶部导入
-import PetProfile, {
-  formatDate,
-  calcAge,
-  resolveCoverImageUrl,
-  resolveCoverImage,
-  isBrandAvatarUrl,
-} from '../index'
+import PetProfile, { formatDate, calcAge } from '../index'
 
 // —— Taro 基础组件 → DOM 元素，便于用 testing-library 断言 ——
 vi.mock('@tarojs/components', () => ({
-  View: ({ children, className, style, onClick }: any) => (
-    <div className={className} style={style} onClick={onClick}>{children}</div>
+  View: ({ children, className, style, onClick, hoverClass }: any) => (
+    <div className={className} style={style} data-hover={hoverClass} onClick={onClick}>{children}</div>
   ),
   Text: ({ children, className, style }: any) => (
     <span className={className} style={style}>{children}</span>
   ),
   ScrollView: ({ children, className }: any) => <div className={className}>{children}</div>,
-  // 必须透传 onError：否则页面里"图片加载失败 → 退回插画"这条路径在测试里根本触发不了
-  // （独立审查指出：不透传时 33 条用例全绿也拦不住"失败后照片位空白"这个退化）
+  // 必须透传 mode 与 onError：否则「页头插画按原图比例（widthFix）」「加载失败不再渲染」两条路径都测不到
   Image: ({ src, className, mode, onError, ...rest }: any) => (
     <img className={className} src={src} alt='' data-mode={mode} onError={onError} {...rest} />
   ),
@@ -56,6 +48,15 @@ const store = vi.hoisted(() => ({
 }))
 const auth = vi.hoisted(() => ({ isAuthenticated: true, isInitialized: true }))
 const breeds = vi.hoisted(() => ({ list: [] as any[] }))
+// 三个取数服务的可控句柄：默认值在 beforeEach 里恢复
+const petSvc = vi.hoisted(() => ({ getPetFacts: vi.fn() }))
+const checkinSvc = vi.hoisted(() => ({
+  getCheckinStats: vi.fn(),
+  getCheckinsByDateRange: vi.fn(),
+  getLatestCheckin: vi.fn(),
+  calcHealthScore: vi.fn(),
+}))
+const vaccineSvc = vi.hoisted(() => ({ getVaccineRecords: vi.fn() }))
 
 vi.mock('@tarojs/taro', () => ({ default: taro }))
 
@@ -64,15 +65,18 @@ vi.mock('../../../stores/authStore', () => ({
     selector({ user: { id: 'user_001' }, isAuthenticated: auth.isAuthenticated, isInitialized: auth.isInitialized }),
 }))
 
-vi.mock('../../../stores/petStore', () => ({
-  usePetStore: () => ({
+vi.mock('../../../stores/petStore', () => {
+  const usePetStore: any = () => ({
     pets: store.pets,
     currentPet: store.currentPet,
     fetchPets: store.fetchPets,
     switchPet: store.switchPet,
     markPetDeceased: store.markPetDeceased,
-  }),
-}))
+  })
+  // 切换宠物失败提示那条分支读的是 store 的 error 字段
+  usePetStore.getState = () => ({ error: null })
+  return { usePetStore }
+})
 
 vi.mock('../../../stores/familyStore', () => {
   const useFamilyStore: any = (selector: any) => selector({ users: store.users })
@@ -80,27 +84,36 @@ vi.mock('../../../stores/familyStore', () => {
   return { useFamilyStore }
 })
 
-vi.mock('../../../hooks/useThemeClass', () => ({ useThemeClass: () => '' }))
+// 本页订阅主题只为一个用途：给页头插画拼四季 URL（useThemeKey）
+vi.mock('../../../hooks/useThemeClass', () => ({
+  useThemeClass: () => 'theme-autumn',
+  useThemeKey: () => 'autumn',
+}))
 vi.mock('../../../utils/authGuard', () => guard)
 vi.mock('../../index.scss', () => ({}))
 
-vi.mock('../../../services/petService', () => ({ getPetFacts: vi.fn().mockResolvedValue([]) }))
+vi.mock('../../../services/petService', () => ({ getPetFacts: petSvc.getPetFacts }))
 vi.mock('../../../services/checkinService', () => ({
-  getCheckinStats: vi.fn().mockResolvedValue({ streak: 12 }),
-  getCheckinsByDateRange: vi.fn().mockResolvedValue([]),
-  getLatestCheckin: vi.fn().mockResolvedValue(null),
-  calcHealthScore: vi.fn(() => 86),
+  getCheckinStats: checkinSvc.getCheckinStats,
+  getCheckinsByDateRange: checkinSvc.getCheckinsByDateRange,
+  getLatestCheckin: checkinSvc.getLatestCheckin,
+  calcHealthScore: checkinSvc.calcHealthScore,
 }))
-vi.mock('../../../services/vaccineService', () => ({ getVaccineRecords: vi.fn().mockResolvedValue([]) }))
+vi.mock('../../../services/vaccineService', () => ({ getVaccineRecords: vaccineSvc.getVaccineRecords }))
 vi.mock('../../../data/petKnowledge/breedsLight', () => ({ BREED_LIGHT: breeds.list }))
 
 vi.mock('../../../components/PageLoading', () => ({ default: () => <div>loading</div> }))
 vi.mock('../../../components/PageBackground', () => ({ default: () => null }))
 vi.mock('../../../components/PetAvatar', () => ({
-  default: ({ petName }: any) => <span data-testid='pet-avatar'>{petName}</span>,
+  // 名字放在 data-pet 属性而不是文本里：宠物名在本页会出现在页头、头像位、切换器三处，
+  // mock 再把名字渲染成文本就会让 findByText('小橘') 命中多个元素、把用例逼成 getAllBy。
+  // 断言切换器名字的用例查的是 .pf-switch-name 文本，不受这里影响。
+  default: ({ petName, className }: any) => (
+    <span data-testid='pet-avatar' className={className} data-pet={petName} />
+  ),
 }))
 vi.mock('../../../components', () => ({
-  // 只渲染 data-icon 属性，便于断言"这个位置用的是 Icon 而不是 emoji"
+  // 只渲染 data-icon 属性，便于断言「这个位置用的是 Icon 而不是 emoji」
   Icon: ({ name, className }: any) => <span className={className} data-icon={name} />,
   EmptyState: ({ title, actionText }: any) => (
     <div data-testid='empty-state'>{title}|{actionText}</div>
@@ -126,7 +139,21 @@ const petBase = {
   allergies: [] as string[],
   medications: [] as string[],
   chronicConditions: [] as string[],
+  // 建档时间：页头的「已陪伴 N 天」以它为起算点（口径同 pages/mine 的养宠时长）
+  createdAt: '2025-09-12T00:00:00.000Z',
 }
+
+/** 本页 8 条清单全部有真实页面（2026-09-12 收口补上了「生日与纪念日」），逐条钉住落点 */
+const REAL_ROUTES: Array<[string, string]> = [
+  ['健康趋势与报告', '/pagesPet/trends/index'],
+  ['疫苗日历', '/pagesPet/vaccine/index'],
+  ['慢病记录', '/pagesPet/chronic-tracking/index'],
+  ['喂养记录', '/pagesPet/feeding-advice/index'],
+  ['生日与纪念日', '/pagesPet/anniversary/index'],
+  ['形象与头像', '/pagesPet/avatar-customize/index'],
+  ['家庭成员与血缘', '/pagesPet/family/lineage/index'],
+  ['编辑档案', '/pagesPet/edit/index'],
+]
 
 beforeEach(() => {
   store.pets = [{ ...petBase }]
@@ -136,106 +163,21 @@ beforeEach(() => {
   auth.isInitialized = true
   // 原地清空（mock 工厂持有的是同一个数组引用）
   breeds.list.length = 0
+  petSvc.getPetFacts.mockReset().mockResolvedValue([])
+  checkinSvc.getCheckinStats.mockReset().mockResolvedValue({ streak: 12 })
+  checkinSvc.getCheckinsByDateRange.mockReset().mockResolvedValue([])
+  checkinSvc.getLatestCheckin.mockReset().mockResolvedValue(null)
+  checkinSvc.calcHealthScore.mockReset().mockReturnValue(86)
+  vaccineSvc.getVaccineRecords.mockReset().mockResolvedValue([])
   taro.showModal.mockReset()
   taro.showToast.mockReset()
   taro.navigateTo.mockReset()
   store.markPetDeceased.mockClear()
   guard.redirectToLoginIfNeeded.mockClear()
 })
-
 // ---------------------------------------------------------------------------
 // 1. 纯函数
 // ---------------------------------------------------------------------------
-describe('resolveCoverImageUrl', () => {
-  it('should return the photo url when the pet has a real photo', () => {
-    expect(resolveCoverImageUrl({ ...petBase, avatarPhotoUrl: 'https://cdn.example.com/a.png' }))
-      .toBe('https://cdn.example.com/a.png')
-  })
-
-  it('should fall back to the AI cartoon url when there is no photo', () => {
-    expect(resolveCoverImageUrl({ ...petBase, avatarCartoonUrl: 'https://cdn.example.com/b.png' }))
-      .toBe('https://cdn.example.com/b.png')
-  })
-
-  it('should prefer the photo over the AI cartoon', () => {
-    expect(resolveCoverImageUrl({
-      ...petBase,
-      avatarPhotoUrl: 'https://cdn.example.com/photo.png',
-      avatarCartoonUrl: 'https://cdn.example.com/cartoon.png',
-    })).toBe('https://cdn.example.com/photo.png')
-  })
-
-  it('should return the brand fallback avatar when the pet has no image of its own', () => {
-    // 全站统一口径：任何宠物永远有一个"小动物"头像（品种兜底），所以这里不再是空串。
-    // 页面上"用不用它当封面"由 resolveCoverImage 决定，不在这个函数里判。
-    expect(resolveCoverImageUrl({ ...petBase, avatarPhotoUrl: null, avatarCartoonUrl: null }))
-      .toContain('/uploads/avatars/home-style/cat/')
-    expect(resolveCoverImageUrl(petBase)).toContain('/uploads/avatars/home-style/cat/')
-  })
-
-  it('should still return brand preset avatars — the user picked them, so the cover must show them', () => {
-    // 回归锁（2026-09-11 用户实测）：以前这里判"品牌头像不当封面"直接回空串，
-    // 于是用户在形象定制里选的预设形象在封面被一张通用插画顶掉，
-    // 用户原话"我宠物是有头像的，这个不是头像，而是不知道哪来的图"。
-    const serverPreset = 'https://api.xinghuanhai.com/uploads/avatars/home-style/cat/cat-01-orange-tabby.png'
-    expect(resolveCoverImageUrl({ ...petBase, avatarCartoonUrl: serverPreset })).toBe(serverPreset)
-    const localPreset = '/assets/preset-home/cat/cat-01-orange-tabby.png'
-    expect(resolveCoverImageUrl({ ...petBase, avatarCartoonUrl: localPreset })).toBe(localPreset)
-  })
-
-  it('should still use a real photo even when a brand preset avatar also exists', () => {
-    expect(resolveCoverImageUrl({
-      ...petBase,
-      avatarPhotoUrl: 'https://cdn.example.com/photo.png',
-      avatarCartoonUrl: 'https://api.xinghuanhai.com/uploads/avatars/home-style/cat/cat-01-orange-tabby.png',
-    })).toBe('https://cdn.example.com/photo.png')
-  })
-})
-
-describe('resolveCoverImage', () => {
-  it('should render the image and hide the illustration when a cover url exists', () => {
-    expect(resolveCoverImage('https://cdn.example.com/photo.png'))
-      .toEqual({ show: true, showIllustration: false })
-  })
-
-  it('should format/keep brand presets usable as covers (256x256 方图也照显示)', () => {
-    expect(resolveCoverImage('https://api.xinghuanhai.com/uploads/avatars/home-style/cat/cat-01-orange-tabby.png'))
-      .toEqual({ show: true, showIllustration: false })
-  })
-
-  it('should fall back to the brand illustration when there is no image at all', () => {
-    expect(resolveCoverImage(''))
-      .toEqual({ show: false, showIllustration: true })
-  })
-
-  it('should fall back to the brand illustration when the cover image failed to load', () => {
-    // 回归锁（独立审查 P1）：图片 onError 后必须"不渲染图片 + 露出插画"，
-    // 否则照片位会剩一块空相纸 —— 首版把失败态留在 jsx 里就是这么翻的车
-    expect(resolveCoverImage('https://cdn.example.com/broken.png', true))
-      .toEqual({ show: false, showIllustration: true })
-    expect(resolveCoverImage('', true))
-      .toEqual({ show: false, showIllustration: true })
-  })
-})
-
-describe('isBrandAvatarUrl', () => {
-  it('should detect server home-style avatars and local presets', () => {
-    expect(isBrandAvatarUrl('https://api.xinghuanhai.com/uploads/avatars/home-style/dog/dog-01-golden.png')).toBe(true)
-    expect(isBrandAvatarUrl('/assets/preset-home/cat/cat-09-chinese-tabby.png')).toBe(true)
-  })
-
-  it('should not flag user photos or AI generated avatars', () => {
-    expect(isBrandAvatarUrl('https://api.xinghuanhai.com/uploads/pet-photos/u/p/a.jpg')).toBe(false)
-    expect(isBrandAvatarUrl('https://api.xinghuanhai.com/uploads/avatars/gen/abc.png')).toBe(false)
-  })
-
-  it('should still detect brand avatars after the host or directory prefix changes', () => {
-    // 判据只认路径段（与服务端 familyPhotoService.isBrandPresetUrl 同口径），
-    // 品牌头像改走 CDN 时不会漏判 → 不会把 256px 小图拉成封面糊图
-    expect(isBrandAvatarUrl('https://cdn.example.com/assets/home-style/cat/cat-01.png')).toBe(true)
-  })
-})
-
 describe('formatDate', () => {
   it('should format an ISO date to YYYY-MM-DD', () => {
     expect(formatDate('2023-05-12T00:00:00.000Z')).toMatch(/^2023-05-1[12]$/)
@@ -252,10 +194,9 @@ describe('formatDate', () => {
 })
 
 /**
- * 造一个"n 个月前"的日期：用当月 **1 号**。
+ * 造一个「n 个月前」的日期：用当月 1 号。
  * 既避开 setMonth 的月末溢出，也保证任何一天（必然 ≥ 1 号）都算满整月，
- * 期望值不会随"今天几号"抖动 —— 这也是 2026-09-11 统一年龄算法时踩到的点：
- * 原实现按月相减不减「日」，导致同样构造会多算一个月。
+ * 期望值不会随「今天几号」抖动。
  */
 function monthsAgo(n: number): string {
   const d = new Date()
@@ -274,68 +215,180 @@ describe('calcAge', () => {
     expect(calcAge(monthsAgo(15))).toBe('1岁3个月')
   })
 
-  // 说明：原先这里还有一条「月末不漂移」用例，但它的期望值是用**和被测实现同样的公式**
-  // 现算出来的（`(y2-y1)*12 + (m2-m1)` 再拼模板），属同义反复 —— 把算法改回旧版本它照样绿，
-  // 且 setDate(31) 在 2 月会溢出，期望值还随真实日历漂移。
-  // 月末 / 闰年 / 未来日期这些边界已由 utils/date 的固定时钟用例精确覆盖
-  // （见 src/utils/__tests__/date.test.ts → describe('formatPetAge')），故此处删除。
-
   it('should return an empty string when birth date is missing', () => {
     expect(calcAge('')).toBe('')
   })
 })
 
 // ---------------------------------------------------------------------------
-// 2. 渲染冒烟
+// 2. v2 结构：宽幅页头 + 两组 menulist
 // ---------------------------------------------------------------------------
-describe('PetProfile 渲染', () => {
-  it('should render the cover card with the pet name', async () => {
+describe('PetProfile v2 页头', () => {
+  it('should render the brand IP hero illustration at its natural ratio', async () => {
     render(<PetProfile />)
-    expect(await screen.findByText('小橘')).toBeTruthy()
-    expect(screen.getByText('宠物档案')).toBeTruthy()
-    // 默认宠物没有任何自有形象 → 用品牌小动物头像兜底，且品牌插画不再同时渲染
-    // （回归锁：以前封面把品牌头像判为"不合格"退回通用插画，用户看到的就是"不知道哪来的图"）
-    const cover = document.querySelector('.pf-polaroid-img') as HTMLImageElement
-    expect(cover).toBeTruthy()
-    expect(cover.getAttribute('src')).toContain('/uploads/avatars/home-style/cat/')
-    // 【2026-09-11 用户反馈后改】方形品牌头像原来靠 aspectFit + 同图模糊环境层托底，
-    // 实机观感是"一团圆晕"（用户原话：怎么还是圆的，直接方的、就一层就行）；
-    // 现改为 aspectFill 铺满方框（证件照式裁切），托底的环境层已一并删除。
-    expect(cover.getAttribute('data-mode')).toBe('aspectFill')
-    expect(screen.queryByTestId('illustration')).toBeNull()
+    await screen.findByText('小橘')
+    const art = document.querySelector('.pf-hero__art') as HTMLImageElement
+    expect(art).toBeTruthy()
+    // 四季插画按主题取图（本用例把主题钉成 autumn）
+    expect(art.getAttribute('src')).toContain('/uploads/illustrations/seasonal/pet-profile-autumn-hero.jpg')
+    // widthFix = 按原图比例铺满宽度；方形插画用 aspectFill 会裁掉主体的头顶与笔记本
+    expect(art.getAttribute('data-mode')).toBe('widthFix')
   })
 
-  it('should fall back to the brand illustration when the cover image fails to load', async () => {
-    // 渲染级断言（独立审查 P1 的回归锁）：真触发 onError，再验证图片被卸载、插画出现。
-    // 注意用 [data-role="cover"] 精确定位封面主图 —— 环境层与它同 src，靠 class 区分。
-    const { container } = render(<PetProfile />)
+  it('should show 品种 · 年龄 · 已陪伴 N 天 in the hero identity line', async () => {
+    render(<PetProfile />)
     await screen.findByText('小橘')
-    const cover = container.querySelector('[data-role="cover"]') as HTMLImageElement
-    expect(cover).toBeTruthy()
-    fireEvent.error(cover)
-    // onError 后：主图与环境层都卸载，品牌插画顶上（照片位不允许空着）
-    expect(container.querySelector('[data-role="cover"]')).toBeNull()
-    expect(screen.getByTestId('illustration').getAttribute('data-name')).toBe('page-pet-profile')
+    const meta = document.querySelector('.pf-hero__meta') as HTMLElement
+    expect(meta.textContent).toContain('中华田园猫')
+    expect(meta.textContent).toMatch(/已陪伴 \d+ 天/)
+  })
+
+  it('should drop the companion segment instead of showing 0 天 when createdAt is missing', async () => {
+    store.pets = [{ ...petBase, createdAt: '' }]
+    store.currentPet = store.pets[0]
+    render(<PetProfile />)
+    await screen.findByText('小橘')
+    const meta = document.querySelector('.pf-hero__meta') as HTMLElement
+    expect(meta.textContent).not.toContain('已陪伴')
+    expect(meta.textContent).not.toContain('0 天')
+  })
+
+  it('should drop the hero avatar button (v2 没画) but keep 换头像 via 形象与头像 行', async () => {
+    render(<PetProfile />)
+    await screen.findByText('小橘')
+    // v2 的页头只有名字 + 身份行，2026-09-12 收口按 v2 撤掉了头像圆钮
+    expect(document.querySelector('.pf-hero__avatar')).toBeNull()
+    // 能力没丢：形象定制（换头像 / 换形象）仍是第二组那一行的真实落点
+    fireEvent.click(screen.getByText('形象与头像'))
+    expect(taro.navigateTo).toHaveBeenCalledWith({ url: '/pagesPet/avatar-customize/index' })
+  })
+
+  it('should hide the hero illustration instead of showing a broken image on error', async () => {
+    render(<PetProfile />)
+    await screen.findByText('小橘')
+    fireEvent.error(document.querySelector('.pf-hero__art') as HTMLImageElement)
+    expect(document.querySelector('.pf-hero__art')).toBeNull()
+    // 文字层仍在（页头不会因为少一张图而塌掉）
+    expect(document.querySelector('.pf-hero__name')).toBeTruthy()
+  })
+})
+
+describe('PetProfile v2 两组 menulist', () => {
+  it('should render both groups with the v2 section titles', async () => {
+    render(<PetProfile />)
+    await screen.findByText('小橘')
+    expect(screen.getByText('健康档案')).toBeTruthy()
+    // 第二组标题是「关于 + 当前宠物名」，多宠物下不会挂错名字
+    expect(screen.getByText('关于小橘')).toBeTruthy()
+  })
+
+  it('should render all 8 v2 menu labels', async () => {
+    render(<PetProfile />)
+    await screen.findByText('小橘')
+    for (const [label] of REAL_ROUTES) expect(screen.getByText(label)).toBeTruthy()
+    // 两组各 4 行，图标位共 8 个（健康备忘 / 品种特征那几组是 pf-menu__item--static，另有图标）
+    expect(document.querySelectorAll('.pf-sec .pf-menu__item:not(.pf-menu__item--static) .pf-menu__icon [data-icon]').length).toBe(8)
+  })
+
+  it('should navigate every row that has a real page to that exact route', async () => {
+    render(<PetProfile />)
+    await screen.findByText('小橘')
+    for (const [label, url] of REAL_ROUTES) {
+      taro.navigateTo.mockClear()
+      fireEvent.click(screen.getByText(label))
+      expect(taro.navigateTo).toHaveBeenCalledWith({ url })
+    }
+  })
+
+  it('should navigate 生日与纪念日 to the real anniversary page', async () => {
+    render(<PetProfile />)
+    await screen.findByText('小橘')
+    const row = screen.getByText('生日与纪念日').closest('.pf-menu__item') as HTMLElement
+    // 8 行全部有落点：既没有「即将上线」胶囊，也没有降权态
+    expect(screen.queryByText('即将上线')).toBeNull()
+    expect(row.className).not.toContain('soon')
+    fireEvent.click(screen.getByText('生日与纪念日'))
+    expect(taro.navigateTo).toHaveBeenCalledWith({ url: '/pagesPet/anniversary/index' })
+  })
+
+  it('should render the v2 「全部 ›」 in the 健康档案 group head and open 趋势页', async () => {
+    render(<PetProfile />)
+    await screen.findByText('小橘')
+    const more = document.querySelector('.pf-sec__more') as HTMLElement
+    expect(more).toBeTruthy()
+    // 文案与 v2 原型逐字一致（字面量 › 而不是箭头图标，与 pages/mine、pages/creative 的组头引导字同款）
+    expect(more.textContent).toBe('全部 ›')
+    // 只有第一组有（v2 的「关于 {名}」组头没有这一枚）
+    expect(document.querySelectorAll('.pf-sec__more').length).toBe(1)
+    // 真入口：点了要跳到趋势页（不是纯展示的假按钮）
+    fireEvent.click(more)
+    expect(taro.navigateTo).toHaveBeenCalledWith({ url: '/pagesPet/trends/index' })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 3. 既有能力与关键交互
+// ---------------------------------------------------------------------------
+describe('PetProfile 既有能力', () => {
+  it('should show next-step hints instead of bare dashes when health data is missing', async () => {
+    render(<PetProfile />)
+    await screen.findByText('小橘')
+    const values = Array.from(document.querySelectorAll('.pf-metric__value, .pf-metric__empty')).map(n => n.textContent)
+    expect(values).toEqual(['打卡后生成', '12天', '暂无记录'])
+    expect(document.body.textContent).not.toContain('--')
+  })
+
+  it('should render real numbers when checkin and vaccine data exist', async () => {
+    checkinSvc.getLatestCheckin.mockResolvedValue({ poopLevel: 1, appetiteLevel: 1, spiritLevel: 1 })
+    vaccineSvc.getVaccineRecords.mockResolvedValue([{ status: 'completed' }, { status: 'pending' }])
+    render(<PetProfile />)
+    await screen.findByText('小橘')
+    // 等两批异步取数落地（打分 / 疫苗覆盖各一次 setState）
+    await new Promise(r => setTimeout(r, 0))
+    const values = Array.from(document.querySelectorAll('.pf-metric__value, .pf-metric__empty')).map(n => n.textContent)
+    expect(values).toEqual(['86分', '12天', '50%'])
+  })
+
+  it('should match breed traits from the breed knowledge base', async () => {
+    // 注意：mock 工厂在导入时就捕获了数组引用，这里必须原地 push（重新赋值 breeds.list 不会生效）
+    breeds.list.push({
+      name: '中华田园猫',
+      aliases: [],
+      geneticDiseases: ['多囊肾'],
+      weightRangeStr: '3-5kg',
+      dietRestrictions: ['洋葱'],
+    })
+    render(<PetProfile />)
+    await screen.findByText('小橘')
+    expect(screen.getByText('多囊肾')).toBeTruthy()
+    expect(screen.getByText('3-5kg')).toBeTruthy()
+    expect(screen.getByText('洋葱')).toBeTruthy()
+  })
+
+  it('should render 它的小习惯 only when there are facts', async () => {
+    const first = render(<PetProfile />)
+    await screen.findByText('小橘')
+    expect(screen.queryByText('它的小习惯')).toBeNull()
+    first.unmount()
+
+    petSvc.getPetFacts.mockResolvedValue([
+      { id: 1, petId: 'pet_001', category: 'like', fact: '爱吃冻干', createdAt: '2026-01-01' },
+    ])
+    render(<PetProfile />)
+    expect(await screen.findByText('爱吃冻干')).toBeTruthy()
+    expect(screen.getByText('它的小习惯')).toBeTruthy()
   })
 
   it('should use Icon components instead of functional emoji', async () => {
     render(<PetProfile />)
     await screen.findByText('小橘')
-    // 拍立得上的「换头像」必须是图标（曾经写成 tone=white 压在近白相纸上 → 所有主题看不见）
-    expect(document.querySelector('.pf-polaroid-shoot [data-icon="camera"]')).toBeTruthy()
-    // 便签方块四个入口也都是 Icon
-    expect(document.querySelectorAll('.pf-grid-icon [data-icon]').length).toBe(4)
+    // 两组清单 8 行 + 状态图标位都由 Icon 渲染
+    expect(document.querySelectorAll('.pf-menu__icon [data-icon]').length).toBeGreaterThanOrEqual(8)
     // 功能性 emoji 不应出现在渲染文本里
     const text = document.body.textContent || ''
-    for (const e of ['📷', '🩺', '📔', '🎨', '🚫', '💊', '🪪']) {
+    for (const e of ['📷', '🩺', '📔', '🎨', '🚫', '💊', '🪪', '📈', '💉']) {
       expect(text.includes(e)).toBe(false)
     }
-  })
-
-  it('should show next-step hints instead of bare dashes when health data is missing', async () => {
-    render(<PetProfile />)
-    expect(await screen.findByText('打卡后生成')).toBeTruthy()
-    expect(screen.getByText('暂无记录')).toBeTruthy()
   })
 
   it('should hide the pet switcher when there is only one pet', async () => {
@@ -353,7 +406,7 @@ describe('PetProfile 渲染', () => {
     await screen.findAllByText('小橘')
     expect(document.querySelector('.pf-switcher')).toBeTruthy()
     // 精确断言切换器里的名字文本，而不是 getAllByText('旺财').length > 0
-    // （PetAvatar 的 mock 也会渲染 petName，那种断言即使切换器不渲染名字也会通过）
+    // （PetAvatar 的 mock 把 petName 放在 data-pet 属性上，那种断言即使切换器不渲染名字也会通过）
     const names = Array.from(document.querySelectorAll('.pf-switch-name')).map(n => n.textContent)
     expect(names).toEqual(['小橘', '旺财'])
   })
@@ -362,22 +415,6 @@ describe('PetProfile 渲染', () => {
     render(<PetProfile />)
     await screen.findByText('小橘')
     expect(screen.getByText('标记宠物离世')).toBeTruthy()
-  })
-
-  it('should match breed traits from the breed knowledge base', async () => {
-    // 注意：mock 工厂在导入时就捕获了数组引用，这里必须原地 push（重新赋值 breeds.list 不会生效）
-    breeds.list.push({
-      name: '中华田园猫',
-      aliases: [],
-      geneticDiseases: ['多囊肾'],
-      weightRangeStr: '3-5kg',
-      dietRestrictions: ['洋葱'],
-    })
-    render(<PetProfile />)
-    await screen.findByText('小橘')
-    expect(screen.getByText('多囊肾')).toBeTruthy()
-    expect(screen.getByText('3-5kg')).toBeTruthy()
-    expect(screen.getByText('洋葱')).toBeTruthy()
   })
 
   it('should render the empty state and its CTA when there is no pet', async () => {
@@ -401,13 +438,10 @@ describe('PetProfile 渲染', () => {
     // 未登录：不渲染宠物内容，交由收口守卫处理
     await new Promise(r => setTimeout(r, 0))
     expect(guard.redirectToLoginIfNeeded).toHaveBeenCalled()
-    expect(screen.queryByText('宠物档案')).toBeNull()
+    expect(screen.queryByText('关于小橘')).toBeNull()
   })
 })
 
-// ---------------------------------------------------------------------------
-// 3. 关键交互：标记离世（两次确认 + 输入宠物名比对）
-// ---------------------------------------------------------------------------
 describe('PetProfile 标记宠物离世', () => {
   /** 让 showModal 按顺序回放预设的响应 */
   function mockModals(responses: Array<Record<string, unknown>>) {

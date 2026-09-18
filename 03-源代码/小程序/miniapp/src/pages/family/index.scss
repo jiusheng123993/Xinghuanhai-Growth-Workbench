@@ -824,3 +824,1030 @@
 .family-bottom-safe {
   height: 40rpx;
 }
+
+// ============================================================
+// 以下为「家庭看板」（pagesPet/family/dashboard）并入本页时带来的样式（2026-09-12）
+// 【为什么重写类名而不是照抄 dashboard 的 .fd-*】dashboard 的样式表有 1577 行，其中约 320 行是
+// 只为它自己那份深色主题覆盖写的；本页走的是主题变量 + PageBackground，照抄会带进两套主题口径。
+// 这里按本页既有写法（$color-* / rgba(var(--x-rgb), α)）重写，只保留真正搬过来的区块。
+// 【类名前缀】family-pet-*（成员宠物）/ family-photo-*（全家福生成）/ family-album-*（相册）
+// ============================================================
+
+// ===== 2.6 宠物成员管理 =====
+.family-pet-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+.family-pet-card {
+  width: calc((100% - 20rpx) / 2);
+  padding: 24rpx 20rpx;
+  border-radius: 24rpx;
+  background: $color-bg-secondary;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.family-pet-card__top {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12rpx;
+}
+
+.family-pet-card__avatar-wrap {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  background: $color-bg-card;
+  @include flex-center;
+}
+
+.family-pet-card__avatar-img {
+  width: 100%;
+  height: 100%;
+}
+
+.family-pet-card__avatar-emoji {
+  font-size: 52rpx;
+  line-height: 1;
+}
+
+// 设角色按钮贴卡片右上角：它是本卡的主操作，压在角落比另起一行更省纵向空间
+.family-pet-card__role-btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  background: $color-primary-bg;
+}
+
+.family-pet-card__role-btn-text {
+  font-size: 20rpx;
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.family-pet-card__name {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  max-width: 100%;
+  @include text-ellipsis;
+}
+
+.family-pet-card__role {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: $color-primary;
+}
+
+.family-pet-card__breed {
+  margin-top: 4rpx;
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  max-width: 100%;
+  @include text-ellipsis;
+}
+
+.family-pet-card__remove {
+  margin-top: 14rpx;
+  padding: 6rpx 22rpx;
+  border-radius: 999rpx;
+  background: $color-danger-bg;
+}
+
+.family-pet-card__remove-text {
+  font-size: 20rpx;
+  color: $color-danger;
+}
+
+.family-pet-empty {
+  padding: 28rpx 24rpx;
+  border-radius: 16rpx;
+  background: $color-bg-secondary;
+}
+
+.family-pet-empty__text {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.family-pet-invite {
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 2rpx dashed $color-border;
+}
+
+.family-pet-invite__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.family-pet-invite__title {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.family-pet-invite__count {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.family-pet-invite__row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 0;
+  border-bottom: 2rpx solid rgba(var(--border-rgb, 240, 224, 208), 0.6);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.family-pet-invite__avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  background: $color-bg-secondary;
+  @include flex-center;
+  flex-shrink: 0;
+}
+
+.family-pet-invite__avatar-img {
+  width: 100%;
+  height: 100%;
+}
+
+.family-pet-invite__avatar-emoji {
+  font-size: 36rpx;
+  line-height: 1;
+}
+
+.family-pet-invite__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.family-pet-invite__name {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  @include text-ellipsis;
+}
+
+.family-pet-invite__breed {
+  display: block;
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+}
+
+.family-pet-invite__btn {
+  flex-shrink: 0;
+  padding: 10rpx 24rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  box-shadow: $shadow-sm;
+
+  &:active {
+    opacity: 0.85;
+  }
+}
+
+.family-pet-invite__btn-text {
+  font-size: 22rpx;
+  color: #FFFFFF;
+  font-weight: $font-weight-semibold;
+}
+
+// ===== 6.5 全家福 =====
+.family-photo__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 0;
+}
+
+.family-photo__empty-text {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  text-align: center;
+  line-height: 1.6;
+}
+
+// --- 生成前：成员预览 / 座次 / 场景 ---
+.family-photo__members {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16rpx;
+  padding: 8rpx 0 4rpx;
+}
+
+.family-photo__member {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4rpx solid $color-primary-light;
+  background: $color-primary-bg;
+  @include flex-center;
+
+  &--more {
+    border-style: dashed;
+    border-color: $color-border;
+    background: $color-bg-secondary;
+  }
+}
+
+.family-photo__member-img {
+  width: 100%;
+  height: 100%;
+}
+
+.family-photo__member-emoji {
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+.family-photo__member-more {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  font-weight: $font-weight-semibold;
+}
+
+.family-photo__desc {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  text-align: center;
+  line-height: 1.6;
+}
+
+// --- 座次（排在前面 = 合影靠左） ---
+.family-photo__order {
+  margin-top: 24rpx;
+  padding: 20rpx;
+  border-radius: 20rpx;
+  background: $color-bg-secondary;
+}
+
+.family-photo__order-title {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.family-photo__order-hint {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  line-height: 1.5;
+}
+
+.family-photo__order-scroll {
+  width: 100%;
+  white-space: nowrap;
+  margin-top: 16rpx;
+}
+
+.family-photo__order-row {
+  display: flex;
+  gap: 16rpx;
+  padding-bottom: 8rpx;
+}
+
+.family-photo__order-item {
+  position: relative;
+  flex-shrink: 0;
+  width: 140rpx;
+  padding: 16rpx 12rpx;
+  border-radius: 20rpx;
+  background: $color-bg-card;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.family-photo__order-pos {
+  font-size: 20rpx;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+}
+
+.family-photo__order-avatar {
+  display: block;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: $color-bg-secondary;
+}
+
+.family-photo__order-name {
+  font-size: 20rpx;
+  color: $color-text-primary;
+  max-width: 116rpx;
+  @include text-ellipsis;
+}
+
+.family-photo__order-btns {
+  display: flex;
+  gap: 12rpx;
+}
+
+.family-photo__order-btn {
+  width: 48rpx;
+  height: 40rpx;
+  border-radius: 999rpx;
+  background: $color-primary-bg;
+  @include flex-center;
+
+  &--disabled {
+    opacity: 0.35;
+  }
+}
+
+.family-photo__order-btn-text {
+  font-size: 24rpx;
+  color: $color-primary;
+  line-height: 1;
+}
+
+// --- 场景选择 ---
+.family-photo__scene {
+  margin-top: 24rpx;
+}
+
+.family-photo__scene-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.family-photo__scene-tab {
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+  background: $color-bg-secondary;
+
+  &--active {
+    background: $color-primary-bg;
+  }
+}
+
+.family-photo__scene-tab-text {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+
+  .family-photo__scene-tab--active & {
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.family-photo__scene-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.family-photo__scene-chip {
+  width: calc((100% - 48rpx) / 4);
+  padding: 16rpx 8rpx;
+  border-radius: 20rpx;
+  background: $color-bg-secondary;
+  border: 2rpx solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+
+  &--active {
+    border-color: $color-primary;
+    background: $color-primary-bg;
+  }
+}
+
+.family-photo__scene-emoji {
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+.family-photo__scene-label {
+  font-size: 20rpx;
+  color: $color-text-secondary;
+  max-width: 100%;
+  @include text-ellipsis;
+
+  .family-photo__scene-chip--active & {
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.family-photo__scene-input {
+  width: 100%;
+  min-height: 120rpx;
+  margin-top: 16rpx;
+  padding: 16rpx;
+  border-radius: 16rpx;
+  background: $color-bg-secondary;
+  font-size: 24rpx;
+  color: $color-text-primary;
+  box-sizing: border-box;
+}
+
+.family-photo__generate-btn {
+  margin-top: 24rpx;
+  height: 88rpx;
+  border-radius: 44rpx;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  box-shadow: $shadow-button;
+  @include flex-center;
+
+  &:active {
+    opacity: 0.85;
+  }
+
+  &--loading {
+    opacity: 0.6;
+  }
+}
+
+.family-photo__generate-btn-text {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: #FFFFFF;
+}
+
+// --- AI 生成中 ---
+.family-photo__generating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14rpx;
+  padding: 48rpx 24rpx;
+}
+
+.family-photo__generating-spinner {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  border: 6rpx solid rgba(var(--primary-rgb, 255, 107, 61), 0.2);
+  border-top-color: $color-primary;
+  animation: familyPhotoSpin 0.9s linear infinite;
+  margin-bottom: 8rpx;
+}
+
+.family-photo__generating-text {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+.family-photo__generating-style {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  text-align: center;
+}
+
+.family-photo__generating-hint {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  text-align: center;
+}
+
+// --- 生成结果预览 ---
+.family-photo__preview {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.family-photo__preview-img-wrap {
+  position: relative;
+  width: 100%;
+  /* 与 canvas 导出比例一致（750×1000）；不写死像素高，避免与导出比例脱节 */
+  padding-top: 133.33%;
+  border-radius: 24rpx;
+  overflow: hidden;
+  background: $color-bg-secondary;
+}
+
+.family-photo__preview-img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+}
+
+.family-photo__preview-tap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10rpx 0;
+  background: rgba(0, 0, 0, 0.45);
+  @include flex-center;
+  font-size: 20rpx;
+  color: #FFFFFF;
+}
+
+.family-photo__preview-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.family-photo__btn {
+  flex: 1;
+  height: 80rpx;
+  border-radius: 40rpx;
+  @include flex-center;
+
+  &--outline {
+    border: 2rpx solid $color-primary;
+    background: transparent;
+  }
+
+  &--primary {
+    background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+    box-shadow: $shadow-button;
+  }
+
+  &:active {
+    opacity: 0.85;
+  }
+}
+
+.family-photo__btn-text {
+  font-size: 24rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+
+  .family-photo__btn--primary & {
+    color: #FFFFFF;
+  }
+}
+
+.family-photo__regenerate {
+  align-self: center;
+  padding: 10rpx 32rpx;
+  border-radius: 999rpx;
+  background: $color-bg-secondary;
+}
+
+.family-photo__regenerate-text {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+}
+
+// 画布本体尺寸写在内联 style 里（0×0 屏内节点，见 tsx 注释）；这里只兜底 pointer-events
+.family-photo__canvas {
+  pointer-events: none;
+  opacity: 0;
+}
+
+// 旋转动画（小程序 wxss 支持 @keyframes；命名加页面前缀避免与全站动画重名）
+@keyframes familyPhotoSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ===== 6.6 全家福相册 =====
+.family-album__new {
+  padding: 2rpx 12rpx;
+  border-radius: 999rpx;
+  background: $color-primary;
+  font-size: 18rpx;
+  color: #FFFFFF;
+  font-weight: $font-weight-bold;
+}
+
+.family-album__upload {
+  flex-shrink: 0;
+  padding: 10rpx 22rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  box-shadow: $shadow-sm;
+
+  &:active {
+    opacity: 0.85;
+  }
+}
+
+.family-album__upload-text {
+  font-size: 22rpx;
+  color: #FFFFFF;
+  font-weight: $font-weight-medium;
+}
+
+.family-album__loading {
+  padding: 40rpx 0;
+  @include flex-center;
+}
+
+.family-album__loading-text {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.family-album__empty {
+  padding: 32rpx 24rpx;
+  border-radius: 16rpx;
+  background: $color-bg-secondary;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.family-album__empty-title {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
+}
+
+.family-album__empty-text {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.family-album__list {
+  display: flex;
+  flex-direction: column;
+  gap: 28rpx;
+
+  // 新照片入册后的短暂高亮（保存成功时给一个可见反馈，2s 后自行撤掉）
+  &--highlight {
+    animation: fadeInUp 0.35s ease-out;
+  }
+}
+
+.family-album__group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.family-album__group-label {
+  font-size: 22rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
+}
+
+.family-album__group-count {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+}
+
+.family-album__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+.family-album__item {
+  width: calc((100% - 20rpx) / 2);
+  border-radius: 20rpx;
+  overflow: hidden;
+  background: $color-bg-secondary;
+}
+
+.family-album__item-img {
+  position: relative;
+  width: 100%;
+  padding-top: 100%;
+  background: $color-bg-card;
+}
+
+.family-album__item-photo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.family-album__item-placeholder {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  @include flex-center;
+}
+
+.family-album__item-emoji {
+  font-size: 56rpx;
+  line-height: 1;
+}
+
+.family-album__item-badge {
+  position: absolute;
+  right: 8rpx;
+  top: 8rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 999rpx;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.family-album__item-badge-text {
+  font-size: 18rpx;
+  color: #FFFFFF;
+}
+
+.family-album__item-body {
+  padding: 14rpx 16rpx 16rpx;
+}
+
+.family-album__item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8rpx;
+}
+
+.family-album__item-date {
+  font-size: 20rpx;
+  color: $color-text-secondary;
+}
+
+.family-album__item-scene {
+  font-size: 18rpx;
+  color: $color-primary;
+  max-width: 120rpx;
+  @include text-ellipsis;
+}
+
+.family-album__item-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10rpx;
+}
+
+.family-album__item-count {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+}
+
+.family-album__item-del {
+  padding: 4rpx 18rpx;
+  border-radius: 999rpx;
+  background: $color-danger-bg;
+}
+
+.family-album__item-del-text {
+  font-size: 20rpx;
+  color: $color-danger;
+}
+
+// ============================================================
+// 家庭成员（人）关系 —— 由 pagesPet/family-tree 搬来（2026-09-12 舰长裁决方案②）
+// 类名前缀 family-rel-*（入口 / 列表）与 family-rel-panel__*（浮层面板），不碰原 family-user-* 一行
+// ============================================================
+
+// ===== 「共同养宠」卡右上角的设置关系入口 =====
+.family-rel__entry {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  flex-shrink: 0;
+  padding: 6rpx 18rpx;
+  border-radius: 999rpx;
+  background: $color-primary-bg;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.family-rel__entry-icon {
+  font-size: 20rpx;
+  line-height: 1;
+}
+
+.family-rel__entry-text {
+  font-size: 22rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+// 已有关系数量：让用户不点开也知道"里面有几条"
+.family-rel__entry-count {
+  font-size: 18rpx;
+  color: #FFFFFF;
+  background: $color-primary;
+  border-radius: 999rpx;
+  padding: 0 10rpx;
+  line-height: 1.7;
+}
+
+// ===== 关系列表（贴在成员横滑条下方） =====
+.family-rel__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-top: 8rpx;
+  padding: 20rpx;
+  border-radius: 20rpx;
+  background: $color-bg-secondary;
+}
+
+.family-rel__row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-width: 0;
+}
+
+.family-rel__emoji {
+  font-size: 28rpx;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.family-rel__text {
+  flex: 1;
+  min-width: 0;
+  font-size: 24rpx;
+  color: $color-text-primary;
+  @include text-ellipsis;
+}
+
+.family-rel__remove {
+  flex-shrink: 0;
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: $color-danger-bg;
+  @include flex-center;
+}
+
+.family-rel__remove-text {
+  font-size: 22rpx;
+  color: $color-danger;
+  line-height: 1;
+}
+
+// ===== 设置关系浮层 + 底部面板 =====
+.family-rel-overlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 100;
+}
+
+.family-rel-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 101;
+  max-height: 80vh;
+  padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
+  border-radius: 32rpx 32rpx 0 0;
+  background: $color-bg-card;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.family-rel-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.family-rel-panel__title {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.family-rel-panel__close {
+  font-size: 32rpx;
+  color: $color-text-tertiary;
+  padding: 0 12rpx;
+}
+
+// 非 owner 的只读说明（不给"点了没反应"的按钮）
+.family-rel-panel__readonly {
+  padding: 40rpx 24rpx;
+  border-radius: 20rpx;
+  background: $color-bg-secondary;
+}
+
+.family-rel-panel__readonly-text {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  text-align: center;
+  line-height: 1.7;
+}
+
+.family-rel-form__field {
+  margin-bottom: 24rpx;
+}
+
+.family-rel-form__label {
+  display: block;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-bottom: 10rpx;
+}
+
+.family-rel-form__picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 80rpx;
+  padding: 0 24rpx;
+  border-radius: 16rpx;
+  background: $color-bg-secondary;
+  font-size: 26rpx;
+  color: $color-text-primary;
+}
+
+.family-rel-form__placeholder {
+  color: $color-text-tertiary;
+}
+
+.family-rel-form__types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+}
+
+.family-rel-form__type {
+  padding: 10rpx 22rpx;
+  border-radius: 999rpx;
+  background: $color-bg-secondary;
+  border: 2rpx solid transparent;
+
+  &--active {
+    border-color: $color-primary;
+    background: $color-primary-bg;
+  }
+}
+
+.family-rel-form__type-text {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+
+  .family-rel-form__type--active & {
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.family-rel-form__submit {
+  margin-top: 8rpx;
+  height: 88rpx;
+  border-radius: 44rpx;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  box-shadow: $shadow-button;
+  @include flex-center;
+
+  &:active {
+    opacity: 0.85;
+  }
+}
+
+.family-rel-form__submit-text {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: #FFFFFF;
+}

@@ -3,6 +3,10 @@
 
 // ============================================
 // 日常回忆录页 · 原型 1:1
+// 2026-09-13：hero 由「猫头占位横幅」改为样例视频预览位；
+//             新增「从回忆里选照片」面板（.memoir__pool*）样式
+// 2026-09-13（24号）：hero 样例视频改成 4:3 比例盒（修「框比例失调」），
+//             并给 .memoir__hero 补回 position: relative（修 H5 里视频逃出 hero、盖住页内标题）
 // ============================================
 .memoir {
   min-height: 100vh;
@@ -17,7 +21,7 @@
 
 .xhh-card {
   background: $color-bg-card;
-  border: 1px solid $color-border;
+  border: 1rpx solid $color-border;
   border-radius: $radius-md;
   box-shadow: $shadow-card;
 }
@@ -40,41 +44,175 @@
   color: $color-text-secondary;
 }
 
-// —— hero 横幅 ——
+// —— hero：样例预览位（2026-09-13 用户指认「这里是放样例的地方」） ——
 .memoir__hero {
+  // 【2026-09-13（24号）】position: relative 必须留着（22号改造时删过一行，别再删）：
+  // H5 构建里 Taro 的 <Video> 宿主元素自带 `position: absolute; top: 0; left: 0; width: 100%`
+  // （见 node_modules/@tarojs/components/dist/collection/components/video/video.js 里 Host 的
+  //   class 为 taro-video-container，以及该组件样式表里的 .taro-video-container 规则）。
+  // 祖先里一个定位元素都没有时，它以**视口**为包含块 → width:100% 解析成整屏宽，
+  // 6 号实测 video rect = (0,0,375,136)，页内标题「轻纪念」被压在下面（elementFromPoint 命中 .taro-video-cover）。
+  // 有这一行，hero 就是它的包含块；overflow: hidden 再兜一道：真逃逸也裁在卡片圆角内。
+  // 这条对小程序是纯防御（原生 <Video> 没有那套 absolute 样式），两端都安全。
   position: relative;
-  height: 300rpx;
   border-radius: $radius-md;
   overflow: hidden;
   background-image: linear-gradient(135deg, $color-primary-bg, $color-gold-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   box-shadow: $shadow-card;
+  padding: $spacing-md;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
 }
 
-.memoir__hero-bg {
+// 顶部一行：左「样例预览」说明，右档位角标。
+// 角标特意放在视频之外：少数未开同层渲染的机型上，原生 video 会盖住绝对定位的兄弟节点。
+// 【2026-09-13（24号）】显式抬到 video 之上：H5 的 video 是绝对定位元素，绝对定位默认画在静态兄弟之上，
+// 不抬层级就可能重演「video 盖住标题/角标」（.memoir__hero-foot 同理）。
+// ⚠️ z-index 只管 web 层：未开同层渲染的机型上原生 video 会盖住一切，那种机型靠结构保护
+//    ——角标与说明行都排在 video 之外的独立行里（结构注释见 index.tsx 的 hero 区块）。
+.memoir__hero-head {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  gap: $spacing-md;
 }
 
-.memoir__hero-emoji {
-  font-size: 160rpx;
-  line-height: 1;
-  animation: pulse 3s ease-in-out infinite;
+.memoir__hero-label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
 }
 
 .memoir__hero-badge {
-  position: absolute;
-  top: $spacing-md;
-  right: $spacing-md;
   padding: 6rpx $spacing-md;
   border-radius: $radius-round;
   background: rgba(255, 255, 255, 0.85);
 }
 
 .memoir__hero-badge-text {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+// 样例视频的画面盒：**比例盒**（高度由宽度按片源比例撑出）+ 视频绝对定位铺满 → 两端零黑边。
+// 【片源比例 = 4:3（960×720）】2026-09-13（24号）实测来源：6 号跑 H5 验收时浏览器落盘的缓存体
+//   …\.work-tmp\ui-b4\h5\.edge-cdp-profile\Default\Cache\Cache_Data\f_000004（该 profile 的缓存索引里
+//   唯一出现过的视频 URL 就是 sample-light-1.mp4），ffprobe 读出 960×720 / h264 / 24fps / 10.04s。
+//   sample-light-2.mp4 本地无副本且沙箱禁网 → **未实测**；万一它不是 4:3，contain 会让画面在短边留黑
+//   （16:9 片源塞进 4:3 框 = 上下各留约 12.5% 高），画面完整、不裁主体 —— 这是有意选的保守取舍：
+//   回忆录的画面宁可有黑边，也不能把毛孩子的头裁掉。
+// 【换片源必改这里】padding-top 的百分比按**包含块宽度**解析，取值 = 高 ÷ 宽 × 100%：
+//   4:3 → 75%（现值）；16:9 → 56.25%；1:1 → 100%（写法与 pages/index/index.scss 的 .today-hero 同款）。
+//   片源比例变了却不改这一行，就会退回「宽扁框里塞方片、左右各留大半屏黑边」的老毛病。
+// 深色底：与下方预览画布同色；封面直接用视频自身首帧，不额外引入封面图。
+.memoir__hero-frame {
+  position: relative;
+  height: 0;
+  padding-top: 75%;
+  overflow: hidden;
+  border-radius: $radius-sm;
+  background: #1A1410;
+}
+
+// 视频本体：铺满上面的比例盒。
+// - 小程序：<Video> 是原生组件、没有 Taro H5 那套 absolute 样式，靠这里的 position/宽高撑满盒子；
+// - H5：Taro 给宿主元素自带的正是同一套值（absolute + top/left: 0 + 100% 宽高），这边写等价值，
+//   唯一变化是包含块从视口变成了 .memoir__hero-frame（因为它 position: relative）→ 视频被关进框里。
+// 这里故意不依赖级联先后：写的值要么与 Taro 相同、要么本就只有我们声明，谁赢结果都一样。
+// 圆角两端都写：原生 video 不保证被父级 overflow: hidden 裁切，写在自身更稳。
+.memoir__hero-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: $radius-sm;
+  background: #1A1410;
+}
+
+// 底部一行：左侧当前样例说明，右侧切换 + 全屏入口
+.memoir__hero-foot {
+  // 与 .memoir__hero-head 同理：显式抬到绝对定位的 video 之上（见上方注释）
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+}
+
+.memoir__hero-caption {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.memoir__hero-caption-label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.memoir__hero-caption-hint {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.memoir__hero-actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-shrink: 0;
+}
+
+.memoir__hero-switch {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.memoir__hero-switch-item {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: $radius-full;
+  background: $color-bg-card;
+  border: 1rpx solid $color-border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  @include press-feedback;
+
+  &--active {
+    background: $color-primary;
+    border-color: $color-primary;
+  }
+}
+
+.memoir__hero-switch-text {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  color: $color-text-secondary;
+
+  .memoir__hero-switch-item--active & {
+    color: $color-text-inverse;
+  }
+}
+
+.memoir__hero-fullscreen {
+  padding: 10rpx $spacing-md;
+  border-radius: $radius-round;
+  background: $color-bg-card;
+  border: 1rpx solid $color-border;
+  @include press-feedback;
+}
+
+.memoir__hero-fullscreen-text {
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   color: $color-primary;
@@ -90,7 +228,7 @@
 .memoir__product-card {
   padding: $spacing-lg;
   border-radius: $radius-md;
-  border: 1px solid $color-border;
+  border: 1rpx solid $color-border;
   box-shadow: $shadow-xs;
   @include press-feedback;
 
@@ -172,7 +310,7 @@
   padding: 4rpx $spacing-md;
   border-radius: $radius-round;
   background: $color-bg-card;
-  border: 1px solid $color-border;
+  border: 1rpx solid $color-border;
   font-size: $font-size-xs;
   color: $color-text-secondary;
 }
@@ -292,7 +430,7 @@
   border-radius: $radius-sm;
   overflow: hidden;
   background: $color-bg-secondary;
-  border: 1px solid $color-border;
+  border: 1rpx solid $color-border;
 
   &--add {
     display: flex;
@@ -359,12 +497,23 @@
   }
 }
 
+// 「从回忆里选」按钮：未展开时走虚线（比实线的主按钮轻一档，提示它是可选通道）；
+// 展开后回到实线 + 主色浅底，表示当前生效的就是这条通道。
+.memoir__pick-btn--pool {
+  border-style: dashed;
+}
+
+.memoir__pick-btn--open {
+  border-style: solid;
+  background: $color-primary-bg;
+}
+
 .memoir__story {
   width: 100%;
   min-height: 140rpx;
   padding: $spacing-md;
   background: $color-bg-secondary;
-  border: 1px solid $color-border;
+  border: 1rpx solid $color-border;
   border-radius: $radius-sm;
   font-size: $font-size-sm;
   color: $color-text-primary;
@@ -396,7 +545,7 @@
   font-size: $font-size-sm;
   color: $color-text-secondary;
   background: $color-bg-secondary;
-  border: 1px solid $color-border;
+  border: 1rpx solid $color-border;
   transition: all 0.2s ease;
 }
 
@@ -429,22 +578,159 @@
   color: $color-primary;
 }
 
+// ==================== 从回忆里选照片 · 照片池面板（2026-09-13 新增） ====================
+// 面板三种态共用这套样式：有照片（分组宫格）/ 接口失败（重试条）/ 空态（引导去时光线）。
+.memoir__pool {
+  padding: $spacing-md;
+  background: $color-bg-secondary;
+  border: 1rpx dashed $color-border;
+  border-radius: $radius-sm;
+  margin-bottom: $spacing-md;
+}
+
+.memoir__pool-hint {
+  display: block;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-bottom: $spacing-md;
+}
+
+.memoir__pool-tip {
+  display: block;
+  padding: $spacing-md 0;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  text-align: center;
+}
+
+// 失败态：不自动重试（避免接口抖动打出请求风暴），给用户一个手动的重试条。
+.memoir__pool-retry {
+  padding: $spacing-md;
+  background: $color-bg-card;
+  border: 1rpx solid $color-border;
+  border-radius: $radius-sm;
+  text-align: center;
+  @include press-feedback;
+}
+
+.memoir__pool-retry-text {
+  font-size: $font-size-sm;
+  color: $color-primary;
+}
+
+// 空态：引导去时光线记一条回忆（照片池的数据源就是时光线 + 档案相册）。
+.memoir__pool-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-lg 0;
+}
+
+.memoir__pool-empty-icon {
+  font-size: 72rpx;
+}
+
+.memoir__pool-empty-text {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  text-align: center;
+}
+
+.memoir__pool-empty-btn {
+  margin-top: $spacing-xs;
+  padding: 12rpx $spacing-lg;
+  background: $color-bg-card;
+  border: 1rpx solid $color-primary;
+  border-radius: $radius-round;
+  @include press-feedback;
+}
+
+.memoir__pool-empty-btn-text {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+// 分组标题（档案相册 / 时光线照片）与 3 列宫格
+.memoir__pool-section {
+  display: block;
+  margin: $spacing-md 0 $spacing-sm;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.memoir__pool-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-md;
+}
+
+.memoir__pool-item {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: $radius-sm;
+  border: 2rpx solid transparent;
+  background: $color-bg-card;
+  @include press-feedback;
+}
+
+.memoir__pool-item--selected {
+  border-color: $color-primary;
+}
+
+.memoir__pool-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+// 选中角标：压在缩略图右上角
+.memoir__pool-check {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: $radius-round;
+  background: $color-primary;
+  color: $color-text-inverse;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-xs;
+}
+
+// 时光线照片的日期角标：压在缩略图下沿
+.memoir__pool-day {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 4rpx 0;
+  font-size: $font-size-xs;
+  color: $color-text-inverse;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+
 // —— AI 生成：风格列表 ——
-.memoir__style-list,
-.memoir__bgm-list {
+.memoir__bgm-list,
+.memoir__style-list {
   display: flex;
   flex-direction: column;
   gap: $spacing-md;
 }
 
-.memoir__style-card,
-.memoir__bgm-card {
+.memoir__bgm-card,
+.memoir__style-card {
   display: flex;
   align-items: center;
   gap: $spacing-md;
   padding: $spacing-md;
   background: $color-bg-card;
-  border: 1px solid $color-border;
+  border: 1rpx solid $color-border;
   border-radius: $radius-sm;
   transition: border-color $transition-fast, background-color $transition-fast;
   @include press-feedback;
@@ -455,8 +741,8 @@
   }
 }
 
-.memoir__style-emoji,
-.memoir__bgm-emoji {
+.memoir__bgm-emoji,
+.memoir__style-emoji {
   width: 80rpx;
   height: 80rpx;
   border-radius: $radius-full;
@@ -468,8 +754,8 @@
   flex-shrink: 0;
 }
 
-.memoir__style-info,
-.memoir__bgm-info {
+.memoir__bgm-info,
+.memoir__style-info {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -477,15 +763,15 @@
   gap: 4rpx;
 }
 
-.memoir__style-name,
-.memoir__bgm-name {
+.memoir__bgm-name,
+.memoir__style-name {
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
   color: $color-text-primary;
 }
 
-.memoir__style-desc,
-.memoir__bgm-tag {
+.memoir__bgm-tag,
+.memoir__style-desc {
   font-size: $font-size-xs;
   color: $color-text-tertiary;
 }
@@ -646,7 +932,7 @@
   height: 96rpx;
   border-radius: $radius-full;
   background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(8rpx);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -691,8 +977,8 @@
   min-width: 0;
 }
 
-.memoir__preview-text,
-.memoir__preview-label {
+.memoir__preview-label,
+.memoir__preview-text {
   display: block;
   font-size: $font-size-sm;
   color: $color-text-primary;
@@ -780,69 +1066,4 @@
   &--failed {
     background: rgba(200, 80, 80, 0.75);
   }
-}
-
-// ==================== 参考样例视频区（2026-09-10 轻纪念两案例） ====================
-.memoir__samples {
-  margin-top: $spacing-md;
-}
-
-.memoir__samples-title {
-  display: block;
-  font-size: $font-size-md;
-  font-weight: $font-weight-bold;
-  color: $color-text-primary;
-  margin-bottom: $spacing-sm;
-}
-
-.memoir__samples-list {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-sm;
-}
-
-.memoir__samples-card {
-  display: flex;
-  align-items: center;
-  gap: $spacing-md;
-  padding: $spacing-md $spacing-lg;
-  border-radius: $radius-lg;
-  background: #fff;
-  box-shadow: 0 4rpx 14rpx rgba(170, 120, 70, 0.1);
-  @include press-feedback;
-}
-
-.memoir__samples-card-emoji {
-  font-size: 40rpx;
-  flex-shrink: 0;
-}
-
-.memoir__samples-card-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.memoir__samples-card-label {
-  display: block;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
-}
-
-.memoir__samples-card-hint {
-  display: block;
-  margin-top: 4rpx;
-  font-size: $font-size-xs;
-  color: $color-text-tertiary;
-}
-
-.memoir__samples-card-play {
-  flex-shrink: 0;
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 50%;
-  @include flex-center;
-  background: rgba(255, 107, 61, 0.12);
-  color: #FF6B3D;
-  font-size: 24rpx;
 }

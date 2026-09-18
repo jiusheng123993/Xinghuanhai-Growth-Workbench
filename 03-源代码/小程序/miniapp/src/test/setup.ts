@@ -38,6 +38,7 @@ vi.mock('@tarojs/taro', () => ({
     hideLoading: vi.fn(),
     login: vi.fn(() => ({ code: 'mock-code' })),
     navigateTo: vi.fn(),
+    redirectTo: vi.fn(),
     navigateBack: vi.fn(),
     reLaunch: vi.fn(),
     switchTab: vi.fn(),
@@ -58,6 +59,11 @@ vi.mock('@tarojs/taro', () => ({
   showToast: vi.fn(),
   showModal: vi.fn(),
   navigateTo: vi.fn(),
+  // redirectTo 必须补：`utils/onboardingGate.ts`（登录后分流去引导页）用的是 redirectTo，
+  // 全局 mock 缺它时，任何 import 到该模块的测试都会在 `redirectTo(...).catch()` 处
+  // 抛 "Cannot read properties of undefined"。2026-09-12 由 12 号发现（当时靠每个测试文件
+  // 各自补 mock 绕开），这里补成全局，避免后来人再踩。
+  redirectTo: vi.fn(),
   navigateBack: vi.fn(),
   reLaunch: vi.fn(),
   switchTab: vi.fn(),

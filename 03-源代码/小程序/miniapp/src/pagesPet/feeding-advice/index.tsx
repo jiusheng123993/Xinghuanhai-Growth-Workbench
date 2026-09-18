@@ -1,6 +1,12 @@
 /**
- * 喂养建议页面
- * 宠物个性化喂养方案与建议
+ * 喂养记录页面
+ *
+ * 【命名口径（2026-09-12 收口）】导航栏标题与本页大标题统一叫「喂养记录」——
+ * 宠物档案页「健康档案」组的菜单项就叫这个名字，同一页两个名字会让人以为进错了。
+ * 页内的 AI 子功能仍沿用权益名「个性化喂养建议」（membershipService 的 featureKey
+ * `feeding_advice` 及其权益清单都叫这个名字，单方面改名会让两处对不上）。
+ *
+ * 内容：喂养记录增删查（services/feedingRecordsService）+ 智能建议 / 喂食计划 / 饮食记录三个 tab。
  */
 import { View, Text, ScrollView, Input, Textarea, Picker } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
@@ -51,7 +57,8 @@ export default function FeedingAdvicePage() {
 
   const pet = currentPet || pets[0]
 
-  // 会员门槛：个性化喂养建议 为会员权益，非会员展示开通引导（PRD 7.3）
+  // 会员门槛：页内的 AI 子功能「个性化喂养建议」是会员权益，非会员展示开通引导
+  // （PRD 7.3；这个权益名与 membershipService 的 featureName 同源，改页面名时不要顺手改它）
   // ⚠️ 注意：useMemberGate 的 allowed 初始为 null，异步判断后变为 true/false。
   // 若在这里（其他 hooks 之前）条件 return，allowed 变化会导致 hooks 数量不一致，
   // 触发 React error #300。因此会员门槛 return 统一放在组件底部所有 hooks 之后。
@@ -178,7 +185,8 @@ export default function FeedingAdvicePage() {
   return (
     <ScrollView className={`feeding-page ${themeClass}`} scrollY>
       <View className='feeding-header'>
-        <Text className='feeding-title'>喂养建议</Text>
+        {/* 大标题与导航栏标题、档案页菜单项三者统一叫「喂养记录」（命名口径见文件头） */}
+        <Text className='feeding-title'>喂养记录</Text>
         <Text className='feeding-subtitle'>{pet.name} 的个性化饮食管理</Text>
       </View>
 

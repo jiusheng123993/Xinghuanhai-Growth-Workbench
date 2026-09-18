@@ -23,7 +23,7 @@ export type ThemeKey = 'spring' | 'summer' | 'autumn' | 'winter' | 'starry' | 'g
  *
  * 【为什么必须有】图标用 SVG data URI 渲染，颜色得写死进 SVG，拿不到页面的 CSS 变量；
  * 所以「跟随主题」只能靠这里查表。没有这张表时，宫格底色已经跟着主题变了、
- * 图标颜色却还停在默认主题，切换主题后就会出现「图标色 ≠ 底色」的违和。
+ * 图标颜色却还停在旧配色（当年写死的那套橙），切换主题后就会出现「图标色 ≠ 底色」的违和。
  *
  * 补充（2026-09-12 自定义 tabBar）：底部标签栏的底色/文字色/图标也同理跟着主题走，
  * 由 `custom-tab-bar` 组件读本表渲染（原生 tabBar API 已失效）。
@@ -222,7 +222,25 @@ export const THEME_LIST: ThemeMeta[] = [
 
 const THEME_STORAGE_KEY = 'xhh_theme';
 const WALLPAPER_STORAGE_KEY = 'xhh_pet_wallpaper';
-const DEFAULT_THEME: ThemeKey = 'autumn';
+
+/**
+ * 默认主题：春 · 嫩芽绿
+ *
+ * 【2026-09-12 用户明确要求「把春季主题设为默认」】本值的语义只有一条：
+ * **本地存储里没有 `xhh_theme`（新用户 / 清过缓存）时用哪套配色**。
+ * 老用户存过自己的选择 → getStoredTheme() 原样读回，本次改动**不会**给他们换主题。
+ *
+ * ⚠️ 别把本值与「兜底层」混为一谈：非法 key 的元数据兜底（getThemeMeta → THEME_LIST[0]）、
+ * styles/_theme.scss 里 page / .app-root 的基线变量、根目录 tabBar 图标
+ * （DEFAULT_TABBAR_ICON_DIR）都仍然是**秋季那套**，没人改它们；
+ * 也正因为兜底层还是秋色，data/illustrations.ts 的 DEFAULT_SEASON 才继续留 autumn。
+ *
+ * 【2026-09-12 补记（默认主题收尾批）】`app.config.ts` 的窗口底色
+ * （navigationBarBackgroundColor / backgroundColor）原本也算兜底秋色之一，现已改为
+ * **春季** navbarBg '#F3FAEF' —— 它是 JS 接管前的首帧色，跟着默认主题走才不会闪色。
+ * 注意这**不改变**上面的结论：真正的兜底层仍是 _theme.scss 的 page / .app-root 基线（秋季）。
+ */
+const DEFAULT_THEME: ThemeKey = 'spring';
 
 /** 主题与背景状态定义 */
 interface ThemeState {
@@ -236,7 +254,7 @@ interface ThemeState {
   applyNativeBars: (theme: ThemeKey) => void;
 }
 
-/** 从本地存储获取已保存的主题（非法值回退默认） */
+/** 从本地存储获取已保存的主题（**没存过**或存了非法值 → 都回退 DEFAULT_THEME） */
 function getStoredTheme(): ThemeKey {
   try {
     const raw = Taro.getStorageSync(THEME_STORAGE_KEY);

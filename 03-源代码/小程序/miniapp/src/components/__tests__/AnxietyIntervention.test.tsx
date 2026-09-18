@@ -655,7 +655,7 @@ describe('AnxietyIntervention', () => {
     expect(Taro.navigateTo).toHaveBeenCalledWith({ url: '/pagesPet/trends/index' })
   })
 
-  it('hospital action navigates to hospital page', () => {
+  it('hospital action opens the hospital capability in 团团, not the hospital page directly', () => {
     const onDismiss = vi.fn()
     const { container } = render(
       <AnxietyIntervention
@@ -672,7 +672,28 @@ describe('AnxietyIntervention', () => {
     const hospitalBtn = Array.from(actionBtns).find(btn => btn.textContent?.includes('找附近医院'))
     fireEvent.click(hospitalBtn!)
     expect(onDismiss).toHaveBeenCalled()
-    expect(Taro.navigateTo).toHaveBeenCalledWith({ url: '/pagesPet/hospital/index' })
+    // 2026-09-12 收口批次 §2：附近医院属 AI 推理类能力 → 收拢到团团 + 带 capability 自动打开
+    expect(Taro.navigateTo).toHaveBeenCalledWith({
+      url: '/pagesYuantuan/agent/index?capability=hospital',
+    })
+  })
+
+  it('non-AI actions (trends / checkin / vaccine) keep their direct routes', () => {
+    const { container } = render(
+      <AnxietyIntervention
+        type='new_owner_anxiety'
+        context={newOwnerContext}
+        petName='小白'
+        species='cat'
+        onDismiss={vi.fn()}
+      />,
+    )
+    fireEvent.click(screen.getByText('下一步'))
+    const actionBtns = container.querySelectorAll('.anxiety-intervention__action-btn')
+    const vaccineBtn = Array.from(actionBtns).find(btn => btn.textContent?.includes('设置疫苗提醒'))
+    fireEvent.click(vaccineBtn!)
+    // 疫苗日历是纯记录/查询类能力 → 保留原位，不进团团（防止收口时被顺手改坏）
+    expect(Taro.navigateTo).toHaveBeenCalledWith({ url: '/pagesPet/vaccine/index' })
   })
 
   it('new_owner_anxiety last step has only done action', () => {

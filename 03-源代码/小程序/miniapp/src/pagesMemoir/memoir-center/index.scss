@@ -3,51 +3,71 @@
 
 // ============================================
 // 回忆录馆（2026-09-09 对齐高保真原型 creative-hub-prototype.html 屏3）
-// 米白暖色主题——与全 App 主视觉（#fffaf5 族）一致，非深色紫金
+//
+// 配色口径（2026-09-13 本包改）：**全部跟随主题**，走 styles/_theme 的 token
+// （`$color-* / $gradient-* / $shadow-card`），不再写死暖白/珊瑚橙字面量。
+// 主题类由 index.tsx 用 useThemeClass() 挂在页面根节点 `.mhall` 上，
+// 没有这一层，token 只会吃到基线（秋·暖阳珊瑚橙）兜底色 —— 这正是用户反馈
+// 「回忆录馆没有跟随主题」的成因。深色主题（星空银河）的兜底见文件末尾。
 // ============================================
 
 .mhall {
   min-height: 100vh;
-  background: #fffaf5;
+  background: $gradient-page;
   padding: 28rpx 28rpx calc(80rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
 }
 
-// ==================== 紫渐变 hero（原型 .hero.film） ====================
+// ==================== 页头：四季回忆录大插画（高保真 v2 屏 08 的 .brandip 版式） ====================
+// v2 的 .brandip = 「图片满宽在上 + 下方一行说明块」的卡片，背景 #FDD9BC。
+// 这里沿用同样的结构，但卡片底色走主题变量（深色主题下才不会露出一块固定的浅橘底）。
+// ⚠️ 这里踩过的坑：`.today-hero` 当初按 16:9 猜高度（380rpx）配 aspectFit，
+// 而 `memoir-<季>.jpg` / `today-brand-<季>.jpg` 都是 1254×1254 方图 → 两侧各留白 25%。
+// 所以高度必须写 750rpx（容器宽度）：方图进方形容器，零裁切零留白。
 .mhall-hero {
   border-radius: 40rpx;
-  padding: 36rpx 32rpx;
-  background: linear-gradient(135deg, #a78bfa, #7c6cf0);
-  color: #fff;
-  position: relative;
   overflow: hidden;
+  background: $color-bg-card;
+  box-shadow: $shadow-card;
+  border: 1rpx solid $color-border-light;
   margin-bottom: 28rpx;
-}
 
-.mhall-hero-face {
-  position: absolute;
-  right: 28rpx;
-  top: 24rpx;
-  font-size: 88rpx;
-  opacity: 0.35;
-}
+  // fill 模式下尺寸完全交给 CSS（组件不再写内联宽高）
+  &__art {
+    width: 100%;
+    height: 750rpx;
+    display: block;
+  }
 
-.mhall-hero-title {
-  display: block;
-  font-size: 40rpx;
-  font-weight: 700;
-  margin-bottom: 8rpx;
-}
+  &__cap {
+    padding: 22rpx 28rpx 26rpx;
+    border-top: 1rpx solid $color-border-light;
+  }
 
-.mhall-hero-sub {
-  display: block;
-  font-size: 24rpx;
-  opacity: 0.92;
+  &__title {
+    display: block;
+    font-size: 32rpx;
+    font-weight: 700;
+    color: $color-text-primary;
+  }
+
+  &__sub {
+    display: block;
+    margin-top: 8rpx;
+    font-size: 24rpx;
+    color: $color-text-secondary;
+  }
 }
 
 // ==================== 素材盘点 banner（原型 .banner） ====================
+// 【本包唯一一处"判断类"改动】原型/旧实现是一条**写死的桃→粉渐变**（#ffd8a8 → #ffc2d1）。
+// 为什么换：它是页面里最显眼的彩色块，春/夏主题下整屏绿/蓝里怼一块桃粉，正是"不跟随主题"的观感来源；
+//   而它的对照物是页面底色（不是画面），所以属于"跟随主题才有意义"的色值。
+// 换成什么：主色淡底 → 金色淡底的渐变，两色都走**通道变量**（--primary-rgb / --gold-rgb）取半透明，
+//   四季/星空各自成套；不能用 `rgba(var(--primary), .12)` —— 颜色变量进 rgba() 逗号语法是非法 CSS，整条会丢。
+// 文字改 `$color-text-secondary`：深浅主题下都压在"自家淡底"上（深色主题下页面底色变深，淡底随之变深）。
 .mhall-banner {
-  background: linear-gradient(135deg, #ffd8a8, #ffc2d1);
+  background: linear-gradient(135deg, rgba(var(--primary-rgb, 255, 107, 61), 0.12), rgba(var(--gold-rgb, 255, 176, 32), 0.16));
   border-radius: 32rpx;
   padding: 20rpx 28rpx;
   margin-bottom: 12rpx;
@@ -55,7 +75,7 @@
 
 .mhall-banner-text {
   font-size: 22rpx;
-  color: #7a4a2a;
+  color: $color-text-secondary;
   line-height: 1.6;
 }
 
@@ -63,16 +83,16 @@
 .mhall-sectitle {
   font-size: 28rpx;
   font-weight: 700;
-  color: #5a4634;
+  color: $color-text-primary;
   margin: 28rpx 4rpx 16rpx;
 }
 
 // ==================== 三档 wide 卡（原型 .card.wide） ====================
 .mhall-card {
-  background: #fff;
+  background: $color-bg-card;
   border-radius: 36rpx;
   padding: 24rpx;
-  box-shadow: 0 8rpx 28rpx rgba(170, 120, 70, 0.12);
+  box-shadow: $shadow-card;
   display: flex;
   gap: 24rpx;
   align-items: center;
@@ -81,7 +101,7 @@
 
   &:active {
     transform: scale(0.98);
-    background: #fff8f2;
+    background: $color-primary-bg;
   }
 
   // 素材不足档位弱化（仍可进入，流程内引导降档/补素材）
@@ -112,18 +132,18 @@
 .mhall-card-title {
   font-size: 28rpx;
   font-weight: 700;
-  color: #3d2f24;
+  color: $color-text-primary;
 }
 
 .mhall-card-sub {
   font-size: 20rpx;
-  color: #b08b5e;
+  color: $color-text-secondary;
 }
 
 .mhall-card-desc {
   display: block;
   font-size: 21rpx;
-  color: #a08b76;
+  color: $color-text-tertiary;
   line-height: 1.45;
 }
 
@@ -138,15 +158,15 @@
   display: inline-block;
   font-size: 22rpx;
   font-weight: 700;
-  color: #e2582f;
-  background: #ffece2;
+  color: $color-primary-dark;
+  background: $color-primary-bg;
   border-radius: 28rpx;
   padding: 6rpx 18rpx;
 }
 
 .mhall-card-mprice {
   font-size: 20rpx;
-  color: #b08b5e;
+  color: $color-text-secondary;
 }
 
 // ==================== 更多：两列 mini 卡（原型 .grid2 .card） ====================
@@ -157,13 +177,13 @@
 }
 
 .mhall-mini {
-  background: #fff;
+  background: $color-bg-card;
   border-radius: 36rpx;
   padding: 24rpx;
-  box-shadow: 0 8rpx 28rpx rgba(170, 120, 70, 0.12);
+  box-shadow: $shadow-card;
 
   &:active {
-    background: #fff8f2;
+    background: $color-primary-bg;
   }
 }
 
@@ -174,7 +194,7 @@
 .mhall-mini-title {
   display: block;
   font-size: 28rpx;
-  color: #3d2f24;
+  color: $color-text-primary;
   font-weight: 600;
   margin: 12rpx 0 6rpx;
 }
@@ -182,7 +202,7 @@
 .mhall-mini-desc {
   display: block;
   font-size: 21rpx;
-  color: #a08b76;
+  color: $color-text-tertiary;
   line-height: 1.45;
 }
 
@@ -200,7 +220,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(61, 33, 18, 0.55);
+  background: $color-bg-overlay;
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -213,7 +233,7 @@
   max-width: 680rpx;
   max-height: 90vh;
   border-radius: 40rpx;
-  background: #fff;
+  background: $color-bg-card;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -225,28 +245,28 @@
   align-items: center;
   justify-content: space-between;
   padding: 24rpx 28rpx;
-  border-bottom: 1rpx solid #f2e6da;
+  border-bottom: 1rpx solid $color-border;
 }
 
 .mhall-review-header-title {
   font-size: 28rpx;
   font-weight: 600;
-  color: #3d2f24;
+  color: $color-text-primary;
 }
 
 .mhall-review-header-close {
   width: 48rpx;
   height: 48rpx;
   border-radius: 50%;
-  background: #fdf6ef;
+  background: $color-bg-secondary;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 24rpx;
-  color: #a08b76;
+  color: $color-text-tertiary;
 
   &:active {
-    background: #ffece2;
+    background: $color-primary-bg;
   }
 }
 
@@ -270,7 +290,7 @@
   display: flex;
   gap: 20rpx;
   padding: 20rpx 28rpx 28rpx;
-  border-top: 1rpx solid #f2e6da;
+  border-top: 1rpx solid $color-border;
 }
 
 .mhall-review-btn {
@@ -286,12 +306,12 @@
   }
 
   &--primary {
-    background: linear-gradient(135deg, #ff8a5c, #ff6b3d);
-    box-shadow: 0 8rpx 20rpx rgba(255, 107, 61, 0.3);
+    background: linear-gradient(135deg, $color-primary-light, $color-primary);
+    box-shadow: 0 8rpx 20rpx rgba(var(--primary-rgb, 255, 107, 61), 0.3);
   }
 
   &--outline {
-    border: 2rpx solid #f2e6da;
+    border: 2rpx solid $color-border;
   }
 }
 
@@ -300,14 +320,40 @@
   font-weight: 600;
 
   .mhall-review-btn--primary & {
-    color: #fff;
+    color: $color-text-inverse;
   }
   .mhall-review-btn--outline & {
-    color: #8b7355;
+    color: $color-text-secondary;
   }
 }
 
 .mhall-review-canvas {
   pointer-events: none;
   opacity: 0;
+}
+
+// ==================== 深色主题（星空银河）自保 ====================
+//
+// 【问题】`.theme-starry` 把 `--text-*` 整体翻成白色，而 `--bg-card` 仍是 `#FFFFFF`
+//   —— 本页四类"浅底纸面"会变成**白底白字**：页头插画卡 `.mhall-hero`、
+//   三档卡 `.mhall-card`、迷你卡 `.mhall-mini`、年度回顾弹窗 `.mhall-review-modal`。
+// 【这是既有全站缺陷】不是本页引入：全局修复要动 100+ 个页面、需整体回归，属另案。
+// 【做法】沿用时光线页 / 我的页 / 今天页已验证的**页面级兜底**：在"浅底纸面"作用域内
+//   把卡内 token 钉回浅色取值（底色是浅的，因此必须配深色文字）。只影响本页这几类卡。
+//   ⚠️ 不能钉在页面根 `.mhall` 上：页面底色与 banner 是**跟着主题变深**的，
+//      把它们一起钉浅就会出现"深色主题下页面依旧暖白"的反向问题。
+//   ⚠️ 弹窗还要钉 `--bg-secondary`：关闭按钮的浅底用的就是它（星空主题下是深蓝底 #232C57），
+//      不钉会变成"深蓝圆底 + 深棕 ✕"（比白底白字更难读），与 timeline 弹窗同一处方。
+.mhall.theme-starry {
+  .mhall-hero,
+  .mhall-card,
+  .mhall-mini,
+  .mhall-review-modal {
+    --text-primary: #40281C;
+    --text-secondary: #8B6E58;
+    --text-tertiary: #B69B83;
+    --border: #F3E2D2;
+    --border-light: rgba(243, 226, 210, 0.5);
+    --bg-secondary: #FFFDF9;
+  }
 }
