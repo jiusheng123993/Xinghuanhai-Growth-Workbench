@@ -129,6 +129,19 @@ describe('promptTemplates 提示词模板库', () => {
         expect(lockLines.some((line) => line.indexOf(name) === 0)).toBe(true);
       }
     });
+
+    it('锁正文不含具体数值：挡住「伪量化」被抄进线上提示词（独立复核建议）', () => {
+      // 背景：外部资料包（神兽卡）里满屏「主色约占52%/辅色30%/强调色18%」「华丽度 4.5/5」，
+      // 但独立复核统计证实那些是**模板常量**——200 只里出现 199 次，不是测量值。
+      // 抄进 prompt 只会变成噪音。本条断言把「不写具体百分比/分数」这条裁决钉死：
+      // 锁正文允许写「按主色/辅色/强调色三层占比复现」这种**抽象结构**，但不许出现阿拉伯数字或 %。
+      const result = appendLocks(FULL_PROMPT, 'right');
+      const appended = result.slice(FULL_PROMPT.trim().length);
+      const lockLines = appended.split('\n').filter((line) => line.trim().length > 0);
+      for (const line of lockLines) {
+        expect(line).not.toMatch(/[0-9%]/);
+      }
+    });
   });
 
   describe('buildFinalSegmentPrompt 完整组装', () => {

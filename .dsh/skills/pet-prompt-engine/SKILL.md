@@ -20,6 +20,9 @@
 ## 二、金科玉律（红线，先于一切）
 
 1. **宠物名字绝不进提示词**（猫叫「烧鸡」会被画成烤鸡——线上事故，已有测试锁死）。名字只进入库字段，不进 prompt。
+   ⚠️ **两道清洗缺一不可（2026-09-19 补）**：① `translatePetNames` —— 按档案里的**已知名字**替换为外貌指代；
+   ② `stripNamingPhrases` —— 按**句式特征**清洗「叫X的 / 名叫X / 名字是X / 叫作X / 唤作X / 昵称是X」，
+   用来拦 **LLM 自己编造**的第三方名字（白名单机制拦不住这种，见 §八）。
 2. **外貌要写具体**（提示词库 §0.9）：毛色/花纹/体型/脸型/眼睛/鼻子/胡须/特殊标记，禁止"橘色虎斑"式草草带过。有真实照片 → 用视觉模型自动提取（`extractPetAppearance`）。
 3. **数量锁定**：明确"只出现这 N 只"，防模型加戏/多画。
 4. **参考图一致性**：有参考图必须声明"保持毛色/花纹/体型/五官与参考图一致，不改变外貌，不增减数量"；**无参考图绝不写"以参考照片为准"**（提示词说谎）。
@@ -42,6 +45,8 @@
 | 画质词 | `高质量，细节丰富，干净背景` | 各组装点 |
 | 角色锁定（有参考图） | `PET_IDENTITY_KEEP` | `server/src/services/petPrompt.ts` |
 | 主体锁定 | `PET_ONLY_ONE` | `server/src/services/petPrompt.ts` |
+| 名字清洗（**白名单**：已知名字） | `translatePetNames` | `server/src/services/petPrompt.ts` |
+| 名字清洗（**句式级**：防 LLM 编造名） | `stripNamingPhrases` | `server/src/services/petPrompt.ts` |
 
 **用户侧指引**（参考提示词模板，前端已实现公式化五字段：主体/外貌/表情/画风/氛围 + 一键填入）。
 
@@ -64,6 +69,9 @@
 - **全库调用模式**：真实照片/日常静图默认模式 S（首帧安全）；空镜/转场/光影/音频用模式 P（后期模块）；大动作与风格化模板用模式 C（先专用关键帧再视频），不得把模式 C 直接套到任意静态宠物照片
 - **十段结构**：GLOBAL STYLE → SCENE → CHARACTERS → LOCATION → FIRST FRAME → Shot → OPTICS → PHYSICS → LIGHTING → AUDIO（缺段补官方级默认）
 - **静图安全动作**：每镜只用一种运镜；只做缓慢眨眼/轻微呼吸/耳朵或尾巴尖小幅微动，不凭空奔跑、跳跃、转身
+- **运镜与节奏（2026-09-19 补）**：`Shot` 默认段带**位移速度**（如「约 2 秒/帧，全程匀速、无卡顿无骤停」）与**静→动→静**节奏声明
+- **宠物专有信号（2026-09-19 补，我们的护城河）**：`PHYSICS` 默认段覆盖耳位 / 胡须 / 尾尖 / 竖毛 / 舔鼻 / 瞬膜（第三眼睑）等真实可读的微动作；
+  ⚠️ 只用**视觉事实词**（如「耳廓向后压低」），**不写情绪词**（Anti-Subjective）；且**只能小幅低缓连续**，不得越出静图安全边界
 - **Locks 连续性锁**：COUNT LOCK / SCREEN DIRECTION（默认保持首帧原始朝向）/ IDENTITY LOCK / ANATOMY LOCK / QUALITY LOCK
 - **多角色锚点**：每在场角色一个 CharacterAnchor（id/type/desc 3-6 特征全片逐字重复）；历史脚本和 LLM 输出也必须在进入 Seedance 前清除宠物名字
 - **首帧契约**：Seedance 图片输入显式 `role: first_frame`；无参考图绝不写身份锁定说谎
@@ -108,19 +116,21 @@ Q版萌系(q) / 日系治愈(japanese) / 美式卡通(american) / 水彩手绘(w
 | 数量不明确 | 明确"共 N 只"，防只画一只/多画 |
 | 文字生成占照片配额 | style 区分（文字 `-text-*` 不计入照片额度） |
 | 品牌默认头像当参考图 | `isBrandPresetUrl` 拦截 + 引导生成真实形象 |
+| **LLM 自己编造名字**（如写出「一只叫小橘的猫」） | 白名单 `translatePetNames` **拦不住**（名字不在档案里）→ 必须叠 `stripNamingPhrases` 句式级清洗。⚠️ 它是**纯删除式**：名字后**无标点**时会吃掉后文（如「名字是旺财今天很乖」→「这只狗」），已知边界 |
 
 ## 九、修改提示词的正确姿势
 
 1. **改画风/表情/外貌提取** → `server/src/services/avatarService.ts`（AVATAR_STYLE_OPTIONS / EXPRESSION_PROMPTS / extractPetAppearance）+ 前端 `avatar-customize/index.tsx`（GEN_STYLES / GEN_STYLE_ATMOS / 模板），两处 key 必须一致
 2. **改全家福** → `server/src/services/familyPhotoService.ts`（STYLE_PROMPTS / buildPrompt / isBrandPresetUrl）
 3. **改回忆录** → `server/src/services/promptTemplates.ts`（十段默认值 / Locks / 角色锚点）
-4. **改公共约束** → `server/src/services/petPrompt.ts`（petSubjectText / PET_IDENTITY_KEEP / PET_ONLY_ONE）
+4. **改公共约束** → `server/src/services/petPrompt.ts`（petSubjectText / PET_IDENTITY_KEEP / PET_ONLY_ONE / translatePetNames / stripNamingPhrases）
 5. **改提示词库原文** → `01-产品文档/宠物回忆录-提示词库.md`，然后回填本技能与代码
 6. **必须同步测试**：相关 .test.ts 断言（名字不进提示词 / 数量 / 兜底 / 清洗 / 白名单），跑 `npm test`（前后端）+ `tsc --noEmit`
 
 ## 十、验证清单（改完自查）
 
 - [ ] 名字/鸡类词不进任何提示词（有测试锁）
+- [ ] 造句式级清洗已接在调用链上，且负向句（「他叫我过去」）不被误伤
 - [ ] 外貌具体（多维度），有照片能自动提取
 - [ ] 数量明确、主体锁定、参考图约束条件正确
 - [ ] 画风/表情 key 前后端一致，白名单闭环

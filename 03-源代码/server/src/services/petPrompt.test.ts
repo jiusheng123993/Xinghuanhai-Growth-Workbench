@@ -344,4 +344,91 @@ describe('stripNamingPhrases 命名句式结构性清洗（拦白名单拦不住
       expect(stripNamingPhrases('这只狗名叫旺财，那只猫叫小黑')).toBe('这只狗，那只猫叫小黑');
     });
   });
+
+  /**
+   * 【2026-09-19 队长接线】句式级清洗已合进 translatePetNames，调用方无需再单独调用。
+   * 这两条锁的是「接了线才真的生效」——只实现不接入等于死代码，缺口照样敞着。
+   */
+  describe('translatePetNames 已内置句式级清洗（接线验证）', () => {
+    it('档案里没有任何名字时，LLM 编造名依然被清掉（旧实现会在这里提前 return 漏出去）', () => {
+      const out = translatePetNames('一只叫小橘的猫在窗台上', [
+        { name: null, breed: '英短', species: 'cat' },
+      ]);
+      expect(out).not.toContain('小橘');
+      expect(out).toBe('一只猫在窗台上');
+    });
+
+    it('已知名字与编造名同时出现时，两道清洗都生效', () => {
+      const out = translatePetNames('烧鸡和一只叫小橘的猫', [
+        { name: '烧鸡', breed: '英短', species: 'cat' },
+      ]);
+      expect(out).not.toContain('烧鸡');
+      expect(out).not.toContain('小橘');
+    });
+
+    it('负向：正常句子不被接线误伤', () => {
+      expect(translatePetNames('他叫我过去', [{ name: null, breed: null, species: 'cat' }])).toBe(
+        '他叫我过去',
+      );
+    });
+  });
+
+  /**
+   * 【2026-09-19 独立复核回归】审-1 攻出了 5 条**真漏网**：定语式修饰上限原为 `{0,2}`，
+   * 而「品种+颜色」（≥3 字）恰是 LLM 分镜与用户自定义场景的默认写法 ⇒ 整条正则不匹配 ⇒
+   * **编造名字原样进提示词**。本组用例就是当时那 5 条反例，钉死「上限已放宽」这件事。
+   */
+  describe('回归：定语修饰 ≥3 字时的编造名泄漏（复核 §3.1 的五条反例）', () => {
+    it('名叫旺财的一只橘猫', () => {
+      expect(stripNamingPhrases('名叫旺财的一只橘猫')).toBe('一只橘猫');
+    });
+
+    it('那只叫旺财的英短蓝猫', () => {
+      expect(stripNamingPhrases('那只叫旺财的英短蓝猫')).toBe('那只英短蓝猫');
+    });
+
+    it('那只叫小黑的白色长毛猫', () => {
+      expect(stripNamingPhrases('那只叫小黑的白色长毛猫')).toBe('那只白色长毛猫');
+    });
+
+    it('名叫团子的白色萨摩耶', () => {
+      expect(stripNamingPhrases('名叫团子的白色萨摩耶')).toBe('白色萨摩耶');
+    });
+
+    it('叫旺财的邻居家的狗', () => {
+      expect(stripNamingPhrases('叫旺财的邻居家的狗')).toBe('邻居家的狗');
+    });
+
+    it('五条一起断言：结果一律不含编造名', () => {
+      const cases = [
+        '名叫旺财的一只橘猫',
+        '那只叫旺财的英短蓝猫',
+        '那只叫小黑的白色长毛猫',
+        '名叫团子的白色萨摩耶',
+        '叫旺财的邻居家的狗',
+      ];
+      for (const c of cases) {
+        expect(stripNamingPhrases(c)).not.toMatch(/旺财|小黑|团子/);
+      }
+    });
+  });
+
+  /**
+   * 【2026-09-19 独立复核回归】复核另发现「裸叫 + 补语」会咬出粘连残渣
+   * （`它叫得很大声的猫` → `它猫`）。处置是宁可漏：`得/了/着` 开头的补语一律不当作名字候选。
+   * ⇒ 这些句子应当**原样不动**。
+   */
+  describe('回归：裸「叫」+ 补语不得咬出粘连残渣（复核 §3.2）', () => {
+    it('叫得很大声 → 原样不动（不得变成「它猫」）', () => {
+      expect(stripNamingPhrases('它叫得很大声的猫')).toBe('它叫得很大声的猫');
+    });
+
+    it('叫了两声 → 原样不动（不得变成「报警器狗」）', () => {
+      expect(stripNamingPhrases('报警器叫了两声的狗')).toBe('报警器叫了两声的狗');
+    });
+
+    it('叫着玩 → 原样不动', () => {
+      expect(stripNamingPhrases('那只叫着玩的猫')).toBe('那只叫着玩的猫');
+    });
+  });
 });
