@@ -1,0 +1,477 @@
+@import '../../styles/_theme';
+@import '../../styles/_animations';
+
+// ============================================
+// 取名引擎页 · 原型 1:1
+// ============================================
+.naming {
+  min-height: 100vh;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
+  padding: $spacing-xl $spacing-lg $spacing-xxl;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  animation: pageEnter 0.4s ease-out;
+}
+
+.xhh-card {
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card;
+}
+
+// —— 页面标题区 ——
+.naming__head {
+  padding-top: $spacing-xs;
+}
+
+.naming__title-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.naming__title {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.naming__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4rpx $spacing-md;
+  border-radius: $radius-round;
+  background: $color-gold-bg;
+}
+
+.naming__badge-text {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $color-gold-deep;
+}
+
+.naming__subtitle {
+  display: block;
+  margin-top: $spacing-sm;
+  font-size: $font-size-sm;
+  line-height: 1.6;
+  color: $color-text-secondary;
+}
+
+// —— 模式选择 ——
+.naming__section-title {
+  display: block;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.naming__mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-md;
+}
+
+.naming__mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $spacing-xs;
+  padding: $spacing-lg;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-xs;
+  transition: border-color $transition-fast, transform $transition-fast, box-shadow $transition-fast;
+  @include press-feedback;
+
+  &--active {
+    border-color: $color-primary;
+    box-shadow: $shadow-sm;
+    transform: translateY(-4rpx);
+  }
+}
+
+.naming__mode-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-full;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  background: $color-primary-bg;
+}
+
+.naming__mode-title {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.naming__mode-desc {
+  font-size: $font-size-xs;
+  line-height: 1.5;
+  color: $color-text-tertiary;
+}
+
+// —— 宠物信息表单 ——
+.naming__form {
+  padding: $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.naming__form-title {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.naming__form-title-icon {
+  font-size: $font-size-lg;
+  line-height: 1;
+}
+
+.naming__form-title-text {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.naming__field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.naming__field-row {
+  display: flex;
+  gap: $spacing-md;
+
+  .naming__field--half {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.naming__label {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.naming__input {
+  width: 100%;
+  height: 80rpx;
+  padding: 0 $spacing-md;
+  background: $color-bg-secondary;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+}
+
+.naming__placeholder {
+  color: $color-text-placeholder;
+}
+
+.naming__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+}
+
+.naming__chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 140rpx;
+  padding: 16rpx $spacing-lg;
+  background: $color-bg-card;
+  border: 2rpx solid $color-border;
+  border-radius: $radius-round;
+  transition: border-color $transition-fast, background-color $transition-fast;
+  @include press-feedback;
+
+  &--wide {
+    min-width: 160rpx;
+  }
+
+  &--active {
+    border-color: $color-primary;
+    background: $color-primary-bg;
+  }
+}
+
+.naming__chip-text {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+
+  .naming__chip--active & {
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+// —— 生成按钮 ——
+.naming__generate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+  padding: $spacing-lg 0;
+  border-radius: $radius-sm;
+  background-image: linear-gradient(135deg, $color-primary-light, $color-primary);
+  color: $color-text-inverse;
+  box-shadow: $shadow-button;
+  @include press-feedback;
+
+  &--loading {
+    opacity: 0.8;
+  }
+}
+
+.naming__generate-icon {
+  font-size: 36rpx;
+  line-height: 1;
+}
+
+.naming__generate-text {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+}
+
+// —— 解读结果 ——
+.naming__interpret-result {
+  padding: $spacing-lg;
+}
+
+.naming__interpret-head {
+  margin-bottom: $spacing-md;
+}
+
+.naming__interpret-title {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.naming__interpret-text {
+  display: block;
+  font-size: $font-size-sm;
+  line-height: 1.8;
+  color: $color-text-secondary;
+  white-space: pre-wrap;
+}
+
+// —— 候选名字 ——
+.naming__results {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.naming__results-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.naming__results-title {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.naming__results-title-icon {
+  font-size: $font-size-md;
+  line-height: 1;
+}
+
+.naming__results-title-text {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.naming__results-hint {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.naming__name-card {
+  padding: $spacing-lg;
+  transition: border-color $transition-fast;
+
+  &--expanded {
+    border-color: $color-primary;
+  }
+}
+
+.naming__name-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-md;
+}
+
+.naming__name-left {
+  min-width: 0;
+}
+
+.naming__name {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.naming__name-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: $spacing-xs;
+  flex-shrink: 0;
+}
+
+.naming__stars {
+  font-size: $font-size-sm;
+  color: $color-gold;
+  letter-spacing: 2rpx;
+}
+
+.naming__source-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4rpx $spacing-md;
+  border-radius: $radius-round;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+
+  &--gold {
+    background: $color-gold-bg;
+    color: $color-gold-deep;
+  }
+
+  &--coral {
+    background: $color-primary-bg;
+    color: $color-primary;
+  }
+
+  &--info {
+    background: rgba($color-teal, 0.14);
+    color: $color-teal;
+  }
+}
+
+.naming__source-chip-text {
+  font-size: $font-size-xs;
+}
+
+.naming__meaning {
+  display: block;
+  margin-top: $spacing-md;
+  font-size: $font-size-sm;
+  line-height: 1.7;
+  color: $color-text-secondary;
+}
+
+.naming__expand-btn {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+}
+
+.naming__expand-btn-text {
+  font-size: $font-size-xs;
+  color: $color-primary;
+}
+
+.naming__expand-arrow {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  transition: transform $transition-fast;
+
+  &--up {
+    transform: rotate(180deg);
+  }
+}
+
+.naming__insight {
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-divider;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.naming__insight-item {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+}
+
+.naming__insight-ic {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-full;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  flex-shrink: 0;
+
+  &--success {
+    background: rgba($color-success, 0.14);
+  }
+
+  &--gold {
+    background: $color-gold-bg;
+  }
+
+  &--info {
+    background: rgba($color-teal, 0.14);
+  }
+
+  &--coral {
+    background: $color-primary-bg;
+  }
+}
+
+.naming__insight-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.naming__insight-title {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.naming__insight-text {
+  display: block;
+  margin-top: 4rpx;
+  font-size: $font-size-sm;
+  line-height: 1.7;
+  color: $color-text-secondary;
+}
+
+// —— 免责提示 ——
+.naming__disclaimer {
+  display: block;
+  text-align: center;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  padding: $spacing-md 0 $spacing-xl;
+}

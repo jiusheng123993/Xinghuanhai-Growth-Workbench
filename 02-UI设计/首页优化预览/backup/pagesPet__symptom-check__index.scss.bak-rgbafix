@@ -1,0 +1,934 @@
+@import '../../styles/_theme';
+@import '../../styles/_animations';
+
+.pet-symptom-check {
+  min-height: 100vh;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
+  padding-bottom: 200rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.pet-symptom-check__content {
+  position: relative;
+  z-index: 2;
+  padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+// ==================== 空态 ====================
+.pet-symptom-check__empty {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 48rpx;
+}
+
+.pet-symptom-check__empty-icon {
+  font-size: 96rpx;
+  margin-bottom: 24rpx;
+}
+
+.pet-symptom-check__empty-text {
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+  text-align: center;
+  line-height: 1.6;
+}
+
+// ==================== 宠物信息条 ====================
+.pet-symptom-check__pet-bar {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 24rpx 32rpx;
+  background: $color-bg-card;
+  border-radius: 24rpx;
+  box-shadow: $shadow-card;
+}
+
+.pet-symptom-check__pet-bar-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $color-primary-light, $color-primary);
+  @include flex-center;
+  flex-shrink: 0;
+  box-shadow: $shadow-sm;
+}
+
+.pet-symptom-check__pet-bar-icon {
+  font-size: 48rpx;
+  line-height: 1;
+}
+
+.pet-symptom-check__pet-bar-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pet-symptom-check__pet-bar-name {
+  display: block;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  @include text-ellipsis;
+}
+
+.pet-symptom-check__pet-bar-desc {
+  display: block;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-top: 6rpx;
+  @include text-ellipsis;
+}
+
+.pet-symptom-check__pet-bar-badge {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+  background: rgba($color-primary, 0.1);
+  flex-shrink: 0;
+}
+
+.pet-symptom-check__pet-bar-badge-icon {
+  font-size: 24rpx;
+  line-height: 1;
+}
+
+.pet-symptom-check__pet-bar-badge-text {
+  font-size: 22rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+// ==================== 通用卡片 ====================
+.pet-symptom-check__card {
+  @include card-base;
+  padding: 32rpx;
+  animation: fadeInUp 0.35s ease-out;
+}
+
+// ---- 卡头 ----
+.pet-symptom-check__card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.pet-symptom-check__card-head-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.pet-symptom-check__card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.pet-symptom-check__card-title-bar {
+  width: 8rpx;
+  height: 32rpx;
+  border-radius: 4rpx;
+  background: linear-gradient(180deg, $color-primary-light, $color-primary);
+  flex-shrink: 0;
+}
+
+.pet-symptom-check__card-title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
+}
+
+.pet-symptom-check__card-title-sub {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-normal;
+  color: $color-text-tertiary;
+}
+
+.pet-symptom-check__card-hint {
+  display: block;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-top: 8rpx;
+}
+
+.pet-symptom-check__card-chip {
+  flex-shrink: 0;
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+  background: rgba($color-primary, 0.1);
+  font-size: 22rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+// ---- 小节头（图标圆 + 标题） ----
+.pet-symptom-check__subhead {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.pet-symptom-check__subhead-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  @include flex-center;
+  flex-shrink: 0;
+}
+
+.pet-symptom-check__subhead-icon--gold {
+  background: rgba($color-gold, 0.16);
+}
+
+.pet-symptom-check__subhead-icon--coral {
+  background: rgba($color-primary, 0.14);
+}
+
+.pet-symptom-check__subhead-icon-text {
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+.pet-symptom-check__subhead-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pet-symptom-check__subhead-title {
+  display: block;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.pet-symptom-check__subhead-desc {
+  display: block;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+}
+
+// ==================== 症状网格 ====================
+.pet-symptom-check__symptom-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20rpx;
+  margin-top: 28rpx;
+}
+
+.pet-symptom-check__sym-btn {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 24rpx 24rpx;
+  border-radius: 16rpx;
+  background: $color-bg-secondary;
+  border: 2rpx solid $color-border;
+  transition: all $transition-normal;
+  min-width: 0;
+}
+
+.pet-symptom-check__sym-btn:active {
+  transform: scale(0.97);
+}
+
+.pet-symptom-check__sym-btn-icon {
+  font-size: 32rpx;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.pet-symptom-check__sym-btn-label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+  @include text-ellipsis;
+}
+
+.pet-symptom-check__sym-btn--selected {
+  border-color: transparent;
+  background: linear-gradient(135deg, $color-primary-light, $color-primary);
+  box-shadow: $shadow-button;
+}
+
+.pet-symptom-check__sym-btn--selected .pet-symptom-check__sym-btn-label {
+  color: $color-text-inverse;
+  font-weight: $font-weight-semibold;
+}
+
+// ==================== 分级列表 ====================
+.pet-symptom-check__levels {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  margin-top: 28rpx;
+}
+
+.pet-symptom-check__level {
+  display: flex;
+  align-items: flex-start;
+  gap: 20rpx;
+  padding: 28rpx;
+  border-radius: 32rpx;
+  border: 2rpx solid transparent;
+  transition: all $transition-normal;
+}
+
+.pet-symptom-check__level--active {
+  border-width: 4rpx;
+  box-shadow: $shadow-sm;
+}
+
+.pet-symptom-check__level-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  @include flex-center;
+  flex-shrink: 0;
+  transition: all $transition-normal;
+}
+
+.pet-symptom-check__level-icon-text {
+  font-size: 32rpx;
+  line-height: 1;
+}
+
+.pet-symptom-check__level-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pet-symptom-check__level-name {
+  display: block;
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.pet-symptom-check__level-desc {
+  display: block;
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  line-height: 1.6;
+  margin-top: 8rpx;
+}
+
+.pet-symptom-check__level-action {
+  display: block;
+  font-size: 22rpx;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  line-height: 1.6;
+  margin-top: 8rpx;
+}
+
+// ==================== 开始分析按钮 ====================
+.pet-symptom-check__analyze-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  height: 96rpx;
+  border-radius: 48rpx;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  box-shadow: $shadow-button;
+  transition: all $transition-normal;
+}
+
+.pet-symptom-check__analyze-btn:active {
+  transform: scale(0.98);
+  box-shadow: $shadow-xs;
+}
+
+.pet-symptom-check__analyze-btn--disabled {
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+.pet-symptom-check__analyze-btn-icon {
+  font-size: 32rpx;
+  line-height: 1;
+}
+
+.pet-symptom-check__analyze-btn-text {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: #FFFFFF;
+}
+
+// ==================== 就医建议 ====================
+.pet-symptom-check__tips-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20rpx;
+  margin-top: 28rpx;
+}
+
+.pet-symptom-check__tip-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 28rpx 16rpx;
+  border-radius: 32rpx;
+  background: $color-bg-secondary;
+  transition: transform $transition-fast;
+}
+
+.pet-symptom-check__tip-item:active {
+  transform: scale(0.96);
+}
+
+.pet-symptom-check__tip-icon {
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+.pet-symptom-check__tip-icon--coral {
+  color: $color-primary;
+}
+
+.pet-symptom-check__tip-icon--gold {
+  color: $color-gold-deep;
+}
+
+.pet-symptom-check__tip-icon--green {
+  color: $color-success;
+}
+
+.pet-symptom-check__tip-label {
+  font-size: 22rpx;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.pet-symptom-check__tip-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  margin-top: 28rpx;
+  padding-top: 24rpx;
+  border-top: 2rpx solid $color-border;
+}
+
+.pet-symptom-check__tip-note-icon {
+  font-size: 28rpx;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+.pet-symptom-check__tip-note-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  line-height: 1.6;
+}
+
+// ==================== 免责声明 ====================
+.pet-symptom-check__disclaimer {
+  display: block;
+  padding: 8rpx 48rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  line-height: 1.6;
+}
+
+// ==================== 分析中浮层 ====================
+.pet-symptom-check__analyzing {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 253, 249, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.pet-symptom-check__analyzing-pulse {
+  position: relative;
+  width: 160rpx;
+  height: 160rpx;
+  @include flex-center;
+  margin-bottom: 40rpx;
+}
+
+.pet-symptom-check__analyzing-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 4rpx solid rgba($color-primary, 0.2);
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+.pet-symptom-check__analyzing-ring--inner {
+  width: 70%;
+  height: 70%;
+  animation-delay: 0.5s;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+.pet-symptom-check__analyzing-icon {
+  font-size: 56rpx;
+  position: relative;
+  z-index: 1;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.pet-symptom-check__analyzing-title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: 12rpx;
+}
+
+.pet-symptom-check__analyzing-desc {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  margin-bottom: 32rpx;
+}
+
+.pet-symptom-check__analyzing-dots {
+  display: flex;
+  gap: 16rpx;
+}
+
+.pet-symptom-check__analyzing-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: $color-primary;
+  animation: dotBounce 1.4s ease-in-out infinite;
+}
+
+.pet-symptom-check__analyzing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.pet-symptom-check__analyzing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+// ==================== 分析结果 ====================
+.pet-symptom-check__result {
+  @include card-base;
+  padding: 40rpx 32rpx;
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.pet-symptom-check__result--normal {
+  border-left: 8rpx solid $color-success;
+}
+
+.pet-symptom-check__result--caution {
+  border-left: 8rpx solid $color-primary;
+}
+
+.pet-symptom-check__result--warning {
+  border-left: 8rpx solid $color-primary-dark;
+}
+
+.pet-symptom-check__result--emergency {
+  border-left: 8rpx solid $color-danger;
+}
+
+.pet-symptom-check__result-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.pet-symptom-check__result-emoji {
+  font-size: 40rpx;
+}
+
+.pet-symptom-check__result-level {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.pet-symptom-check__result-advice {
+  padding: 24rpx;
+  border-radius: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.pet-symptom-check__result--normal .pet-symptom-check__result-advice {
+  background: rgba(140, 173, 126, 0.08);
+  border: 1px solid rgba(140, 173, 126, 0.15);
+}
+
+.pet-symptom-check__result--caution .pet-symptom-check__result-advice {
+  background: rgba($color-primary, 0.06);
+  border: 1px solid rgba($color-primary, 0.12);
+}
+
+.pet-symptom-check__result--warning .pet-symptom-check__result-advice {
+  background: rgba($color-primary, 0.08);
+  border: 1px solid rgba($color-primary, 0.15);
+}
+
+.pet-symptom-check__result--emergency .pet-symptom-check__result-advice {
+  background: $color-danger-bg;
+}
+
+.pet-symptom-check__result-advice-text {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: 1.6;
+}
+
+.pet-symptom-check__result--normal .pet-symptom-check__result-advice-text {
+  color: $color-success;
+}
+
+.pet-symptom-check__result--caution .pet-symptom-check__result-advice-text {
+  color: $color-primary-light;
+}
+
+.pet-symptom-check__result--warning .pet-symptom-check__result-advice-text {
+  color: $color-primary;
+}
+
+.pet-symptom-check__result--emergency .pet-symptom-check__result-advice-text {
+  color: $color-danger;
+}
+
+.pet-symptom-check__result-section {
+  margin-bottom: 24rpx;
+}
+
+.pet-symptom-check__result-section-title {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 16rpx;
+}
+
+.pet-symptom-check__result-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.pet-symptom-check__result-tag {
+  font-size: 22rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  background: rgba($color-primary, 0.08);
+  color: $color-text-secondary;
+}
+
+.pet-symptom-check__result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.pet-symptom-check__result-action {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  padding: 16rpx 20rpx;
+  background: $color-primary-bg;
+  border-radius: 16rpx;
+}
+
+.pet-symptom-check__result-action-num {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  color: #FFFFFF;
+  font-size: 22rpx;
+  font-weight: $font-weight-bold;
+  @include flex-center;
+  flex-shrink: 0;
+}
+
+.pet-symptom-check__result-action-text {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.pet-symptom-check__result-disclaimer {
+  padding: 20rpx;
+  background: rgba($color-primary, 0.06);
+  border: 1px solid rgba($color-primary, 0.12);
+  border-radius: 16rpx;
+  margin-top: 8rpx;
+}
+
+.pet-symptom-check__result-disclaimer-text {
+  font-size: 22rpx;
+  color: $color-primary-light;
+  line-height: 1.5;
+}
+
+.pet-symptom-check__result-actions-bar {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 8rpx;
+}
+
+// ==================== 通用按钮 ====================
+.pet-symptom-check__btn {
+  flex: 1;
+  height: 96rpx;
+  border-radius: 48rpx;
+  @include flex-center;
+  transition: all $transition-normal;
+}
+
+.pet-symptom-check__btn:active {
+  transform: scale(0.98);
+}
+
+.pet-symptom-check__btn--primary {
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  box-shadow: 0 8rpx 32rpx rgba($color-primary, 0.3);
+}
+
+.pet-symptom-check__btn--primary:active {
+  box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.2);
+}
+
+.pet-symptom-check__btn--hospital {
+  background: $color-danger;
+  box-shadow: 0 8rpx 32rpx rgba(224, 133, 107, 0.3);
+}
+
+.pet-symptom-check__btn--hospital:active {
+  box-shadow: 0 4rpx 16rpx rgba(224, 133, 107, 0.2);
+}
+
+.pet-symptom-check__btn--outline {
+  background: transparent;
+  border: 2rpx solid $color-primary;
+}
+
+.pet-symptom-check__btn--disabled {
+  opacity: 0.4;
+  box-shadow: none;
+}
+
+.pet-symptom-check__btn-text {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+}
+
+.pet-symptom-check__btn-text--white {
+  color: #FFFFFF;
+}
+
+/* ===== 置信度与依据展示（Phase 1：见 设计方案-2026-08-22 第五章，单位统一 rpx） ===== */
+.pet-symptom-check__confidence {
+  margin-top: 40rpx;
+  padding: 40rpx;
+  background: #F7F9FC;
+  border-radius: 32rpx;
+}
+
+.pet-symptom-check__confidence-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.pet-symptom-check__confidence-title {
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+/* 置信度徽标：高=绿 / 中=橙 / 低=灰，颜色与风险语义弱绑定，避免与风险等级混淆 */
+.pet-symptom-check__confidence-badge {
+  padding: 8rpx 28rpx;
+  border-radius: 999rpx;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: #FFFFFF;
+}
+
+.pet-symptom-check__confidence-badge--high {
+  background: #2FC98E;
+}
+
+.pet-symptom-check__confidence-badge--medium {
+  background: #FFB020;
+}
+
+.pet-symptom-check__confidence-badge--low {
+  background: #B0B7C3;
+}
+
+/* 单条结论：文案 + 依据徽标 */
+.pet-symptom-check__conclusion {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+  padding: 20rpx 0;
+  border-top: 1px solid #EEF1F5;
+
+  &:first-of-type {
+    border-top: none;
+  }
+}
+
+.pet-symptom-check__conclusion-text {
+  flex: 1;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+  color: $color-text-secondary;
+}
+
+.pet-symptom-check__conclusion-basis {
+  flex-shrink: 0;
+  padding: 4rpx 20rpx;
+  border-radius: 999rpx;
+  font-size: $font-size-xs;
+  color: #FFFFFF;
+}
+
+/* 依据类型配色：规则=蓝 / 图谱=紫 / 记录=青 / AI推测=灰 */
+.pet-symptom-check__conclusion-basis--rule {
+  background: #4A90D9;
+}
+
+.pet-symptom-check__conclusion-basis--graph {
+  background: #8B5CF6;
+}
+
+.pet-symptom-check__conclusion-basis--record {
+  background: #0EA5A0;
+}
+
+.pet-symptom-check__conclusion-basis--llm {
+  background: #9AA4B2;
+}
+
+/* ===== AI 深度分析区块（Phase 2，会员专属） ===== */
+.pet-symptom-check__deep {
+  margin-top: 24rpx;
+  padding: 28rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, rgba(138, 92, 246, 0.08), rgba(74, 144, 217, 0.06));
+  border: 1px solid rgba(138, 92, 246, 0.18);
+}
+
+/* 触发按钮（未分析时展示） */
+.pet-symptom-check__deep-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, #8B5CF6, #4A90D9);
+}
+
+.pet-symptom-check__deep-btn--loading {
+  opacity: 0.7;
+}
+
+.pet-symptom-check__deep-btn-text {
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  color: #FFFFFF;
+}
+
+/* 分析结果 */
+.pet-symptom-check__deep-head {
+  margin-bottom: 16rpx;
+}
+
+.pet-symptom-check__deep-title {
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  color: #6D3FD9;
+}
+
+.pet-symptom-check__deep-advice {
+  display: block;
+  font-size: $font-size-sm;
+  line-height: 1.6;
+  color: $color-text-primary;
+}
+
+/* 记忆召回（basis='record'，只作背景展示） */
+.pet-symptom-check__deep-memories {
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1px dashed rgba(138, 92, 246, 0.25);
+}
+
+.pet-symptom-check__deep-memories-title {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: #8B5CF6;
+  margin-bottom: 10rpx;
+}
+
+.pet-symptom-check__deep-memory {
+  display: block;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+  color: $color-text-secondary;
+  padding: 6rpx 0;
+}
+
+/* ===== 纠错反馈入口（Phase 3：结果有误 → 知识库审核流程） ===== */
+.pet-symptom-check__feedback {
+  margin-top: 16rpx;
+  padding: 14rpx;
+  text-align: center;
+  border-radius: 16rpx;
+  background: rgba(74, 144, 217, 0.06);
+}
+
+.pet-symptom-check__feedback-text {
+  font-size: $font-size-sm;
+  color: #4A90D9;
+}
+

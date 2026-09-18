@@ -1,0 +1,1236 @@
+@import '../../../styles/_theme';
+
+.family-dashboard {
+  min-height: 100vh;
+  padding: 40rpx 32rpx 32rpx;
+  background: $gradient-page;
+  animation: pageEnter 0.4s ease-out;
+}
+
+.fd-section {
+  margin-bottom: 28rpx;
+}
+
+.fd-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.fd-section-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: $color-text-primary;
+}
+
+.fd-section-count {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.fd-section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.fd-upload-btn {
+  padding: 10rpx 20rpx;
+  border-radius: 16rpx;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  box-shadow: 0 4rpx 12rpx rgba($color-primary, 0.3);
+  @include press-feedback;
+
+  &:active {
+    opacity: 0.85;
+  }
+}
+
+.fd-upload-btn-text {
+  font-size: 22rpx;
+  color: #fff;
+  font-weight: 500;
+}
+
+// ===== 标题 =====
+.fd-title {
+  display: block;
+  text-align: center;
+  font-size: 44rpx;
+  font-weight: 700;
+  background: $gradient-gold;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8rpx;
+}
+
+.fd-subtitle {
+  display: block;
+  text-align: center;
+  font-size: 26rpx;
+  color: $color-text-secondary;
+  margin-bottom: 8rpx;
+}
+
+// ===== 健康看板 =====
+.fd-health-board {
+  border-radius: $radius-lg;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  overflow: hidden;
+}
+
+.fd-health-board-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 20rpx 24rpx;
+  background: linear-gradient(135deg, rgba($color-sage, 0.08), rgba($color-primary, 0.06));
+  border-bottom: 1px solid $color-border;
+}
+
+.fd-health-board-icon {
+  font-size: 32rpx;
+}
+
+.fd-health-board-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+}
+
+.fd-health-board-date {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-left: auto;
+}
+
+.fd-health-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 24rpx 16rpx;
+}
+
+.fd-health-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.fd-health-stat-num {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: $color-primary;
+}
+
+.fd-health-stat-label {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+}
+
+.fd-health-divider {
+  width: 2rpx;
+  height: 48rpx;
+  background: $color-border;
+}
+
+.fd-health-members {
+  display: flex;
+  gap: 16rpx;
+  padding: 0 24rpx 24rpx;
+  overflow-x: auto;
+}
+
+.fd-health-member {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  padding: 16rpx 14rpx;
+  border-radius: $radius-md;
+  background: $color-primary-bg;
+  min-width: 120rpx;
+  border: 1px solid $color-border;
+
+  &--checked {
+    background: rgba($color-sage, 0.08);
+    border-color: rgba($color-sage, 0.2);
+  }
+}
+
+.fd-health-member-avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: $radius-full;
+  background: $color-primary-bg;
+  @include flex-center;
+  font-size: 32rpx;
+  border: 2rpx solid $color-border;
+  overflow: hidden;
+
+  &--checked {
+    border-color: rgba($color-sage, 0.4);
+    background: rgba($color-sage, 0.1);
+  }
+}
+
+/* 宠物小动物头像图片：铺满圆形容器（容器自身已圆角裁剪） */
+.fd-health-member-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: $radius-full;
+}
+
+/* 宠物小动物头像加载失败回退 emoji */
+.fd-health-member-avatar-emoji {
+  font-size: 32rpx;
+  line-height: 1;
+}
+
+.fd-health-member-name {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+}
+
+.fd-health-checked-badge {
+  padding: 4rpx 10rpx;
+  border-radius: 10rpx;
+  background: rgba($color-sage, 0.12);
+}
+
+.fd-health-checked-text {
+  font-size: 18rpx;
+  color: $color-sage;
+  font-weight: 500;
+}
+
+.fd-health-pending-badge {
+  padding: 4rpx 10rpx;
+  border-radius: 10rpx;
+  background: $color-danger-light;
+}
+
+.fd-health-pending-text {
+  font-size: 18rpx;
+  color: $color-danger;
+  font-weight: 500;
+}
+
+.fd-health-member-role {
+  font-size: 18rpx;
+  color: $color-text-tertiary;
+}
+
+// ===== 成员列表 =====
+.fd-members-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.fd-member-card {
+  flex: 1 1 calc(50% - 8rpx);
+  padding: 22rpx 18rpx;
+  border-radius: $radius-lg;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  transition: all 0.2s ease;
+  @include press-feedback;
+}
+
+.fd-member-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.fd-member-avatar-wrap {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-full;
+  background: $color-primary-bg;
+  @include flex-center;
+  font-size: 36rpx;
+  border: 2rpx solid $color-border;
+  overflow: hidden;
+}
+
+/* 宠物小动物头像图片：铺满圆形容器 */
+.fd-member-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: $radius-full;
+}
+
+/* 宠物小动物头像加载失败回退 emoji */
+.fd-member-avatar-emoji {
+  font-size: 36rpx;
+  line-height: 1;
+}
+
+.fd-member-role-btn {
+  padding: 6rpx 14rpx;
+  border-radius: 12rpx;
+  background: $color-primary-bg;
+  border: 1px solid rgba($color-primary, 0.2);
+
+  &:active {
+    background: rgba($color-primary, 0.15);
+  }
+}
+
+.fd-member-role-btn-text {
+  font-size: 20rpx;
+  color: $color-primary;
+  font-weight: 500;
+}
+
+.fd-member-name {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+}
+
+.fd-member-role {
+  display: block;
+  font-size: 22rpx;
+  color: $color-primary;
+  margin-bottom: 4rpx;
+}
+
+.fd-member-breed {
+  display: block;
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  margin-bottom: 12rpx;
+}
+
+.fd-member-remove {
+  padding: 8rpx 0;
+  border-top: 1px solid $color-border;
+  text-align: center;
+
+  &:active {
+    background: rgba($color-danger, 0.05);
+  }
+}
+
+.fd-member-remove-text {
+  font-size: 22rpx;
+  color: $color-danger;
+}
+
+// ===== 可邀请列表 =====
+.fd-invite-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.fd-invite-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 20rpx;
+  border-radius: $radius-md;
+  background: $color-bg-card;
+  border: 1px dashed $color-border;
+}
+
+.fd-invite-avatar {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: $radius-full;
+  background: $color-primary-bg;
+  @include flex-center;
+  font-size: 28rpx;
+  flex-shrink: 0;
+  border: 2rpx solid $color-border;
+  overflow: hidden;
+}
+
+/* 宠物小动物头像图片：铺满圆形容器 */
+.fd-invite-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: $radius-full;
+}
+
+/* 宠物小动物头像加载失败回退 emoji */
+.fd-invite-avatar-emoji {
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+.fd-invite-info {
+  flex: 1;
+}
+
+.fd-invite-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+  display: block;
+}
+
+.fd-invite-breed {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  margin-top: 4rpx;
+  display: block;
+}
+
+.fd-invite-btn {
+  padding: 10rpx 22rpx;
+  border-radius: 20rpx;
+  background: $gradient-gold;
+  flex-shrink: 0;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.fd-invite-btn-text {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: $color-text-inverse;
+}
+
+// ===== 全家福 =====
+.fd-photo-section {
+  border-radius: $radius-lg;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  overflow: hidden;
+  position: relative;
+}
+
+.fd-photo-canvas {
+  pointer-events: none;
+  opacity: 0;
+}
+
+.fd-photo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 24rpx;
+  background: linear-gradient(135deg, rgba(#FF8C42, 0.06), rgba(#D4A574, 0.04));
+  border-bottom: 1px solid $color-border;
+}
+
+.fd-photo-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.fd-photo-header-icon {
+  font-size: 32rpx;
+}
+
+.fd-photo-header-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+}
+
+.fd-photo-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 32rpx;
+}
+
+.fd-photo-empty-icon {
+  font-size: 64rpx;
+  margin-bottom: 16rpx;
+  opacity: 0.6;
+}
+
+.fd-photo-empty-text {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.fd-photo-generate {
+  padding: 32rpx 24rpx 28rpx;
+}
+
+.fd-photo-generate-preview {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24rpx;
+}
+
+.fd-photo-generate-frame {
+  position: relative;
+  width: 240rpx;
+  height: 240rpx;
+  border-radius: $radius-full;
+  background: linear-gradient(135deg, #FFF5EC, #FFF8F0);
+  border: 3rpx dashed rgba(#D4A574, 0.3);
+}
+
+.fd-photo-generate-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-full;
+  background: $color-bg-card;
+  border: 2rpx solid $color-border;
+  @include flex-center;
+  font-size: 36rpx;
+  z-index: 2;
+}
+
+.fd-photo-generate-avatar {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: $radius-full;
+  background: #FFF5EC;
+  border: 2rpx solid rgba(#D4A574, 0.3);
+  @include flex-center;
+  font-size: 28rpx;
+  z-index: 1;
+  overflow: hidden;
+}
+
+/* 全家福预览里的宠物小动物头像图片 */
+.fd-photo-generate-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: $radius-full;
+}
+
+/* 全家福预览里加载失败回退 emoji */
+.fd-photo-generate-avatar-emoji {
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+.fd-photo-generate-info {
+  text-align: center;
+  margin-bottom: 24rpx;
+}
+
+.fd-photo-generate-label {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+  margin-bottom: 8rpx;
+}
+
+.fd-photo-generate-desc {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+// ===== 成员排位（排在前面的=画面里靠左边） =====
+.fd-order {
+  margin-bottom: 28rpx;
+
+  &__title {
+    display: block;
+    font-size: $font-size-sm;
+    font-weight: 600;
+    color: $color-text-primary;
+    margin-bottom: 8rpx;
+  }
+
+  &__hint {
+    display: block;
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+    margin-bottom: 16rpx;
+  }
+
+  &__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16rpx;
+  }
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8rpx;
+    padding: 16rpx 20rpx;
+    background: rgba(255, 253, 246, 0.9);
+    border: 2rpx solid rgba(230, 179, 34, 0.35);
+    border-radius: $radius-md;
+    min-width: 128rpx;
+  }
+
+  &__pos {
+    font-size: $font-size-xs;
+    color: $color-primary;
+    font-weight: 600;
+  }
+
+  &__avatar {
+    width: 88rpx;
+    height: 88rpx;
+    border-radius: 50%;
+    background: #f5f0e6;
+  }
+
+  &__name {
+    max-width: 140rpx;
+    font-size: $font-size-xs;
+    color: $color-text-secondary;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__btns {
+    display: flex;
+    gap: 12rpx;
+  }
+
+  &__btn {
+    width: 48rpx;
+    height: 44rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-sm;
+    background: rgba(230, 179, 34, 0.15);
+
+    &--disabled {
+      opacity: 0.3;
+    }
+  }
+
+  &__btn-text {
+    font-size: 28rpx;
+    line-height: 1;
+    color: $color-text-primary;
+  }
+}
+
+// ===== 场景选择器（五大主题分组宫格 + 自定义场景输入） =====
+.fd-scene-picker {
+  margin-bottom: 28rpx;
+}
+
+// 主题分组 tab：横向排布，超出可横向滑动（5 组不会同时全屏铺开）
+.fd-scene-tabs {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+  overflow-x: auto;
+
+  // 隐藏横向滚动条，保持卡片内干净
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.fd-scene-tab {
+  flex-shrink: 0;
+  padding: 10rpx 22rpx;
+  border-radius: $radius-full;
+  background: rgba(#D4A574, 0.1);
+  transition: all 0.2s ease;
+  @include press-feedback;
+}
+
+.fd-scene-tab-text {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  white-space: nowrap;
+}
+
+// 选中的主题组：品牌橙金渐变底 + 白字
+.fd-scene-tab--active {
+  background: linear-gradient(135deg, #FF8C42, #D4A574);
+
+  .fd-scene-tab-text {
+    color: #fff;
+    font-weight: 600;
+  }
+}
+
+// 当前分组下的场景 chips 宫格（自动换行）
+.fd-scene-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+}
+
+.fd-scene-chip {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 12rpx 18rpx;
+  border-radius: $radius-full;
+  background: #FFF8F0;
+  border: 2rpx solid rgba(#D4A574, 0.28);
+  transition: all 0.2s ease;
+  @include press-feedback;
+}
+
+.fd-scene-chip-emoji {
+  font-size: 24rpx;
+  line-height: 1;
+}
+
+.fd-scene-chip-label {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  white-space: nowrap;
+}
+
+// 选中的场景 chip：橙金描边 + 浅橙底 + 主色文字
+.fd-scene-chip--active {
+  background: rgba(#FF8C42, 0.12);
+  border-color: #FF8C42;
+
+  .fd-scene-chip-label {
+    color: #E0722F;
+    font-weight: 600;
+  }
+}
+
+// 自定义场景 chip：虚线边框与预设场景区分
+.fd-scene-chip--custom {
+  border-style: dashed;
+}
+
+// 自定义场景描述输入框（仅选中"自定义"时出现）
+.fd-scene-custom-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 16rpx;
+  padding: 18rpx 20rpx;
+  height: 120rpx;
+  border-radius: $radius-md;
+  border: 2rpx solid rgba(#D4A574, 0.35);
+  background: #FFFDF9;
+  font-size: 24rpx;
+  color: $color-text-primary;
+}
+
+// 相册条目上的场景小标签（如"🎄圣诞之夜"）
+.fd-album-item-scene {
+  font-size: 20rpx;
+  color: #C77A2E;
+  margin-right: 12rpx;
+}
+
+.fd-photo-generate-btn {
+  padding: 22rpx 0;
+  border-radius: $radius-full;
+  background: linear-gradient(135deg, #FF8C42, #D4A574);
+  text-align: center;
+  transition: all 0.2s ease;
+  @include press-feedback;
+
+  &--loading {
+    opacity: 0.7;
+    pointer-events: none;
+  }
+}
+
+.fd-photo-generate-btn-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #fff;
+}
+
+// ===== AI 生成进度 =====
+.fd-photo-generating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 56rpx 32rpx 48rpx;
+}
+
+.fd-photo-generating-spinner {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  border: 5rpx solid rgba(#FF8C42, 0.15);
+  border-top-color: #FF8C42;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 28rpx;
+}
+
+.fd-photo-generating-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #FF8C42;
+  margin-bottom: 12rpx;
+}
+
+.fd-photo-generating-style {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  margin-bottom: 20rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  background: rgba(#FF8C42, 0.08);
+}
+
+.fd-photo-generating-hint {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  text-align: center;
+}
+
+// ===== 预览区 =====
+.fd-photo-preview {
+  padding: 24rpx;
+}
+
+.fd-photo-preview-img-wrap {
+  position: relative;
+  border-radius: $radius-md;
+  overflow: hidden;
+  margin-bottom: 20rpx;
+}
+
+.fd-photo-preview-img {
+  width: 100%;
+  padding-top: 133.3%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: $radius-md;
+}
+
+.fd-photo-preview-tap {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16rpx;
+  background: linear-gradient(transparent, rgba(0,0,0,0.4));
+  text-align: center;
+
+  Text {
+    font-size: 22rpx;
+    color: #fff;
+  }
+}
+
+.fd-photo-preview-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 16rpx;
+}
+
+.fd-photo-btn {
+  flex: 1;
+  padding: 18rpx 0;
+  border-radius: $radius-full;
+  text-align: center;
+  transition: all 0.2s ease;
+  @include press-feedback;
+
+  &--outline {
+    border: 2rpx solid rgba(#FF8C42, 0.4);
+  }
+
+  &--primary {
+    background: linear-gradient(135deg, #FF8C42, #D4A574);
+  }
+}
+
+.fd-photo-btn-text {
+  font-size: 26rpx;
+  font-weight: 600;
+  
+  .fd-photo-btn--outline & {
+    color: #FF8C42;
+  }
+  .fd-photo-btn--primary & {
+    color: #fff;
+  }
+}
+
+.fd-photo-regenerate {
+  text-align: center;
+  padding: 8rpx 0;
+
+  &:active {
+    opacity: 0.6;
+  }
+}
+
+.fd-photo-regenerate-text {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+}
+
+// ===== 快捷操作 =====
+.fd-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.fd-action-card {
+  flex: 1;
+  padding: 32rpx 20rpx;
+  border-radius: $radius-lg;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  text-align: center;
+  transition: all 0.2s ease;
+  @include press-feedback;
+}
+
+.fd-action-icon {
+  display: block;
+  font-size: 48rpx;
+  margin-bottom: 12rpx;
+}
+
+.fd-action-label {
+  font-size: 26rpx;
+  color: $color-text-primary;
+  font-weight: 500;
+}
+
+// ===== 空状态 =====
+.fd-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.fd-empty-icon {
+  font-size: 100rpx;
+  margin-bottom: 24rpx;
+  animation: pulse 3s ease-in-out infinite;
+}
+
+.fd-empty-text {
+  font-size: 30rpx;
+  color: $color-text-secondary;
+  margin-bottom: 32rpx;
+}
+
+.fd-empty-btn {
+  padding: 20rpx 64rpx;
+  border-radius: $radius-full;
+  background: $gradient-gold;
+  transition: all 0.2s ease;
+  @include press-feedback;
+
+  Text {
+    font-size: 28rpx;
+    font-weight: 600;
+    color: $color-text-inverse;
+  }
+}
+
+.fd-bottom-safe {
+  height: 60rpx;
+}
+
+.fd-album-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64rpx 0;
+}
+
+.fd-album-loading-spinner {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: $radius-full;
+  border: 4rpx solid $color-border;
+  border-top-color: $color-primary;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16rpx;
+}
+
+.fd-album-loading-text {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.fd-album-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 56rpx 32rpx 48rpx;
+  border-radius: $radius-lg;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+}
+
+.fd-album-empty-illustration {
+  position: relative;
+  margin-bottom: 24rpx;
+}
+
+.fd-album-empty-illustration-icon {
+  font-size: 80rpx;
+  display: block;
+  animation: float 3s ease-in-out infinite;
+}
+
+.fd-album-empty-illustration-dots {
+  display: flex;
+  gap: 8rpx;
+  justify-content: center;
+  margin-top: 12rpx;
+}
+
+.fd-album-empty-dot {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: $radius-full;
+  background: $color-primary;
+  opacity: 0.4;
+  animation: pulse 1.8s ease-in-out infinite;
+
+  &:nth-child(2) { animation-delay: 0.3s; }
+  &:nth-child(3) { animation-delay: 0.6s; }
+}
+
+.fd-album-empty-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+  margin-bottom: 12rpx;
+}
+
+.fd-album-empty-text {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.fd-album-list {
+  display: flex;
+  flex-direction: column;
+  gap: 32rpx;
+
+  &--highlight {
+    animation: albumHighlight 2s ease-out;
+  }
+}
+
+@keyframes albumHighlight {
+  0% {
+    box-shadow: 0 0 0 0 rgba($color-primary, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 12rpx rgba($color-primary, 0.05);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba($color-primary, 0);
+  }
+}
+
+.fd-album-new-dot {
+  font-size: 18rpx;
+  font-weight: 700;
+  color: #fff;
+  background: $gradient-gold;
+  padding: 2rpx 10rpx;
+  border-radius: 8rpx;
+  animation: pulse 0.6s ease-in-out 3;
+}
+
+.fd-album-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+  padding-left: 4rpx;
+}
+
+.fd-album-group-label {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+}
+
+.fd-album-group-count {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.fd-album-group-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.fd-album-item {
+  flex: 1 1 calc(50% - 8rpx);
+  max-width: calc(50% - 8rpx);
+  border-radius: $radius-lg;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  @include press-feedback;
+}
+
+.fd-album-item-img {
+  width: 100%;
+  padding-top: 100%;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.fd-album-item-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #FFF8F0, #FFF5EC);
+}
+
+.fd-album-item-emoji {
+  font-size: 52rpx;
+  margin-bottom: 4rpx;
+}
+
+.fd-album-item-badge {
+  position: absolute;
+  top: 12rpx;
+  right: 12rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 10rpx;
+  background: rgba($color-primary, 0.85);
+}
+
+.fd-album-item-badge-text {
+  font-size: 18rpx;
+  color: #fff;
+  font-weight: 500;
+}
+
+.fd-album-item-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+
+  .fd-album-item:active & {
+    opacity: 1;
+  }
+}
+
+.fd-album-item-overlay-text {
+  font-size: 24rpx;
+  color: #fff;
+  font-weight: 500;
+  padding: 8rpx 24rpx;
+  border-radius: $radius-full;
+  border: 2rpx solid rgba(255, 255, 255, 0.6);
+}
+
+.fd-album-item-body {
+  padding: 16rpx;
+}
+
+.fd-album-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+}
+
+.fd-album-item-date {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  font-weight: 500;
+}
+
+.fd-album-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.fd-album-item-count {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+}
+
+.fd-album-item-desc {
+  display: block;
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  line-height: 1.4;
+  margin-bottom: 10rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.fd-album-item-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8rpx;
+  border-top: 1px solid $color-border;
+}
+
+.fd-album-item-del {
+  padding: 6rpx 16rpx;
+  border-radius: 8rpx;
+  background: $color-danger-light;
+
+  &:active {
+    opacity: 0.7;
+  }
+}
+
+.fd-album-item-del-text {
+  font-size: 20rpx;
+  color: $color-danger;
+}
+
+.fd-album-item--uploaded {
+  border-color: rgba($color-primary, 0.25);
+  background: linear-gradient(135deg, #FFFAF8, #FFFBF6);
+
+  .fd-album-item-placeholder {
+    background: linear-gradient(135deg, #FFFEFA, #FFFDF8);
+  }
+}

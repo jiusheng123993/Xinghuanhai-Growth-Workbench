@@ -1,0 +1,303 @@
+@import '../../styles/_theme';
+@import '../../styles/_animations';
+
+// ============================================
+// 登录页 — 原型 1:1：品牌区 + 主视觉 + 功能预览 + 双登录入口 + 协议
+// ============================================
+
+.login-page {
+  min-height: 100vh;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
+  position: relative;
+  z-index: 1;
+  animation: pageEnter 0.4s ease-out;
+}
+
+.login-page__content {
+  position: relative;
+  z-index: 2;
+  max-width: 640rpx;
+  margin: 0 auto;
+  padding: 64rpx 48rpx 80rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40rpx;
+}
+
+// ===== 品牌区 =====
+.auth-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+  // 品牌区轻缩放入场，突出第一眼品牌感（ease-out，仅 transform/opacity）
+  animation: fadeInScale 0.3s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.auth-brand__badge {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $color-primary-light, $color-primary);
+  @include flex-center;
+  box-shadow: $shadow-button;
+  /* 可见动效：品牌徽章呼吸光晕（打开登录页即可看到） */
+  animation: xhh-breathe 2.4s ease-in-out infinite;
+}
+
+.auth-brand__badge-icon {
+  font-size: 56rpx;
+  line-height: 1;
+}
+
+.auth-brand__badge-img {
+  /* 品牌 logo：猫狗大头像（图片本身已带圆角透明，无需再裁圆） */
+  width: 128rpx;
+  height: 128rpx;
+}
+
+.auth-brand__logo {
+  font-size: 56rpx;
+  font-weight: $font-weight-bold;
+  background: $gradient-gold;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+.auth-brand__slogan {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+// ===== 主视觉卡 =====
+.auth-hero {
+  width: 100%;
+  padding: 24rpx;
+  border-radius: 48rpx;
+  background: linear-gradient(135deg, $color-primary-bg, $color-bg-card);
+  border: 2rpx solid $color-border;
+  box-shadow: $shadow-card;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+  animation: fadeInUp 0.35s ease-out;
+}
+
+.auth-hero__img {
+  width: 100%;
+  border-radius: 32rpx;
+  display: block;
+  background: $color-bg-card;
+}
+
+.auth-hero__caption {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
+}
+
+// ===== 功能预览 =====
+.auth-features {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 24rpx 8rpx;
+  // 功能预览轻微错峰入场，与主视觉形成层次
+  animation: fadeInUp 0.32s cubic-bezier(0.22, 0.61, 0.36, 1) 0.08s both;
+}
+
+.auth-feature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  flex: 1;
+}
+
+.auth-feature__icon {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 32rpx;
+  background: $color-bg-card;
+  box-shadow: $shadow-card;
+  @include flex-center;
+}
+
+.auth-feature__icon-text {
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+.auth-feature__label {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+}
+
+// ===== 错误提示 =====
+.login-error {
+  width: 100%;
+  padding: 16rpx 24rpx;
+  border-radius: 16rpx;
+  background: rgba($color-danger, 0.1);
+  color: $color-danger;
+  font-size: 24rpx;
+  text-align: center;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+// ===== 登录按钮 =====
+.auth-btn {
+  width: 100%;
+  height: 104rpx;
+  border-radius: 999rpx;
+  @include flex-center;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  border: none;
+  margin: 0;
+  // 沉浸光感：登录主按钮弹簧按压（过冲曲线，可被打断）
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease, box-shadow 0.3s ease;
+
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+
+  &--wechat {
+    background: linear-gradient(135deg, $color-primary-light, $color-primary);
+    color: #FFFFFF;
+    box-shadow: $shadow-button;
+    /* 可见动效：主登录按钮呼吸光晕 */
+    animation: xhh-breathe 2.4s ease-in-out 0.6s infinite;
+  }
+
+  &--phone {
+    background: $color-bg-card;
+    border: 2rpx solid $color-border;
+  }
+
+  &--loading {
+    opacity: 0.6;
+  }
+}
+
+.auth-btn--phone__text {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
+}
+
+// —— 手机号登录表单 ——
+.login-phone-form {
+  width: 100%;
+}
+
+.login-input {
+  width: 100%;
+  height: 96rpx;
+  padding: 0 32rpx;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  background: $color-bg-card;
+  border: 2rpx solid $color-border;
+  border-radius: 48rpx;
+  margin-bottom: 24rpx;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+
+  &:focus {
+    border-color: $color-primary-light;
+    box-shadow: 0 0 0 4px rgba($color-primary, 0.08), 0 0 20rpx rgba($color-primary, 0.15);
+  }
+}
+
+.login-sms-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 8rpx;
+}
+
+.login-sms-input {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.login-sms-btn {
+  flex-shrink: 0;
+  min-width: 200rpx;
+  height: 96rpx;
+  line-height: 96rpx;
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $color-primary;
+  background: rgba($color-primary, 0.08);
+  border: 2rpx solid rgba($color-primary, 0.2);
+  border-radius: 48rpx;
+  transition: all 0.2s ease;
+
+  &:active {
+    background: rgba($color-primary, 0.15);
+  }
+}
+
+.login-sms-btn--disabled {
+  color: $color-text-hint;
+  background: $color-bg-card;
+  border-color: $color-border;
+  pointer-events: none;
+}
+
+// ===== 协议勾选 =====
+.auth-agree {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8rpx;
+  margin-top: 8rpx;
+}
+
+.auth-agree__check {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 12rpx;
+  border: 2rpx solid $color-border;
+  background: $color-bg-card;
+  @include flex-center;
+  flex-shrink: 0;
+  transition: all $transition-fast;
+
+  &--on {
+    background: linear-gradient(135deg, $color-primary-light, $color-primary);
+    border-color: transparent;
+  }
+}
+
+.auth-agree__check-mark {
+  font-size: 24rpx;
+  color: #FFFFFF;
+  font-weight: $font-weight-bold;
+}
+
+.auth-agree__text {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.auth-agree__link {
+  font-size: 22rpx;
+  color: $color-primary;
+}
+
+// 减少动态效果偏好：入场只保留淡入
+@media (prefers-reduced-motion: reduce) {
+  .login-page__content > view {
+    animation: fadeIn 0.2s ease both;
+  }
+}

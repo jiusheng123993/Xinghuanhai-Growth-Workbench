@@ -1,0 +1,1276 @@
+@import '../../styles/_theme';
+@import '../../styles/_animations';
+
+.pet-vaccine {
+  min-height: 100vh;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
+  padding: 32rpx 24rpx;
+  padding-bottom: 200rpx;
+  position: relative;
+  animation: pageEnter 0.4s ease-out;
+}
+
+.pet-vaccine__loading {
+  @include flex-center;
+  padding: 80rpx 0;
+}
+
+.pet-vaccine__loading-text {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.pet-vaccine__header {
+  margin: 24rpx 0;
+}
+
+.pet-vaccine__title {
+  display: block;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  text-align: center;
+}
+
+.pet-vaccine__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 48rpx;
+}
+
+.pet-vaccine__empty-icon {
+  font-size: 96rpx;
+  margin-bottom: 24rpx;
+}
+
+.pet-vaccine__empty-text {
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+  text-align: center;
+  line-height: 1.6;
+}
+
+// ==================== 疫苗进度概览卡（原型对齐） ====================
+.pet-vaccine__progress-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32rpx;
+  padding: 40rpx 40rpx;
+  border-radius: $radius-lg;
+  background: rgba($color-primary, 0.08);
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.pet-vaccine__progress-info {
+  min-width: 0;
+}
+
+.pet-vaccine__progress-label {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.pet-vaccine__progress-value {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 72rpx;
+  font-weight: $font-weight-bold;
+  line-height: 1;
+  color: $color-primary;
+  font-variant-numeric: tabular-nums;
+}
+
+.pet-vaccine__progress-total {
+  font-size: 40rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-tertiary;
+}
+
+.pet-vaccine__progress-sub {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.pet-vaccine__progress-ring-wrap {
+  flex-shrink: 0;
+}
+
+.pet-vaccine__progress-ring {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-90deg);
+}
+
+.pet-vaccine__progress-ring-inner {
+  width: 116rpx;
+  height: 116rpx;
+  border-radius: 50%;
+  background: rgba($color-primary, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(90deg);
+}
+
+.pet-vaccine__progress-ring-text {
+  font-size: 28rpx;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+  font-variant-numeric: tabular-nums;
+}
+
+.pet-vaccine__progress-foot {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 12rpx;
+  padding: 0 8rpx;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+}
+
+.pet-vaccine__progress-foot-icon {
+  font-size: 28rpx;
+  color: $color-primary;
+}
+
+// ==================== 下一针提醒卡（原型对齐：高亮） ====================
+.pet-vaccine__next-remind {
+  border-radius: $radius-lg;
+  background: $color-bg-card;
+  box-shadow: $shadow-card;
+  overflow: hidden;
+  margin-top: 24rpx;
+  animation: fadeInUp 0.35s ease-out;
+}
+
+.pet-vaccine__next-remind-bar {
+  height: 12rpx;
+  background: linear-gradient(135deg, $color-gold-soft, $color-primary);
+}
+
+.pet-vaccine__next-remind-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  padding: 32rpx 40rpx;
+}
+
+.pet-vaccine__next-remind-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.pet-vaccine__next-remind-label {
+  display: block;
+  font-size: 22rpx;
+  font-weight: $font-weight-medium;
+  color: $color-text-tertiary;
+  margin-bottom: 8rpx;
+}
+
+.pet-vaccine__next-remind-name {
+  display: block;
+  font-size: 32rpx;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pet-vaccine__next-remind-date {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 12rpx;
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  font-variant-numeric: tabular-nums;
+}
+
+.pet-vaccine__next-remind-arrow {
+  font-size: 40rpx;
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+}
+
+// ==================== 疫苗小知识卡（原型对齐） ====================
+.pet-vaccine__tips {
+  display: flex;
+  gap: 24rpx;
+  padding: 40rpx;
+  border-radius: $radius-lg;
+  background: $color-bg-card;
+  box-shadow: $shadow-card;
+  margin-top: 24rpx;
+  animation: fadeInUp 0.35s ease-out;
+}
+
+.pet-vaccine__tips-icon {
+  @include flex-center;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-full;
+  background: $color-gold-bg;
+  color: $color-gold-deep;
+  flex-shrink: 0;
+  font-size: 32rpx;
+}
+
+.pet-vaccine__tips-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.pet-vaccine__tips-title {
+  display: block;
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: 12rpx;
+}
+
+.pet-vaccine__tips-text {
+  display: block;
+  font-size: $font-size-xs;
+  line-height: 1.7;
+  color: $color-text-secondary;
+
+  &--hint {
+    margin-top: 8rpx;
+    color: $color-text-tertiary;
+  }
+}
+
+// ==================== 添加疫苗记录按钮（原型对齐） ====================
+.pet-vaccine__add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  height: 112rpx;
+  border-radius: $radius-lg;
+  margin-top: 24rpx;
+  background: linear-gradient(135deg, $color-primary-light, $color-primary);
+  box-shadow: $shadow-button;
+  animation: fadeInUp 0.35s ease-out;
+
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.92;
+  }
+}
+
+.pet-vaccine__add-btn-icon {
+  font-size: 40rpx;
+  color: $color-text-inverse;
+  line-height: 1;
+}
+
+.pet-vaccine__add-btn-text {
+  font-size: 32rpx;
+  font-weight: $font-weight-bold;
+  color: $color-text-inverse;
+}
+
+// ==================== 到期摘要卡片 ====================
+.pet-vaccine__next-due {
+  @include card-base;
+  padding: 24rpx 32rpx;
+  margin-bottom: 24rpx;
+  border-left: 8rpx solid $color-primary;
+  animation: fadeInUp 0.35s ease-out;
+}
+
+.pet-vaccine__next-due-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.pet-vaccine__next-due-title {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.pet-vaccine__next-due-count {
+  font-size: 22rpx;
+  color: $color-text-inverse;
+  background: $color-danger;
+  padding: 2rpx 14rpx;
+  border-radius: 14rpx;
+  font-weight: $font-weight-semibold;
+}
+
+.pet-vaccine__next-due-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.pet-vaccine__next-due-item {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 12rpx 16rpx;
+  background: $color-primary-bg;
+  border-radius: 16rpx;
+}
+
+.pet-vaccine__next-due-item-icon {
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+
+.pet-vaccine__next-due-item-info {
+  flex: 1;
+}
+
+.pet-vaccine__next-due-item-name {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  display: block;
+}
+
+.pet-vaccine__next-due-item-date {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  display: block;
+  margin-top: 2rpx;
+}
+
+.pet-vaccine__next-due-item-status {
+  font-size: 20rpx;
+  font-weight: $font-weight-medium;
+  flex-shrink: 0;
+}
+
+.pet-vaccine__next-due-item-status--overdue {
+  color: $color-danger;
+}
+
+.pet-vaccine__next-due-item-status--due {
+  color: $color-primary;
+}
+
+.pet-vaccine__next-due-item-status--upcoming {
+  color: $color-success;
+}
+
+// ==================== 区块入场动效 ====================
+.pet-vaccine__stats {
+  @include card-base;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.pet-vaccine__reminders,
+.pet-vaccine__auto-schedule,
+.pet-vaccine__deworming {
+  animation: fadeInUp 0.4s ease-out both;
+}
+
+.pet-vaccine__reminders { animation-delay: 0.05s; }
+.pet-vaccine__auto-schedule { animation-delay: 0.1s; }
+.pet-vaccine__deworming { animation-delay: 0.15s; }
+
+.pet-vaccine__stats-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.pet-vaccine__stats-value {
+  font-size: 40rpx;
+  font-weight: $font-weight-bold;
+}
+
+.pet-vaccine__stats-value--completed {
+  color: $color-success;
+}
+
+.pet-vaccine__stats-value--pending {
+  color: $color-primary;
+}
+
+.pet-vaccine__stats-value--overdue {
+  color: $color-danger;
+}
+
+.pet-vaccine__stats-label {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.pet-vaccine__stats-divider {
+  width: 2rpx;
+  height: 48rpx;
+  background: $color-divider;
+}
+
+.pet-vaccine__reminders {
+  @include card-base;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.pet-vaccine__reminders-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.pet-vaccine__reminders-title {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.pet-vaccine__reminders-toggle {
+  padding: 8rpx 24rpx;
+  border-radius: 20rpx;
+  background: $color-primary-bg;
+  transition: all $transition-normal;
+}
+
+.pet-vaccine__reminders-toggle--on {
+  background: rgba($color-primary, 0.08);
+  border: 1px solid $color-border;
+}
+
+.pet-vaccine__reminders-toggle-text {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  font-weight: $font-weight-medium;
+}
+
+.pet-vaccine__reminders-toggle--on .pet-vaccine__reminders-toggle-text {
+  color: $color-primary;
+}
+
+.pet-vaccine__reminder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.pet-vaccine__reminder-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 16rpx;
+  background: $color-primary-bg;
+}
+
+.pet-vaccine__reminder-item--overdue {
+  background: $color-danger-bg;
+}
+
+.pet-vaccine__reminder-item--upcoming {
+  background: rgba($color-primary, 0.06);
+}
+
+.pet-vaccine__reminder-icon {
+  font-size: 32rpx;
+}
+
+.pet-vaccine__reminder-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.pet-vaccine__reminder-name {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.pet-vaccine__reminder-date {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.pet-vaccine__reminder-item--overdue .pet-vaccine__reminder-date {
+  color: $color-danger;
+}
+
+.pet-vaccine__section {
+  margin-top: 24rpx;
+}
+
+.pet-vaccine__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+  padding: 0 8rpx;
+}
+
+.pet-vaccine__section-title {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.pet-vaccine__section-count {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.pet-vaccine__auto-schedule {
+  @include card-base;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.pet-vaccine__schedule-toggle {
+  padding: 8rpx 20rpx;
+  background: $color-primary-bg;
+  border-radius: 20rpx;
+}
+
+.pet-vaccine__schedule-toggle-text {
+  font-size: 22rpx;
+  color: $color-primary;
+}
+
+.pet-vaccine__schedule-list {
+  margin-top: 16rpx;
+}
+
+.pet-vaccine__schedule-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.pet-vaccine__schedule-item:last-child {
+  border-bottom: none;
+}
+
+.pet-vaccine__schedule-item--overdue {
+  background: $color-danger-bg;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 8rpx;
+  border-bottom: none;
+}
+
+.pet-vaccine__schedule-item--due {
+  background: rgba($color-primary, 0.06);
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 8rpx;
+  border-bottom: none;
+}
+
+.pet-vaccine__schedule-item-left {
+  flex: 1;
+}
+
+.pet-vaccine__schedule-item-name {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  display: block;
+}
+
+.pet-vaccine__schedule-item-notes {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+  display: block;
+}
+
+.pet-vaccine__schedule-item-right {
+  text-align: right;
+}
+
+.pet-vaccine__schedule-item-date {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  display: block;
+}
+
+.pet-vaccine__schedule-item-status {
+  font-size: 22rpx;
+  font-weight: $font-weight-medium;
+  display: block;
+  margin-top: 4rpx;
+}
+
+.pet-vaccine__schedule-item-status--overdue {
+  color: $color-danger;
+}
+
+.pet-vaccine__schedule-item-status--due {
+  color: $color-primary;
+}
+
+.pet-vaccine__schedule-item-status--upcoming {
+  color: $color-success;
+}
+
+.pet-vaccine__deworming {
+  @include card-base;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.pet-vaccine__deworming-list {
+  margin-top: 16rpx;
+}
+
+.pet-vaccine__deworming-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.pet-vaccine__deworming-item:last-child {
+  border-bottom: none;
+}
+
+.pet-vaccine__deworming-item--overdue {
+  background: $color-danger-bg;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 8rpx;
+  border-bottom: none;
+}
+
+.pet-vaccine__deworming-item--due {
+  background: rgba($color-primary, 0.06);
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 8rpx;
+  border-bottom: none;
+}
+
+.pet-vaccine__deworming-item-left {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.pet-vaccine__deworming-item-type {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.pet-vaccine__deworming-item-right {
+  text-align: right;
+}
+
+.pet-vaccine__deworming-item-date {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  display: block;
+}
+
+.pet-vaccine__deworming-item-status {
+  font-size: 22rpx;
+  font-weight: $font-weight-medium;
+  display: block;
+  margin-top: 4rpx;
+}
+
+.pet-vaccine__deworming-item-status--overdue {
+  color: $color-danger;
+}
+
+.pet-vaccine__deworming-item-status--due {
+  color: $color-primary;
+}
+
+.pet-vaccine__deworming-item-status--upcoming {
+  color: $color-success;
+}
+
+.pet-vaccine__list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 48rpx;
+  @include card-base;
+}
+
+.pet-vaccine__list-empty-icon {
+  font-size: 64rpx;
+  margin-bottom: 16rpx;
+}
+
+.pet-vaccine__list-empty-text {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  text-align: center;
+}
+
+.pet-vaccine__list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.pet-vaccine__share-item {
+  @include flex-center;
+  gap: 6rpx;
+  padding: 12rpx 0;
+  margin-top: -8rpx;
+}
+
+.pet-vaccine__share-item-text {
+  font-size: $font-size-xs;
+  color: $color-success;
+  font-weight: $font-weight-medium;
+}
+
+.pet-vaccine__load-more {
+  @include flex-center;
+  padding: 24rpx 0;
+}
+
+.pet-vaccine__load-more-text {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.pet-vaccine__disclaimer {
+  padding: 16rpx 24rpx;
+  margin-top: 16rpx;
+}
+
+.pet-vaccine__disclaimer-text {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  line-height: 1.5;
+}
+
+.pet-vaccine__fab {
+  position: fixed;
+  right: 32rpx;
+  bottom: 160rpx;
+  width: 96rpx;
+  height: 96rpx;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  border-radius: 50%;
+  @include flex-center;
+  box-shadow: 0 8rpx 32rpx rgba($color-primary, 0.3);
+  z-index: 100;
+  @include press-feedback;
+}
+
+.pet-vaccine__fab-icon {
+  font-size: 48rpx;
+  color: #FFFFFF;
+  font-weight: 300;
+  line-height: 1;
+}
+
+/* VaccineCalendar */
+.vaccine-calendar {
+  @include card-base;
+  padding: 32rpx;
+}
+
+.vaccine-calendar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.vaccine-calendar__nav-btn {
+  width: 56rpx;
+  height: 56rpx;
+  @include flex-center;
+  background: $color-primary-bg;
+  border-radius: 16rpx;
+  @include press-feedback;
+}
+
+.vaccine-calendar__nav-icon {
+  font-size: 32rpx;
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.vaccine-calendar__title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.vaccine-calendar__weekdays {
+  display: flex;
+  margin-bottom: 16rpx;
+}
+
+.vaccine-calendar__weekday {
+  flex: 1;
+  text-align: center;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  font-weight: $font-weight-medium;
+}
+
+.vaccine-calendar__days {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.vaccine-calendar__day {
+  width: 14.28%;
+  height: 80rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-radius: 16rpx;
+  transition: background $transition-fast;
+}
+
+.vaccine-calendar__day--empty {
+  pointer-events: none;
+}
+
+.vaccine-calendar__day--today {
+  background: $color-primary-bg;
+}
+
+.vaccine-calendar__day--today .vaccine-calendar__day-num {
+  color: $color-primary;
+  font-weight: $font-weight-bold;
+}
+
+.vaccine-calendar__day--overdue {
+  background: $color-danger-bg;
+}
+
+.vaccine-calendar__day-num {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+}
+
+.vaccine-calendar__day-marks {
+  display: flex;
+  gap: 4rpx;
+  margin-top: 4rpx;
+}
+
+.vaccine-calendar__mark {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+}
+
+.vaccine-calendar__mark--vaccine {
+  background: $color-primary;
+}
+
+.vaccine-calendar__mark--deworm {
+  background: $color-success;
+}
+
+.vaccine-calendar__legend {
+  display: flex;
+  justify-content: center;
+  gap: 32rpx;
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 2rpx solid $color-divider;
+}
+
+.vaccine-calendar__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.vaccine-calendar__legend-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+}
+
+.vaccine-calendar__legend-dot--vaccine {
+  background: $color-primary;
+}
+
+.vaccine-calendar__legend-dot--deworm {
+  background: $color-success;
+}
+
+.vaccine-calendar__legend-dot--overdue {
+  background: $color-danger;
+}
+
+.vaccine-calendar__legend-text {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+/* VaccineRecordCard */
+.vaccine-record-card {
+  @include card-base;
+  padding: 32rpx;
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.vaccine-record-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.vaccine-record-card__type {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.vaccine-record-card__type-icon {
+  font-size: $font-size-xl;
+}
+
+.vaccine-record-card__type-label {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.vaccine-record-card__status {
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+.vaccine-record-card__status-text {
+  font-size: 22rpx;
+  font-weight: $font-weight-medium;
+}
+
+.vaccine-record-card__body {
+  margin-bottom: 20rpx;
+}
+
+.vaccine-record-card__category {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 16rpx;
+}
+
+.vaccine-record-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.vaccine-record-card__info-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.vaccine-record-card__info-label {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  min-width: 120rpx;
+}
+
+.vaccine-record-card__info-value {
+  font-size: $font-size-xs;
+  color: $color-text-primary;
+  flex: 1;
+}
+
+.vaccine-record-card__info-value--overdue {
+  color: $color-danger;
+  font-weight: $font-weight-semibold;
+}
+
+.vaccine-record-card__actions {
+  display: flex;
+  gap: 16rpx;
+  padding-top: 20rpx;
+  border-top: 2rpx solid $color-divider;
+}
+
+.vaccine-record-card__btn {
+  flex: 1;
+  height: 72rpx;
+  @include flex-center;
+  border-radius: 36rpx;
+  transition: all $transition-normal;
+  @include press-feedback;
+}
+
+.vaccine-record-card__btn--primary {
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+}
+
+.vaccine-record-card__btn--secondary {
+  background: $color-primary-bg;
+}
+
+.vaccine-record-card__btn--danger {
+  background: $color-danger-bg;
+}
+
+.vaccine-record-card__btn-text {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+}
+
+.vaccine-record-card__btn--primary .vaccine-record-card__btn-text {
+  color: #FFFFFF;
+}
+
+.vaccine-record-card__btn--secondary .vaccine-record-card__btn-text {
+  color: $color-primary;
+}
+
+.vaccine-record-card__btn--danger .vaccine-record-card__btn-text {
+  color: $color-danger;
+}
+
+/* VaccineAddModal */
+.vaccine-modal__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: $color-bg-overlay;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.vaccine-modal {
+  width: 100%;
+  max-height: 85vh;
+  background: $color-bg-card;
+  border-radius: 48rpx 48rpx 0 0;
+  display: flex;
+  flex-direction: column;
+  animation: sheetUp 0.3s ease;
+}
+
+@keyframes sheetUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.vaccine-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx;
+  border-bottom: 2rpx solid $color-divider;
+}
+
+.vaccine-modal__title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.vaccine-modal__close {
+  width: 48rpx;
+  height: 48rpx;
+  @include flex-center;
+}
+
+.vaccine-modal__close-icon {
+  font-size: 32rpx;
+  color: $color-text-tertiary;
+}
+
+.vaccine-modal__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.vaccine-modal__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.vaccine-modal__label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.vaccine-modal__type-selector {
+  display: flex;
+  gap: 16rpx;
+}
+
+.vaccine-modal__type-btn {
+  flex: 1;
+  height: 80rpx;
+  @include flex-center;
+  background: $color-primary-bg;
+  border-radius: 24rpx;
+  border: 2rpx solid transparent;
+  transition: all $transition-normal;
+}
+
+.vaccine-modal__type-btn--active {
+  background: $color-primary-bg;
+  border-color: $color-primary;
+}
+
+.vaccine-modal__type-text {
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+  font-weight: $font-weight-medium;
+}
+
+.vaccine-modal__type-btn--active .vaccine-modal__type-text {
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.vaccine-modal__picker {
+  height: 88rpx;
+  padding: 0 24rpx;
+  background: $color-primary-bg;
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid $color-border;
+}
+
+.vaccine-modal__picker-value {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+}
+
+.vaccine-modal__picker-arrow {
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+}
+
+.vaccine-modal__input {
+  width: 100%;
+  height: 88rpx;
+  padding: 0 24rpx;
+  background: $color-primary-bg;
+  border-radius: 24rpx;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+  border: 1px solid $color-border;
+}
+
+.vaccine-modal__input-placeholder {
+  color: $color-text-placeholder;
+}
+
+.vaccine-modal__textarea {
+  width: 100%;
+  min-height: 160rpx;
+  padding: 24rpx;
+  background: $color-primary-bg;
+  border-radius: 24rpx;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+  line-height: 1.6;
+  border: 1px solid $color-border;
+}
+
+.vaccine-modal__textarea-placeholder {
+  color: $color-text-placeholder;
+}
+
+.vaccine-modal__count {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  text-align: right;
+}
+
+.vaccine-modal__footer {
+  padding: 24rpx 32rpx 48rpx;
+  border-top: 2rpx solid $color-divider;
+}
+
+.vaccine-modal__submit {
+  width: 100%;
+  height: 96rpx;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  border-radius: 48rpx;
+  @include flex-center;
+  box-shadow: 0 8rpx 32rpx rgba($color-primary, 0.3);
+  @include press-feedback;
+}
+
+.vaccine-modal__submit--disabled {
+  opacity: 0.4;
+  box-shadow: none;
+}
+
+.vaccine-modal__submit-text {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: #FFFFFF;
+}

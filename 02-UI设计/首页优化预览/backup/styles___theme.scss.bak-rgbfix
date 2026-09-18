@@ -1,0 +1,613 @@
+// ============================================
+// 星河宠记 · 四季主题系统（Q版暖阳Coral风格）
+// 4套亮色主题：秋·暖阳珊瑚橙 / 春·嫩芽绿 / 夏·海盐蓝 / 冬·冰晶紫
+// 默认：秋·暖阳珊瑚橙（Warm Coral）
+// 通过 theme-xxx class 切换（Taro 不支持渲染自定义 data-* 属性）
+// ============================================
+
+// ============================================
+// 公共变量（所有主题共享）
+// ============================================
+
+// —— 间距（8pt 栅格） ——
+$spacing-xs: 8rpx;
+$spacing-sm: 12rpx;
+$spacing-md: 16rpx;
+$spacing-lg: 24rpx;
+$spacing-xl: 32rpx;
+$spacing-xxl: 48rpx;
+
+// —— 字号 ——
+$font-size-xs: 20rpx;
+$font-size-sm: 24rpx;
+$font-size-md: 28rpx;
+$font-size-lg: 32rpx;
+$font-size-xl: 36rpx;
+$font-size-xxl: 48rpx;
+$font-size-base: $font-size-md;
+
+// —— 字重 ——
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// —— 圆角（Q版圆润，对齐设计稿 12/20/28px） ——
+$radius-xs: 16rpx;
+$radius-sm: 24rpx;
+$radius-md: 40rpx;
+$radius-lg: 56rpx;
+$radius-xl: 72rpx;
+$radius-round: 999rpx;
+$radius-full: 999rpx;
+
+// —— 阴影（Q版软萌立体，对齐设计稿；沉浸光感：基础阴影自带一层主色柔光，全项目卡片/按钮统一受益） ——
+$shadow-xs: 0 2rpx 8rpx rgba(61, 33, 18, 0.05);
+$shadow-sm: 0 8rpx 40rpx -24rpx rgba(240, 78, 29, 0.18);
+$shadow-md: 0 16rpx 56rpx -28rpx rgba(61, 33, 18, 0.2);
+$shadow-lg: 0 24rpx 80rpx -32rpx rgba(61, 33, 18, 0.28);
+$shadow-card: 0 8rpx 40rpx -12rpx rgba(61, 33, 18, 0.08), 0 0 26rpx rgba(var(--primary-rgb, 255, 107, 61), 0.14), 0 0 70rpx rgba(255, 176, 32, 0.08);
+$shadow-button: 0 12rpx 36rpx -8rpx rgba(255, 107, 61, 0.35), 0 0 30rpx rgba(var(--primary-rgb, 255, 107, 61), 0.38), 0 0 80rpx rgba(255, 176, 32, 0.20);
+
+// —— 过渡 ——
+$transition-fast: 0.15s ease;
+$transition-normal: 0.25s ease;
+$transition-slow: 0.4s ease;
+
+// ============================================
+// 默认主题：秋·暖阳珊瑚橙（Warm Coral）
+// 高饱和珊瑚橙 × 暖金 × 奶油白
+// ============================================
+page {
+  --primary: #FF6B3D;
+  --primary-rgb: 255, 107, 61;
+  --primary-light: #FFA082;
+  --primary-light-rgb: 255, 160, 130;
+  --primary-dark: #F04E1D;
+  --primary-dark-rgb: 240, 78, 29;
+  --primary-bg: rgba(255, 107, 61, 0.08);
+
+  --success: #2FC98E;
+  --success-rgb: 47, 201, 142;
+  --warning: #FFB020;
+  --gold: #FFB020;
+  --gold-soft: #FFD068;
+  --gold-deep: #E8920A;
+  --gold-bg: #FFF6DC;
+  --danger: #FF5A5F;
+  --danger-rgb: 255, 90, 95;
+  --danger-light: rgba(255, 90, 95, 0.12);
+  --danger-bg: rgba(255, 90, 95, 0.2);
+  --teal: #4FA3E3;
+  --teal-rgb: 79, 163, 227;
+  --coral: #FF6B3D;
+  --coral-rgb: 255, 107, 61;
+  --sage: #2FC98E;
+  --sage-rgb: 47, 201, 142;
+
+  --text-primary: #40281C;
+  --text-secondary: #8B6E58;
+  --text-tertiary: #B69B83;
+  --text-placeholder: #CBB49E;
+  --text-hint: #967A62;
+  --text-inverse: #FFFFFF;
+
+  --bg-page: #FFF6EE;
+  --bg-card: #FFFFFF;
+  --bg-secondary: #FFFDF9;
+  --bg-overlay: rgba(61, 33, 18, 0.5);
+
+  --border: #F3E2D2;
+  --border-light: rgba(243, 226, 210, 0.5);
+  --divider: rgba(243, 226, 210, 0.3);
+
+  --gradient-page: linear-gradient(180deg, #FFFDF9 0%, #FFF6EE 40%, #FFEDE0 100%);
+  --gradient-card: linear-gradient(135deg, rgba(255, 107, 61, 0.06), rgba(255, 176, 32, 0.03));
+  --gradient-gold: linear-gradient(135deg, #FF6B3D, #FFB020);
+  --gradient-warm: linear-gradient(135deg, #FF6B3D, #FFA082, #FFD068);
+
+  /* —— 沉浸光感（WXSS 降级版）：多层阴影辉光 + 弹簧曲线；WXSS 无 backdrop-filter，玻璃用半透明实色 —— */
+  --gold-rgb: 255, 176, 32;
+  --glow-sm: 0 0 16rpx rgba(var(--primary-rgb), 0.20), 0 0 44rpx rgba(var(--primary-rgb), 0.10);
+  --glow-md: 0 0 24rpx rgba(var(--primary-rgb), 0.28), 0 0 70rpx rgba(var(--primary-rgb), 0.15), 0 0 120rpx rgba(var(--gold-rgb), 0.12);
+  --glow-strong: 0 0 30rpx rgba(var(--primary-rgb), 0.36), 0 0 90rpx rgba(var(--primary-rgb), 0.20), 0 0 150rpx rgba(var(--gold-rgb), 0.16);
+  --spring-curve: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --spring-dur: 0.5s;
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.92);
+}
+
+// app-root 同样设置默认主题变量
+.app-root {
+  --primary: #FF6B3D;
+  --primary-rgb: 255, 107, 61;
+  --primary-light: #FFA082;
+  --primary-light-rgb: 255, 160, 130;
+  --primary-dark: #F04E1D;
+  --primary-dark-rgb: 240, 78, 29;
+  --primary-bg: rgba(255, 107, 61, 0.08);
+
+  --success: #2FC98E;
+  --success-rgb: 47, 201, 142;
+  --warning: #FFB020;
+  --gold: #FFB020;
+  --gold-soft: #FFD068;
+  --gold-deep: #E8920A;
+  --gold-bg: #FFF6DC;
+  --danger: #FF5A5F;
+  --danger-rgb: 255, 90, 95;
+  --danger-light: rgba(255, 90, 95, 0.12);
+  --danger-bg: rgba(255, 90, 95, 0.2);
+  --teal: #4FA3E3;
+  --teal-rgb: 79, 163, 227;
+  --coral: #FF6B3D;
+  --coral-rgb: 255, 107, 61;
+  --sage: #2FC98E;
+  --sage-rgb: 47, 201, 142;
+
+  --text-primary: #40281C;
+  --text-secondary: #8B6E58;
+  --text-tertiary: #B69B83;
+  --text-placeholder: #CBB49E;
+  --text-hint: #967A62;
+  --text-inverse: #FFFFFF;
+
+  --bg-page: #FFF6EE;
+  --bg-card: #FFFFFF;
+  --bg-secondary: #FFFDF9;
+  --bg-overlay: rgba(61, 33, 18, 0.5);
+
+  --border: #F3E2D2;
+  --border-light: rgba(243, 226, 210, 0.5);
+  --divider: rgba(243, 226, 210, 0.3);
+
+  --gradient-page: linear-gradient(180deg, #FFFDF9 0%, #FFF6EE 40%, #FFEDE0 100%);
+  --gradient-card: linear-gradient(135deg, rgba(255, 107, 61, 0.06), rgba(255, 176, 32, 0.03));
+  --gradient-gold: linear-gradient(135deg, #FF6B3D, #FFB020);
+  --gradient-warm: linear-gradient(135deg, #FF6B3D, #FFA082, #FFD068);
+
+  /* —— 沉浸光感（WXSS 降级版）：多层阴影辉光 + 弹簧曲线；WXSS 无 backdrop-filter，玻璃用半透明实色 —— */
+  --gold-rgb: 255, 176, 32;
+  --glow-sm: 0 0 16rpx rgba(var(--primary-rgb), 0.20), 0 0 44rpx rgba(var(--primary-rgb), 0.10);
+  --glow-md: 0 0 24rpx rgba(var(--primary-rgb), 0.28), 0 0 70rpx rgba(var(--primary-rgb), 0.15), 0 0 120rpx rgba(var(--gold-rgb), 0.12);
+  --glow-strong: 0 0 30rpx rgba(var(--primary-rgb), 0.36), 0 0 90rpx rgba(var(--primary-rgb), 0.20), 0 0 150rpx rgba(var(--gold-rgb), 0.16);
+  --spring-curve: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --spring-dur: 0.5s;
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.92);
+}
+
+// ============================================
+// 默认主题 SCSS 变量（编译时回退值）
+// ============================================
+$color-primary: var(--primary, #FF6B3D);
+$color-primary-light: var(--primary-light, #FFA082);
+$color-primary-dark: var(--primary-dark, #F04E1D);
+$color-primary-bg: var(--primary-bg, rgba(255, 107, 61, 0.08));
+
+$color-success: var(--success, #2FC98E);
+$color-warning: var(--warning, #FFB020);
+$color-gold: var(--gold, #FFB020);
+$color-gold-soft: var(--gold-soft, #FFD068);
+$color-gold-deep: var(--gold-deep, #E8920A);
+$color-gold-bg: var(--gold-bg, #FFF6DC);
+$color-danger: var(--danger, #FF5A5F);
+$color-danger-light: var(--danger-light, rgba(255, 90, 95, 0.12));
+$color-danger-bg: var(--danger-bg, rgba(255, 90, 95, 0.2));
+$color-teal: var(--teal, #4FA3E3);
+$color-coral: var(--coral, #FF6B3D);
+$color-sage: var(--sage, #2FC98E);
+
+$color-text-primary: var(--text-primary, #40281C);
+$color-text-secondary: var(--text-secondary, #8B6E58);
+$color-text-tertiary: var(--text-tertiary, #B69B83);
+$color-text-placeholder: var(--text-placeholder, #CBB49E);
+$color-text-hint: var(--text-hint, #967A62);
+$color-text-inverse: var(--text-inverse, #FFFFFF);
+
+$color-bg-page: var(--bg-page, #FFF6EE);
+$color-bg-card: var(--bg-card, #FFFFFF);
+$color-bg-secondary: var(--bg-secondary, #FFFDF9);
+$color-bg-overlay: var(--bg-overlay, rgba(61, 33, 18, 0.5));
+
+$color-border: var(--border, #F3E2D2);
+$color-border-light: var(--border-light, rgba(243, 226, 210, 0.5));
+$color-divider: var(--divider, rgba(243, 226, 210, 0.3));
+
+$gradient-page: var(--gradient-page, linear-gradient(180deg, #FFFDF9 0%, #FFF6EE 40%, #FFEDE0 100%));
+$gradient-card: var(--gradient-card, linear-gradient(135deg, rgba(255, 107, 61, 0.06), rgba(255, 176, 32, 0.03)));
+$gradient-gold: var(--gradient-gold, linear-gradient(135deg, #FF6B3D, #FFB020));
+$gradient-warm: var(--gradient-warm, linear-gradient(135deg, #FF6B3D, #FFA082, #FFD068));
+
+// —— 沉浸光感（WXSS 降级版）——
+$glow-sm: var(--glow-sm, 0 0 16rpx rgba(var(--primary-rgb, 255, 107, 61), 0.20), 0 0 44rpx rgba(var(--primary-rgb, 255, 107, 61), 0.10));
+$glow-md: var(--glow-md, 0 0 24rpx rgba(var(--primary-rgb, 255, 107, 61), 0.28), 0 0 70rpx rgba(var(--primary-rgb, 255, 107, 61), 0.15), 0 0 120rpx rgba(255, 176, 32, 0.12));
+$glow-strong: var(--glow-strong, 0 0 30rpx rgba(var(--primary-rgb, 255, 107, 61), 0.36), 0 0 90rpx rgba(var(--primary-rgb, 255, 107, 61), 0.20), 0 0 150rpx rgba(255, 176, 32, 0.16));
+$spring-curve: var(--spring-curve, cubic-bezier(0.34, 1.56, 0.64, 1));
+$spring-dur: var(--spring-dur, 0.5s);
+$glass-bg: var(--glass-bg, rgba(255, 255, 255, 0.72));
+$glass-border: var(--glass-border, rgba(255, 255, 255, 0.92));
+
+// ============================================
+// 春·嫩芽绿 Spring Dew
+// 主色：清新嫩芽绿 · 迎春花黄 · 奶油嫩白
+// ============================================
+.theme-spring {
+  --primary: #54B460;
+  --primary-rgb: 84, 180, 96;
+  --primary-light: #8AD390;
+  --primary-light-rgb: 138, 211, 144;
+  --primary-dark: #3A9A4E;
+  --primary-dark-rgb: 58, 154, 78;
+  --primary-bg: rgba(84, 180, 96, 0.08);
+
+  --success: #2FC98E;
+  --warning: #FFC94D;
+  --warning-rgb: 255, 201, 77;
+  --gold: #FFC94D;
+  --gold-rgb: 255, 201, 77; /* 沉浸光感辉光用，跟随本主题金色 */
+  --gold-soft: #FFE08F;
+  --gold-deep: #E8A81C;
+  --gold-bg: #FFF8DC;
+  --danger: #FF5A5F;
+  --danger-light: rgba(255, 90, 95, 0.12);
+  --danger-bg: rgba(255, 90, 95, 0.2);
+  --teal: #4FA3E3;
+  --coral: #54B460;
+  --sage: #2FC98E;
+
+  --text-primary: #2E4A33;
+  --text-secondary: #6E8B66;
+  --text-tertiary: #9BB494;
+  --text-placeholder: #B5C9AE;
+  --text-hint: #7A9A72;
+  --text-inverse: #FFFFFF;
+
+  --bg-page: #F3FAEF;
+  --bg-card: #FFFFFF;
+  --bg-secondary: #FBFEF8;
+  --bg-overlay: rgba(46, 74, 51, 0.5);
+
+  --border: #DEEBD4;
+  --border-light: rgba(222, 235, 212, 0.5);
+  --divider: rgba(222, 235, 212, 0.3);
+
+  --gradient-page: linear-gradient(180deg, #FBFEF8 0%, #F3FAEF 40%, #E7F4DE 100%);
+  --gradient-card: linear-gradient(135deg, rgba(84, 180, 96, 0.06), rgba(255, 201, 77, 0.03));
+  --gradient-gold: linear-gradient(135deg, #54B460, #FFC94D);
+  --gradient-warm: linear-gradient(135deg, #54B460, #8AD390, #FFE08F);
+}
+
+// ============================================
+// 夏·海盐蓝 Summer Blue
+// 主色：海盐天蓝 · 落日橙 · 清爽蓝白
+// ============================================
+.theme-summer {
+  --primary: #2FA8E8;
+  --primary-rgb: 47, 168, 232;
+  --primary-light: #7CC6F0;
+  --primary-light-rgb: 124, 198, 240;
+  --primary-dark: #177FC4;
+  --primary-dark-rgb: 23, 127, 196;
+  --primary-bg: rgba(47, 168, 232, 0.08);
+
+  --success: #2FC98E;
+  --warning: #FFB84D;
+  --warning-rgb: 255, 184, 77;
+  --gold: #FFB84D;
+  --gold-rgb: 255, 184, 77; /* 沉浸光感辉光用，跟随本主题金色 */
+  --gold-soft: #FFD98F;
+  --gold-deep: #E8931C;
+  --gold-bg: #FFF3DC;
+  --danger: #FF5A5F;
+  --danger-light: rgba(255, 90, 95, 0.12);
+  --danger-bg: rgba(255, 90, 95, 0.2);
+  --teal: #4FA3E3;
+  --coral: #2FA8E8;
+  --sage: #2FC98E;
+
+  --text-primary: #1F3A4E;
+  --text-secondary: #5E7C91;
+  --text-tertiary: #8FA6B8;
+  --text-placeholder: #A8BCCB;
+  --text-hint: #6D8A9E;
+  --text-inverse: #FFFFFF;
+
+  --bg-page: #EFF7FC;
+  --bg-card: #FFFFFF;
+  --bg-secondary: #FAFDFF;
+  --bg-overlay: rgba(31, 58, 78, 0.5);
+
+  --border: #D4E7F0;
+  --border-light: rgba(212, 231, 240, 0.5);
+  --divider: rgba(212, 231, 240, 0.3);
+
+  --gradient-page: linear-gradient(180deg, #FAFDFF 0%, #EFF7FC 40%, #DFEFF8 100%);
+  --gradient-card: linear-gradient(135deg, rgba(47, 168, 232, 0.06), rgba(255, 184, 77, 0.03));
+  --gradient-gold: linear-gradient(135deg, #2FA8E8, #FFB84D);
+  --gradient-warm: linear-gradient(135deg, #2FA8E8, #7CC6F0, #FFD98F);
+}
+
+// ============================================
+// 秋·暖阳珊瑚橙 Warm Coral（默认）
+// 主色：高饱和珊瑚橙 · 暖金 · 奶油暖白
+// ============================================
+.theme-autumn {
+  --primary: #FF6B3D;
+  --primary-rgb: 255, 107, 61;
+  --primary-light: #FFA082;
+  --primary-light-rgb: 255, 160, 130;
+  --primary-dark: #F04E1D;
+  --primary-dark-rgb: 240, 78, 29;
+  --primary-bg: rgba(255, 107, 61, 0.08);
+
+  --success: #2FC98E;
+  --warning: #FFB020;
+  --gold: #FFB020;
+  --gold-soft: #FFD068;
+  --gold-deep: #E8920A;
+  --gold-bg: #FFF6DC;
+  --danger: #FF5A5F;
+  --danger-light: rgba(255, 90, 95, 0.12);
+  --danger-bg: rgba(255, 90, 95, 0.2);
+  --teal: #4FA3E3;
+  --coral: #FF6B3D;
+  --sage: #2FC98E;
+
+  --text-primary: #40281C;
+  --text-secondary: #8B6E58;
+  --text-tertiary: #B69B83;
+  --text-placeholder: #CBB49E;
+  --text-hint: #967A62;
+  --text-inverse: #FFFFFF;
+
+  --bg-page: #FFF6EE;
+  --bg-card: #FFFFFF;
+  --bg-secondary: #FFFDF9;
+  --bg-overlay: rgba(61, 33, 18, 0.5);
+
+  --border: #F3E2D2;
+  --border-light: rgba(243, 226, 210, 0.5);
+  --divider: rgba(243, 226, 210, 0.3);
+
+  --gradient-page: linear-gradient(180deg, #FFFDF9 0%, #FFF6EE 40%, #FFEDE0 100%);
+  --gradient-card: linear-gradient(135deg, rgba(255, 107, 61, 0.06), rgba(255, 176, 32, 0.03));
+  --gradient-gold: linear-gradient(135deg, #FF6B3D, #FFB020);
+  --gradient-warm: linear-gradient(135deg, #FF6B3D, #FFA082, #FFD068);
+
+  /* —— 沉浸光感（WXSS 降级版）：多层阴影辉光 + 弹簧曲线；WXSS 无 backdrop-filter，玻璃用半透明实色 —— */
+  --gold-rgb: 255, 176, 32;
+  --glow-sm: 0 0 16rpx rgba(var(--primary-rgb), 0.20), 0 0 44rpx rgba(var(--primary-rgb), 0.10);
+  --glow-md: 0 0 24rpx rgba(var(--primary-rgb), 0.28), 0 0 70rpx rgba(var(--primary-rgb), 0.15), 0 0 120rpx rgba(var(--gold-rgb), 0.12);
+  --glow-strong: 0 0 30rpx rgba(var(--primary-rgb), 0.36), 0 0 90rpx rgba(var(--primary-rgb), 0.20), 0 0 150rpx rgba(var(--gold-rgb), 0.16);
+  --spring-curve: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --spring-dur: 0.5s;
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.92);
+}
+
+// ============================================
+// 冬·冰晶紫 Winter Frost
+// 主色：冰晶紫 · 雪青蓝 · 霜白
+// ============================================
+.theme-winter {
+  --primary: #6C7CF0;
+  --primary-rgb: 108, 124, 240;
+  --primary-light: #A5B1F7;
+  --primary-light-rgb: 165, 177, 247;
+  --primary-dark: #4557D8;
+  --primary-dark-rgb: 69, 87, 216;
+  --primary-bg: rgba(108, 124, 240, 0.08);
+
+  --success: #2FC98E;
+  --warning: #8FA8E8;
+  --warning-rgb: 143, 168, 232;
+  --gold: #8FA8E8;
+  --gold-rgb: 143, 168, 232; /* 沉浸光感辉光用，跟随本主题金色 */
+  --gold-soft: #B8C7F2;
+  --gold-deep: #6A82CE;
+  --gold-bg: #EDF1FA;
+  --danger: #FF5A5F;
+  --danger-light: rgba(255, 90, 95, 0.12);
+  --danger-bg: rgba(255, 90, 95, 0.2);
+  --teal: #4FA3E3;
+  --coral: #6C7CF0;
+  --sage: #2FC98E;
+
+  --text-primary: #26324E;
+  --text-secondary: #5F6B93;
+  --text-tertiary: #929CBA;
+  --text-placeholder: #AAB2CC;
+  --text-hint: #6E7A9E;
+  --text-inverse: #FFFFFF;
+
+  --bg-page: #F1F3FB;
+  --bg-card: #FFFFFF;
+  --bg-secondary: #FAFAFE;
+  --bg-overlay: rgba(38, 50, 78, 0.5);
+
+  --border: #DADDF0;
+  --border-light: rgba(218, 221, 240, 0.5);
+  --divider: rgba(218, 221, 240, 0.3);
+
+  --gradient-page: linear-gradient(180deg, #FAFAFE 0%, #F1F3FB 40%, #E5E9F8 100%);
+  --gradient-card: linear-gradient(135deg, rgba(108, 124, 240, 0.06), rgba(143, 168, 232, 0.03));
+  --gradient-gold: linear-gradient(135deg, #6C7CF0, #8FA8E8);
+  --gradient-warm: linear-gradient(135deg, #6C7CF0, #A5B1F7, #B8C7F2);
+}
+
+// ============================================
+// 星空银河 Starry（深色背景主题）
+// 主色：星河蓝紫 · 暖金星点 · 深蓝夜空
+// 用途：呼应「星河」品牌名，也是「毛孩子回到天上当星星」的情感表达
+// 注意：这是唯一的深色主题 —— 文字变量整体转浅色，
+//      但卡片仍保持白底（深色背景上浮白卡，可读性最好）
+// ============================================
+.theme-starry {
+  --primary: #7A8CFF;
+  --primary-rgb: 122, 140, 255;
+  --primary-light: #A5B1F7;
+  --primary-light-rgb: 165, 177, 247;
+  --primary-dark: #5A6BE8;
+  --primary-dark-rgb: 90, 107, 232;
+  --primary-bg: rgba(122, 140, 255, 0.14);
+
+  --success: #2FC98E;
+  --success-rgb: 47, 201, 142;
+  --warning: #FFD068;
+  --warning-rgb: 255, 208, 104;
+  --gold: #FFD068;
+  --gold-rgb: 255, 208, 104;
+  --gold-soft: #FFE29A;
+  --gold-deep: #E8A81C;
+  --gold-bg: rgba(255, 208, 104, 0.16);
+  --danger: #FF7A7F;
+  --danger-rgb: 255, 122, 127;
+  --danger-light: rgba(255, 122, 127, 0.16);
+  --danger-bg: rgba(255, 122, 127, 0.24);
+  --teal: #6FC0F5;
+  --teal-rgb: 111, 192, 245;
+  --coral: #7A8CFF;
+  --coral-rgb: 122, 140, 255;
+  --sage: #2FC98E;
+  --sage-rgb: 47, 201, 142;
+
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255, 255, 255, 0.74);
+  --text-tertiary: rgba(255, 255, 255, 0.52);
+  --text-placeholder: rgba(255, 255, 255, 0.42);
+  --text-hint: rgba(255, 255, 255, 0.62);
+  --text-inverse: #1B2450;
+
+  --bg-page: #1B2450;
+  --bg-card: #FFFFFF;
+  --bg-secondary: #232C57;
+  --bg-overlay: rgba(10, 14, 34, 0.66);
+
+  --border: rgba(255, 255, 255, 0.16);
+  --border-light: rgba(255, 255, 255, 0.1);
+  --divider: rgba(255, 255, 255, 0.08);
+
+  --gradient-page: linear-gradient(180deg, #171F42 0%, #25315F 55%, #33406F 100%);
+  --gradient-card: linear-gradient(135deg, rgba(122, 140, 255, 0.1), rgba(255, 208, 104, 0.05));
+  --gradient-gold: linear-gradient(135deg, #7A8CFF, #FFD068);
+  --gradient-warm: linear-gradient(135deg, #7A8CFF, #A5B1F7, #FFE29A);
+
+  --glow-sm: 0 0 16rpx rgba(var(--primary-rgb), 0.28), 0 0 44rpx rgba(var(--primary-rgb), 0.14);
+  --glow-md: 0 0 24rpx rgba(var(--primary-rgb), 0.34), 0 0 70rpx rgba(var(--primary-rgb), 0.18), 0 0 120rpx rgba(var(--gold-rgb), 0.14);
+  --glow-strong: 0 0 30rpx rgba(var(--primary-rgb), 0.42), 0 0 90rpx rgba(var(--primary-rgb), 0.24), 0 0 150rpx rgba(var(--gold-rgb), 0.18);
+  --glass-bg: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.2);
+}
+
+// ============================================
+// 奶油格纹 Cream Grid
+// 配色沿用暖阳珊瑚橙，只把背景换成「奶油底 + 细格纹」的手账质感，
+// 因此这里仅覆盖背景相关变量，其余继承默认主题
+// 格纹本身由 PageBackground 组件的图案层绘制
+// ============================================
+.theme-grid {
+  --bg-page: #FFF9F0;
+  --bg-secondary: #FFFDF7;
+  --gradient-page: linear-gradient(180deg, #FFFDF9 0%, #FFF9F0 45%, #FFF2E2 100%);
+}
+
+// ============================================
+// 宠物照片壁纸层（.xhh-pet-wallpaper）
+// 由 PageBackground 组件在用户开启照片壁纸时渲染；
+// 照片做轻模糊 + 半透明遮罩，保证上层内容始终可读
+// ============================================
+.xhh-pet-wallpaper {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+
+  &__img {
+    width: 100%;
+    height: 100%;
+    // 轻微放大，避免模糊后边缘透出底色
+    transform: scale(1.12);
+  }
+
+  &__veil {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 246, 238, 0.42) 0%, rgba(255, 246, 238, 0.66) 100%);
+  }
+}
+
+// 深色主题下改用深色遮罩，避免星空主题被浅色遮罩冲淡
+.theme-starry .xhh-pet-wallpaper__veil {
+  background: linear-gradient(180deg, rgba(23, 31, 66, 0.55) 0%, rgba(23, 31, 66, 0.78) 100%);
+}
+
+// ============================================
+// 混入（Mixin）
+// ============================================
+
+@mixin press-feedback {
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  &:active {
+    transform: scale(0.96);
+    opacity: 0.85;
+  }
+}
+
+@mixin card-base {
+  background: var(--bg-card, #FFFFFF);
+  border-radius: $radius-md;
+  border: 1px solid var(--border, #F3E2D2);
+}
+
+@mixin card-glow {
+  position: relative;
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 2rpx;
+    background: linear-gradient(135deg, var(--primary, #FF6B3D), var(--primary-light, #FFA082), var(--primary, #FF6B3D));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin gold-gradient-text {
+  background: linear-gradient(135deg, var(--primary, #FF6B3D), var(--primary-light, #FFA082));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// 弹簧按压反馈：过冲曲线（可被打断、带回弹），替代默认线性缩放
+@mixin spring-feedback {
+  transition: transform $spring-dur $spring-curve, box-shadow 0.3s ease;
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// 光晕卡片：白玻璃底 + 主色辉光（WXSS 降级版毛玻璃 = 半透明实色 + 细描边）
+@mixin glow-card {
+  background: $glass-bg;
+  border: 1px solid $glass-border;
+  border-radius: $radius-md;
+  box-shadow: $glow-sm;
+}

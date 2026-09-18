@@ -1,0 +1,1009 @@
+/**
+ * 时光页面
+ * 宠物时光线展示与回忆记录（打卡动态 + 真实回忆 pet_moments 合并成一条时间线）
+ * 页面结构：固定顶部页头 + 可滚动时间线区域
+ *
+ * 2026-09-10 调整：回忆录类入口统一收口到「创作 → 回忆录馆」，
+ * 本页原有的「回忆精选」三张卡（年度回忆/日常回忆录/纪念Vlog）已整体移除——
+ * 后两个与回忆录馆的轻纪念/标准档完全重复，年度回忆则不重复、已迁入回忆录馆。
+ * 本页职责收窄为：看时光线 + 记一条回忆。
+ */
+import { View, Text, ScrollView, Image, Textarea, Picker } from '@tarojs/components'
+import Taro from '@tarojs/taro'
+import { useState, useEffect, useMemo } from 'react'
+import { useThemeClass } from '../../hooks/useThemeClass'
+import { usePetStore } from '../../stores/petStore'
+import { useAuthStore } from '../../stores/authStore'
+import { getCheckins } from '../../services/checkinService'
+import { timelineService } from '../../services/timelineService'
+import { resolveAvatarUrl } from '../../services/api'
+import { CONFIG } from '../../config'
+import { storage } from '../../utils/storage'
+import { chooseImageWithPrivacy } from '../../utils/privacy'
+import type { PetProfile } from '../../services/petService'
+import type { PetHealthEntry } from '../../memory-body/types/memoryBodyTypes'
+import type { PetMoment } from '../../types/familyTypes'
+import './index.scss'
+import { Icon } from '../../components'
+import PageBackground from '../../components/PageBackground'
+
+interface TimelineEvent {
+  id: string
+  date: string
+  title: string
+  type: 'milestone' | 'memory' | 'ghost' | 'flashback'
+  emoji: string
+  photos: string[]
+  description: string
+  flashbackYear?: number
+  /** 对应 pet_moments 表记录 id（仅真实回忆有），用于删除/详情定位 */
+  sourceId?: string
+}
+
+interface FlashbackMemory {
+  title: string
+  emoji: string
+  description: string
+  yearsAgo: number
+}
+
+function entryDateStr(entry: PetHealthEntry): string {
+  if (entry.createdAt instanceof Date) {
+    return entry.createdAt.toISOString().slice(0, 10)
+  }
+  return String(entry.createdAt).slice(0, 10)
+}
+
+function getMonthDay(dateStr: string): string {
+  return dateStr.slice(5, 10)
+}
+
+/**
+ * 本地日期字符串（YYYY-MM-DD）
+ * 坑点：toISOString() 是 UTC 日期，中国时区（UTC+8）晚上 20 点后会比本地日期早一天，
+ * 补记日期默认值必须用本地时区，否则用户会"穿越到昨天"
+ */
+function getLocalDateString(d: Date = new Date()): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function findFlashbackMemory(
+  pet: PetProfile | null,
+  entries: PetHealthEntry[],
+): FlashbackMemory | null {
+  if (!pet) return null
+
+  const today = new Date()
+  const todayMD = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  const currentYear = today.getFullYear()
+
+  const birthday = pet.birthDate
+  if (birthday) {
+    const birthMD = getMonthDay(birthday)
+    if (birthMD === todayMD) {
+      const years = currentYear - new Date(birthday).getFullYear()
+      if (years >= 1) {
+        return {
+          title: `${pet.name}的生日`,
+          emoji: '🎂',
+          description: `${years}年前的今天，${pet.name}来到了这个世界`,
+          yearsAgo: years,
+        }
+      }
+    }
+  }
+
+  const createdAt = pet.createdAt || ''
+  if (createdAt && getMonthDay(createdAt) === todayMD) {
+    const adoptYear = new Date(createdAt).getFullYear()
+    const yearsAgo = currentYear - adoptYear
+    if (yearsAgo >= 1 && (!birthday || getMonthDay(birthday) !== todayMD)) {
+      return {
+        title: '加入家庭',
+        emoji: '🏠',
+        description: `${yearsAgo}年前的今天，${pet.name}成为了家庭的一员`,
+        yearsAgo,
+      }
+    }
+  }
+
+  if (entries.length > 0) {
+    const sameDayEntries = entries.filter(e => {
+      const d = entryDateStr(e)
+      const md = getMonthDay(d)
+      const year = parseInt(d.slice(0, 4))
+      return md === todayMD && year < currentYear
+    })
+
+    if (sameDayEntries.length > 0) {
+      sameDayEntries.sort((a, b) => entryDateStr(b).localeCompare(entryDateStr(a)))
+      const bestEntry = sameDayEntries[0]
+      const entryYear = parseInt(entryDateStr(bestEntry).slice(0, 4))
+      const yearsAgo = currentYear - entryYear
+
+      if (bestEntry.riskLevel === 'emergency') {
+        return {
+          title: '渡过难关',
+          emoji: '💪',
+          description: `${yearsAgo}年前的今天，${pet.name}经历了一次健康预警。现在它很健康，感谢你的悉心照顾。`,
+          yearsAgo,
+        }
+      }
+
+      if (bestEntry.note) {
+        return {
+          title: '往日时光',
+          emoji: '💭',
+          description: `${yearsAgo}年前的今天，你记录了：${bestEntry.note.length > 30 ? bestEntry.note.slice(0, 30) + '...' : bestEntry.note}`,
+          yearsAgo,
+        }
+      }
+
+      if (bestEntry.weight !== undefined && bestEntry.weight !== null) {
+        return {
+          title: '体重记录',
+          emoji: '⚖️',
+          description: `${yearsAgo}年前的今天，${pet.name}的体重是${bestEntry.weight}kg`,
+          yearsAgo,
+        }
+      }
+    }
+  }
+
+  return null
+}
+
+function generateTimelineFromData(pet: PetProfile | null, entries: PetHealthEntry[]): TimelineEvent[] {
+  const events: TimelineEvent[] = []
+
+  if (pet) {
+    const birthday = pet.birthDate
+    if (birthday) {
+      const birthDate = new Date(birthday)
+      const ageYears = Math.floor((Date.now() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+      events.push({
+        id: 'milestone-birth',
+        date: birthday,
+        title: `${pet.name}的生日`,
+        type: 'milestone',
+        emoji: '🎂',
+        photos: [],
+        description: `来到这个世界的第一天${ageYears > 0 ? `，现在已经${ageYears}岁了` : ''}`,
+      })
+    }
+
+    const createdAt = pet.createdAt || ''
+    if (createdAt && (!birthday || createdAt.slice(0, 10) !== pet.birthDate.slice(0, 10))) {
+      events.push({
+        id: 'milestone-adopt',
+        date: createdAt,
+        title: '加入家庭的第1天',
+        type: 'milestone',
+        emoji: '🏠',
+        photos: [],
+        description: `欢迎${pet.name}成为家庭的一员`,
+      })
+    }
+  }
+
+  const sortedEntries = [...entries].sort((a, b) => {
+    const aDate = entryDateStr(a)
+    const bDate = entryDateStr(b)
+    return bDate.localeCompare(aDate)
+  })
+
+  const recentEntries = sortedEntries.slice(0, 6)
+  for (const entry of recentEntries) {
+    const dateStr = entryDateStr(entry)
+    const note = entry.note || ''
+
+    if (entry.riskLevel === 'emergency') {
+      events.push({
+        id: `memory-${entry.id}`,
+        date: dateStr,
+        title: '健康预警',
+        type: 'memory',
+        emoji: '🚨',
+        photos: [],
+        description: note || '检测到紧急健康信号，请关注宠物状态',
+      })
+    } else if (entry.weight !== undefined && entry.weight !== null) {
+      events.push({
+        id: `memory-${entry.id}`,
+        date: dateStr,
+        title: `体重记录：${entry.weight}kg`,
+        type: 'memory',
+        emoji: '⚖️',
+        photos: [],
+        description: note || '定期体重监测',
+      })
+    } else if (note) {
+      events.push({
+        id: `memory-${entry.id}`,
+        date: dateStr,
+        title: '日常记录',
+        type: 'memory',
+        emoji: '📝',
+        photos: [],
+        description: note,
+      })
+    }
+  }
+
+  return events
+}
+
+/**
+ * 真实回忆（pet_moments）→ 时间线事件
+ * 用户手动添加的回忆帖是时光线的核心内容，必须展示（原实现漏加载导致"打不开"）
+ * 兼容后端 snake_case 字段（happened_at/created_at）与前端 camelCase（happenedAt/createdAt）
+ * @param moment - 后端返回的回忆记录
+ */
+function momentToTimelineEvent(moment: PetMoment): TimelineEvent {
+  const raw = moment as PetMoment & Record<string, unknown>
+  const content = (moment.content || {}) as { description?: string; petName?: string; petEmoji?: string }
+  // 补记日期优先取 happened_at（happenedAt），未补记时回退 created_at
+  const happened = (raw.happenedAt as string) || (raw.happened_at as string) || ''
+  const created = (raw.createdAt as string) || (raw.created_at as string) || ''
+  const dateStr = (happened || created).slice(0, 10)
+  const photos = Array.isArray(moment.photos) ? moment.photos : []
+  return {
+    id: `moment-${moment.id}`,
+    sourceId: moment.id,
+    date: dateStr,
+    title: content.petName ? `${content.petName}的回忆` : '回忆',
+    type: 'memory',
+    emoji: content.petEmoji || '💭',
+    photos,
+    description: content.description || (raw.aiSummary as string) || '',
+  }
+}
+
+export default function TimelinePage() {
+  const [showBanner, setShowBanner] = useState(true)
+  const [dynamicEvents, setDynamicEvents] = useState<TimelineEvent[]>([])
+  // 真实回忆事件（pet_moments），与打卡生成的动态事件分开维护，便于局部刷新
+  const [momentEvents, setMomentEvents] = useState<TimelineEvent[]>([])
+  const [flashback, setFlashback] = useState<FlashbackMemory | null>(null)
+  const [flashbackAdded, setFlashbackAdded] = useState(false)
+  const themeClass = useThemeClass()
+  const currentPet = usePetStore((s) => s.currentPet)
+  const userId = usePetStore((s) => s.userId)
+
+  // 新增回忆弹窗状态
+  const [showAddMemoryModal, setShowAddMemoryModal] = useState(false)
+  const [memoryText, setMemoryText] = useState('')
+  // 多图支持：本地临时路径数组（最多 9 张），与后端 photos 上限对齐
+  const [memoryPhotoPaths, setMemoryPhotoPaths] = useState<string[]>([])
+  // 补记日期（YYYY-MM-DD），默认今天，可手动选过去任意一天
+  const [memoryDate, setMemoryDate] = useState(() => getLocalDateString())
+  const [isMemorySubmitting, setIsMemorySubmitting] = useState(false)
+  // AI 生成/润色 loading（防止重复点击）
+  const [isAiDescribeLoading, setIsAiDescribeLoading] = useState(false)
+  const [isAiPolishLoading, setIsAiPolishLoading] = useState(false)
+
+  // 回忆详情弹窗状态：点击时间线条目时打开
+  const [detailEvent, setDetailEvent] = useState<TimelineEvent | null>(null)
+
+  // 已加载的真实回忆（pet_moments），用于详情展示与删除后的本地刷新
+  const [moments, setMoments] = useState<PetMoment[]>([])
+
+  useEffect(() => {
+    async function loadTimelineData() {
+      try {
+        if (currentPet?.id && userId) {
+          const entries = await getCheckins(currentPet.id, userId)
+          const generated = generateTimelineFromData(currentPet, entries)
+          setDynamicEvents(generated)
+
+          // 加载真实回忆（pet_moments），修复"添加的回忆不显示/打不开"的问题
+          const moments = await timelineService.getMoments(currentPet.id)
+          setMoments(moments)
+          const momentEvents = moments.map(momentToTimelineEvent)
+          setMomentEvents(momentEvents)
+
+          const memory = findFlashbackMemory(currentPet, entries)
+          setFlashback(memory)
+          setFlashbackAdded(false)
+        } else if (currentPet) {
+          const generated = generateTimelineFromData(currentPet, [])
+          setDynamicEvents(generated)
+          setMomentEvents([])
+          const memory = findFlashbackMemory(currentPet, [])
+          setFlashback(memory)
+          setFlashbackAdded(false)
+        }
+      } catch {
+        if (currentPet) {
+          const generated = generateTimelineFromData(currentPet, [])
+          setDynamicEvents(generated)
+          setMomentEvents([])
+          const memory = findFlashbackMemory(currentPet, [])
+          setFlashback(memory)
+          setFlashbackAdded(false)
+        }
+      }
+    }
+    loadTimelineData()
+  }, [currentPet?.id, userId])
+
+  const timelineEvents = useMemo(() => {
+    const allEvents: TimelineEvent[] = []
+
+    if (flashback && flashbackAdded) {
+      allEvents.push({
+        id: 'flashback-auto',
+        date: `${flashback.yearsAgo}年前`,
+        title: flashback.title,
+        type: 'flashback',
+        emoji: flashback.emoji,
+        photos: [],
+        description: flashback.description,
+        flashbackYear: flashback.yearsAgo,
+      })
+    }
+
+    // 真实回忆优先展示（用户主动记录的内容），再叠加打卡生成事件
+    const sorted = [...momentEvents, ...dynamicEvents].sort((a, b) => b.date.localeCompare(a.date))
+    allEvents.push(...sorted)
+
+    return allEvents
+  }, [dynamicEvents, momentEvents, flashback, flashbackAdded])
+
+  const handleAddMemory = () => {
+    if (!currentPet) {
+      Taro.showToast({ title: '请先选择宠物', icon: 'none' })
+      return
+    }
+    // 每次打开弹窗重置表单：清空文字/照片，日期默认今天
+    setMemoryText('')
+    setMemoryPhotoPaths([])
+    setMemoryDate(getLocalDateString())
+    setShowAddMemoryModal(true)
+  }
+
+  /** 选择回忆照片（支持多选，最多 9 张，与后端 photos 上限一致） */
+  const handleAddMemoryPhoto = async () => {
+    try {
+      const remaining = 9 - memoryPhotoPaths.length
+      if (remaining <= 0) {
+        Taro.showToast({ title: '最多上传 9 张照片', icon: 'none' })
+        return
+      }
+      const res = await chooseImageWithPrivacy({
+        count: remaining,
+        sizeType: ['compressed'],
+        sourceType: ['album', 'camera'],
+      })
+      if (!res.tempFilePaths.length) return
+      setMemoryPhotoPaths((prev) => [...prev, ...res.tempFilePaths].slice(0, 9))
+    } catch (err) {
+      if ((err as { errMsg?: string }).errMsg?.includes('cancel')) return
+      Taro.showToast({ title: '选择照片失败', icon: 'none' })
+    }
+  }
+
+  /** 移除已选照片（多图编辑） */
+  const handleRemoveMemoryPhoto = (index: number) => {
+    setMemoryPhotoPaths((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  /**
+   * AI 生成回忆描述：取第一张照片上传 → 视觉模型生成温暖文案
+   * 生成的文案填入输入框（用户可编辑后再保存）
+   */
+  const handleAiDescribe = async () => {
+    if (isAiDescribeLoading) return
+    if (!memoryPhotoPaths.length) {
+      Taro.showToast({ title: '请先上传照片', icon: 'none' })
+      return
+    }
+    setIsAiDescribeLoading(true)
+    try {
+      const description = await timelineService.aiDescribe(memoryPhotoPaths[0])
+      if (description) {
+        setMemoryText(description)
+        Taro.showToast({ title: 'AI 已生成描述，可编辑', icon: 'success' })
+      } else {
+        Taro.showToast({ title: 'AI 生成失败，请重试', icon: 'none' })
+      }
+    } catch {
+      Taro.showToast({ title: 'AI 生成失败，请重试', icon: 'none' })
+    } finally {
+      setIsAiDescribeLoading(false)
+    }
+  }
+
+  /** AI 润色回忆文案：把用户写的草稿扩写成温暖文案 */
+  const handleAiPolish = async () => {
+    if (isAiPolishLoading) return
+    const text = memoryText.trim()
+    if (!text) {
+      Taro.showToast({ title: '请先写一段文字', icon: 'none' })
+      return
+    }
+    setIsAiPolishLoading(true)
+    try {
+      const polished = await timelineService.aiPolish(text)
+      if (polished) {
+        setMemoryText(polished)
+        Taro.showToast({ title: 'AI 已润色', icon: 'success' })
+      } else {
+        Taro.showToast({ title: 'AI 润色失败，请重试', icon: 'none' })
+      }
+    } catch {
+      Taro.showToast({ title: 'AI 润色失败，请重试', icon: 'none' })
+    } finally {
+      setIsAiPolishLoading(false)
+    }
+  }
+
+  /**
+   * 提交回忆：逐张上传照片 → 携带补记日期（happenedAt）保存
+   * 保存成功后刷新本地回忆列表（不用整页重拉，避免闪烁）
+   */
+  const handleAddMemorySubmit = async () => {
+    const text = memoryText.trim()
+    if (!text) {
+      Taro.showToast({ title: '请写一段回忆描述', icon: 'none' })
+      return
+    }
+    if (!currentPet || !userId) return
+
+    setIsMemorySubmitting(true)
+    try {
+      // 逐张上传照片，收集服务器返回的 URL（相对路径，展示时再补全）
+      const photoUrls: string[] = []
+      const token = storage.getToken()
+      for (const filePath of memoryPhotoPaths) {
+        const uploadRes = await Taro.uploadFile({
+          url: `${CONFIG.API_BASE_URL}/api/timeline/photo/upload`,
+          filePath,
+          name: 'photo',
+          header: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        const uploadData = JSON.parse(uploadRes.data) as { success: boolean; data?: { url: string } }
+        if (uploadData.success && uploadData.data?.url) {
+          photoUrls.push(uploadData.data.url)
+        }
+      }
+
+      const saved = await timelineService.addMoment({
+        userId,
+        petId: currentPet.id,
+        type: 'memory',
+        content: {
+          petName: currentPet.name,
+          petEmoji: currentPet.species === 'cat' ? '🐱' : currentPet.species === 'dog' ? '🐕' : '🐾',
+          description: text,
+        },
+        photos: photoUrls,
+        // 补记日期：直接传 YYYY-MM-DD 纯日期（不拼本地时间，避免跨时区偏移），
+        // 服务端按日解析存储，前端展示时 slice(0,10) 与所选日期完全一致
+        happenedAt: memoryDate || undefined,
+      })
+
+      setShowAddMemoryModal(false)
+      Taro.showToast({ title: '回忆已保存 ✦', icon: 'success' })
+
+      // 本地插入新回忆，避免整页重拉
+      setMoments((prev) => [saved, ...prev])
+      setMomentEvents((prev) => [momentToTimelineEvent(saved), ...prev])
+    } catch {
+      Taro.showToast({ title: '保存失败，请重试', icon: 'none' })
+    } finally {
+      setIsMemorySubmitting(false)
+    }
+  }
+
+  /** 点击时间线条目：统一点开详情弹窗——生日/体重/日常记录等系统生成条目同样有完整
+   * 标题/日期/描述，此前只弹"查看"toast 是打不开的死胡同；删除按钮仅对有 sourceId
+   * 的真实回忆显示（归属校验在 handleDeleteMoment 内），查看权限与删除权限分离 */
+  const handleEventClick = (event: TimelineEvent) => {
+    setDetailEvent(event)
+  }
+
+  /** 预览大图：支持单张/多张轮播 */
+  const handlePreviewPhotos = (urls: string[], current: string) => {
+    if (!urls.length) return
+    Taro.previewImage({ urls, current })
+  }
+
+  /** 删除回忆：确认后调接口，成功后从本地列表移除 */
+  const handleDeleteMoment = async () => {
+    if (!detailEvent?.sourceId) return
+    const confirm = await new Promise<boolean>((resolve) => {
+      Taro.showModal({
+        title: '删除这条回忆？',
+        content: '删除后不可恢复',
+        confirmText: '删除',
+        confirmColor: '#FF4D4F',
+        success: (r) => resolve(!!r.confirm),
+        fail: () => resolve(false),
+      })
+    })
+    if (!confirm) return
+
+    try {
+      await timelineService.deleteMoment(detailEvent.sourceId)
+      // 本地移除，保持界面即时响应
+      setMoments((prev) => prev.filter((m) => m.id !== detailEvent.sourceId))
+      setMomentEvents((prev) => prev.filter((e) => e.sourceId !== detailEvent.sourceId))
+      setDetailEvent(null)
+      Taro.showToast({ title: '已删除', icon: 'success' })
+    } catch {
+      Taro.showToast({ title: '删除失败，请重试', icon: 'none' })
+    }
+  }
+
+  const handleFlashbackAction = () => {
+    if (flashback && !flashbackAdded) {
+      setFlashbackAdded(true)
+      setShowBanner(false)
+      Taro.showToast({ title: `已添加到时光线`, icon: 'success' })
+    }
+  }
+
+  const handleYearlyReview = useCallback(async () => {
+    if (reviewLoading || !currentPet || !userId) return
+    setReviewLoading(true)
+    try {
+      const currentYear = new Date().getFullYear()
+      const reviewData = await generateYearlyReview(currentPet, userId, currentYear)
+      setYearlyReview(reviewData)
+
+      reviewCanvasRef.current = true
+      await new Promise(resolve => setTimeout(resolve, 300))
+
+      const result = await renderYearlyReview(reviewData, {
+        canvasId: 'yearly-review-canvas',
+        pixelRatio: 2,
+      })
+      setReviewImageUrl(result.tempFilePath)
+      setShowReviewModal(true)
+    } catch (err: unknown) {
+      const error = err as { message?: string }
+      Taro.showToast({ title: error.message || '生成失败，请重试', icon: 'none' })
+    } finally {
+      setReviewLoading(false)
+    }
+  }, [reviewLoading, currentPet, userId])
+
+  const handleSaveReview = useCallback(async () => {
+    if (!reviewImageUrl) return
+    try {
+      await saveYearlyReview(reviewImageUrl)
+    } catch (err: unknown) {
+      const error = err as { message?: string }
+      Taro.showToast({ title: error.message || '保存失败', icon: 'none' })
+    }
+  }, [reviewImageUrl])
+
+  const handleCloseReview = useCallback(() => {
+    setShowReviewModal(false)
+    setReviewImageUrl('')
+    reviewCanvasRef.current = false
+  }, [])
+
+  /** 跳转到日常回忆录页面 */
+  const handleDailyMemoir = () => {
+    if (!currentPet) {
+      Taro.showToast({ title: '请先选择宠物', icon: 'none' })
+      return
+    }
+    Taro.navigateTo({ url: `/pagesMemoir/memoir-daily/index?petId=${currentPet.id}` })
+  }
+
+  /** 跳转到纪念Vlog页面 */
+  const handleMemorialVlog = () => {
+    if (!currentPet) {
+      Taro.showToast({ title: '请先选择宠物', icon: 'none' })
+      return
+    }
+    Taro.navigateTo({ url: `/pagesMemoir/memoir-vlog/index?petId=${currentPet.id}` })
+  }
+
+  const handleYearlyReview = useCallback(async () => {
+    if (reviewLoading || !currentPet || !userId) return
+    setReviewLoading(true)
+    try {
+      const currentYear = new Date().getFullYear()
+      const reviewData = await generateYearlyReview(currentPet, userId, currentYear)
+      setYearlyReview(reviewData)
+
+      reviewCanvasRef.current = true
+      await new Promise(resolve => setTimeout(resolve, 300))
+
+      const result = await renderYearlyReview(reviewData, {
+        canvasId: 'yearly-review-canvas',
+        pixelRatio: 2,
+      })
+      setReviewImageUrl(result.tempFilePath)
+      setShowReviewModal(true)
+    } catch (err: unknown) {
+      const error = err as { message?: string }
+      Taro.showToast({ title: error.message || '生成失败，请重试', icon: 'none' })
+    } finally {
+      setReviewLoading(false)
+    }
+  }, [reviewLoading, currentPet, userId])
+
+  const handleSaveReview = useCallback(async () => {
+    if (!reviewImageUrl) return
+    try {
+      await saveYearlyReview(reviewImageUrl)
+    } catch (err: unknown) {
+      const error = err as { message?: string }
+      Taro.showToast({ title: error.message || '保存失败', icon: 'none' })
+    }
+  }, [reviewImageUrl])
+
+  const handleCloseReview = useCallback(() => {
+    setShowReviewModal(false)
+    setReviewImageUrl('')
+    reviewCanvasRef.current = false
+  }, [])
+
+  /** 跳转到日常回忆录页面 */
+  const handleDailyMemoir = () => {
+    if (!currentPet) {
+      Taro.showToast({ title: '请先选择宠物', icon: 'none' })
+      return
+    }
+    Taro.navigateTo({ url: `/pagesMemoir/memoir-daily/index?petId=${currentPet.id}` })
+  }
+
+  /** 跳转到纪念Vlog页面 */
+  const handleMemorialVlog = () => {
+    if (!currentPet) {
+      Taro.showToast({ title: '请先选择宠物', icon: 'none' })
+      return
+    }
+    Taro.navigateTo({ url: `/pagesMemoir/memoir-vlog/index?petId=${currentPet.id}` })
+  }
+
+  const petName = currentPet?.name || '你的宠物'
+
+  return (
+    <View className={`timeline-page ${themeClass}`}>
+      {/* 全屏动态背景光斑层 */}
+      <PageBackground />
+      {/* ===== 固定顶部：页头 + 回忆精选 ===== */}
+      <View className='timeline-fixed-top'>
+        <View className='timeline-header'>
+          <View className='timeline-header-left'>
+            <Text className='timeline-title'>{petName}的时光线</Text>
+            <Text className='timeline-subtitle'>记录每一刻温暖时光</Text>
+          </View>
+          <View className='timeline-add-round-btn' onClick={handleAddMemory}>
+            <Text className='timeline-add-round-icon'>+</Text>
+          </View>
+        </View>
+
+        {/* 回忆精选（横向滚动） */}
+        <View className='timeline-featured'>
+          <View className='timeline-featured-head'>
+            <Text className='timeline-featured-title'>回忆精选</Text>
+            <Text className='timeline-featured-hint'>左右滑动查看</Text>
+          </View>
+          <ScrollView className='timeline-featured-scroll' scrollX showScrollbar={false}>
+            {/* 年度回忆卡片 */}
+            <View
+              className={`timeline-featured-card timeline-featured-card--coral ${reviewLoading ? 'timeline-func-card--loading' : ''}`}
+              onClick={handleYearlyReview}
+            >
+              <View className='timeline-featured-card-glow' />
+              <View className='timeline-featured-card-icon'>
+                <Icon name='book-open' size={18} tone='primary' />
+              </View>
+              <View className='timeline-featured-card-text'>
+                <Text className='timeline-featured-card-title'>年度回忆</Text>
+                <Text className='timeline-featured-card-desc'>{reviewLoading ? '生成中...' : '一键生成年度图集'}</Text>
+              </View>
+            </View>
+
+            {/* 日常回忆录卡片 */}
+            <View className='timeline-featured-card timeline-featured-card--gold' onClick={handleDailyMemoir}>
+              <View className='timeline-featured-card-glow' />
+              <View className='timeline-featured-card-icon'>
+                <Icon name='film-strip' size={18} tone='primary' />
+              </View>
+              <View className='timeline-featured-card-text'>
+                <Text className='timeline-featured-card-title'>日常回忆录</Text>
+                <Text className='timeline-featured-card-desc'>静图动效 · 温暖短片</Text>
+              </View>
+            </View>
+
+            {/* 纪念Vlog卡片 */}
+            <View className='timeline-featured-card timeline-featured-card--sage' onClick={handleMemorialVlog}>
+              <View className='timeline-featured-card-glow' />
+              <View className='timeline-featured-card-icon'>
+                <Text>💎</Text>
+              </View>
+              <View className='timeline-featured-card-text'>
+                <Text className='timeline-featured-card-title'>纪念Vlog</Text>
+                <Text className='timeline-featured-card-desc'>AI叙事 · 珍藏记忆</Text>
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+
+      {/* ===== 可滚动区域：横幅 + 时间线 ===== */}
+      <ScrollView className='timeline-scroll' scrollY>
+        {showBanner && (
+          <View className='timeline-banner'>
+            <View className={`timeline-banner-inner ${flashback ? 'timeline-banner-inner--flashback' : ''}`}>
+              <View className='timeline-banner-glow' />
+              <View className='timeline-banner-content'>
+                <Text className='timeline-banner-icon'>
+                  {flashback ? flashback.emoji : '💫'}
+                </Text>
+                <View className='timeline-banner-text-wrap'>
+                  <Text className='timeline-banner-title'>
+                    {flashback ? flashback.title : '旧时光提醒'}
+                  </Text>
+                  <Text className='timeline-banner-desc'>
+                    {flashback
+                      ? flashback.description
+                      : `坚持打卡，记录${petName}的每一天`
+                    }
+                  </Text>
+                </View>
+                {flashback && (
+                  <View className='timeline-banner-action' onClick={handleFlashbackAction}>
+                    <Text className='timeline-banner-action-text'>添加到时光线</Text>
+                  </View>
+                )}
+              </View>
+              <View className='timeline-banner-close' onClick={() => setShowBanner(false)}>
+                <Text>✕</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        <View className='timeline-list'>
+          <Text className='timeline-list-title'>时光足迹</Text>
+          {timelineEvents.length > 0 ? (
+            timelineEvents.map((event, index) => (
+            <View key={event.id} className='timeline-item' onClick={() => handleEventClick(event)}>
+              <View className='timeline-line-col'>
+                <View className={`timeline-dot timeline-dot--${event.type}`}>
+                  <Text className='timeline-dot-emoji'>{event.emoji}</Text>
+                </View>
+                {index < timelineEvents.length - 1 && (
+                  <View className='timeline-line' />
+                )}
+              </View>
+              <View className={`timeline-card timeline-card--${event.type}`}>
+                <View className='timeline-card-date'>
+                  <Text className='timeline-date-text'>{event.date}</Text>
+                  {event.type === 'milestone' && (
+                    <View className='timeline-milestone-badge'>
+                      <Text className='timeline-milestone-badge-text'>里程碑</Text>
+                    </View>
+                  )}
+                  {event.type === 'memory' && (
+                    <View className='timeline-memory-badge'>
+                      <Text className='timeline-memory-badge-text'>回忆</Text>
+                    </View>
+                  )}
+                  {event.type === 'flashback' && (
+                    <View className='timeline-flashback-badge'>
+                      <Text className='timeline-flashback-badge-text'>旧时光</Text>
+                    </View>
+                  )}
+                </View>
+                <Text className='timeline-card-title'>{event.title}</Text>
+                <Text className='timeline-card-desc'>{event.description}</Text>
+                {event.photos.length > 0 ? (
+                  <View className='timeline-photo-grid'>
+                    {event.photos.map((photo, pi) => (
+                      // 真实照片展示（原实现只有占位符，无法看到照片内容）
+                      <Image
+                        key={pi}
+                        className='timeline-photo-img'
+                        src={resolveAvatarUrl(photo)}
+                        mode='aspectFill'
+                        onClick={() => handlePreviewPhotos(event.photos.map(resolveAvatarUrl), resolveAvatarUrl(photo))}
+                      />
+                    ))}
+                  </View>
+                ) : (
+                  <View className='timeline-photo-empty'>
+                    <View className='timeline-photo-dashed'>
+                      <Text className='timeline-photo-add-icon'>+</Text>
+                      <Text className='timeline-photo-add-text'>添加照片</Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+            </View>
+          ))) : (
+            <View className='timeline-empty'>
+              <Icon name='note-pencil' size={40} tone='ink' className='timeline-empty__icon' />
+              <Text className='timeline-empty__title'>还没有时光记录</Text>
+              <Text className='timeline-empty__desc'>点击上方「新增回忆」按钮，记录毛孩子的珍贵瞬间</Text>
+            </View>
+          )}
+        </View>
+
+        {/* ===== 添加时光记录按钮（原型对齐） ===== */}
+        <View className='timeline-add-main-btn' onClick={handleAddMemory}>
+          <Text className='timeline-add-main-icon'>+</Text>
+          <Text className='timeline-add-main-text'>添加时光记录</Text>
+        </View>
+
+        <View className='timeline-bottom-safe' />
+      </ScrollView>
+
+      {/* ===== 年度回忆弹窗 ===== */}
+      {showReviewModal && reviewImageUrl && yearlyReview && (
+        <View className='timeline-review-overlay' onClick={handleCloseReview}>
+          <View className='timeline-review-modal' onClick={(e: { stopPropagation: () => void }) => e.stopPropagation()}>
+            <View className='timeline-review-header'>
+              <Text className='timeline-review-header-title'>
+                {yearlyReview.year}年度回忆 · {yearlyReview.petEmoji} {yearlyReview.petName}
+              </Text>
+              <View className='timeline-review-header-close' onClick={handleCloseReview}>
+                <Text>✕</Text>
+              </View>
+            </View>
+            <View className='timeline-review-image-wrap'>
+              <View
+                className='timeline-review-image'
+                style={{ backgroundImage: `url(${reviewImageUrl})` }}
+                onClick={() => Taro.previewImage({ urls: [reviewImageUrl], current: reviewImageUrl })}
+              />
+            </View>
+            <View className='timeline-review-actions'>
+              <View className='timeline-review-btn timeline-review-btn--primary' onClick={handleSaveReview}>
+                <Text className='timeline-review-btn-text'>💾 保存到相册</Text>
+              </View>
+              <View className='timeline-review-btn timeline-review-btn--outline' onClick={handleCloseReview}>
+                <Text className='timeline-review-btn-text'>关闭</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+      <Canvas
+        className='timeline-review-canvas'
+        canvasId='yearly-review-canvas'
+        id='yearly-review-canvas'
+        style={{ display: reviewCanvasRef.current ? 'block' : 'none', position: 'fixed', left: '-9999px', top: '-9999px', width: '750px', height: '1334px' }}
+        type='2d'
+      />
+
+      {/* ===== 新增回忆弹窗（日期补记 + 多图 + AI 辅助） ===== */}
+      {showAddMemoryModal && (
+        <View className='timeline-review-overlay' onClick={() => setShowAddMemoryModal(false)}>
+          <View className='timeline-add-memory-modal' onClick={(e: { stopPropagation: () => void }) => e.stopPropagation()}>
+            <View className='timeline-review-header'>
+              <Text className='timeline-review-header-title'>新增回忆 ✦</Text>
+              <View className='timeline-review-header-close' onClick={() => setShowAddMemoryModal(false)}>
+                <Text>✕</Text>
+              </View>
+            </View>
+            <View className='timeline-add-memory-body'>
+              {/* 补记日期：默认今天，可手动选择过去任意一天 */}
+              <View className='timeline-add-memory-date-row'>
+                <Text className='timeline-add-memory-date-label'>📅 回忆日期</Text>
+                <Picker mode='date' value={memoryDate} end={getLocalDateString()} onChange={(e) => setMemoryDate(e.detail.value)}>
+                  <View className='timeline-add-memory-date-value'>
+                    <Text>{memoryDate}</Text>
+                    <Text className='timeline-add-memory-date-arrow'>▾</Text>
+                  </View>
+                </Picker>
+              </View>
+
+              <Textarea
+                className='timeline-add-memory-textarea'
+                placeholder='写下这个值得记住的瞬间...'
+                value={memoryText}
+                onInput={(e: { detail: { value: string } }) => setMemoryText(e.detail.value)}
+                maxlength={500}
+                autoHeight
+              />
+
+              {/* AI 辅助：生成描述 / 润色文案 */}
+              <View className='timeline-add-memory-ai-row'>
+                <View
+                  className={`timeline-ai-btn ${isAiDescribeLoading || !memoryPhotoPaths.length ? 'timeline-ai-btn--disabled' : ''}`}
+                  onClick={memoryPhotoPaths.length && !isAiDescribeLoading ? handleAiDescribe : undefined}
+                >
+                  <Text className='timeline-ai-btn-text'>{isAiDescribeLoading ? '✨ 生成中...' : '✨ AI 写描述'}</Text>
+                </View>
+                <View
+                  className={`timeline-ai-btn ${isAiPolishLoading || !memoryText.trim() ? 'timeline-ai-btn--disabled' : ''}`}
+                  onClick={memoryText.trim() && !isAiPolishLoading ? handleAiPolish : undefined}
+                >
+                  <Text className='timeline-ai-btn-text'>{isAiPolishLoading ? '✨ 润色中...' : '✨ AI 润色'}</Text>
+                </View>
+              </View>
+
+              {/* 多图上传：九宫格预览，可删除单张 */}
+              <View className='timeline-add-memory-photo-grid'>
+                {memoryPhotoPaths.map((photoPath, pi) => (
+                  <View key={pi} className='timeline-add-memory-photo-item'>
+                    <Image className='timeline-add-memory-photo-img' src={photoPath} mode='aspectFill' />
+                    <View className='timeline-add-memory-photo-remove' onClick={() => handleRemoveMemoryPhoto(pi)}>
+                      <Text>✕</Text>
+                    </View>
+                  </View>
+                ))}
+                {memoryPhotoPaths.length < 9 && (
+                  <View className='timeline-add-memory-photo-add' onClick={handleAddMemoryPhoto}>
+                    <Icon name='camera' size={18} tone='primary' className='timeline-add-memory-photo-icon' />
+                    <Text className='timeline-add-memory-photo-label'>{memoryPhotoPaths.length ? '继续添加' : '拍照/上传照片'}</Text>
+                  </View>
+                )}
+              </View>
+              <Text className='timeline-add-memory-photo-tip'>最多 9 张 · AI 描述基于第一张照片</Text>
+            </View>
+            <View className='timeline-review-actions'>
+              <View
+                className={`timeline-review-btn timeline-review-btn--primary ${isMemorySubmitting ? 'timeline-review-btn--disabled' : ''}`}
+                onClick={isMemorySubmitting ? undefined : handleAddMemorySubmit}
+              >
+                <Text className='timeline-review-btn-text'>
+                  {isMemorySubmitting ? '保存中...' : '💾 保存回忆'}
+                </Text>
+              </View>
+              <View className='timeline-review-btn timeline-review-btn--outline' onClick={() => setShowAddMemoryModal(false)}>
+                <Text className='timeline-review-btn-text'>取消</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* ===== 回忆详情弹窗（大图 + 完整文案 + 删除） ===== */}
+      {detailEvent && (
+        <View className='timeline-review-overlay' onClick={() => setDetailEvent(null)}>
+          <View className='timeline-detail-modal' onClick={(e: { stopPropagation: () => void }) => e.stopPropagation()}>
+            <View className='timeline-review-header'>
+              <Text className='timeline-review-header-title'>{detailEvent.emoji} {detailEvent.title}</Text>
+              <View className='timeline-review-header-close' onClick={() => setDetailEvent(null)}>
+                <Text>✕</Text>
+              </View>
+            </View>
+            <View className='timeline-detail-body'>
+              <Text className='timeline-detail-date'>📅 {detailEvent.date}</Text>
+              {detailEvent.photos.length > 0 ? (
+                <ScrollView className='timeline-detail-photos' scrollX showScrollbar={false}>
+                  <View className='timeline-detail-photos-row'>
+                    {detailEvent.photos.map((photo, pi) => (
+                      <Image
+                        key={pi}
+                        className='timeline-detail-photo'
+                        src={resolveAvatarUrl(photo)}
+                        mode='aspectFill'
+                        onClick={() => handlePreviewPhotos(detailEvent.photos.map(resolveAvatarUrl), resolveAvatarUrl(photo))}
+                      />
+                    ))}
+                  </View>
+                </ScrollView>
+              ) : null}
+              <Text className='timeline-detail-desc'>{detailEvent.description || '这是一条没有文字说明的回忆。'}</Text>
+            </View>
+            {detailEvent.sourceId && (
+              <View className='timeline-review-actions'>
+                <View className='timeline-review-btn timeline-review-btn--danger' onClick={handleDeleteMoment}>
+                  <Text className='timeline-review-btn-text'>🗑 删除这条回忆</Text>
+                </View>
+                <View className='timeline-review-btn timeline-review-btn--outline' onClick={() => setDetailEvent(null)}>
+                  <Text className='timeline-review-btn-text'>关闭</Text>
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
+    </View>
+  )
+}

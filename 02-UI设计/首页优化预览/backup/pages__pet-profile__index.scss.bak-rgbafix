@@ -1,0 +1,628 @@
+@import '../../styles/_theme';
+@import '../../styles/_animations';
+
+// ============================================
+// 宠物档案 — 对齐高保真原型 pet-profile.html
+// Q版奶萌 · 温馨 · 高饱和（四季主题跟随）
+// ============================================
+
+.profile-page {
+  min-height: 100vh;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
+  animation: pageEnter 0.4s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+// ============================================
+// 宠物形象卡（原型对齐：居中 + 径向光晕 + 双环头像）
+// ============================================
+.profile-hero-card {
+  position: relative;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  margin: 24rpx 32rpx 0;
+  padding: 96rpx 40rpx 40rpx;
+  text-align: center;
+  overflow: hidden;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+// 顶部径向渐变光晕
+.profile-hero-glow {
+  position: absolute;
+  top: -192rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 576rpx;
+  height: 576rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba($color-primary, 0.16) 0%, transparent 66%);
+  pointer-events: none;
+}
+
+.profile-hero-avatar {
+  position: relative;
+  width: 192rpx;
+  height: 192rpx;
+  margin: 0 auto;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, $color-primary-light, $color-primary);
+  box-shadow:
+    0 0 0 10rpx $color-bg-card,
+    0 0 0 16rpx $color-gold-soft,
+    $shadow-sm;
+  @include breathe-glow;
+}
+
+/* 更换头像角标：悬浮在头像右下角，点击进入形象定制页 */
+.profile-hero-avatar-edit {
+  position: absolute;
+  right: -6rpx;
+  bottom: -6rpx;
+  padding: 8rpx 18rpx;
+  border-radius: $radius-round;
+  background: linear-gradient(135deg, #FFB84D 0%, #FF8C42 100%);
+  box-shadow: $shadow-sm;
+  border: 4rpx solid $color-bg-card;
+  @include press-feedback;
+}
+
+.profile-hero-avatar-edit-text {
+  font-size: 22rpx;
+  color: #fff;
+  font-weight: $font-weight-semibold;
+}
+
+.profile-hero-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  margin-top: 56rpx;
+}
+
+.profile-hero-name {
+  font-size: 48rpx;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  line-height: 1.2;
+}
+
+.profile-deceased-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(107, 91, 123, 0.12);
+  border: 1rpx solid rgba(107, 91, 123, 0.3);
+  flex-shrink: 0;
+}
+
+.profile-deceased-icon {
+  font-size: 22rpx;
+}
+
+.profile-deceased-text {
+  font-size: 22rpx;
+  color: #6B5B7B;
+  font-weight: $font-weight-medium;
+}
+
+// 多成员共同养宠：家庭共养标识（2026-08-24）
+.profile-co-care-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  background: $color-primary-bg;
+  border: 1rpx solid rgba($color-primary, 0.3);
+  flex-shrink: 0;
+}
+
+.profile-co-care-icon {
+  font-size: 22rpx;
+}
+
+.profile-co-care-text {
+  font-size: 22rpx;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.profile-hero-breed-pill {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 20rpx;
+  padding: 8rpx 28rpx;
+  border-radius: 999rpx;
+  border: 1rpx solid rgba($color-primary, 0.5);
+  color: $color-primary;
+  background: rgba($color-primary, 0.07);
+  font-size: 26rpx;
+  font-weight: $font-weight-medium;
+}
+
+.profile-hero-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20rpx;
+  margin-top: 48rpx;
+  padding-top: 32rpx;
+  border-top: 1rpx solid $color-border;
+}
+
+.profile-hero-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  font-size: 24rpx;
+  color: $color-text-secondary;
+}
+
+.profile-hero-meta-item--success {
+  color: $color-success;
+  font-weight: $font-weight-semibold;
+}
+
+.profile-hero-meta-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: $color-success;
+  display: inline-block;
+}
+
+.profile-hero-meta-divider {
+  width: 2rpx;
+  height: 24rpx;
+  background: $color-border;
+}
+
+// ============================================
+// 宠物切换（保留）
+// ============================================
+.profile-pet-switcher {
+  display: flex;
+  gap: $spacing-sm;
+  padding: $spacing-md $spacing-xl;
+  overflow-x: auto;
+}
+
+.profile-pet-tab {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm 28rpx;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  border-radius: 24rpx;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+}
+
+.profile-pet-tab-active {
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  color: $color-text-inverse;
+  border-color: transparent;
+  box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.3);
+}
+
+// ============================================
+// 健康指标区 2x2（原型对齐）
+// ============================================
+.profile-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24rpx;
+  margin: 24rpx 32rpx 0;
+  animation: fadeInUp 0.5s ease-out 0.08s both;
+}
+
+.profile-metric {
+  width: calc((100% - 24rpx) / 2);
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card;
+  padding: 32rpx;
+  transition: transform 0.2s ease;
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+.profile-metric-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  margin-bottom: 24rpx;
+
+  &--coral { background: rgba($color-primary, 0.14); color: $color-primary; }
+  &--gold { background: rgba($color-gold, 0.2); color: $color-gold-deep; }
+  &--success { background: rgba($color-success, 0.14); color: $color-success; }
+  &--info { background: rgba($color-teal, 0.14); color: $color-teal; }
+}
+
+.profile-metric-label {
+  display: block;
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  margin-bottom: 12rpx;
+}
+
+.profile-metric-value {
+  font-size: 44rpx;
+  font-weight: $font-weight-bold;
+  line-height: 1;
+  color: $color-text-primary;
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-metric-unit {
+  font-size: 24rpx;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+  margin-left: 4rpx;
+}
+
+// ============================================
+// 档案详情卡 / 品种特征卡（原型对齐：标题 + 行式列表）
+// ============================================
+.profile-detail-card {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  margin: 24rpx 32rpx 0;
+  padding: 0 40rpx 16rpx;
+  animation: fadeInUp 0.5s ease-out 0.16s both;
+}
+
+.profile-section-head {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 40rpx 0 8rpx;
+}
+
+.profile-section-bar {
+  width: 4rpx;
+  height: 32rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(180deg, $color-primary-light, $color-primary);
+  flex-shrink: 0;
+}
+
+.profile-section-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-section-title {
+  font-size: 30rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  line-height: 1.3;
+}
+
+.profile-section-sub {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  margin-top: 2rpx;
+}
+
+// 档案详情行
+.profile-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 0;
+  border-top: 1rpx solid $color-border;
+}
+
+.profile-detail-row--last {
+  margin-bottom: 16rpx;
+}
+
+.profile-detail-label {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  font-size: 28rpx;
+  color: $color-text-tertiary;
+}
+
+.profile-detail-icon {
+  font-size: 28rpx;
+  flex-shrink: 0;
+
+  &--coral { color: $color-primary; }
+  &--gold { color: $color-gold-deep; }
+  &--success { color: $color-success; }
+  &--warning { color: $color-warning; }
+}
+
+.profile-detail-value {
+  font-size: 28rpx;
+  color: $color-text-primary;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  max-width: 55%;
+  word-break: break-all;
+}
+
+// 品种特征行
+.profile-feature-row {
+  display: flex;
+  align-items: center;
+  gap: 28rpx;
+  padding: 28rpx 0;
+  border-top: 1rpx solid $color-border;
+}
+
+.profile-feature-row--last {
+  margin-bottom: 16rpx;
+}
+
+.profile-feature-icon {
+  font-size: 32rpx;
+  flex-shrink: 0;
+  color: $color-primary;
+
+  &--gold { color: $color-gold-deep; }
+  &--warning { color: $color-warning; }
+}
+
+.profile-feature-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.profile-feature-label {
+  display: block;
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  margin-bottom: 4rpx;
+}
+
+.profile-feature-value {
+  display: block;
+  font-size: 28rpx;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  line-height: 1.5;
+}
+
+// ============================================
+// AI 提取的特征/喜好（保留）
+// ============================================
+.profile-section {
+  margin: 24rpx 32rpx 0;
+}
+
+.profile-section-title {
+  font-size: 30rpx;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: block;
+}
+
+.profile-facts-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.profile-fact-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: 22rpx $spacing-lg;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  border: 1px solid $color-border;
+  transition: all 0.2s ease;
+  animation: cardStaggerIn 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+
+  &:active {
+    border-color: rgba($color-primary, 0.3);
+  }
+}
+
+.profile-fact-item--like {
+  border-left: 6rpx solid #FF6B81;
+}
+
+.profile-fact-item--dislike {
+  border-left: 6rpx solid #A0A0A0;
+}
+
+.profile-fact-item--habit {
+  border-left: 6rpx solid #4ECDC4;
+}
+
+.profile-fact-item--personality {
+  border-left: 6rpx solid #FFD93D;
+}
+
+.profile-fact-icon {
+  font-size: 36rpx;
+  flex-shrink: 0;
+}
+
+.profile-fact-text {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  line-height: 1.5;
+}
+
+// ============================================
+// 编辑档案按钮（原型对齐：全宽圆角渐变）
+// ============================================
+.profile-edit-btn {
+  margin: 32rpx 32rpx 0;
+  height: 96rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 图标与文字之间留一点缝（原来 emoji 内联在文字里，自带空隙） */
+  gap: 8rpx;
+  background: linear-gradient(135deg, $color-primary-light, $color-primary);
+  box-shadow: $shadow-button;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.92;
+  }
+}
+
+.profile-edit-btn-text {
+  font-size: 30rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-inverse;
+}
+
+// ============================================
+// 操作按钮（保留）
+// ============================================
+.profile-actions {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.profile-action-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: 28rpx $spacing-sm;
+  // 跟随主题：玻璃底 + 光晕描边（与全局 xhh-glow-card 一致，随主题换色）
+  background: $glass-bg;
+  border: 1px solid $glass-border;
+  border-radius: $radius-md;
+  box-shadow: $glow-sm;
+  backdrop-filter: blur(20rpx);
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.96);
+    border-color: rgba($color-primary, 0.3);
+    background: rgba($color-primary, 0.05);
+  }
+}
+
+.profile-action-icon {
+  font-size: 40rpx;
+  transition: transform 0.2s ease;
+}
+
+.profile-action-btn:active .profile-action-icon {
+  transform: scale(0.9);
+}
+
+.profile-action-label {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+// ============================================
+// 危险区域（保留）
+// ============================================
+.profile-danger-zone {
+  padding: 24rpx;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  border: 1px solid rgba($color-coral, 0.3);
+}
+
+.profile-danger-title {
+  font-size: $font-size-sm;
+  color: $color-coral;
+  font-weight: $font-weight-medium;
+  margin-bottom: $spacing-md;
+  display: block;
+}
+
+.profile-danger-btn {
+  padding: $spacing-md;
+  text-align: center;
+  background: rgba($color-coral, 0.08);
+  border: 1px solid rgba($color-coral, 0.25);
+  border-radius: $radius-sm;
+  font-size: $font-size-sm;
+  color: $color-coral;
+  border-radius: $radius-md;
+  transition: all 0.15s ease;
+
+  &:active {
+    background: rgba($color-coral, 0.15);
+    transform: scale(0.98);
+  }
+}
+
+// ============================================
+// 空状态
+// ============================================
+.profile-empty {
+  @include flex-center;
+  flex-direction: column;
+  padding: 120rpx $spacing-xl;
+}
+
+.profile-empty-icon {
+  font-size: 80rpx;
+  margin-bottom: $spacing-md;
+  opacity: 0.6;
+}
+
+.profile-empty-text {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+  margin-bottom: $spacing-xs;
+}
+
+.profile-empty-hint {
+  font-size: $font-size-xs;
+  color: $color-text-hint;
+  margin-bottom: $spacing-xl;
+}
+
+.profile-empty-btn {
+  padding: $spacing-md 56rpx;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  color: $color-text-inverse;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  border-radius: $radius-round;
+  box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.3);
+  @include press-feedback;
+}
+
+.profile-bottom-safe {
+  height: 60rpx;
+}

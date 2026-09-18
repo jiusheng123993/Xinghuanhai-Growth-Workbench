@@ -1,0 +1,813 @@
+@import '../../styles/_theme';
+@import '../../styles/_animations';
+
+.pet-checkin {
+  min-height: 100vh;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
+  padding: $spacing-xl $spacing-lg;
+  padding-bottom: 200rpx;
+  position: relative;
+  animation: pageEnter 0.4s ease-out;
+}
+
+.pet-checkin__loading {
+  @include flex-center;
+  padding: 80rpx 0;
+}
+
+.pet-checkin__loading-text {
+  font-size: 26rpx;
+  color: $color-text-tertiary;
+}
+
+.pet-checkin__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx $spacing-xxl;
+}
+
+.pet-checkin__empty-icon {
+  font-size: 96rpx;
+  margin-bottom: $spacing-lg;
+}
+
+.pet-checkin__empty-text {
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.pet-checkin__form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+// ==================== 进度指示条 ====================
+.pet-checkin__progress {
+  @include card-base;
+  border-radius: $radius-xl;
+  padding: $spacing-lg $spacing-xl;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.2);
+  margin-bottom: $spacing-lg;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.pet-checkin__progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.pet-checkin__progress-title {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.pet-checkin__progress-text {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.pet-checkin__progress-track {
+  height: 8rpx;
+  background: $color-primary-bg;
+  border-radius: 4rpx;
+  overflow: hidden;
+}
+
+.pet-checkin__progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, $color-primary, $color-primary-dark);
+  border-radius: 4rpx;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// ==================== 区块卡片（原型对齐：图标圆 + 标题 + 描述） ====================
+.pet-checkin__section {
+  @include card-base;
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.2);
+  animation: fadeInUp 0.4s ease-out both;
+}
+
+// 依次入场延迟
+.pet-checkin__section:nth-child(1) { animation-delay: 0.05s; }
+.pet-checkin__section:nth-child(2) { animation-delay: 0.1s; }
+.pet-checkin__section:nth-child(3) { animation-delay: 0.15s; }
+.pet-checkin__section:nth-child(4) { animation-delay: 0.2s; }
+.pet-checkin__section:nth-child(5) { animation-delay: 0.25s; }
+.pet-checkin__section:nth-child(6) { animation-delay: 0.3s; }
+
+.pet-checkin__section-head {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 24rpx;
+}
+
+.pet-checkin__section-icon {
+  @include flex-center;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-full;
+  flex-shrink: 0;
+  font-size: 36rpx;
+
+  &--coral { background: rgba($color-primary, 0.14); color: $color-primary; }
+  &--gold { background: rgba($color-gold, 0.18); color: $color-gold-deep; }
+  &--info { background: rgba($color-teal, 0.14); color: $color-teal; }
+  &--success { background: rgba($color-success, 0.14); color: $color-success; }
+}
+
+.pet-checkin__section-titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.pet-checkin__section-title {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  line-height: 1.3;
+}
+
+.pet-checkin__section-optional {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-normal;
+  color: $color-text-tertiary;
+}
+
+.pet-checkin__section-desc {
+  display: block;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+}
+
+.pet-checkin__section-title-badge {
+  font-size: 20rpx;
+  color: $color-text-inverse;
+  background: $color-primary;
+  padding: 4rpx 14rpx;
+  border-radius: 16rpx;
+  flex-shrink: 0;
+}
+
+.pet-checkin__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+}
+
+// ==================== 选项（原型对齐：圆角胶囊纯文字） ====================
+.pet-checkin__option {
+  flex: 1;
+  min-width: 132rpx;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20rpx;
+  background: $color-bg-secondary;
+  border-radius: 999rpx;
+  border: 1rpx solid $color-border;
+  transition: all 0.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+  @include press-feedback;
+}
+
+.pet-checkin__option--active {
+  background: $color-primary-bg;
+  border-color: $color-primary;
+  box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.2);
+}
+
+.pet-checkin__option-label {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+  transition: color $transition-fast;
+  white-space: nowrap;
+}
+
+.pet-checkin__option--active .pet-checkin__option-label {
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+}
+
+// 选中态弹跳入口
+@keyframes optionPopIn {
+  0% { transform: scale(0.9); opacity: 0; }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.pet-checkin__option--active {
+  animation: optionPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+// ==================== 快捷体重 ====================
+.pet-checkin__weight-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+
+.pet-checkin__weight-preset {
+  padding: 12rpx 24rpx;
+  border-radius: 24rpx;
+  background: $color-primary-bg;
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  border: 2rpx solid transparent;
+  transition: all $transition-normal;
+  @include press-feedback;
+}
+
+.pet-checkin__weight-preset:active {
+  border-color: $color-primary;
+  background: rgba($color-primary, 0.08);
+}
+
+.pet-checkin__toggle {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.pet-checkin__toggle-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  height: 120rpx;
+  background: $color-primary-bg;
+  border-radius: $radius-xl;
+  border: 2rpx solid transparent;
+  transition: all $transition-normal;
+  @include press-feedback;
+}
+
+.pet-checkin__toggle-btn--active {
+  background: $color-primary-bg;
+  border-color: $color-primary;
+  box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.2);
+}
+
+.pet-checkin__toggle-btn--active-danger {
+  background: $color-danger-light;
+  border-color: $color-danger;
+  box-shadow: 0 4rpx 16rpx rgba(224, 133, 107, 0.2);
+}
+
+.pet-checkin__toggle-emoji {
+  font-size: 40rpx;
+  line-height: 1;
+  margin-bottom: 8rpx;
+}
+
+.pet-checkin__toggle-label {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  font-weight: $font-weight-medium;
+}
+
+.pet-checkin__toggle-btn--active .pet-checkin__toggle-label {
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.pet-checkin__toggle-btn--active-danger .pet-checkin__toggle-label {
+  color: $color-danger;
+  font-weight: $font-weight-semibold;
+}
+
+.pet-checkin__weight-input {
+  width: 100%;
+  height: 88rpx;
+  padding: 0 24rpx;
+  background: $color-primary-bg;
+  border: 2rpx solid $color-border;
+  border-radius: $radius-xl;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+  transition: border-color $transition-fast;
+
+  &:focus {
+    border-color: $color-primary;
+  }
+}
+
+// ===== 体重行（原型对齐：输入框 + kg + 跳过） =====
+.pet-checkin__weight-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.pet-checkin__weight-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.pet-checkin__weight-row .pet-checkin__weight-input {
+  width: 100%;
+  border-radius: 999rpx;
+  height: 88rpx;
+  padding: 0 88rpx 0 32rpx;
+}
+
+.pet-checkin__weight-unit {
+  position: absolute;
+  right: 32rpx;
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+}
+
+.pet-checkin__weight-skip {
+  flex-shrink: 0;
+  height: 88rpx;
+  padding: 0 40rpx;
+  border-radius: 999rpx;
+  border: 1rpx solid $color-border;
+  background: $color-bg-secondary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+  transition: all 0.15s ease;
+
+  &:active {
+    background: $color-primary-bg;
+    border-color: $color-primary;
+    color: $color-primary;
+  }
+}
+
+// ===== 品种标准范围提示（原型对齐） =====
+.pet-checkin__weight-range-hint {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 20rpx;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.pet-checkin__weight-placeholder {
+  color: $color-text-tertiary;
+}
+
+.pet-checkin__notes {
+  width: 100%;
+  min-height: 160rpx;
+  padding: $spacing-lg;
+  background: $color-primary-bg;
+  border: 2rpx solid $color-border;
+  border-radius: $radius-xl;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+  line-height: 1.6;
+  transition: border-color $transition-fast;
+
+  &:focus {
+    border-color: $color-primary;
+  }
+}
+
+.pet-checkin__notes-placeholder {
+  color: $color-text-tertiary;
+}
+
+.pet-checkin__notes-count {
+  display: block;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  text-align: right;
+  margin-top: $spacing-sm;
+}
+
+.pet-checkin__submit {
+  width: 100%;
+  height: 96rpx;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  color: $color-text-inverse;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  border-radius: $radius-round;
+  @include flex-center;
+  box-shadow: 0 8rpx 32rpx rgba($color-primary, 0.3);
+  transition: all $transition-normal;
+  margin-top: $spacing-md;
+  @include press-feedback;
+}
+
+.pet-checkin__submit--disabled {
+  opacity: 0.4;
+  box-shadow: none;
+}
+
+.pet-checkin__result {
+  @include card-base;
+  border-radius: $radius-xl;
+  padding: 40rpx $spacing-xl;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.2);
+  margin-bottom: $spacing-lg;
+}
+
+.pet-checkin__result--normal {
+  border-left: 8rpx solid $color-success;
+}
+
+.pet-checkin__result--caution {
+  border-left: 8rpx solid $color-primary-light;
+}
+
+.pet-checkin__result--warning {
+  border-left: 8rpx solid $color-primary;
+}
+
+.pet-checkin__result--emergency {
+  border-left: 8rpx solid $color-danger;
+}
+
+.pet-checkin__result-title {
+  display: block;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.pet-checkin__result-feedback {
+  display: block;
+  font-size: 26rpx;
+  color: $color-text-secondary;
+  line-height: 1.6;
+  padding: 20rpx;
+  border-radius: $radius-md;
+}
+
+.pet-checkin__result--normal .pet-checkin__result-feedback {
+  background: rgba(140, 173, 126, 0.12);
+  color: $color-success;
+}
+
+.pet-checkin__result--caution .pet-checkin__result-feedback {
+  background: rgba($color-primary, 0.12);
+  color: $color-primary-light;
+}
+
+.pet-checkin__result--warning .pet-checkin__result-feedback {
+  background: rgba($color-primary, 0.15);
+  color: $color-primary;
+}
+
+.pet-checkin__result--emergency .pet-checkin__result-feedback {
+  background: $color-danger-light;
+  color: $color-danger;
+}
+
+.pet-checkin__result-detail {
+  margin-top: $spacing-lg;
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.pet-checkin__result-tag {
+  font-size: 22rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  background: $color-primary-bg;
+  color: $color-text-secondary;
+}
+
+.pet-checkin__stats {
+  @include card-base;
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.2);
+  margin-top: $spacing-lg;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.pet-checkin__stats-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.pet-checkin__stats-value {
+  font-size: 40rpx;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+}
+
+.pet-checkin__stats-label {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.pet-checkin__stats-divider {
+  width: 2rpx;
+  height: 48rpx;
+  background: $color-divider;
+}
+
+.pet-checkin__disclaimer {
+  padding: 20rpx;
+  background: rgba($color-primary, 0.08);
+  border-radius: $radius-md;
+  border: 1px solid rgba($color-primary, 0.12);
+  margin-top: $spacing-lg;
+}
+
+.pet-checkin__disclaimer-text {
+  font-size: 22rpx;
+  color: $color-primary-light;
+  line-height: 1.5;
+}
+
+.pet-checkin__feedback-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: $color-bg-overlay;
+  z-index: 1000;
+  @include flex-center;
+}
+
+.pet-checkin__feedback-popup {
+  width: 600rpx;
+  @include card-base;
+  border-radius: $radius-xl;
+  padding: $spacing-xxl 40rpx 40rpx;
+  text-align: center;
+  animation: fadeInScale 0.3s ease-out;
+}
+
+.pet-checkin__feedback-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: $spacing-lg;
+}
+
+.pet-checkin__feedback-icon {
+  font-size: 72rpx;
+  margin-bottom: $spacing-md;
+}
+
+.pet-checkin__feedback-title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.pet-checkin__feedback-text {
+  font-size: 26rpx;
+  color: $color-text-secondary;
+  line-height: 1.6;
+  margin-bottom: 36rpx;
+  text-align: left;
+}
+
+.pet-checkin__feedback-actions {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.pet-checkin__feedback-btn {
+  height: 80rpx;
+  border-radius: $radius-round;
+  @include flex-center;
+  @include press-feedback;
+}
+
+.pet-checkin__feedback-btn--emergency {
+  background: linear-gradient(135deg, $color-danger, #C0705A);
+}
+
+.pet-checkin__feedback-btn--emergency .pet-checkin__feedback-btn-text {
+  color: $color-text-primary;
+}
+
+.pet-checkin__feedback-btn--food {
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+}
+
+.pet-checkin__feedback-btn--food .pet-checkin__feedback-btn-text {
+  color: $color-text-inverse;
+}
+
+.pet-checkin__feedback-btn--close {
+  background: $color-primary-bg;
+  border: 1px solid $color-border;
+}
+
+.pet-checkin__feedback-btn--close .pet-checkin__feedback-btn-text {
+  color: $color-text-tertiary;
+}
+
+.pet-checkin__feedback-btn-text {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+}
+
+.pet-checkin__result-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.pet-checkin__diary {
+  @include card-base;
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.2);
+  border-color: rgba($color-primary, 0.25);
+}
+
+.pet-checkin__diary-header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+  padding-bottom: 20rpx;
+  border-bottom: 2rpx dashed rgba($color-primary, 0.15);
+}
+
+.pet-checkin__diary-title {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+  letter-spacing: 1rpx;
+}
+
+.pet-checkin__diary-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $spacing-md 0;
+}
+
+.pet-checkin__diary-emoji {
+  font-size: 56rpx;
+  line-height: 1;
+  margin-bottom: $spacing-md;
+}
+
+.pet-checkin__diary-text {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  line-height: 1.8;
+  text-align: center;
+  font-style: italic;
+  max-width: 480rpx;
+}
+
+.pet-checkin__diary-author {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  margin-top: $spacing-sm;
+  align-self: flex-end;
+}
+
+.pet-checkin__diary-share {
+  margin-top: $spacing-lg;
+  height: 72rpx;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  border-radius: 36rpx;
+  @include flex-center;
+  box-shadow: 0 6rpx 24rpx rgba($color-primary, 0.25);
+  transition: all $transition-normal;
+  @include press-feedback;
+}
+
+.pet-checkin__diary-share-text {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-inverse;
+}
+
+.pet-checkin__care-plan-btn {
+  @include card-base;
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.2);
+  border-color: rgba($color-primary, 0.25);
+  @include flex-center;
+  transition: all $transition-normal;
+  @include press-feedback;
+}
+
+.pet-checkin__care-plan-btn-text {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+  letter-spacing: 1rpx;
+}
+
+// ==================== 多宠快捷打卡 ====================
+.pet-checkin__batch {
+  @include card-base;
+  border-radius: $radius-xl;
+  padding: $spacing-lg $spacing-xl;
+  margin-bottom: $spacing-lg;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
+}
+
+.pet-checkin__batch-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.pet-checkin__batch-title {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+.pet-checkin__batch-sub {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.pet-checkin__batch-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  margin: $spacing-md 0;
+}
+
+.pet-checkin__batch-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 10rpx 20rpx;
+  border-radius: $radius-lg;
+  background: rgba($color-primary, 0.08);
+  @include press-feedback;
+}
+
+.pet-checkin__batch-item-emoji {
+  font-size: 28rpx;
+}
+
+.pet-checkin__batch-item-name {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+}
+
+.pet-checkin__batch-item-arrow {
+  font-size: 26rpx;
+  color: $color-text-tertiary;
+}
+
+.pet-checkin__batch-btn {
+  @include flex-center;
+  height: 80rpx;
+  border-radius: $radius-xl;
+  background: $color-primary;
+  @include press-feedback;
+}
+
+.pet-checkin__batch-btn--disabled {
+  opacity: 0.6;
+}
+
+.pet-checkin__batch-btn-text {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: #fff;
+}
+
+.pet-checkin__batch-hint {
+  margin-top: $spacing-sm;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  text-align: center;
+}

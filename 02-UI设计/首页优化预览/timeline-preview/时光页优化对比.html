@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>时光页优化 + 回忆录入口收口</title><style>
+*{box-sizing:border-box}
+body{margin:0;padding:42px 34px 56px;background:#F7F4F0;color:#3D3833;
+  font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+h1{font-size:23px;margin:0 0 8px;letter-spacing:.3px}
+.sub{font-size:13.5px;color:#8C8177;margin:0 0 32px;line-height:1.75}
+h2{font-size:17px;margin:0 0 6px;display:flex;align-items:center;gap:9px}
+h2 .n{display:inline-flex;align-items:center;justify-content:center;width:23px;height:23px;
+  border-radius:50%;background:#FF6B3D;color:#fff;font-size:13px;font-weight:700;flex-shrink:0}
+.card{background:#fff;border-radius:20px;padding:26px 28px;margin-bottom:26px;
+  box-shadow:0 2px 16px rgba(120,100,80,.09)}
+.lead{font-size:13px;color:#9A8F84;margin:0 0 22px;line-height:1.8}
+.lead code{background:#F2EDE7;border-radius:4px;padding:1px 5px;font-size:12px}
+.phones{display:flex;gap:30px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+.pwrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+.ptag{font-size:12px;padding:4px 14px;border-radius:20px;font-weight:600}
+.ptag.bad{background:#FDEBE7;color:#C4472A}
+.ptag.good{background:#E9F6EC;color:#2E7D46}
+
+/* ── 手机外框 ── */
+.phone{width:375px;border-radius:40px;overflow:hidden;background:#fff;
+  box-shadow:0 10px 40px rgba(90,70,50,.16);border:1px solid rgba(0,0,0,.05)}
+.navbar{height:44px;display:flex;align-items:center;justify-content:center;position:relative;background:#FFF6EE}
+.navbar-title{font-size:17px;font-weight:600;color:#1a1a1a}
+.navbar-capsule{position:absolute;right:12px;top:9px;width:87px;height:26px;border-radius:13px;
+  border:1px solid rgba(0,0,0,.08);display:flex;align-items:center;justify-content:space-around;background:rgba(255,255,255,.6)}
+.dots{font-size:11px;color:#333;letter-spacing:.5px}
+.circle{width:13px;height:13px;border-radius:50%;border:1.6px solid #333}
+.screen{height:700px;overflow:hidden;display:flex;flex-direction:column}
+.home-bar{height:4px;background:#fff;padding:0;position:relative}
+.home-bar::after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom:6px;
+  width:120px;height:4px;border-radius:3px;background:#1a1a1a}
+
+/* ── 页头 ── */
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:28px 20px 8px;flex-shrink:0}
+.hdr-left{min-width:0}
+.hdr-title{font-size:26px;font-weight:700;line-height:1.2;color:#40281C}
+.hdr-sub{margin-top:6px;font-size:13px;color:#B69B83}
+.add-round{width:44px;height:44px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;
+  justify-content:center;font-size:24px;color:#fff;font-weight:400;
+  background:linear-gradient(135deg,#FFA082,#FF6B3D);
+  box-shadow:0 6px 18px -4px rgba(255,107,61,.35),0 0 15px rgba(255,107,61,.38)}
+.add-pill{flex-shrink:0;display:flex;align-items:center;gap:4px;height:32px;padding:0 13px;
+  border-radius:999px;background:linear-gradient(135deg,#FFA082,#FF6B3D);
+  box-shadow:0 6px 18px -4px rgba(255,107,61,.35),0 0 15px rgba(255,107,61,.38)}
+.add-pill img{width:16px;height:16px;display:block}
+.add-pill span{font-size:13px;font-weight:600;color:#fff;line-height:1}
+
+.body{flex:1;overflow:hidden;padding-top:8px}
+
+/* ── 回忆精选（改造前） ── */
+.feat{margin-top:12px}
+.feat-head{display:flex;align-items:center;justify-content:space-between;padding:0 20px;margin-bottom:12px}
+.feat-head-title{font-size:18px;font-weight:700;color:#40281C}
+.feat-head-hint{font-size:12px;color:#B69B83}
+.feat-scroll{display:flex;padding:0 20px;overflow:hidden}
+.feat-card{position:relative;overflow:hidden;width:256px;height:160px;border-radius:24px;
+  padding:20px;margin-right:12px;flex-shrink:0;display:flex;flex-direction:column}
+.feat-glow{position:absolute;right:-28px;top:-36px;width:112px;height:112px;border-radius:50%;background:rgba(255,255,255,.15)}
+.feat-icon{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.25)}
+.feat-text{margin-top:auto}
+.feat-title{font-size:18px;font-weight:700;color:#fff;line-height:1.3}
+.feat-desc{margin-top:4px;font-size:12px;color:rgba(255,255,255,.85)}
+
+/* ── 时光速览（改造后） ── */
+.ov{display:flex;align-items:center;margin:4px 16px 14px;padding:12px 4px;border-radius:28px;
+  background:#fff;box-shadow:0 4px 20px -6px rgba(61,33,18,.08),0 0 13px rgba(255,107,61,.14)}
+.ov-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.ov-item img{width:18px;height:18px;display:block}
+.ov-value{font-size:20px;font-weight:700;color:#40281C;line-height:1.1}
+.ov-label{font-size:11px;color:#B69B83}
+.ov-div{width:1px;height:28px;background:#F3E2D2}
+
+/* ── 时间线 ── */
+.tl-list{padding:0 16px}
+.tl-title{font-size:18px;font-weight:700;color:#40281C;margin-bottom:16px}
+.tl-item{display:flex;gap:10px}
+.tl-col{display:flex;flex-direction:column;align-items:center;width:26px;flex-shrink:0}
+.tl-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:11px;flex-shrink:0;background:linear-gradient(135deg,#FF6B3D,#FFB020);
+  border:1px solid #FFF6EE;box-shadow:0 0 10px rgba(255,107,61,.5)}
+.tl-line{width:1.5px;flex:1;min-height:20px;background:linear-gradient(180deg,#FF6B3D,rgba(255,107,61,.1));opacity:.5}
+.tl-card{flex:1;margin-bottom:16px;padding:12px;border-radius:20px;background:#fff;border:1px solid #F3E2D2}
+.tl-date{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.tl-date-txt{font-size:12px;color:#8B6E58}
+.tl-badge{padding:2px 7px;border-radius:10px;background:rgba(255,107,61,.08);border:1px solid #F3E2D2;
+  font-size:10px;color:#FF6B3D}
+.tl-card-title{font-size:15px;font-weight:600;color:#40281C;margin-bottom:4px}
+.tl-card-desc{font-size:12px;color:#8B6E58;line-height:1.6;margin-bottom:8px}
+.ph-dashed{display:flex;align-items:center;justify-content:center;gap:4px;height:60px;border-radius:6px;
+  background:#FFFDF9;border:1px solid rgba(243,226,210,.5)}
+.ph-plus{font-size:16px;color:#B69B83}
+.ph-txt{font-size:11px;color:#B69B83}
+.ph-hint{display:flex;align-items:center;gap:4px;margin-top:6px;padding:8px 10px;border-radius:6px;background:#FFFDF9}
+.ph-hint img{width:14px;height:14px;display:block}
+.ph-hint span{font-size:11px;color:#B69B83}
+
+/* ── CTA ── */
+.cta{display:flex;align-items:center;justify-content:center;gap:8px;height:56px;border-radius:999px;
+  margin:24px 20px 0;background:linear-gradient(135deg,#FFA082,#FF6B3D);
+  box-shadow:0 6px 18px -4px rgba(255,107,61,.35),0 0 15px rgba(255,107,61,.38);color:#fff}
+.cta-plus{font-size:20px;font-weight:400;line-height:1}
+.cta span:last-child{font-size:15px;font-weight:600}
+
+/* ── 回忆录馆卡片 ── */
+.mhall-mini{width:250px;background:#fff;border-radius:18px;padding:12px;
+  box-shadow:0 4px 14px rgba(170,120,70,.12)}
+.mhall-mini .em{font-size:24px}
+.mhall-mini .t{display:block;font-size:14px;color:#3d2f24;font-weight:600;margin:6px 0 3px}
+.mhall-mini .d{display:block;font-size:10.5px;color:#a08b76;line-height:1.45}
+.minirow{display:flex;gap:16px;align-items:center}
+.toast{margin-top:12px;font-size:12px;color:#a08b76}
+.toast .old{color:#C4472A}
+.toast .new{color:#2E7D46;font-weight:600}
+</style></head><body>
+
+<h1>时光页优化 + 回忆录入口收口</h1>
+<p class="sub">用户反馈：「这个界面也要优化」+「像回忆录这些都冲突了，和创作里面，都去除」</p>
+
+<div class="card">
+  <h2><span class="n">A</span>时光页 · 改造前后</h2>
+  <p class="lead">
+    <b>① 去掉与「创作」重复的回忆录入口</b>：原顶部「回忆精选」三张卡占掉半屏，其中「日常回忆录」「纪念Vlog」
+    跳转的目标，正是创作页「回忆录馆」里轻纪念档与标准档的页面 —— 同一批功能两处入口。三张已整体移除。<br>
+    <b>② 悬空裸「+」改成渐变胶囊</b>：原来那个橙色圆圈靠底对齐挂在标题右下留白里，像个没归属的浮标；
+    换成「+ 记录」胶囊（渐变 + 投影 + 按压反馈 + 配图标），与底部主按钮同一视觉语言。<br>
+    <b>③ 空出来的位置换「时光速览」</b>：不是拿装饰硬填，而是放对用户有信息量的真实数字（陪伴天数 / 时光记录 / 珍藏照片）。<br>
+    <b>④ 顺手修掉一个假按钮</b>：卡片里「＋ 添加照片」是虚线按钮样式，但整张卡点击只打开详情、
+    根本不支持给这条记录补照片 —— 点不出预期结果。已改成不带按钮感的纯提示。
+  </p>
+  <div class="phones">
+    <div class="pwrap"><span class="ptag bad">改造前</span><div class="phone">
+    <div class="navbar">
+  <div class="navbar-title">时光</div>
+  <div class="navbar-capsule"><span class="dots">•••</span><span class="circle"></span></div>
+</div>
+    <div class="screen" style="background:linear-gradient(180deg,#FFFDF9 0%,#FFF6EE 40%,#FFEDE0 100%)">
+      <div class="hdr">
+    <div class="hdr-left">
+      <div class="hdr-title">可乐的时光线</div>
+      <div class="hdr-sub">记录每一刻温暖时光</div>
+    </div>
+    <div class="add-round">＋</div>
+  </div>
+      <div class="body">
+        
+        <div class="feat">
+    <div class="feat-head"><span class="feat-head-title">回忆精选</span><span class="feat-head-hint">左右滑动查看</span></div>
+    <div class="feat-scroll">
+      <div class="feat-card" style="background:linear-gradient(135deg,#FFA082,#FF6B3D)">
+      <div class="feat-glow"></div>
+      <div class="feat-icon"></div>
+      <div class="feat-text"><div class="feat-title">年度回忆</div><div class="feat-desc">一键生成年度图集</div></div>
+    </div>
+      <div class="feat-card" style="background:linear-gradient(135deg,#FFD068,#FFB020)">
+      <div class="feat-glow"></div>
+      <div class="feat-icon"></div>
+      <div class="feat-text"><div class="feat-title">日常回忆录</div><div class="feat-desc">静图动效 · 温暖短片</div></div>
+    </div>
+    </div>
+  </div>
+        <div class="tl-list">
+    <div class="tl-title">时光足迹</div>
+    <div class="tl-item">
+      <div class="tl-col">
+        <div class="tl-dot">🎂</div>
+        <div class="tl-line"></div>
+      </div>
+      <div class="tl-card">
+        <div class="tl-date"><span class="tl-date-txt">2026-07-31</span><span class="tl-badge">里程碑</span></div>
+        <div class="tl-card-title">可乐的生日</div>
+        <div class="tl-card-desc">来到这个世界的第一天</div>
+        <div class="ph-dashed"><span class="ph-plus">＋</span><span class="ph-txt">添加照片</span></div>
+      </div>
+    </div>
+  </div>
+        <div class="cta"><span class="cta-plus">＋</span><span>添加时光记录</span></div>
+      </div>
+    </div>
+    <div class="home-bar"></div>
+  </div></div>
+    <div class="pwrap"><span class="ptag good">改造后</span><div class="phone">
+    <div class="navbar">
+  <div class="navbar-title">时光</div>
+  <div class="navbar-capsule"><span class="dots">•••</span><span class="circle"></span></div>
+</div>
+    <div class="screen" style="background:linear-gradient(180deg,#FFFDF9 0%,#FFF6EE 40%,#FFEDE0 100%)">
+      <div class="hdr">
+    <div class="hdr-left">
+      <div class="hdr-title">可乐的时光线</div>
+      <div class="hdr-sub">记录每一刻温暖时光</div>
+    </div>
+    <div class="add-pill"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABZ0lEQVR4nOyawU0DMRBFv3PmRg1IATqADgiImpA4UExuIEEDgQqALgKCAswYrRDaROtJNlnH+f9JI+cwiscvWXtntSOQMwI5EgByJADkSADIcQmIMV5bzCw+4+6Taky1TjxrC47FX9pwjzq5CCE8diV4BMxsOEOdPJuA864Ej4BvGw5QJ3MTcNiV4BEQUTEmoHONOgVAjgSgHFOL4yamKETJTfDU9qe3Zo4TG16xBXKbYDEB7cKGmqeN9gCQIwEgRwJAjgSAHAkAORKA/vx2dWFF2l8SVgQb6iI30Qz9dXVD4+kil8n+jy4B9OfGfokjDIzNOU5zoyd6HgByJADkSADIkQCQIwEgRwJATjEBTSu78HloSv4DUhc5bhbfu6tbF70jBHIkAOR4BMxRL9naPQLeUS/Z2j0C7lAvt7mErAA7RR5suLJ4sfjC7vNhkV7wnljtT7nk7H3AvqNTAORIAMiRAJBDL+AHAAD//+h7flMAAAAGSURBVAMAvWwRfvzTsEYAAAAASUVORK5CYII="><span>记录</span></div>
+  </div>
+      <div class="body">
+        <div class="ov">
+    <div class="ov-item">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAYAAABV7bNHAAADkUlEQVR4nOycz2sTQRSA30tExL/Am6I3ERGxFG1C46FQeqgHD6KXlkIviYJIRFGQ4qHiL1BsI4JiFbEHURQtInhoSVOhikUETxb0qhc9VD2YPN+mDW2TdN8kZibZ5X3QbWZ2trP7ZeZ1dmeSCCi+REDxRQUJqCCBdWABSu5rA4zsBSq8wczMW7CI7boQGgwlY4cB8eFyBh3BzPQ4WMBFXRa6GB7wTwerLguCaJN/Olh1aZAWMI5B1J/YABvzw4DUy4dtgyBC8Jm3TzGTPWl6iLmgZGyOA+IuCAX0Dken20xKGnUxljMUHjkeuIdS8TMmJU1j0EEIH0bXZDZQRNyxKk00xdvJ6mWhnzebVxT+yn1/DGxQW10Jvo7OFendYEC9I+lJHpANVdvB3ZFPBJZPmuDLWmX/l1rqKoYJgE6okcbfaiDmfdMBq6vx4yCCnG86YHU1XlA0f49j1Es+2Z/8M8Gvx8AWDupqeBfDGzPz/KsHHOCiLr3VEFBBAipIoN4YlFgaVwSJBNRBfYIWR6Q1D7qCiHYxARUkoIIEVJCAChJQQQIqSEAFCagggWAKInrNm7vggOAJIrrEz527eF5rwFusAJYJliCCKyznVCm5tJJjFiwSIEGF89WnjMnqNVhZQGWBsziaGy7PpGTHIW+WFCzS+oKI0tyVrlZkpzr4WXTkAVimtQX5y3kGDs7fQQyi73yhfRxgz9V2GJyoKudoRy+f9gQ4enPtV/IXE3gr+8l7SanYHMeM5+IxRMdZzvWKbE8OFVuOM+y2IKLxkhwPHru84Ln0bm4df9Y+pnCsVeR42O5i7TS0ug4cyb5iQd18yb9XlSQi3g5iJjdS/keKMYcij6EJ2BWEuBW+xS9WZN/MTvG+Ln65sJxLgziavV1e1nXMKcd+kEZIUzJ+uSJ7JJsDyu9fnFenPm45d8rLNLPllHAzki5Kil2oyPZWxq+PbuGYc798X7NbTgl3txqIp6u2pGuTP8rzWqHllHB7L7ZGd1uJy0GgCe5vVn0ktZocj+bczVeR1IpyPJp3Mp6kVHw7EKZZzwDnpKEFafa71QNITlaj1Ys+tBdQQQIqSEAFCaggARUkYCroI4SP9yaFzAQRPYGwQYVHJsVq+Ehm/AOX3gnhYJYfzrWbFDSPQb+i7dySeJaB5iGoeB/q5elrWIgaL2Fu+DcvhA39LyagggRUkIAKElBBAipIQAUJqCCBfwAAAP//iddgPgAAAAZJREFUAwDZXTxWeKGtoAAAAABJRU5ErkJggg==">
+      <div class="ov-value">365</div>
+      <div class="ov-label">陪伴天数</div>
+    </div>
+    <div class="ov-div"></div>
+    <div class="ov-item">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAYAAABV7bNHAAAD40lEQVR4nOybzWvUQBTA3+sW1OrBgx+ghyLipaB4K3V37XrwAz8qir17qXazHkTw4K0nBW1P0m3V/8CiHtRWCkq1K4qioiKoVeilKPQkpVLrtuObrNbubpKZpE0ys8zvkCXJS9L8ePNmJmXqwOBJHRg8MYIEGEECjCABRpCAmhTEsql2ZqVPwDJQc4KYleqFOrwJCAMk6SosEYQaguVSeXqlbPlBdgPzhVMQEGlB7GRmJTTMXQRkbXTZVggLBl9o008v1ePrMivdR2/T6XK2D3sLFgRAXpCVegOIOyEKGMxAw4912P1uWircU85CVCBJUjWI5HRFJoeDsBKm1m6SCZWTY980a9cnn8gVacTjECnsM157MiaMcpczSLVnqOooolWqU/LUS8ZtL9tj7DFtRyAU2BgUZ+4Jo9zkMLiP+dHDpZjUEEk5UB7AMymNFJMFCWQFVTJCRbQLYuJvFjjKgcnRowv7G+qPwGRxkKTsLYsjsSQvIdO7aTcOsjOnsiu3T8AwzxwcgLl/h7BrpEiFeR9l/N2qeMQOmZqklSDPgoyQZFYy5XgqX2hzkWSRpEvggTaC7Gbl3VutphceZrldLY5nJwvH7CZYBZ5nZ3ZvcbmnHoIcR8iO4Cp6pYeuktwozjK3U8oLcq05rpAklnhEzW1P2eH1qTuUgYccnnAF+5+Pu90taC8WCa69lQg+0IS6IZZN74eNiaeOPVnpCX1Uny543UpZQaXMCSDnPytI1AOS84rkJKsfwPIkJye6iZKCAmdOJXYmOcgpZY5QDkc5QfIFOfATfE1alRKkmhyOMoJUlMNRQpCqcjixC1JZDidWQarL4cQmSAc5nFgE6SKHE7kgneRwIhWkmxxOZLN5/7Nyvw+guZWEHHY63cSszBqQJBJBlDk9cv+aCfoA8cSTS6G/Y5zazAfAuSmWS54FCUIXVPpah+cgLCRn5YC/D9KmcdGBDpAgggyab4SwkJVjx2JT+YHKfWeU/mDmjfwni6WgqaDl763c0FBQdHI4mgmKVg5HI0HRy+FoIigeORwNBMUnh6O4oHjlcMIfKM7/+kgDOub/wvjlcEIXhPmX3+nnlq+LGLusghxOJE2MRrztrLNlM9QntgmDZ/ETXi98A0WIrAZh/7MJ+pkAzTBrNQQYQQKMIAFGkAAjSIARJMAIEmAECTCCBAQdSWfsJVJ6kYEAyAp6D4tX/CC20rYV9Oa1TJBcE2PsNtQabH5AJszHksz0W4reAbXBC+wdbZYJlC/SPxPNlEk9pOor6ApfMMygG6YT0uWhppaFh4Hp5gUYQQKMIAFGkAAjSIARJMAIEmAECfgDAAD//6E2j7wAAAAGSURBVAMAE6h4aIcqhVMAAAAASUVORK5CYII=">
+      <div class="ov-value">12</div>
+      <div class="ov-label">时光记录</div>
+    </div>
+    <div class="ov-div"></div>
+    <div class="ov-item">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAYAAABV7bNHAAAEHUlEQVR4nOybTWgTWxTH/2fSR5/vPd6XICIuXahI1Y2o/aBVRBRduHAhLtyI2IobqS6lIC4EFaU21boRV65E/NiJVpK0VhSVguBCF+IHolC1atUkczyZMpW2mbkzk5nYG+8Pmkzvubltfpx7bzJnxoLBFwsGX4wgBUaQAiNIgRGkwAhSYAQpMIIUGEEKjCAFdUE6cXvzXli8Ug7ngUHQGZJ3ALyUnwHqyfaou/vAnQ1/YuyfG3K4ArUI823JkXWU7v/o1cV/io39fRy1KqcEkcyKwhHfLl4B7mqtw5vCV+lS4+sU28iP/U599/Llot5v/m1+We3LKSHvsX7WYq+ozyJNf+FXgfGfV8hs8wqMIAVGkAIjSIERpMAIUmAEKdBLEPMDeXiCKqKHIMYhfErNonR2uXwDX4C8nFUAX0UV0EAQP6J05iCd6//itlBf5hXyvAdVQIcMypZrpL7cs2pMt0AnzH4u9N4nOIKE0UAQL/COkU8sHjSYYrSF2xtXTm3ljuYD8vQvEqYKGcRvZBfqlLN38+WXw4iCZQ3ynqbjMs7oeINkDmE7qkDCgvglLLuFugecxZQ7moZF1GVEgvb9jHJBclOM+YVsxatcOSXkc8wV2LxOYnloQjKCSnIKvHp8K54M9Wavy1TZqIuk+AX5yHGZkAR8xQwnXkEB5Lg4kmysxwyXFJ+gEHJcqDdza6ZLikmQ7FaMljByXBxJbG+Q139BFJhHRfIm1H2bK8cXETOVC3J3q97sU0SE0rmboOIaGWws1AvBH2DxGpF8jU4Ovcac7FZpvIAYqUxQhGnlBfUMDAL22uCSSnIka0/l7k6M0QWbejLbEKOk6IJilOMSWBLziCOnO/uw/Dgiifk8YiCaoATkuExIYnz0+NsjKFKTl5yJcdLZHdL3LCokvKAE5bg4kiy7rayk0vU9VAz0f4ukXZVKCieoCnJcnLWlrCT6HynrFu9evSTQOI4knEJEwmbQzmrIcfkhiUenRERSqp/bmxsCjZPO7JUxjiEC4QRZET+rVIAjKYVmZ9eazGzZ4m+GyKROyaSjCIkWVQ1nQS4WW+Xw3ZTIeCZ1tCwKNE46sz9sJmlTF6PTg/clY1qdXWwys0H2RUbAs0UWQpWLtCocOpmUQhumZ9JCdDQ2IgG0Kz07kgponJRJzI+RzuWQAFrW5ulM5hFS+Qanusp8CQVqIzjXP8eOBmWf8lD30HN52oyEMVd3KDCCFBhBCrzXIKYP09twQmpb76AzXKYaWyh61v+9BeU/D+O3P6Y00lLN7/WZTqn8NLd+2CvsOcWcexdiOJ8y86Ez1NVf8Ioq1qC6ffJwBzULD6G+cMCvR6AJU5M31Nl0W072d6u7G3wx27wCI0iBEaTACFJgBCkwghQYQQqMIAVGkAIjSMF3AAAA///QPexvAAAABklEQVQDAD9Coor8aG5iAAAAAElFTkSuQmCC">
+      <div class="ov-value">28</div>
+      <div class="ov-label">珍藏照片</div>
+    </div>
+  </div>
+        
+        <div class="tl-list">
+    <div class="tl-title">时光足迹</div>
+    <div class="tl-item">
+      <div class="tl-col">
+        <div class="tl-dot">🎂</div>
+        <div class="tl-line"></div>
+      </div>
+      <div class="tl-card">
+        <div class="tl-date"><span class="tl-date-txt">2026-07-31</span><span class="tl-badge">里程碑</span></div>
+        <div class="tl-card-title">可乐的生日</div>
+        <div class="tl-card-desc">来到这个世界的第一天</div>
+        <div class="ph-hint"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADgAAAA4CAYAAACohjseAAADU0lEQVR4nOyZT0jUQRTH35uflVRYQUiQlw4VlkFUZJdCDTNXJUKkkx1KXQ/hIRCi2tx1hYIuQlDZaoVEXeq4m3soPHQICgkswf4QBVaol4Jyxd3f6/0UQWzWdXdnyFl+H9j9sfNmfr/9MjPvvXk/ATmOgBzHFWg6rkDTyXmBeaCQcE9nKSD0I+IOyIxRJGqsbrnyChSBoIjIA38B/bFGEGErZAERjOXl5++sOt3+GxSgbolOWd3ZinNw7hGfnuoGRSiZwUgoWMGXZ6CWo55m33PIkqwFRvuvr4vHYqMqZm8hqpZqSoEDvV0Hbduu4a6H+LFrFtsJsZBvUgw6IBrh74l/2hFiBPhSEIVTOaSkAqO3/IUJS9zmTXESVjBE9MQmu7XO65+U2ZOGiUSe9YgvFbDC4ZBUL8ByVladzC71ouFQ4AQYIG4e3v+1A72BGpktSZhAY8TNY9tYJmuXCyTcBaaBsEfWLOR9aRWYBkG+rNk9TZiO0tOEFIIhXvJ97OpG4nbi7exDhVViA+xmWxN7wL2gEX0CieIEcG3tdjtQXu6PL7IOOp/XPT13xnG8g/td4IzDAg1oE8izVutp6Ygu1eeA1zvDl8vh3uALns2noAFde/BGdQpxC6lp8g1wynUTNKBeIMEnmNrQDmmCsY3neal+AcUoF8h/ss/T1jYNaeKM4XLFXVCMcoFC4EfIEHY070ExGmbQzlhgAuEDKEa9wASshgyxROZjk6HBi2LGgZtPBPtAMcrjIArKWCDvwf2gGPVLlPBU+J5/C6TJ7BiielCMcoGcW27C+Gy5I71xzhjEAlCMrkymjGulXcvtHA51XnXGgAZ0niYuhUPBw6vteGOlN/BV1iES8hcRiccIWAqa0HpcYqdxZAat4UioM8oi3nHTsE2UJxCLOeMp4T13nKti60Ej+s+Dc/uqgQU1zP1EJ52bt4Fu3JKF6bgCTUfuZBB/gHl8lzUmK/y+AcPg13hDsnapQEvY/ezLf4IpEP1Cy7ovM0kFHjvr/4ZI58AQCEWr58zFCZltyUjLr9EqefRDDs6bYQXClbhJzooaqpt9g8n6LCuViIaC2wioiF8baynOpo2NcSForKrZ9zlVV/250n/GDfSm4wo0HVeg6eS8wL8AAAD//xSOftIAAAAGSURBVAMA2YnypYPsaSoAAAAASUVORK5CYII="><span>这条记录还没有照片</span></div>
+      </div>
+    </div>
+  </div>
+        <div class="cta"><span class="cta-plus">＋</span><span>添加时光记录</span></div>
+      </div>
+    </div>
+    <div class="home-bar"></div>
+  </div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="n">B</span>回忆录馆 · 「年度回顾」从假占位变成真功能</h2>
+  <p class="lead">
+    时光页三张卡里，只有「年度回忆」不与创作页重复 —— 它是全项目唯一能生成年度图集的功能，
+    而创作页回忆录馆里的「年度回顾」当时还只是个<b>点了只弹 toast 的假占位</b>。
+    按「回忆录入口统一收口到创作」的原则，把生成逻辑（含离屏 Canvas 与预览弹窗）整段迁到了回忆录馆。
+  </p>
+  <div class="minirow">
+    <div class="mhall-mini">
+      <div class="em">🎊</div>
+      <div class="t">年度回顾</div>
+      <div class="d">这一年 TA 的档案大片</div>
+      <div class="toast"><span class="old">改造前：点击弹「年度回顾即将上线」</span></div>
+    </div>
+    <div class="mhall-mini">
+      <div class="em">🎊</div>
+      <div class="t">年度回顾</div>
+      <div class="d">这一年 TA 的档案大片</div>
+      <div class="toast"><span class="new">改造后：直接生成年度图集 → 可预览、可保存到相册</span></div>
+    </div>
+  </div>
+</div>
+
+</body></html>

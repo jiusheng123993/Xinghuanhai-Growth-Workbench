@@ -1,0 +1,26 @@
+[
+  {
+    "key": "pet",
+    "route": "/pages/pet-profile/index",
+    "out": "E:\\星河宠记\\02-UI设计\\首页优化预览\\h5-real\\auth-pet.png",
+    "size": 55474,
+    "ok": true,
+    "name": "宠物档案"
+  },
+  {
+    "key": "mine",
+    "route": "/pages/mine/index",
+    "out": "E:\\星河宠记\\02-UI设计\\首页优化预览\\h5-real\\auth-mine.png",
+    "size": 182094,
+    "ok": true,
+    "name": "我的"
+  },
+  {
+    "key": "creative",
+    "route": "/pages/creative/index",
+    "out": "E:\\星河宠记\\02-UI设计\\首页优化预览\\h5-real\\auth-creative.png",
+    "size": 220540,
+    "ok": true,
+    "name": "创作"
+  }
+]

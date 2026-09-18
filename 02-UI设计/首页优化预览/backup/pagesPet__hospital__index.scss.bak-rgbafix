@@ -1,0 +1,384 @@
+@import '../../styles/_theme';
+@import '../../styles/_animations';
+
+.hospital-page {
+  min-height: 100vh;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
+  padding-bottom: 200rpx;
+  animation: pageEnter 0.4s ease-out;
+}
+
+.hospital-page__search {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 24rpx;
+  background: $color-bg-card;
+  border-bottom: 1px solid $color-border;
+}
+
+.hospital-page__search-input-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  height: 80rpx;
+  padding: 0 24rpx;
+  background: $color-primary-bg;
+  border-radius: 40rpx;
+  border: 2rpx solid transparent;
+  transition: all $transition-normal;
+}
+
+.hospital-page__search-input-wrap:focus-within {
+  border-color: $color-primary;
+  box-shadow: 0 0 0 6rpx rgba($color-primary, 0.1);
+}
+
+.hospital-page__search-clear {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background: $color-text-placeholder;
+  @include flex-center;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.hospital-page__search-clear Text {
+  font-size: 22rpx;
+  color: #FFFFFF;
+}
+
+.hospital-page__search-icon {
+  font-size: 28rpx;
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+}
+
+.hospital-page__search-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: $color-text-primary;
+  height: 100%;
+}
+
+.hospital-page__search-placeholder {
+  color: $color-text-tertiary;
+}
+
+.hospital-page__search-btn {
+  width: 120rpx;
+  height: 80rpx;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.25);
+  @include press-feedback;
+}
+
+.hospital-page__search-btn-text {
+  font-size: 28rpx;
+  color: $color-text-inverse;
+  font-weight: $font-weight-semibold;
+}
+
+.hospital-page__filters {
+  display: flex;
+  gap: 16rpx;
+  padding: 16rpx 24rpx;
+  background: $color-bg-card;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.hospital-page__filter-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12rpx 28rpx;
+  background: $color-primary-bg;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 32rpx;
+  transition: all $transition-normal;
+  flex-shrink: 0;
+}
+
+.hospital-page__filter-tag--active {
+  background: $color-primary;
+  border-color: $color-primary;
+}
+
+.hospital-page__filter-tag-text {
+  font-size: 26rpx;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+}
+
+.hospital-page__filter-tag--active .hospital-page__filter-tag-text {
+  color: $color-text-inverse;
+  font-weight: $font-weight-semibold;
+}
+
+.hospital-page__disclaimer {
+  padding: 16rpx 24rpx;
+  background: $color-bg-card;
+}
+
+.hospital-page__disclaimer-text {
+  display: block;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  line-height: 1.5;
+}
+
+.hospital-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 160rpx 48rpx;
+  animation: fadeInScale 0.4s ease-out;
+}
+
+.hospital-page__empty-icon {
+  font-size: 96rpx;
+  margin-bottom: 24rpx;
+}
+
+.hospital-page__empty-text {
+  font-size: 30rpx;
+  color: $color-text-tertiary;
+  font-weight: $font-weight-medium;
+  margin-bottom: 12rpx;
+}
+
+.hospital-page__empty-hint {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  text-align: center;
+}
+
+.hospital-page__list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  padding: 24rpx;
+}
+
+.hospital-page__list .hospital-page__card {
+  animation: fadeInUp 0.4s ease-out both;
+}
+
+.hospital-page__list .hospital-page__card:nth-child(1) { animation-delay: 0.02s; }
+.hospital-page__list .hospital-page__card:nth-child(2) { animation-delay: 0.06s; }
+.hospital-page__list .hospital-page__card:nth-child(3) { animation-delay: 0.1s; }
+
+.hospital-page__card {
+  @include card-base;
+  padding: 32rpx;
+  transition: all $transition-normal;
+  overflow: hidden;
+}
+
+.hospital-page__card:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.hospital-page__card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.hospital-page__card-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.hospital-page__card-name {
+  font-size: 30rpx;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hospital-page__card-type {
+  padding: 4rpx 16rpx;
+  border-radius: 16rpx;
+  flex-shrink: 0;
+}
+
+.hospital-page__card-type-text {
+  font-size: 22rpx;
+  font-weight: $font-weight-semibold;
+}
+
+.hospital-page__card-rating {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+
+.hospital-page__card-stars {
+  font-size: 24rpx;
+  color: $color-primary;
+  letter-spacing: 2rpx;
+}
+
+.hospital-page__card-rating-text {
+  font-size: 26rpx;
+  color: $color-primary;
+  font-weight: $font-weight-bold;
+}
+
+.hospital-page__card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.hospital-page__card-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+}
+
+.hospital-page__card-info-icon {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+  margin-top: 2rpx;
+}
+
+.hospital-page__card-info-text {
+  font-size: 26rpx;
+  color: $color-text-secondary;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.hospital-page__card-services {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+}
+
+.hospital-page__card-service-tag {
+  padding: 8rpx 20rpx;
+  background: $color-primary-bg;
+  border-radius: 20rpx;
+}
+
+.hospital-page__card-service-tag--more {
+  background: rgba($color-primary, 0.1);
+  border: 1px solid $color-border;
+}
+
+.hospital-page__card-service-tag-text {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+}
+
+.hospital-page__card-service-tag--more .hospital-page__card-service-tag-text {
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.hospital-page__card-detail {
+  padding: 20rpx 0;
+  border-top: 1px solid $color-divider;
+  margin-bottom: 20rpx;
+  animation: fadeInUp 0.25s ease-out;
+  overflow: hidden;
+}
+
+.hospital-page__card-detail-section {
+  margin-bottom: 16rpx;
+}
+
+.hospital-page__card-detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.hospital-page__card-detail-label {
+  display: block;
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  margin-bottom: 12rpx;
+}
+
+.hospital-page__card-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.hospital-page__card-detail-tag {
+  font-size: 22rpx;
+  padding: 8rpx 20rpx;
+  background: rgba($color-primary, 0.1);
+  color: $color-primary-light;
+  border-radius: 20rpx;
+}
+
+.hospital-page__card-actions {
+  display: flex;
+  gap: 16rpx;
+  padding-top: 20rpx;
+  border-top: 1px solid $color-divider;
+}
+
+.hospital-page__card-btn {
+  flex: 1;
+  height: 80rpx;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  @include press-feedback;
+}
+
+.hospital-page__card-btn--call {
+  background: rgba($color-success, 0.1);
+  border: 1px solid rgba($color-success, 0.3);
+}
+
+.hospital-page__card-btn--nav {
+  background: rgba($color-primary, 0.1);
+  border: 1px solid $color-border;
+}
+
+.hospital-page__card-btn-icon {
+  font-size: 28rpx;
+}
+
+.hospital-page__card-btn-text {
+  font-size: 28rpx;
+  font-weight: $font-weight-semibold;
+}
+
+.hospital-page__card-btn--call .hospital-page__card-btn-text {
+  color: $color-success;
+}
+
+.hospital-page__card-btn--nav .hospital-page__card-btn-text {
+  color: $color-primary;
+}

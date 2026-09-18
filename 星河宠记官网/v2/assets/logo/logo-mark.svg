@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1024" height="1024">
+  <defs>
+    <linearGradient id="coralF" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFA082"/>
+      <stop offset="0.55" stop-color="#FF6B3D"/>
+      <stop offset="1" stop-color="#F04E1D"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 奶油圆角底 -->
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="#FFF6EE" stroke="#FFE0CF" stroke-width="4"/>
+
+  <!-- 角落小星光 -->
+  <path d="M 108 118 Q 114 134 128 136 Q 114 138 108 154 Q 102 138 88 136 Q 102 134 108 118 Z" fill="#FFB020"/>
+  <path d="M 404 118 Q 410 134 424 136 Q 410 138 404 154 Q 398 138 384 136 Q 398 134 404 118 Z" fill="#FFB020"/>
+
+  <!-- 四颗爪趾 -->
+  <ellipse cx="160" cy="180" rx="27" ry="39" fill="url(#coralF)" transform="rotate(-16 160 180)"/>
+  <ellipse cx="212" cy="144" rx="27" ry="39" fill="url(#coralF)" transform="rotate(-8 212 144)"/>
+  <ellipse cx="300" cy="144" rx="27" ry="39" fill="url(#coralF)" transform="rotate(8 300 144)"/>
+  <ellipse cx="352" cy="180" rx="27" ry="39" fill="url(#coralF)" transform="rotate(16 352 180)"/>
+
+  <!-- 主掌垫（爪印为主角） -->
+  <path d="M 184 300 Q 256 268 328 300 Q 356 366 306 404 Q 256 430 206 404 Q 156 366 184 300 Z" fill="url(#coralF)"/>
+
+  <!-- 掌垫内星光负空间（星河点缀） -->
+  <path d="M 256 314 Q 270.1 345.9 302 360 Q 270.1 374.1 256 406 Q 241.9 374.1 210 360 Q 241.9 345.9 256 314 Z" fill="#FFF6EE"/>
+</svg>

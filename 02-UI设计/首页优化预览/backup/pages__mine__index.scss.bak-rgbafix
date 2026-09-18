@@ -1,0 +1,477 @@
+@import '../../styles/_theme';
+@import '../../styles/_animations';
+
+// ============================================
+// 我的页面 — 沉浸式暖色头部 + 丰富动效
+// ============================================
+
+.mine-page {
+  min-height: 100vh;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
+  animation: pageEnter 0.4s ease-out;
+}
+
+// ===== 沉浸式头部（替代旧"渐变横幅+白卡"双色模块） =====
+// 设计意图：无卡片无横幅，头像/昵称直接坐在页面米色渐变上，
+// 整个顶部只有一种底色，视觉干净不割裂；头像用白描边+双层柔光环从背景上"托"起来
+.mine-hero {
+  display: flex;
+  align-items: center;
+  gap: 28rpx;
+  margin: 40rpx $spacing-xl 0;
+  padding: 8rpx;
+  animation: fadeInUp 0.45s ease-out;
+}
+
+.mine-hero-avatar {
+  @include flex-center;
+  width: 136rpx;
+  height: 136rpx;
+  border-radius: $radius-full;
+  background: $gradient-warm;
+  // 白描边 + 外圈半透明白环 + 暖色投影：让头像在浅色背景上有层次但不突兀
+  border: 6rpx solid $color-bg-card;
+  box-shadow:
+    0 10rpx 28rpx rgba($color-primary, 0.16),
+    0 0 0 12rpx rgba($color-bg-card, 0.5);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* 头像图片：铺满圆形头像框 */
+.mine-hero-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.mine-hero-avatar-text {
+  font-size: 56rpx;
+  color: $color-text-inverse;
+  font-weight: $font-weight-bold;
+}
+
+.mine-hero-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.mine-hero-name-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.mine-hero-name {
+  font-size: 40rpx;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.mine-hero-desc {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.mine-vip-badge {
+  padding: 6rpx 16rpx;
+  background: linear-gradient(135deg, $color-gold-soft, $color-gold);
+  border-radius: 999rpx;
+  font-size: 20rpx;
+  color: $color-text-inverse;
+  font-weight: $font-weight-bold;
+  box-shadow: 0 4rpx 16rpx -4rpx rgba($color-gold, 0.45);
+}
+
+.mine-edit-btn {
+  padding: 12rpx 28rpx;
+  background: $color-primary-bg;
+  border: 1px solid $color-border;
+  border-radius: $radius-round;
+  font-size: $font-size-sm;
+  color: $color-primary-light;
+  flex-shrink: 0;
+  @include press-feedback;
+}
+
+// ===== 数据概览行 3 列（原型对齐） =====
+.mine-stats {
+  display: flex;
+  margin: 24rpx $spacing-xl 0;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card;
+  padding: 40rpx 16rpx;
+  animation: fadeInUp 0.45s ease-out 0.06s both;
+}
+
+.mine-stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+
+  & + .mine-stat-item {
+    border-left: 1px solid $color-border;
+  }
+}
+
+.mine-stat-icon {
+  @include flex-center;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-full;
+  font-size: 32rpx;
+
+  &--coral { background: rgba($color-primary, 0.14); color: $color-primary; }
+  &--gold { background: rgba($color-gold, 0.2); color: $color-gold-deep; }
+  &--info { background: rgba($color-teal, 0.16); color: $color-teal; }
+}
+
+.mine-stat-num {
+  font-size: 36rpx;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  // 沉浸光感：统计数字暖色辉光
+  text-shadow: 0 0 12rpx rgba($color-primary, 0.28), 0 0 36rpx rgba($color-gold, 0.14);
+}
+
+.mine-stat-label {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  line-height: 1;
+}
+
+// ===== 家庭信息卡（多成员共同养宠，2026-08-24） =====
+.mine-family-card {
+  display: flex;
+  align-items: center;
+  margin: 24rpx $spacing-xl 0;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card;
+  padding: 28rpx 32rpx;
+  gap: 24rpx;
+  animation: fadeInUp 0.45s ease-out 0.1s both;
+  @include press-feedback;
+}
+
+.mine-family-icon {
+  @include flex-center;
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: $radius-full;
+  background: linear-gradient(135deg, rgba($color-gold, 0.22), rgba($color-primary, 0.16));
+  font-size: 40rpx;
+  flex-shrink: 0;
+}
+
+.mine-family-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  min-width: 0;
+}
+
+.mine-family-name {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  // 沉浸光感：家庭名暖色柔光
+  text-shadow: 0 0 12rpx rgba($color-gold, 0.22);
+}
+
+.mine-family-desc {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mine-family-arrow {
+  font-size: 36rpx;
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+}
+
+// ===== 宠物切换条 =====
+.mine-pet-chips {
+  padding: 0 $spacing-xl $spacing-md;
+}
+
+.mine-pet-chips-scroll {
+  white-space: nowrap;
+}
+
+.mine-pet-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  padding: 16rpx 24rpx;
+  border-radius: $radius-round;
+  background: $color-bg-card;
+  border: 1px solid $color-border-light;
+  margin-right: 16rpx;
+  white-space: normal;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  &--active {
+    background: $color-primary-bg;
+    border-color: $color-primary;
+    box-shadow: 0 0 20rpx rgba($color-primary, 0.15);
+    @include breathe-glow;
+  }
+
+  &--add {
+    border-style: dashed;
+    border-color: $color-text-tertiary;
+    opacity: 0.6;
+  }
+
+  &:active {
+    transform: scale(0.94);
+    opacity: 0.8;
+  }
+}
+
+.mine-pet-chip-avatar {
+  @include flex-center;
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: $radius-full;
+  background: $gradient-card;
+  font-size: 30rpx;
+  overflow: hidden;
+}
+
+/* 宠物真实头像（照片/AI 形象）：铺满圆形框，加载失败退回物种 emoji */
+.mine-pet-chip-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.mine-pet-chip-name {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+}
+
+.mine-pet-chip-check {
+  position: absolute;
+  top: -4rpx;
+  right: -4rpx;
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: $radius-full;
+  background: $gradient-gold;
+  @include flex-center;
+  font-size: 18rpx;
+  color: $color-text-inverse;
+  font-weight: $font-weight-bold;
+  box-shadow: 0 2rpx 8rpx rgba($color-primary, 0.4);
+}
+
+.mine-pet-chip-add-icon {
+  @include flex-center;
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: $radius-full;
+  background: $color-primary-bg;
+  border: 2rpx dashed $color-text-tertiary;
+  font-size: 32rpx;
+  color: $color-text-tertiary;
+}
+
+// ===== 分组菜单（原型对齐：组标题 + 卡片 + 图标圆） =====
+.mine-menu-group {
+  margin: 32rpx $spacing-xl 0;
+  animation: fadeInUp 0.45s ease-out 0.12s both;
+}
+
+.mine-menu-group-title {
+  display: block;
+  font-size: 24rpx;
+  font-weight: $font-weight-medium;
+  color: $color-text-tertiary;
+  padding: 0 8rpx;
+  margin-bottom: 12rpx;
+}
+
+.mine-menu-card {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card, $glow-sm;
+  overflow: hidden;
+}
+
+.mine-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 28rpx 32rpx;
+  border-bottom: 1px solid $color-border;
+  transition: all 0.15s ease;
+
+  &--last {
+    border-bottom: none;
+  }
+
+  &:active {
+    background: $color-primary-bg;
+  }
+}
+
+.mine-menu-icon-wrap {
+  @include flex-center;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-full;
+  flex-shrink: 0;
+  background: rgba($color-primary, 0.14);
+
+  &--gradient {
+    background: linear-gradient(135deg, $color-primary-light, $color-primary);
+    box-shadow: $glow-sm;
+  }
+}
+
+.mine-menu-icon {
+  font-size: 32rpx;
+}
+
+.mine-menu-label-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.mine-menu-label {
+  display: block;
+  font-size: 28rpx;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.mine-menu-theme-desc {
+  display: block;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+}
+
+.mine-menu-theme-dots {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.mine-theme-dot {
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4rpx $color-bg-card, 0 0 0 7rpx $color-border;
+}
+
+.mine-menu-arrow {
+  font-size: 32rpx;
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.mine-menu-item:active .mine-menu-arrow {
+  transform: translateX(4rpx);
+}
+
+// ===== 主题皮肤面板（原型对齐：四季色选择） =====
+.mine-theme-panel {
+  padding: 24rpx 32rpx;
+  border-top: 1rpx solid $color-border;
+  background: $color-bg-secondary;
+}
+
+.mine-theme-panel-hint {
+  display: block;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-bottom: 20rpx;
+}
+
+.mine-theme-grid {
+  display: flex;
+  gap: 20rpx;
+}
+
+.mine-theme-choice {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  padding: 20rpx 0;
+  border-radius: $radius-sm;
+  transition: all 0.15s ease;
+
+  &:active {
+    transform: scale(0.94);
+  }
+
+  &--active {
+    opacity: 1;
+  }
+}
+
+.mine-theme-choice-dot {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4rpx $color-bg-card, 0 0 0 7rpx $color-border;
+
+  .mine-theme-choice--active & {
+    box-shadow: 0 0 0 4rpx $color-bg-card, 0 0 0 7rpx $color-primary;
+  }
+}
+
+.mine-theme-choice-label {
+  font-size: 22rpx;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+
+  .mine-theme-choice--active & {
+    color: $color-primary;
+  }
+}
+
+// ===== 退出登录 =====
+.mine-section {
+  margin: $spacing-lg $spacing-xl;
+}
+
+.mine-logout-btn {
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  font-size: $font-size-md;
+  color: $color-coral;
+  opacity: 0.7;
+  @include press-feedback;
+}
+
+.mine-bottom-safe {
+  height: 60rpx;
+}

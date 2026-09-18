@@ -1,0 +1,160 @@
+// ============================================
+// 星河宠记 · 全局样式
+// 唯美主题系统，支持4套主题切换
+// ============================================
+@import './_theme';
+@import './_animations';
+
+// 应用根节点（占满全屏，背景跟随主题）
+.app-root {
+  min-height: 100vh;
+  background: $gradient-page;
+}
+
+// 页面基础样式（page 背景透明，由 .app-root 接管背景，确保主题切换时背景跟随变化）
+page {
+  background: transparent;
+  color: $color-text-primary;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: $font-size-md;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// 通用按钮样式
+.btn-primary {
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  color: $color-text-inverse;
+  border: none;
+  padding: 16rpx 36rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.25);
+  @include press-feedback;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid $color-primary;
+  color: $color-primary;
+  padding: 16rpx 36rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-sm;
+  @include press-feedback;
+}
+
+// 通用卡片
+.card {
+  @include card-base;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+}
+
+// 温馨卡片（带呼吸光晕）
+.card-warm {
+  @include card-base;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  @include breathe-glow;
+}
+
+// 滚动条
+::-webkit-scrollbar {
+  width: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba($color-primary, 0.3);
+  border-radius: 3px;
+}
+
+// 安全区
+.safe-bottom {
+  height: constant(safe-area-inset-bottom);
+  height: env(safe-area-inset-bottom);
+  min-height: 24rpx;
+}
+
+// ============================================
+// 温馨装饰元素
+// ============================================
+
+// 爪印浮动粒子容器
+.paw-particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+// 单个爪印粒子
+.paw-particle {
+  position: absolute;
+  font-size: 28rpx;
+  opacity: 0;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+
+  &--1 { animation: pawFloat1 4s ease-out infinite; animation-delay: 0s; }
+  &--2 { animation: pawFloat2 5s ease-out infinite; animation-delay: 1.5s; }
+  &--3 { animation: pawFloat3 4.5s ease-out infinite; animation-delay: 3s; }
+  &--4 { animation: pawFloat1 5.5s ease-out infinite; animation-delay: 0.5s; }
+  &--5 { animation: pawFloat2 4.2s ease-out infinite; animation-delay: 2.5s; }
+  &--6 { animation: pawFloat3 5.8s ease-out infinite; animation-delay: 4s; }
+}
+
+// 星星闪烁容器
+.star-particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+// 单个星星
+.star-particle {
+  position: absolute;
+  font-size: 20rpx;
+  opacity: 0.3;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+
+  &--1 { animation: starTwinkle1 2.5s ease-in-out infinite; animation-delay: 0s; }
+  &--2 { animation: starTwinkle2 3s ease-in-out infinite; animation-delay: 0.8s; }
+  &--3 { animation: starTwinkle3 2.8s ease-in-out infinite; animation-delay: 1.6s; }
+  &--4 { animation: starTwinkle1 3.2s ease-in-out infinite; animation-delay: 0.4s; }
+  &--5 { animation: starTwinkle2 2.4s ease-in-out infinite; animation-delay: 1.2s; }
+  &--6 { animation: starTwinkle3 3.5s ease-in-out infinite; animation-delay: 2s; }
+  &--7 { animation: starTwinkle1 2.7s ease-in-out infinite; animation-delay: 0.2s; }
+  &--8 { animation: starTwinkle2 2.9s ease-in-out infinite; animation-delay: 1.5s; }
+}
+
+// 光粒子上升
+.light-particle {
+  position: absolute;
+  width: 4rpx;
+  height: 4rpx;
+  border-radius: 50%;
+  background: $color-primary-light;
+  animation: particleRise 3s ease-out infinite;
+
+  &--1 { animation-delay: 0s; left: 10%; }
+  &--2 { animation-delay: 1s; left: 25%; }
+  &--3 { animation-delay: 2s; left: 40%; }
+  &--4 { animation-delay: 0.5s; left: 55%; }
+  &--5 { animation-delay: 1.5s; left: 70%; }
+  &--6 { animation-delay: 2.5s; left: 85%; }
+}

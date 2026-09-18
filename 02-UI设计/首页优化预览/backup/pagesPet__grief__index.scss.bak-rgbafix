@@ -1,0 +1,314 @@
+@import '../../styles/_theme';
+@import '../../styles/_animations';
+
+// ============================================
+// 情绪陪伴页 · 原型 1:1
+// ============================================
+.grief {
+  min-height: 100vh;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
+  padding: $spacing-xl $spacing-lg $spacing-xxl;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  animation: pageEnter 0.4s ease-out;
+}
+
+// —— 1. 主视觉 hero ——
+.grief__hero {
+  position: relative;
+  height: 380rpx;
+  border-radius: $radius-md;
+  overflow: hidden;
+  background-image: linear-gradient(160deg, #FFE8D6, $color-primary-bg 55%, #FFF6DC);
+  box-shadow: $shadow-card;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grief__hero-bg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grief__hero-emoji {
+  font-size: 200rpx;
+  line-height: 1;
+  animation: warmBreathe 4s ease-in-out infinite;
+}
+
+.grief__hero-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba($color-text-primary, 0.5), transparent);
+}
+
+.grief__hero-caption {
+  position: absolute;
+  left: $spacing-lg;
+  right: $spacing-lg;
+  bottom: $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.grief__hero-title {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-inverse;
+  text-shadow: 0 2rpx 12rpx rgba($color-text-primary, 0.45);
+}
+
+.grief__hero-sub {
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+// —— 2. 隐私提示条 ——
+.grief__privacy {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-md $spacing-lg;
+  border-radius: $radius-round;
+  background: rgba($color-teal, 0.12);
+}
+
+.grief__privacy-icon {
+  font-size: $font-size-sm;
+}
+
+.grief__privacy-text {
+  font-size: $font-size-xs;
+  color: $color-teal;
+}
+
+// —— 3. 纪念专区 ——
+.grief__section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.grief__section-title {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
+}
+
+.grief__mem-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-md;
+}
+
+.grief__mem-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6rpx;
+  padding: $spacing-lg;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-xs;
+  @include press-feedback;
+}
+
+.grief__mem-icon {
+  font-size: 44rpx;
+  line-height: 1;
+  margin-bottom: $spacing-sm;
+}
+
+.grief__mem-title {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.grief__mem-desc {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+// —— 4. 想对你说 ——
+.grief__soft-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.grief__soft-card {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+  padding: $spacing-lg;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  box-shadow: $shadow-xs;
+}
+
+.grief__soft-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-full;
+  background: $color-primary-bg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34rpx;
+  flex-shrink: 0;
+}
+
+.grief__soft-text {
+  flex: 1;
+  font-size: $font-size-sm;
+  line-height: 1.7;
+  color: $color-text-primary;
+  padding-top: 4rpx;
+}
+
+// —— 5. 哀伤陪伴入口 / 流程 ——
+.grief__companion-entry {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-lg;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  box-shadow: $shadow-card;
+  @include press-feedback;
+}
+
+.grief__companion-entry-icon {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: $radius-full;
+  background: $color-gold-bg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44rpx;
+  flex-shrink: 0;
+}
+
+.grief__companion-entry-texts {
+  flex: 1;
+  min-width: 0;
+}
+
+.grief__companion-entry-title {
+  display: block;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.grief__companion-entry-desc {
+  display: block;
+  margin-top: 4rpx;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.grief__companion-entry-arrow {
+  font-size: 40rpx;
+  color: $color-text-tertiary;
+}
+
+.grief__companion-wrap {
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card;
+  padding: $spacing-lg;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+// —— 6. 专业支持引导 ——
+.grief__support {
+  padding: $spacing-lg;
+  border-radius: $radius-sm;
+  background-image: linear-gradient(135deg, $color-gold-bg, $color-bg-card);
+  border: 1px solid $color-border;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.grief__support-head {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.grief__support-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-full;
+  background: $color-bg-card;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  flex-shrink: 0;
+}
+
+.grief__support-texts {
+  flex: 1;
+  min-width: 0;
+}
+
+.grief__support-title {
+  display: block;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.grief__support-desc {
+  display: block;
+  margin-top: 4rpx;
+  font-size: $font-size-xs;
+  line-height: 1.6;
+  color: $color-text-secondary;
+}
+
+.grief__hotline-btn {
+  padding: $spacing-md 0;
+  border-radius: $radius-round;
+  background: $color-gold-deep;
+  text-align: center;
+  box-shadow: 0 12rpx 32rpx -12rpx rgba($color-gold-deep, 0.55);
+  @include press-feedback;
+}
+
+.grief__hotline-text {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-inverse;
+}
+
+.grief__support-note {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  text-align: center;
+}
+
+// —— 返回 ——
+.grief__back {
+  padding: $spacing-md 0;
+  text-align: center;
+}
+
+.grief__back-text {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}

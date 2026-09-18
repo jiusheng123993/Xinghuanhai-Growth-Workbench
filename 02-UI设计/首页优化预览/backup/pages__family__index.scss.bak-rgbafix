@@ -1,0 +1,826 @@
+@import '../../styles/_theme';
+@import '../../styles/_animations';
+
+// ============================================
+// 家庭页 — 原型 1:1：头部 + 成员横滑 + 今日摘要 + 图谱 + 日历 + 周报 + 动态
+// ============================================
+
+.family-page {
+  min-height: 100vh;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
+  position: relative;
+  z-index: 1;
+  animation: pageEnter 0.4s ease-out;
+}
+
+.family-content {
+  position: relative;
+  z-index: 2;
+  padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+// ===== 加载中 =====
+.family-loading {
+  @include flex-center;
+  min-height: 100vh;
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+}
+
+// ===== 空态（无家庭） =====
+.family-empty-state {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 48rpx 80rpx;
+}
+
+.family-empty-icon {
+  font-size: 96rpx;
+  margin-bottom: 24rpx;
+}
+
+.family-empty-title {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: 16rpx;
+}
+
+.family-empty-desc {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  text-align: center;
+  line-height: 1.7;
+  margin-bottom: 40rpx;
+}
+
+.family-empty-features {
+  display: flex;
+  gap: 24rpx;
+  margin-bottom: 48rpx;
+}
+
+.family-empty-feature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.family-empty-feature-icon {
+  font-size: 48rpx;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 32rpx;
+  background: $color-bg-card;
+  box-shadow: $shadow-card;
+  @include flex-center;
+}
+
+.family-empty-feature-label {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+}
+
+.family-create-btn {
+  width: 100%;
+  height: 96rpx;
+  border-radius: 48rpx;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  box-shadow: $shadow-button;
+  @include flex-center;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: #FFFFFF;
+}
+
+// 凭邀请码加入：空态次级入口（弱化样式，主 CTA 是创建家庭）
+.family-join-btn {
+  width: 100%;
+  height: 88rpx;
+  margin-top: 20rpx;
+  border-radius: 44rpx;
+  background: transparent;
+  border: 2rpx solid rgba($color-primary, 0.45);
+  @include flex-center;
+  font-size: $font-size-md;
+  color: $color-primary;
+}
+
+// ===== 1. 家庭头部 =====
+.family-head {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 8rpx 8rpx;
+}
+
+.family-head__avatar {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $color-primary-light, $color-primary);
+  @include flex-center;
+  flex-shrink: 0;
+  box-shadow: $shadow-sm;
+}
+
+.family-head__avatar-icon {
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+.family-head__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.family-head__name {
+  display: block;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  @include text-ellipsis;
+}
+
+.family-head__sub {
+  display: block;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+}
+
+.family-head__edit {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: $color-bg-card;
+  border: 2rpx solid $color-border;
+  @include flex-center;
+  flex-shrink: 0;
+}
+
+.family-head__edit-icon {
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+// ===== 2. 成员横滑条 =====
+.family-member-strip {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.family-member-strip__inner {
+  display: flex;
+  gap: 24rpx;
+  padding: 8rpx 4rpx 16rpx;
+}
+
+.family-member-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 128rpx;
+  padding: 16rpx 8rpx;
+  background: $color-bg-card;
+  border-radius: 24rpx;
+  box-shadow: $shadow-card;
+  transition: transform $transition-fast;
+}
+
+.family-member-card:active {
+  transform: scale(0.95);
+}
+
+.family-member-card__avatar-wrap {
+  position: relative;
+}
+
+.family-member-card__avatar {
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 50%;
+  border: 4rpx solid $color-primary;
+  overflow: hidden;
+  @include flex-center;
+  background: $color-primary-bg;
+}
+
+.family-member-card__avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.family-member-card__avatar-emoji {
+  font-size: 56rpx;
+  line-height: 1;
+}
+
+.family-member-card__avatar--add {
+  border-color: $color-border;
+  background: $color-bg-secondary;
+}
+
+.family-member-card__dot {
+  position: absolute;
+  right: -4rpx;
+  top: -4rpx;
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 50%;
+  background: $color-text-tertiary;
+  border: 4rpx solid $color-bg-card;
+
+  &--on {
+    background: $color-success;
+  }
+}
+
+.family-member-card__name {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-top: 12rpx;
+  max-width: 128rpx;
+  @include text-ellipsis;
+}
+
+.family-member-card__status {
+  display: block;
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+}
+
+.family-member-card__role {
+  margin-top: 10rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  background: $color-primary-bg;
+}
+
+.family-member-card__role-text {
+  font-size: 20rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+// ===== 2.5 共同养宠（人成员，多成员共同养宠 2026-08-24） =====
+.family-co-care {
+  margin-top: 8rpx;
+  padding: 24rpx 0 8rpx;
+}
+
+.family-user-strip {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.family-user-strip__inner {
+  display: flex;
+  gap: 20rpx;
+  padding: 8rpx 4rpx 16rpx;
+}
+
+.family-user-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 120rpx;
+  padding: 16rpx 8rpx;
+  background: $color-bg-card;
+  border-radius: 24rpx;
+  box-shadow: $shadow-card;
+  transition: transform $transition-fast;
+}
+
+.family-user-card:active {
+  transform: scale(0.95);
+}
+
+.family-user-card__avatar-wrap {
+  position: relative;
+}
+
+.family-user-card__avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  border: 4rpx solid $color-primary;
+  overflow: hidden;
+  @include flex-center;
+  background: $color-primary-bg;
+
+  &--fallback {
+    background: $gradient-card;
+  }
+
+  &--add {
+    border-color: $color-border;
+    background: $color-bg-secondary;
+  }
+}
+
+.family-user-card__avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.family-user-card__avatar-emoji {
+  font-size: 44rpx;
+  line-height: 1;
+}
+
+.family-user-card__name {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-top: 10rpx;
+  max-width: 120rpx;
+  @include text-ellipsis;
+}
+
+.family-user-card__role {
+  display: block;
+  font-size: 20rpx;
+  margin-top: 4rpx;
+
+  &--owner {
+    color: $color-gold-deep;
+    font-weight: $font-weight-semibold;
+  }
+
+  &--member {
+    color: $color-text-tertiary;
+  }
+}
+
+.family-user-card__remove {
+  margin-top: 8rpx;
+  padding: 2rpx 16rpx;
+  border-radius: 999rpx;
+  background: $color-danger-bg;
+}
+
+.family-user-card__remove-text {
+  font-size: 20rpx;
+  color: $color-danger;
+}
+
+// ===== 通用卡片 =====
+.family-card {
+  @include card-base;
+  padding: 32rpx;
+  animation: fadeInUp 0.35s ease-out;
+}
+
+.family-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.family-card__title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-width: 0;
+}
+
+.family-card__icon {
+  font-size: 28rpx;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.family-card__title {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  @include text-ellipsis;
+}
+
+.family-card__meta {
+  flex-shrink: 0;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+// ===== 3. 今日健康摘要 =====
+.family-summary__list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.family-summary__row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  min-width: 0;
+}
+
+.family-summary__avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  @include flex-center;
+  background: $color-primary-bg;
+  flex-shrink: 0;
+}
+
+.family-summary__avatar-img {
+  width: 100%;
+  height: 100%;
+}
+
+.family-summary__avatar-emoji {
+  font-size: 32rpx;
+  line-height: 1;
+}
+
+.family-summary__name {
+  width: 72rpx;
+  flex-shrink: 0;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  @include text-ellipsis;
+}
+
+.family-summary__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.family-summary__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 6rpx 14rpx;
+  border-radius: 999rpx;
+  background: $color-bg-secondary;
+}
+
+.family-summary__chip--uncheck {
+  background: rgba($color-warning, 0.12);
+}
+
+.family-summary__chip-label {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+}
+
+.family-summary__chip-value {
+  font-size: 20rpx;
+  font-weight: $font-weight-bold;
+
+  &--good {
+    color: $color-success;
+  }
+
+  &--warn {
+    color: $color-warning;
+  }
+}
+
+.family-summary__chip-text {
+  font-size: 20rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-warning;
+}
+
+// ===== 4. 家族图谱 =====
+.family-graph__preview {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 16rpx;
+  padding: 8rpx 0 8rpx;
+}
+
+.family-graph__node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.family-graph__avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  border: 4rpx solid $color-primary;
+  overflow: hidden;
+  @include flex-center;
+  background: $color-primary-bg;
+}
+
+.family-graph__avatar-img {
+  width: 100%;
+  height: 100%;
+}
+
+.family-graph__avatar-emoji {
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+.family-graph__avatar--more {
+  border-style: dashed;
+  border-color: $color-border;
+  background: $color-bg-secondary;
+}
+
+.family-graph__name {
+  font-size: 22rpx;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+}
+
+.family-graph__line {
+  width: 32rpx;
+  height: 2rpx;
+  background: $color-border;
+  margin-top: 48rpx;
+  flex-shrink: 0;
+}
+
+.family-graph__btn {
+  margin-top: 24rpx;
+  height: 88rpx;
+  border-radius: 24rpx;
+  border: 2rpx solid $color-primary;
+  @include flex-center;
+  background: $color-bg-card;
+}
+
+.family-graph__btn:active {
+  background: rgba($color-primary, 0.06);
+}
+
+.family-graph__btn-text {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+// ===== 5. 家庭日历 =====
+.family-calendar__list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.family-calendar__item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  min-width: 0;
+}
+
+.family-calendar__dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: $color-primary;
+  flex-shrink: 0;
+}
+
+.family-calendar__icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  @include flex-center;
+  flex-shrink: 0;
+
+  &--coral {
+    background: $color-primary-bg;
+  }
+
+  &--gold {
+    background: $color-gold-bg;
+  }
+}
+
+.family-calendar__icon-text {
+  font-size: 32rpx;
+  line-height: 1;
+}
+
+.family-calendar__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.family-calendar__title {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  @include text-ellipsis;
+}
+
+.family-calendar__sub {
+  display: block;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+}
+
+.family-calendar__date {
+  flex-shrink: 0;
+  font-size: 22rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+.family-calendar__empty {
+  padding: 24rpx;
+  background: $color-bg-secondary;
+  border-radius: 16rpx;
+}
+
+.family-calendar__empty-text {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  text-align: center;
+  line-height: 1.6;
+}
+
+// ===== 6. 家庭周报入口 =====
+.family-report-entry {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.family-report-entry:active {
+  background: rgba($color-primary, 0.04);
+}
+
+.family-report-entry__icon {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  background: $color-gold-bg;
+  @include flex-center;
+  flex-shrink: 0;
+}
+
+.family-report-entry__icon-text {
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+.family-report-entry__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.family-report-entry__title {
+  display: block;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.family-report-entry__sub {
+  display: block;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+}
+
+.family-report-entry__badge {
+  flex-shrink: 0;
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+  background: $color-primary-bg;
+}
+
+.family-report-entry__badge-text {
+  font-size: 22rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+.family-report-entry__arrow {
+  font-size: 32rpx;
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+}
+
+// ===== 7. 家庭动态预览 =====
+.family-new-moments-bar {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 16rpx;
+  background: rgba($color-primary, 0.08);
+  margin-bottom: 20rpx;
+}
+
+.family-new-moments-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: $color-primary;
+}
+
+.family-new-moments-text {
+  flex: 1;
+  font-size: $font-size-xs;
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.family-new-moments-arrow {
+  font-size: $font-size-xs;
+  color: $color-primary;
+}
+
+.family-feed__list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.family-feed__item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  min-width: 0;
+}
+
+.family-feed__avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: $color-primary-bg;
+  @include flex-center;
+  flex-shrink: 0;
+}
+
+.family-feed__avatar-emoji {
+  font-size: 32rpx;
+  line-height: 1;
+}
+
+.family-feed__text {
+  flex: 1;
+  min-width: 0;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  @include text-ellipsis;
+}
+
+.family-feed__text-bold {
+  font-weight: $font-weight-semibold;
+  margin-right: 4rpx;
+}
+
+.family-feed__time {
+  flex-shrink: 0;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.family-feed__empty {
+  padding: 24rpx;
+  background: $color-bg-secondary;
+  border-radius: 16rpx;
+}
+
+.family-feed__empty-text {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.family-bottom-safe {
+  height: 40rpx;
+}

@@ -1,0 +1,638 @@
+@import '../../styles/_theme';
+@import '../../styles/_animations';
+
+.add-pet {
+  min-height: 100vh;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
+  padding: $spacing-xl $spacing-lg;
+  padding-bottom: 200rpx;
+  animation: pageEnter 0.4s ease-out;
+}
+
+.add-pet__form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xl;
+}
+
+.add-pet__form-item {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.add-pet__label {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+  letter-spacing: 1rpx;
+}
+
+.add-pet__label--required::after {
+  content: ' *';
+  color: $color-danger;
+  font-size: $font-size-md;
+}
+
+.add-pet__input {
+  width: 100%;
+  height: 88rpx;
+  padding: 0 24rpx;
+  background: $color-primary-bg;
+  border: 2rpx solid $color-border;
+  border-radius: $radius-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+  transition: border-color $transition-fast;
+
+  &:focus {
+    border-color: $color-primary;
+  }
+}
+
+.add-pet__input-placeholder {
+  color: $color-text-tertiary;
+}
+
+.add-pet__textarea {
+  width: 100%;
+  min-height: 160rpx;
+  padding: 20rpx 24rpx;
+  background: $color-primary-bg;
+  border: 2rpx solid $color-border;
+  border-radius: $radius-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+  line-height: 1.6;
+  transition: border-color $transition-fast;
+
+  &:focus {
+    border-color: $color-primary;
+  }
+}
+
+.add-pet__textarea-placeholder {
+  color: $color-text-tertiary;
+}
+
+.add-pet__picker {
+  width: 100%;
+  height: 88rpx;
+  padding: 0 24rpx;
+  background: $color-primary-bg;
+  border: 2rpx solid $color-border;
+  border-radius: $radius-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: border-color $transition-fast;
+
+  &:active {
+    border-color: $color-primary;
+  }
+}
+
+.add-pet__picker--disabled {
+  opacity: 0.5;
+}
+
+.add-pet__picker-placeholder {
+  color: $color-text-tertiary;
+}
+
+.add-pet__picker-arrow {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.add-pet__species-group {
+  display: flex;
+  gap: $spacing-lg;
+}
+
+.add-pet__species-btn {
+  flex: 1;
+  height: 120rpx;
+  @include card-base;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  transition: all $transition-fast;
+  @include press-feedback;
+}
+
+.add-pet__species-btn--active {
+  background: $color-primary-bg;
+  border-color: $color-primary;
+  color: $color-primary;
+  box-shadow: 0 0 16rpx rgba($color-primary, 0.15);
+}
+
+.add-pet__species-icon {
+  font-size: 40rpx;
+}
+
+.add-pet__gender-group {
+  display: flex;
+  gap: $spacing-lg;
+}
+
+.add-pet__gender-btn {
+  flex: 1;
+  height: 88rpx;
+  @include card-base;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+  transition: all $transition-fast;
+  @include press-feedback;
+}
+
+.add-pet__gender-btn--active {
+  background: $color-primary-bg;
+  border-color: $color-primary;
+  color: $color-primary;
+  box-shadow: 0 0 16rpx rgba($color-primary, 0.15);
+}
+
+.add-pet__switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 88rpx;
+  padding: 0 24rpx;
+  @include card-base;
+}
+
+.add-pet__switch-label {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+}
+
+.add-pet__photo-area {
+  width: 100%;
+  height: 200rpx;
+  @include card-base;
+  border-style: dashed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: border-color $transition-fast;
+
+  &:active {
+    border-color: $color-primary;
+  }
+}
+
+.add-pet__photo-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-sm;
+  color: $color-text-tertiary;
+  font-size: $font-size-sm;
+}
+
+.add-pet__photo-icon {
+  font-size: 48rpx;
+}
+
+.add-pet__photo-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.add-pet__submit-wrap {
+  position: fixed;
+  bottom: 120rpx;
+  left: $spacing-lg;
+  right: $spacing-lg;
+  z-index: 10;
+}
+
+.add-pet__submit-btn {
+  width: 100%;
+  height: 96rpx;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  color: $color-text-inverse;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  border-radius: $radius-round;
+  @include flex-center;
+  box-shadow: 0 8rpx 32rpx rgba($color-primary, 0.3);
+  transition: all $transition-fast;
+  @include press-feedback;
+}
+
+.add-pet__submit-btn--disabled {
+  opacity: 0.4;
+  box-shadow: none;
+}
+
+.add-pet__breed-info {
+  @include card-base;
+  border-color: rgba($color-primary, 0.25);
+  border-radius: $radius-lg;
+  padding: 28rpx $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.08);
+  animation: fadeInUp 0.35s ease-out;
+}
+
+.add-pet__breed-info-header {
+  padding-bottom: $spacing-md;
+  border-bottom: 2rpx solid rgba($color-primary, 0.15);
+}
+
+.add-pet__breed-info-title {
+  font-size: $font-size-md;
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 1rpx;
+}
+
+.add-pet__breed-info-row {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.add-pet__breed-info-label {
+  /* 图标 + 文字水平排列（原来 emoji 内联在标签文字里） */
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 26rpx;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+}
+
+.add-pet__breed-info-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.add-pet__breed-info-tag {
+  font-size: $font-size-sm;
+  padding: 8rpx $spacing-md;
+  border-radius: $radius-sm;
+  line-height: 1.4;
+}
+
+.add-pet__breed-info-tag--warn {
+  background: rgba($color-primary, 0.12);
+  color: $color-primary-light;
+}
+
+.add-pet__breed-info-tag--danger {
+  background: $color-danger-bg;
+  color: $color-danger;
+}
+
+.add-pet__breed-info-value {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-semibold;
+}
+
+// ── 品种搜索面板 ──────────────────────────────────────
+
+.add-pet__breed-panel-overlay {
+  position: fixed;
+  inset: 0;
+  background: $color-bg-overlay;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  animation: fadeIn 0.2s ease;
+}
+
+.add-pet__breed-panel {
+  width: 100%;
+  max-height: 75%;
+  background: $color-bg-card;
+  border-radius: $radius-xl $radius-xl 0 0;
+  display: flex;
+  flex-direction: column;
+  position: relative; // 供「识别中遮罩」绝对定位覆盖
+  animation: slideUp 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.add-pet__breed-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-xl $spacing-lg $spacing-md;
+  border-bottom: 2rpx solid $color-divider;
+  flex-shrink: 0;
+}
+
+.add-pet__breed-panel-title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.add-pet__breed-panel-close {
+  width: 56rpx;
+  height: 56rpx;
+  @include flex-center;
+  border-radius: $radius-full;
+  background: $color-bg-secondary;
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+  @include press-feedback;
+}
+
+.add-pet__breed-panel-search {
+  display: flex;
+  align-items: center;
+  margin: $spacing-md $spacing-lg;
+  padding: 0 20rpx;
+  height: 80rpx;
+  background: $color-bg-secondary;
+  border-radius: $radius-round;
+  flex-shrink: 0;
+  gap: $spacing-sm;
+}
+
+.add-pet__breed-panel-search-icon {
+  font-size: $font-size-md;
+  flex-shrink: 0;
+}
+
+.add-pet__breed-panel-search-input {
+  flex: 1;
+  height: 80rpx;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+}
+
+.add-pet__breed-panel-clear {
+  width: 44rpx;
+  height: 44rpx;
+  @include flex-center;
+  border-radius: $radius-full;
+  background: $color-border;
+  flex-shrink: 0;
+  @include press-feedback;
+
+  Text {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+  }
+}
+
+// ── 拍照识别品种 ──────────────────────────────────────
+
+// 识别入口：主色渐变卡片，放搜索框上方，不知道品种时的首选
+.add-pet__breed-panel-recognize {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin: $spacing-md $spacing-lg;
+  padding: $spacing-md $spacing-lg;
+  background: linear-gradient(135deg, rgba($color-primary, 0.12), rgba($color-primary, 0.06));
+  border: 2rpx solid rgba($color-primary, 0.35);
+  border-radius: $radius-md;
+  flex-shrink: 0;
+  @include press-feedback;
+
+  &--loading {
+    opacity: 0.7;
+  }
+}
+
+.add-pet__breed-panel-recognize-icon {
+  font-size: 40rpx;
+  flex-shrink: 0;
+}
+
+.add-pet__breed-panel-recognize-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.add-pet__breed-panel-recognize-title {
+  font-size: $font-size-md;
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.add-pet__breed-panel-recognize-sub {
+  font-size: $font-size-xs;
+  color: $color-text-hint;
+}
+
+.add-pet__breed-panel-recognize-arrow {
+  font-size: $font-size-lg;
+  color: $color-primary;
+  flex-shrink: 0;
+}
+
+// 识别结果卡：物种图标 + 识别名 + 置信度 + 操作按钮
+.add-pet__breed-panel-recognize-result {
+  background: $color-bg-card;
+  border: 2rpx solid rgba($color-primary, 0.3);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.add-pet__breed-panel-recognize-result-head {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.add-pet__breed-panel-recognize-result-icon {
+  font-size: 48rpx;
+}
+
+.add-pet__breed-panel-recognize-result-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.add-pet__breed-panel-recognize-result-name {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.add-pet__breed-panel-recognize-result-conf {
+  font-size: $font-size-xs;
+  color: $color-text-hint;
+}
+
+.add-pet__breed-panel-recognize-result-actions {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.add-pet__breed-panel-recognize-btn {
+  flex: 1;
+  height: 72rpx;
+  @include flex-center;
+  /* 图标与文字间距（原来 emoji 内联在文字里） */
+  gap: 8rpx;
+  font-size: $font-size-sm;
+  color: $color-primary;
+  background: rgba($color-primary, 0.1);
+  border: 2rpx solid rgba($color-primary, 0.3);
+  border-radius: $radius-round;
+  @include press-feedback;
+
+  &--primary {
+    color: $color-text-inverse;
+    background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+    border: none;
+    font-weight: $font-weight-semibold;
+  }
+
+  &--ghost {
+    color: $color-text-tertiary;
+    background: transparent;
+    border-color: $color-divider;
+  }
+}
+
+// 识别中遮罩：覆盖整个面板，防误触
+.add-pet__breed-panel-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba($color-bg-card, 0.85);
+  border-radius: $radius-xl $radius-xl 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-md;
+  z-index: 10;
+}
+
+.add-pet__breed-panel-mask-spinner {
+  width: 56rpx;
+  height: 56rpx;
+  border: 6rpx solid rgba($color-primary, 0.2);
+  border-top-color: $color-primary;
+  border-radius: $radius-full;
+  animation: spin 0.8s linear infinite;
+}
+
+.add-pet__breed-panel-mask-text {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.add-pet__breed-panel-list {
+  flex: 1;
+  min-height: 0; // 允许列表在面板 max-height 受限（尤其键盘弹起时）内收缩滚动，否则内容会溢出面板
+  padding: 0 $spacing-lg $spacing-xl;
+}
+
+// 「不确定品种」固定行：顶置高亮，帮不知道品种（混血/串串/流浪猫狗）的用户快速兜底
+.add-pet__breed-panel-item--unknown {
+  background: rgba($color-primary, 0.08);
+  border: 2rpx solid rgba($color-primary, 0.25);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+  border-bottom: none; // 覆盖默认分隔线
+
+  .add-pet__breed-panel-item-name {
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.add-pet__breed-panel-item-unknown-hint {
+  font-size: $font-size-xs;
+  color: $color-text-hint;
+  margin-top: 4rpx;
+}
+
+.add-pet__breed-panel-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md 0;
+  border-bottom: 2rpx solid $color-divider;
+  @include press-feedback;
+}
+
+.add-pet__breed-panel-item--active {
+  .add-pet__breed-panel-item-name {
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.add-pet__breed-panel-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.add-pet__breed-panel-item-name {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+}
+
+.add-pet__breed-panel-item-alias {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.add-pet__breed-panel-item-origin {
+  font-size: $font-size-xs;
+  color: $color-text-hint;
+  flex-shrink: 0;
+  margin-left: $spacing-md;
+}
+
+.add-pet__breed-panel-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 0;
+  color: $color-text-tertiary;
+  font-size: $font-size-md;
+}
+
+.add-pet__breed-panel-empty-hint {
+  margin-top: $spacing-sm;
+  font-size: $font-size-sm;
+  color: $color-text-hint;
+}

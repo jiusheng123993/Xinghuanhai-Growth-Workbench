@@ -1,0 +1,725 @@
+/**
+ * 疫苗驱虫日历页面
+ * 疫苗/驱虫记录管理、到期提醒、推荐接种计划
+ */
+import { View, Text, ScrollView } from '@tarojs/components'
+import Taro, { useShareAppMessage, useShareTimeline } from '@tarojs/taro'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useThemeClass } from '../../hooks/useThemeClass'
+import { usePet } from '../../hooks/usePet'
+import { useVaccine } from '../../hooks/useVaccine'
+import { useReminder } from '../../hooks/useReminder'
+import { useAuthStore } from '../../stores/authStore'
+import { useShareStore } from '../../stores/shareStore'
+import PetSwitcher from '../../components/PetSwitcher'
+import VaccineCalendar from '../../components/VaccineCalendar'
+import VaccineRecordCard from '../../components/VaccineRecordCard'
+import VaccineAddModal from '../../components/VaccineAddModal'
+import VaccineShareCard from '../../components/VaccineShareCard'
+import { PageLoading, PageError, PetAvatar, Icon, AchievementCard, AchievementShareCard } from '../../components'
+import { recordShare } from '../../services/shareService'
+import type { ExpressionContext } from '../../engines/petAvatar'
+import type { VaccineRecord } from '../../services/vaccineService'
+import type { VaccineShareData } from '../../types/shareTypes'
+import { checkNpsEligibility, submitNpsResponse, dismissNpsSurvey } from '../../services/npsService'
+import NpsSurvey from '../../components/NpsSurvey'
+import type { NpsTriggerEvent } from '../../types/npsTypes'
+import { MedicalDisclaimer } from '../../engines/petSafety/MedicalDisclaimer'
+import { useAnalytics, usePageView } from '../../hooks/useAnalytics'
+import { AnalyticsEventName } from '../../types/analyticsTypes'
+import { checkVaccineCompleteAchievement } from '../../services/achievementService'
+import type { AchievementConfig } from '../../components/AchievementCard'
+import { generateAutoVaccineSchedule, generateDewormingSchedule, getVaccineReminders, getDewormingReminders, getReminderMessage } from '../../engines/vaccineScheduler'
+import type { AutoScheduleItem, DewormingScheduleItem } from '../../engines/vaccineScheduler'
+import { checkAndSendVaccineReminders } from '../../services/reminderService'
+import './index.scss'
+import PageBackground from '../../components/PageBackground'
+
+export default function PetVaccine() {
+  const themeClass = useThemeClass()
+  const { pets, currentPet, switchPet, isLoading: petLoading } = usePet()
+  const user = useAuthStore((s) => s.user)
+  const inviteCode = useShareStore(s => s.inviteCode)
+  const {
+    records,
+    isLoading: vaccineLoading,
+    error,
+    fetchRecords,
+    addRecord,
+    updateRecord,
+    removeRecord,
+    markCompleted,
+    clearError,
+  } = useVaccine()
+
+  const {
+    subscriptionStatus,
+    upcomingReminders,
+    overdueReminders,
+    fetchSubscriptionStatus,
+    requestSubscription,
+    fetchUpcomingReminders,
+    fetchOverdueReminders,
+  } = useReminder()
+
+  useShareAppMessage(() => ({
+    title: '星河宠记 - 宠物疫苗日历',
+    path: `/pagesPet/vaccine/index${inviteCode ? `?inviteCode=${inviteCode}` : ''}`,
+  }))
+  useShareTimeline(() => ({
+    title: '星河宠记 - 宠物疫苗日历',
+    query: inviteCode ? `inviteCode=${inviteCode}` : '',
+  }))
+
+  const [modalVisible, setModalVisible] = useState(false)
+  const [editRecord, setEditRecord] = useState<VaccineRecord | null>(null)
+  const [loadError, setLoadError] = useState('')
+  const [displayCount, setDisplayCount] = useState(20)
+  const [showVaccineShare, setShowVaccineShare] = useState(false)
+  const [vaccineShareData, setVaccineShareData] = useState<VaccineShareData | null>(null)
+  const [showNpsSurvey, setShowNpsSurvey] = useState(false)
+  const [npsTriggerEvent, setNpsTriggerEvent] = useState<NpsTriggerEvent>('manual')
+  const [vaccineAchievement, setVaccineAchievement] = useState<AchievementConfig | null>(null)
+  const [autoSchedule, setAutoSchedule] = useState<AutoScheduleItem[]>([])
+  const [dewormingSchedule, setDewormingSchedule] = useState<DewormingScheduleItem[]>([])
+  const [showSchedulePanel, setShowSchedulePanel] = useState(false)
+  const [showAchievementShare, setShowAchievementShare] = useState(false)
+  const { trackPageView, trackEvent } = useAnalytics()
+
+  const disclaimerText = new MedicalDisclaimer().getVaccineDisclaimer()
+
+  usePageView('vaccine')
+
+  const loadVaccineData = useCallback(async () => {
+    setLoadError('')
+    setDisplayCount(20)
+    try {
+      if (currentPet?.id) {
+        await fetchRecords(currentPet.id)
+        fetchUpcomingReminders(currentPet.id, 7)
+        fetchOverdueReminders(currentPet.id)
+        
+        // 检查并发送疫苗提醒订阅消息
+        await checkAndSendVaccineReminders(currentPet.id, currentPet.name)
+      }
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : '加载失败，请重试')
+    }
+  }, [currentPet, fetchRecords, fetchUpcomingReminders, fetchOverdueReminders])
+
+  useEffect(() => {
+    loadVaccineData()
+  }, [loadVaccineData])
+
+  useEffect(() => {
+    if (!currentPet?.id) return
+    const allCompleted = records.length > 0 && records.every(r => r.status === 'completed')
+    if (allCompleted) {
+      const result = checkVaccineCompleteAchievement(currentPet.id, true)
+      if (result) {
+        trackEvent('show_achievement')
+        setVaccineAchievement(result)
+      }
+    }
+  }, [currentPet?.id, records])
+
+  useEffect(() => {
+    fetchSubscriptionStatus()
+  }, [fetchSubscriptionStatus])
+
+  useEffect(() => {
+    if (currentPet) {
+      const schedule = generateAutoVaccineSchedule({
+        species: currentPet.species as 'dog' | 'cat',
+        birthDate: currentPet.birthDate,
+        existingVaccines: records.filter(r => r.status === 'completed').map(r => ({ name: r.category, date: r.date })),
+      })
+      setAutoSchedule(schedule)
+
+      const deworming = generateDewormingSchedule({
+        species: currentPet.species as 'dog' | 'cat',
+        birthDate: currentPet.birthDate,
+      })
+      setDewormingSchedule(deworming)
+    }
+  }, [currentPet, records])
+
+  useEffect(() => {
+    if (error) {
+      Taro.showToast({ title: error, icon: 'none' })
+      clearError()
+    }
+  }, [error, clearError])
+
+  const stats = useMemo(() => {
+    const completed = records.filter((r) => r.status === 'completed').length
+    const pending = records.filter((r) => r.status === 'pending').length
+    const overdue = records.filter((r) => r.status === 'overdue').length
+    return { completed, pending, overdue, total: records.length }
+  }, [records])
+
+  const sortedRecords = useMemo(() => {
+    return [...records].sort((a, b) => b.date.localeCompare(a.date))
+  }, [records])
+
+  // 下一针提醒（优先近期即将到期，其次逾期，取最近一条）
+  const nextReminder = useMemo(() => {
+    if (upcomingReminders.length > 0) return upcomingReminders[0]
+    if (overdueReminders.length > 0) return overdueReminders[0]
+    return null
+  }, [upcomingReminders, overdueReminders])
+
+  const handleAdd = () => {
+    trackEvent('add_vaccine_record')
+    setEditRecord(null)
+    setModalVisible(true)
+  }
+
+  const handleEdit = (record: VaccineRecord) => {
+    setEditRecord(record)
+    setModalVisible(true)
+  }
+
+  const handleCloseModal = () => {
+    setModalVisible(false)
+    setEditRecord(null)
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      await removeRecord(id)
+      Taro.showToast({ title: '删除成功', icon: 'success' })
+      if (currentPet) {
+        fetchRecords(currentPet.id)
+      }
+    } catch {
+      Taro.showToast({ title: '删除失败', icon: 'none' })
+    }
+  }
+
+  const handleComplete = async (id: string) => {
+    try {
+      const record = records.find(r => r.id === id)
+      await markCompleted(id)
+      trackEvent(AnalyticsEventName.VaccineDone, { petId: currentPet?.id || '', vaccineName: record?.category || '' })
+      Taro.showToast({ title: '已标记完成', icon: 'success' })
+      if (currentPet) {
+        fetchRecords(currentPet.id)
+      }
+    } catch {
+      Taro.showToast({ title: '操作失败', icon: 'none' })
+    }
+  }
+
+  const handleShareVaccine = useCallback((record: VaccineRecord) => {
+    if (!currentPet) return
+    setVaccineShareData({
+      petName: currentPet.name,
+      petAvatar: currentPet.avatarPhotoUrl || currentPet.avatarCartoonUrl || '',
+      vaccineName: record.category,
+      completedDate: record.date,
+      badgeTitle: '负责任家长',
+    })
+    setShowVaccineShare(true)
+  }, [currentPet])
+
+  const handleVaccineShareConfirm = useCallback(() => {
+    if (!user?.id || !currentPet?.id) return
+    trackEvent(AnalyticsEventName.ShareAction, { type: 'vaccine', platform: 'wechat' })
+    Taro.showShareMenu({ withShareTicket: true })
+    recordShare(user.id, 'vaccine', currentPet.id, 'wechat')
+    setShowVaccineShare(false)
+    if (user?.id) {
+      const npsStatus = checkNpsEligibility(user.id, user.createdAt || new Date().toISOString())
+      if (npsStatus.isEligible) {
+        setShowNpsSurvey(true)
+        setNpsTriggerEvent('after_share')
+      }
+    }
+  }, [user?.id, currentPet?.id, trackEvent])
+
+  const handleVaccineShareClose = useCallback(() => {
+    setShowVaccineShare(false)
+  }, [])
+
+  const handleAchievementClose = useCallback(() => {
+    setVaccineAchievement(null)
+  }, [])
+
+  const handleAchievementShare = useCallback(() => {
+    trackEvent(AnalyticsEventName.ShareAction, { type: 'achievement', platform: 'wechat' })
+    setShowAchievementShare(true)
+  }, [trackEvent, vaccineAchievement?.id])
+
+  const handleAchievementShareClose = useCallback(() => {
+    setShowAchievementShare(false)
+  }, [])
+
+  const handleReminderToggle = async () => {
+    if (currentPet) {
+      trackEvent(AnalyticsEventName.VaccineReminderClick, { petId: currentPet.id, vaccineType: 'subscription', action: subscriptionStatus ? 'disable' : 'enable' })
+    }
+    try {
+      const accepted = await requestSubscription()
+      if (accepted) {
+        Taro.showToast({ title: '已开启疫苗提醒', icon: 'success' })
+        // 立即检查并发送提醒
+        if (currentPet) {
+          await checkAndSendVaccineReminders(currentPet.id, currentPet.name)
+        }
+      } else {
+        Taro.showModal({
+          title: '开启提醒',
+          content: '订阅消息需要您授权才能接收疫苗到期提醒。是否前往设置开启？',
+          success: (res) => {
+            if (res.confirm) {
+              Taro.openSetting()
+            }
+          }
+        })
+      }
+    } catch {
+      Taro.showToast({ title: '授权失败', icon: 'none' })
+    }
+  }
+
+  const handleLoadMore = useCallback(() => {
+    setDisplayCount((prev) => prev + 20)
+  }, [])
+
+  const isLoading = petLoading || vaccineLoading
+
+  const expressionContext = useMemo((): ExpressionContext | null => {
+    if (!currentPet) return null
+    const allCompleted = records.length > 0 && records.every((r) => r.status === 'completed')
+    return {
+      todayEntry: null,
+      hasAnomaly: false,
+      anomalyCount: 0,
+      riskLevel: null,
+      streakDays: 0,
+      isBirthday: false,
+      isVaccineComplete: allCompleted,
+      isRecovery: false,
+      isDeceased: currentPet.isDeceased || false,
+    }
+  }, [currentPet, records])
+
+  if (isLoading && pets.length === 0) {
+    return (
+      <View className={`pet-vaccine ${themeClass}`}>
+          <PageLoading />
+        </View>
+    )
+  }
+
+  if (loadError && pets.length === 0) {
+    return (
+      <View className={`pet-vaccine ${themeClass}`}>
+        <PageError message={loadError} onRetry={loadVaccineData} />
+      </View>
+    )
+  }
+
+  return (
+    <View className={`pet-vaccine ${themeClass}`}>
+      {/* 全屏动态背景光斑层 */}
+      <PageBackground />
+
+      <PetSwitcher
+        pets={pets}
+        currentPetId={currentPet?.id || null}
+        onSwitch={switchPet}
+      />
+
+      {currentPet && expressionContext && (
+        <View className='pet-vaccine__avatar'>
+          <PetAvatar
+            species={currentPet.species as 'dog' | 'cat'}
+            petName={currentPet.name}
+            expressionContext={expressionContext}
+            pet={currentPet}
+            size={80}
+            showLabel
+          />
+        </View>
+      )}
+
+      <View className='pet-vaccine__header'>
+        <Text className='pet-vaccine__title'>疫苗日历</Text>
+      </View>
+
+      {!currentPet ? (
+        <View className='pet-vaccine__empty'>
+          <Icon name='paw-print' size={48} tone='muted' className='pet-vaccine__empty-icon' />
+          <Text className='pet-vaccine__empty-text'>请先添加宠物</Text>
+        </View>
+      ) : (
+        <>
+          {/* ===== 疫苗进度概览卡（原型对齐：已完成 + 环形进度） ===== */}
+          <View className='pet-vaccine__progress-card'>
+            <View className='pet-vaccine__progress-info'>
+              <Text className='pet-vaccine__progress-label'>已完成接种</Text>
+              <Text className='pet-vaccine__progress-value'>
+                {stats.completed}<Text className='pet-vaccine__progress-total'>/{stats.total}</Text>
+              </Text>
+              <Text className='pet-vaccine__progress-sub'>共 {stats.total} 针计划</Text>
+            </View>
+            <View className='pet-vaccine__progress-ring-wrap'>
+              <View
+                className='pet-vaccine__progress-ring'
+                style={{
+                  background: stats.total > 0
+                    ? `conic-gradient(var(--primary, #FF6B3D) ${Math.round((stats.completed / stats.total) * 100)}%, rgba(255,107,61,0.14) 0%)`
+                    : 'rgba(255,107,61,0.14)',
+                }}
+              >
+                <View className='pet-vaccine__progress-ring-inner'>
+                  <Text className='pet-vaccine__progress-ring-text'>
+                    {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+          <View className='pet-vaccine__progress-foot'>
+            <Icon name='syringe' size={14} tone='primary' className='pet-vaccine__progress-foot-icon' />
+            <Text className='pet-vaccine__progress-foot-text'>疫苗覆盖完成度 {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%</Text>
+          </View>
+
+          {/* ===== 下一针提醒卡（原型对齐：高亮） ===== */}
+          {nextReminder && (
+            <View className='pet-vaccine__next-remind' onClick={() => handleEdit(nextReminder.record)}>
+              <View className='pet-vaccine__next-remind-bar' />
+              <View className='pet-vaccine__next-remind-body'>
+                <View className='pet-vaccine__next-remind-info'>
+                  <Text className='pet-vaccine__next-remind-label'>下一针提醒</Text>
+                  <Text className='pet-vaccine__next-remind-name'>{nextReminder.record.category}</Text>
+                  <Text className='pet-vaccine__next-remind-date'>
+                    🔔 {nextReminder.record.nextDate} · 提前7天提醒
+                  </Text>
+                </View>
+                <Text className='pet-vaccine__next-remind-arrow'>›</Text>
+              </View>
+            </View>
+          )}
+
+          <View className='pet-vaccine__stats'>
+            <View className='pet-vaccine__stats-item'>
+              <Text className='pet-vaccine__stats-value pet-vaccine__stats-value--completed'>
+                {stats.completed}
+              </Text>
+              <Text className='pet-vaccine__stats-label'>已完成</Text>
+            </View>
+            <View className='pet-vaccine__stats-divider' />
+            <View className='pet-vaccine__stats-item'>
+              <Text className='pet-vaccine__stats-value pet-vaccine__stats-value--pending'>
+                {stats.pending}
+              </Text>
+              <Text className='pet-vaccine__stats-label'>待接种</Text>
+            </View>
+            <View className='pet-vaccine__stats-divider' />
+            <View className='pet-vaccine__stats-item'>
+              <Text className='pet-vaccine__stats-value pet-vaccine__stats-value--overdue'>
+                {stats.overdue}
+              </Text>
+              <Text className='pet-vaccine__stats-label'>已逾期</Text>
+            </View>
+          </View>
+
+          {/* 到期摘要卡片 */}
+          {(overdueReminders.length > 0 || upcomingReminders.length > 0) && (
+            <View className='pet-vaccine__next-due'>
+              <View className='pet-vaccine__next-due-header'>
+                <View className='pet-vaccine__next-due-title'>
+            <Icon name='clipboard-text' size={15} tone='primary' />
+            <Text>待处理事项</Text>
+          </View>
+                {overdueReminders.length > 0 && (
+                  <Text className='pet-vaccine__next-due-count'>{overdueReminders.length}</Text>
+                )}
+              </View>
+              <View className='pet-vaccine__next-due-list'>
+                {overdueReminders.slice(0, 3).map((r) => (
+                  <View key={r.record.id} className='pet-vaccine__next-due-item'>
+                    {/* 逾期项：用危险红与 --overdue 的危险底色呼应（正常项见下方 calendar-check） */}
+                    <Icon name='warning' size={14} color='#FF5A5F' className='pet-vaccine__next-due-item-icon' />
+                    <View className='pet-vaccine__next-due-item-info'>
+                      <Text className='pet-vaccine__next-due-item-name'>{r.record.category}</Text>
+                      <Text className='pet-vaccine__next-due-item-date'>已于 {r.record.nextDate} 逾期</Text>
+                    </View>
+                    <Text className='pet-vaccine__next-due-item-status pet-vaccine__next-due-item-status--overdue'>逾期</Text>
+                  </View>
+                ))}
+                {upcomingReminders.slice(0, 3).map((r) => (
+                  <View key={r.record.id} className='pet-vaccine__next-due-item'>
+                    <Icon name='calendar-check' size={14} tone='primary' className='pet-vaccine__next-due-item-icon' />
+                    <View className='pet-vaccine__next-due-item-info'>
+                      <Text className='pet-vaccine__next-due-item-name'>{r.record.category}</Text>
+                      <Text className='pet-vaccine__next-due-item-date'>{r.record.nextDate} 到期</Text>
+                    </View>
+                    <Text className='pet-vaccine__next-due-item-status pet-vaccine__next-due-item-status--upcoming'>即将</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {(upcomingReminders.length > 0 || overdueReminders.length > 0) && (
+            <View className='pet-vaccine__reminders'>
+              <View className='pet-vaccine__reminders-header'>
+                <View className='pet-vaccine__reminders-title'>
+          <Icon name='bell' size={15} tone='primary' />
+          <Text>到期提醒</Text>
+        </View>
+                <View
+                  className={`pet-vaccine__reminders-toggle${subscriptionStatus ? ' pet-vaccine__reminders-toggle--on' : ''}`}
+                  onClick={handleReminderToggle}
+                >
+                  <Text className='pet-vaccine__reminders-toggle-text'>
+                    {subscriptionStatus ? '已开启' : '开启提醒'}
+                  </Text>
+                </View>
+              </View>
+              {overdueReminders.length > 0 && (
+                <View className='pet-vaccine__reminder-list'>
+                  {overdueReminders.map((r) => (
+                    <View key={r.record.id} className='pet-vaccine__reminder-item pet-vaccine__reminder-item--overdue'>
+                      <Icon name='warning' size={16} color='#FF5A5F' className='pet-vaccine__reminder-icon' />
+                      <View className='pet-vaccine__reminder-content'>
+                        <Text className='pet-vaccine__reminder-name'>{r.record.category}</Text>
+                        <Text className='pet-vaccine__reminder-date'>已于 {r.record.nextDate} 逾期</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+              {upcomingReminders.length > 0 && (
+                <View className='pet-vaccine__reminder-list'>
+                  {upcomingReminders.map((r) => (
+                    <View key={r.record.id} className='pet-vaccine__reminder-item pet-vaccine__reminder-item--upcoming'>
+                      <Icon name='calendar-check' size={16} tone='primary' className='pet-vaccine__reminder-icon' />
+                      <View className='pet-vaccine__reminder-content'>
+                        <Text className='pet-vaccine__reminder-name'>{r.record.category}</Text>
+                        <Text className='pet-vaccine__reminder-date'>{r.record.nextDate} 到期</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
+          {autoSchedule.length > 0 && (
+            <View className='pet-vaccine__auto-schedule'>
+              <View className='pet-vaccine__section-header'>
+                <View className='pet-vaccine__section-title'>
+            <Icon name='calendar-check' size={15} tone='primary' />
+            <Text>推荐接种计划</Text>
+          </View>
+                <View
+                  className='pet-vaccine__schedule-toggle'
+                  onClick={() => setShowSchedulePanel(!showSchedulePanel)}
+                >
+                  <Text className='pet-vaccine__schedule-toggle-text'>
+                    {showSchedulePanel ? '收起' : '展开'}
+                  </Text>
+                </View>
+              </View>
+              {showSchedulePanel && (
+                <View className='pet-vaccine__schedule-list'>
+                  {autoSchedule.map((item) => (
+                    <View
+                      key={item.id}
+                      className={`pet-vaccine__schedule-item pet-vaccine__schedule-item--${item.status}`}
+                    >
+                      <View className='pet-vaccine__schedule-item-left'>
+                        <Text className='pet-vaccine__schedule-item-name'>{item.vaccineName}</Text>
+                        <Text className='pet-vaccine__schedule-item-notes'>{item.notes}</Text>
+                      </View>
+                      <View className='pet-vaccine__schedule-item-right'>
+                        <Text className='pet-vaccine__schedule-item-date'>{item.scheduledDate}</Text>
+                        <Text className={`pet-vaccine__schedule-item-status pet-vaccine__schedule-item-status--${item.status}`}>
+                          {item.status === 'overdue' ? '已逾期' : item.status === 'due' ? '今天' : `${item.daysUntilDue}天后`}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
+          {dewormingSchedule.length > 0 && (
+            <View className='pet-vaccine__deworming'>
+              <View className='pet-vaccine__section-header'>
+                <View className='pet-vaccine__section-title'>
+            <Icon name='pill' size={15} tone='primary' />
+            <Text>驱虫计划</Text>
+          </View>
+              </View>
+              <View className='pet-vaccine__deworming-list'>
+                {dewormingSchedule.map((item) => (
+                  <View
+                    key={item.id}
+                    className={`pet-vaccine__deworming-item pet-vaccine__deworming-item--${item.status}`}
+                  >
+                    <View className='pet-vaccine__deworming-item-left'>
+                      <Icon name='pill' size={13} tone='primary' />
+                      <Text className='pet-vaccine__deworming-item-type'>
+                        {item.type === 'internal' ? '体内驱虫' : '体外驱虫'}
+                      </Text>
+                    </View>
+                    <View className='pet-vaccine__deworming-item-right'>
+                      <Text className='pet-vaccine__deworming-item-date'>{item.scheduledDate}</Text>
+                      <Text className={`pet-vaccine__deworming-item-status pet-vaccine__deworming-item-status--${item.status}`}>
+                        {item.status === 'overdue' ? '已逾期' : item.status === 'due' ? '今天' : `${item.daysUntilDue}天后`}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          <VaccineCalendar records={records} />
+
+          <View className='pet-vaccine__section'>
+            <View className='pet-vaccine__section-header'>
+              <View className='pet-vaccine__section-title'>
+            <Icon name='clipboard-text' size={15} tone='primary' />
+            <Text>接种记录</Text>
+          </View>
+              <Text className='pet-vaccine__section-count'>共 {stats.total} 条</Text>
+            </View>
+
+            {sortedRecords.length === 0 ? (
+              <View className='pet-vaccine__list-empty'>
+                <Icon name='clipboard-text' size={32} tone='muted' className='pet-vaccine__list-empty-icon' />
+                <Text className='pet-vaccine__list-empty-text'>暂无记录，点击右下角添加</Text>
+              </View>
+            ) : (
+              <View className='pet-vaccine__list'>
+                {sortedRecords.slice(0, displayCount).map((record) => (
+                  <>
+                    <VaccineRecordCard
+                      key={record.id}
+                      record={record}
+                      onComplete={handleComplete}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                    />
+                    {record.status === 'completed' && (
+                      <View className='pet-vaccine__share-item' onClick={() => handleShareVaccine(record)}>
+                        {/* 文字是成功绿，图标同色保持一致 */}
+                        <Icon name='trophy' size={14} color='#2FC98E' />
+                        <Text className='pet-vaccine__share-item-text'>炫耀一下</Text>
+                      </View>
+                    )}
+                  </>
+                ))}
+                {displayCount < sortedRecords.length && (
+                  <View className='pet-vaccine__load-more' onClick={handleLoadMore}>
+                    <Text className='pet-vaccine__load-more-text'>加载更多</Text>
+                  </View>
+                )}
+                {displayCount >= sortedRecords.length && sortedRecords.length > 20 && (
+                  <View className='pet-vaccine__load-more'>
+                    <Text className='pet-vaccine__load-more-text'>已加载全部 {sortedRecords.length} 条记录</Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+
+          {/* ===== 疫苗小知识卡（原型对齐） ===== */}
+          <View className='pet-vaccine__tips'>
+            <View className='pet-vaccine__tips-icon'>
+              {/* 底色是金色浅底，故图标用深金色与之一致 */}
+              <Icon name='lightbulb' size={18} color='#E8920A' />
+            </View>
+            <View className='pet-vaccine__tips-body'>
+              <Text className='pet-vaccine__tips-title'>疫苗小知识</Text>
+              <Text className='pet-vaccine__tips-text'>幼犬首次免疫建议 8 周龄开始，间隔 3-4 周接种一针，共 3 针基础免疫。</Text>
+              <Text className='pet-vaccine__tips-text pet-vaccine__tips-text--hint'>接种后 1 周内避免洗澡和剧烈运动，注意观察精神状态。</Text>
+            </View>
+          </View>
+
+          {/* ===== 添加疫苗记录按钮（原型对齐：全宽渐变） ===== */}
+          <View className='pet-vaccine__add-btn' onClick={handleAdd}>
+            <Text className='pet-vaccine__add-btn-icon'>+</Text>
+            <Text className='pet-vaccine__add-btn-text'>添加疫苗记录</Text>
+          </View>
+        </>
+      )}
+
+      <View className='pet-vaccine__disclaimer'>
+        <Text className='pet-vaccine__disclaimer-text'>{disclaimerText}</Text>
+      </View>
+
+      <View className='pet-vaccine__fab' onClick={handleAdd}>
+        <Text className='pet-vaccine__fab-icon'>+</Text>
+      </View>
+
+      {currentPet && (
+        <VaccineAddModal
+          visible={modalVisible}
+          petId={currentPet.id}
+          userId={user?.id || ''}
+          editRecord={editRecord}
+          onClose={handleCloseModal}
+          onSubmit={addRecord}
+          onUpdate={updateRecord}
+        />
+      )}
+
+      {showVaccineShare && vaccineShareData && (
+        <VaccineShareCard
+          {...vaccineShareData}
+          inviteCode={inviteCode}
+          onShare={handleVaccineShareConfirm}
+          onClose={handleVaccineShareClose}
+        />
+      )}
+
+      {vaccineAchievement && currentPet && (
+        <AchievementCard
+          achievement={vaccineAchievement}
+          petName={currentPet.name}
+          species={currentPet.species as 'dog' | 'cat'}
+          onClose={handleAchievementClose}
+          onShare={handleAchievementShare}
+        />
+      )}
+
+      {showAchievementShare && vaccineAchievement && currentPet && (
+        <AchievementShareCard
+          petName={currentPet.name}
+          petAvatar={currentPet.avatarPhotoUrl || currentPet.avatarCartoonUrl || ''}
+          achievementType={vaccineAchievement.type}
+          achievementTitle={vaccineAchievement.title}
+          achievementSubtitle={vaccineAchievement.subtitle}
+          achievementIcon={vaccineAchievement.icon}
+          achievementColor={vaccineAchievement.color}
+          inviteCode={inviteCode}
+          onClose={handleAchievementShareClose}
+        />
+      )}
+
+      {showNpsSurvey && user && (
+        <NpsSurvey
+          triggerEvent={npsTriggerEvent}
+          onSubmit={(score, feedback) => {
+            submitNpsResponse(user.id, score, npsTriggerEvent, feedback)
+            setShowNpsSurvey(false)
+          }}
+          onDismiss={() => {
+            dismissNpsSurvey()
+            setShowNpsSurvey(false)
+          }}
+        />
+      )}
+
+    </View>
+  )
+}

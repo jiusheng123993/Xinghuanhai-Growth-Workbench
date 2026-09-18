@@ -1,0 +1,163 @@
+@import '../../styles/_theme';
+@import '../../styles/_animations';
+
+.onboarding-page {
+  min-height: 100vh;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  padding: 0 24px;
+  box-sizing: border-box;
+  animation: pageEnter 0.5s ease-out;
+  position: relative;
+  overflow: hidden;
+
+  // —— 背景装饰光晕 ——
+  &::before {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: -60px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba($color-primary, 0.05) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: warmBreathe 5s ease-in-out infinite;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 25%;
+    right: -40px;
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, rgba($color-primary-light, 0.04) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: warmBreathe 5s ease-in-out 1.5s infinite;
+  }
+
+  &__skip {
+    align-self: flex-end;
+    padding: 48px 0 16px;
+    position: relative;
+    z-index: 1;
+    @include press-feedback;
+  }
+
+  &__skip-text {
+    font-size: 14px;
+    color: $color-text-tertiary;
+  }
+
+  &__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    position: relative;
+    z-index: 1;
+    animation: fadeInScale 0.4s ease-out;
+  }
+
+  &__icon {
+    width: 120px;
+    height: 120px;
+    border-radius: 30px;
+    background: $color-bg-card;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba($color-primary, 0.08);
+    margin-bottom: 32px;
+    border: 1px solid $color-border;
+    animation: popupBounceIn 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+    @include breathe-glow;
+  }
+
+  &__icon-emoji {
+    font-size: 56px;
+    animation: heartbeat 2s ease-in-out infinite;
+  }
+
+  &__title {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: $color-text-primary;
+    text-align: center;
+    margin-bottom: 16px;
+    animation: fadeInUp 0.4s ease-out 0.1s both;
+  }
+
+  &__description {
+    display: block;
+    font-size: 15px;
+    color: $color-text-secondary;
+    text-align: center;
+    line-height: 1.6;
+    max-width: 280px;
+    animation: fadeInUp 0.4s ease-out 0.2s both;
+  }
+
+  &__dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 32px;
+    position: relative;
+    z-index: 1;
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background: $color-border;
+    transition: all 0.3s ease;
+
+    &--active {
+      width: 24px;
+      background: $color-primary;
+      box-shadow: 0 0 8rpx rgba($color-primary, 0.4);
+    }
+  }
+
+  &__actions {
+    padding-bottom: 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  &__btn {
+    border-radius: 24px;
+    padding: 14px 0;
+    text-align: center;
+    @include press-feedback;
+
+    &--next {
+      background: $color-bg-card;
+      border: 1px solid $color-border;
+    }
+
+    &--start {
+      background: $gradient-warm;
+      box-shadow: 0 4px 12px rgba($color-primary, 0.3);
+    }
+  }
+
+  &__btn-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: $color-text-primary;
+
+    .onboarding-page__btn--start & {
+      color: $color-text-inverse;
+    }
+  }
+}

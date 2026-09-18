@@ -1,0 +1,730 @@
+@import '../../styles/_theme';
+@import '../../styles/_animations';
+
+.feeding-page {
+  min-height: 100vh;
+  background-color: $color-bg-page;
+  padding-bottom: 80rpx;
+  animation: pageEnter 0.4s ease-out;
+}
+
+.feeding-header {
+  // 方案A（用户选定）：柔和浅底 + 深色文字，替代饱和橙色大渐变
+  background: linear-gradient(135deg, rgba($color-primary, 0.12) 0%, rgba($color-primary, 0.04) 100%);
+  padding: 80rpx 48rpx 40rpx;
+  color: $color-text-primary;
+  border-bottom: 1px solid rgba($color-primary, 0.08);
+}
+
+.feeding-title {
+  font-size: 56rpx;
+  font-weight: $font-weight-bold;
+  margin-bottom: 16rpx;
+  color: $color-text-primary;
+}
+
+.feeding-subtitle {
+  font-size: 28rpx;
+  opacity: 0.9;
+  color: $color-text-secondary;
+}
+
+.feeding-profile-cards {
+  display: flex;
+  gap: 16rpx;
+  // 方案A：卡片自然排布在头部下方（去掉负边距压顶，消除色块叠压）
+  margin: 24rpx 32rpx 32rpx;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.feeding-profile-card {
+  flex: 1;
+  @include card-base;
+  padding: 24rpx 16rpx;
+  text-align: center;
+  // 修复：原渐变内嵌 CSS 变量（var(--bg-card)）在微信渲染器解析不稳，失败会导致
+  // 卡片背景失效透出橙色头部，数值文字（橙）叠在橙色上看不清 → 改用纯实色背景
+  background-color: $color-bg-card;
+}
+
+.feeding-profile-value {
+  font-size: 40rpx;
+  font-weight: $font-weight-bold;
+  // 修复：主色(#FF6B3D)在白底上对比度不足(小字号尤其明显) → 用深色主色提升可读性
+  color: $color-primary-dark;
+  display: block;
+}
+
+.feeding-profile-label {
+  font-size: 22rpx;
+  // 修复：tertiary 灰太浅 → 提升一级到 secondary
+  color: $color-text-secondary;
+  margin-top: 8rpx;
+}
+
+.feeding-tabs {
+  display: flex;
+  margin: 0 32rpx 24rpx;
+  background: $color-primary-bg;
+  border-radius: $radius-md;
+  padding: 8rpx;
+}
+
+.feeding-tab {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  border-radius: $radius-sm;
+  font-size: 28rpx;
+  color: $color-text-secondary;
+  transition: all $transition-fast;
+}
+
+.feeding-tab--active {
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  color: $color-text-inverse;
+  font-weight: $font-weight-medium;
+  box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.3);
+}
+
+.feeding-actions {
+  padding: 0 32rpx 32rpx;
+}
+
+.feeding-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  color: $color-text-inverse;
+  padding: 28rpx;
+  border-radius: $radius-md;
+  font-size: 32rpx;
+  font-weight: $font-weight-medium;
+  box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.25);
+  @include press-feedback;
+}
+
+.feeding-add-icon {
+  font-size: 40rpx;
+  margin-right: 16rpx;
+}
+
+.feeding-content {
+  min-height: 400rpx;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.feeding-advice-card {
+  @include card-base;
+  padding: 32rpx;
+  margin: 0 32rpx 24rpx;
+  border-left: 4px solid $color-primary;
+  transition: all $transition-normal;
+  animation: fadeInUp 0.35s ease-out both;
+}
+
+// ===== AI 个性化喂养分析卡片 =====
+.feeding-ai-card {
+  @include card-base;
+  margin: 0 32rpx 24rpx;
+  padding: 32rpx;
+  background: linear-gradient(180deg, rgba($color-primary, 0.06), rgba($color-primary, 0.02));
+  border: 1px solid rgba($color-primary, 0.15);
+  border-radius: $radius-lg;
+  animation: fadeInUp 0.35s ease-out both;
+}
+
+.feeding-ai-head {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 24rpx;
+}
+
+.feeding-ai-icon {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  background: $gradient-gold;
+  border-radius: 50%;
+  color: #fff;
+}
+
+.feeding-ai-titles {
+  flex: 1;
+}
+
+.feeding-ai-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.feeding-ai-sub {
+  display: block;
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+}
+
+.feeding-ai-text {
+  display: block;
+  font-size: 28rpx;
+  line-height: 1.8;
+  color: $color-text-primary;
+  margin-bottom: 24rpx;
+}
+
+.feeding-ai-text--muted {
+  color: $color-text-secondary;
+}
+
+.feeding-ai-text--error {
+  color: $color-danger;
+}
+
+.feeding-ai-btn {
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $gradient-gold;
+  border-radius: 44rpx;
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: $font-weight-medium;
+  @include press-feedback;
+  box-shadow: $glow-sm;
+}
+
+.feeding-ai-btn--disabled {
+  opacity: 0.6;
+}
+
+.feeding-advice-card:nth-child(1) { animation-delay: 0.05s; }
+.feeding-advice-card:nth-child(2) { animation-delay: 0.1s; }
+.feeding-advice-card:nth-child(3) { animation-delay: 0.15s; }
+
+.feeding-advice-header {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+}
+
+.feeding-advice-icon {
+  font-size: 36rpx;
+}
+
+.feeding-advice-title {
+  font-size: 30rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.feeding-advice-content {
+  font-size: 28rpx;
+  color: $color-text-secondary;
+  line-height: 1.6;
+  padding-left: 52rpx;
+}
+
+.feeding-plan-header {
+  padding: 0 32rpx;
+  margin-bottom: 32rpx;
+}
+
+.feeding-plan-title {
+  font-size: 32rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.feeding-plan-subtitle {
+  font-size: 26rpx;
+  color: $color-text-tertiary;
+  margin-top: 8rpx;
+}
+
+.feeding-plan-timeline {
+  padding: 0 32rpx;
+}
+
+.feeding-plan-item {
+  display: flex;
+  gap: 24rpx;
+  animation: fadeInUp 0.35s ease-out both;
+}
+
+.feeding-plan-item:nth-child(1) { animation-delay: 0.05s; }
+.feeding-plan-item:nth-child(2) { animation-delay: 0.1s; }
+.feeding-plan-item:nth-child(3) { animation-delay: 0.15s; }
+.feeding-plan-item:nth-child(4) { animation-delay: 0.2s; }
+
+.feeding-plan-time-line {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 32rpx;
+}
+
+.feeding-plan-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background: $color-primary;
+  margin-top: 12rpx;
+}
+
+.feeding-plan-line {
+  flex: 1;
+  width: 4rpx;
+  background: linear-gradient(180deg, $color-primary, $color-divider);
+  min-height: 80rpx;
+}
+
+.feeding-plan-card {
+  flex: 1;
+  @include card-base;
+  padding: 28rpx 32rpx;
+  margin-bottom: 32rpx;
+  background: linear-gradient(135deg, $color-bg-card, rgba($color-primary, 0.02));
+}
+
+.feeding-plan-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.feeding-plan-time {
+  font-size: 36rpx;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+}
+
+.feeding-plan-ratio {
+  font-size: 26rpx;
+  color: $color-text-inverse;
+  background: $color-primary;
+  padding: 4rpx 20rpx;
+  border-radius: 12px;
+}
+
+.feeding-plan-label {
+  font-size: 30rpx;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: 8rpx;
+}
+
+.feeding-plan-tip {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  line-height: 1.5;
+}
+
+.feeding-plan-tips {
+  @include card-base;
+  margin: 0 32rpx;
+  padding: 32rpx;
+  background: linear-gradient(135deg, rgba($color-primary, 0.04), $color-bg-card);
+}
+
+.feeding-plan-tips-title {
+  font-size: 28rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 20rpx;
+}
+
+.feeding-plan-tip-item {
+  margin-bottom: 12rpx;
+}
+
+.feeding-plan-tip-item:last-child {
+  margin-bottom: 0;
+}
+
+.feeding-plan-tip-text {
+  font-size: 26rpx;
+  color: $color-text-secondary;
+  line-height: 1.6;
+}
+
+.feeding-record-card {
+  @include card-base;
+  padding: 32rpx;
+  margin: 0 32rpx 24rpx;
+  transition: all $transition-normal;
+  animation: cardStaggerIn 0.4s ease-out both;
+}
+
+.feeding-record-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+  padding-bottom: 24rpx;
+  border-bottom: 1px solid $color-divider;
+}
+
+.feeding-record-header-right {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.feeding-record-date {
+  font-size: 28rpx;
+  color: $color-text-secondary;
+}
+
+.feeding-record-delete {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: rgba($color-danger, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  @include press-feedback;
+}
+
+.feeding-record-delete-icon {
+  font-size: 28rpx;
+  color: $color-danger;
+  font-weight: $font-weight-bold;
+}
+
+.feeding-record-appetite {
+  font-size: 24rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 4px;
+}
+
+.feeding-appetite-good {
+  background: rgba($color-success, 0.15);
+  color: $color-success;
+}
+
+.feeding-appetite-normal {
+  background: rgba($color-primary, 0.15);
+  color: $color-primary;
+}
+
+.feeding-appetite-poor {
+  background: rgba($color-danger, 0.15);
+  color: $color-danger;
+}
+
+.feeding-record-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.feeding-record-food {
+  font-size: 30rpx;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+}
+
+.feeding-record-amount {
+  font-size: 28rpx;
+  color: $color-text-secondary;
+}
+
+.feeding-record-tags {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 8rpx;
+}
+
+.feeding-record-tag {
+  font-size: 24rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 4px;
+}
+
+.feeding-stool-normal {
+  background: rgba($color-success, 0.15);
+  color: $color-success;
+}
+
+.feeding-stool-loose {
+  background: rgba($color-primary, 0.15);
+  color: $color-primary;
+}
+
+.feeding-stool-hard {
+  background: rgba($color-danger, 0.15);
+  color: $color-danger;
+}
+
+.feeding-energy-high {
+  background: rgba($color-primary, 0.15);
+  color: $color-primary;
+}
+
+.feeding-energy-normal {
+  background: $color-primary-bg;
+  color: $color-text-secondary;
+}
+
+.feeding-energy-low {
+  background: rgba($color-danger, 0.15);
+  color: $color-danger;
+}
+
+.feeding-record-notes {
+  font-size: 26rpx;
+  color: $color-text-tertiary;
+  margin-top: 8rpx;
+  padding-top: 16rpx;
+  border-top: 1px dashed $color-divider;
+}
+
+.feeding-empty-state {
+  text-align: center;
+  padding: 80rpx 48rpx;
+  animation: fadeInScale 0.4s ease-out;
+}
+
+.feeding-empty-icon {
+  font-size: 96rpx;
+  margin-bottom: 32rpx;
+}
+
+.feeding-empty-title {
+  font-size: 32rpx;
+  color: $color-text-primary;
+  margin-bottom: 16rpx;
+}
+
+.feeding-empty-hint {
+  font-size: 28rpx;
+  color: $color-text-tertiary;
+}
+
+.feeding-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: $color-bg-overlay;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.feeding-modal {
+  background: linear-gradient(180deg, $color-bg-card 0%, $color-bg-page 100%);
+  width: 100%;
+  max-height: 80vh;
+  border-radius: 20px 20px 0 0;
+  display: flex;
+  flex-direction: column;
+  animation: sheetUp 0.3s ease-out;
+}
+
+.feeding-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx 40rpx;
+  border-bottom: 1px solid $color-divider;
+}
+
+.feeding-modal-title {
+  font-size: 36rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.feeding-modal-close {
+  font-size: 48rpx;
+  color: $color-text-tertiary;
+  padding: 8rpx 16rpx;
+  @include press-feedback;
+}
+
+.feeding-modal-body {
+  flex: 1;
+  padding: 32rpx 40rpx;
+  overflow-y: auto;
+}
+
+.feeding-form-group {
+  margin-bottom: 32rpx;
+}
+
+.feeding-form-label {
+  font-size: 28rpx;
+  color: $color-text-primary;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.feeding-form-input {
+  width: 100%;
+  height: 88rpx;
+  padding: 0 24rpx;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  font-size: 28rpx;
+  background: $color-primary-bg;
+  color: $color-text-primary;
+  box-sizing: border-box;
+}
+
+.feeding-form-picker {
+  width: 100%;
+  height: 88rpx;
+  padding: 0 24rpx;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  font-size: 28rpx;
+  background: $color-primary-bg;
+  color: $color-text-primary;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.feeding-form-amount {
+  display: flex;
+  gap: 16rpx;
+}
+
+.feeding-form-amount-input {
+  flex: 1;
+}
+
+.feeding-form-unit {
+  width: 120rpx;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  font-size: 28rpx;
+  background: $color-primary-bg;
+  color: $color-text-secondary;
+}
+
+.feeding-form-meals {
+  display: flex;
+  gap: 16rpx;
+}
+
+.feeding-meal-option {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  font-size: 28rpx;
+  color: $color-text-secondary;
+  background: $color-primary-bg;
+  transition: all $transition-fast;
+  @include press-feedback;
+}
+
+.feeding-meal-active {
+  background: $color-primary;
+  color: $color-text-inverse;
+  border-color: $color-primary;
+}
+
+.feeding-form-rating {
+  display: flex;
+  gap: 24rpx;
+}
+
+.feeding-rating-option {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  background: $color-primary-bg;
+  transition: all $transition-fast;
+  color: $color-text-secondary;
+  @include press-feedback;
+}
+
+.feeding-rating-active {
+  background: $color-primary;
+  color: $color-text-inverse;
+  border-color: $color-primary;
+}
+
+.feeding-rating-label {
+  font-size: 28rpx;
+}
+
+.feeding-form-textarea {
+  width: 100%;
+  height: 160rpx;
+  padding: 16rpx 24rpx;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  font-size: 28rpx;
+  background: $color-primary-bg;
+  color: $color-text-primary;
+  box-sizing: border-box;
+}
+
+.feeding-modal-footer {
+  display: flex;
+  gap: 24rpx;
+  padding: 32rpx 40rpx;
+  border-top: 1px solid $color-divider;
+}
+
+.feeding-modal-btn {
+  flex: 1;
+  text-align: center;
+  padding: 24rpx;
+  border-radius: 8px;
+  font-size: 32rpx;
+  @include press-feedback;
+}
+
+.feeding-modal-btn-cancel {
+  background: $color-primary-bg;
+  color: $color-text-secondary;
+  border: 1px solid $color-border;
+}
+
+.feeding-modal-btn-confirm {
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  color: $color-text-inverse;
+}
+
+.feeding-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.feeding-empty-text {
+  font-size: 32rpx;
+  color: $color-text-tertiary;
+}
+
+.feeding-bottom-safe {
+  height: 80rpx;
+}

@@ -1,0 +1,2737 @@
+{
+  "生成时间": "2026-09-10T13:46:33.941Z",
+  "失效处数": 380,
+  "受影响文件数": 34,
+  "按变量": {
+    "color-primary": {
+      "cssVar": "primary",
+      "count": 237
+    },
+    "color-warning": {
+      "cssVar": "warning",
+      "count": 11
+    },
+    "color-bg-page": {
+      "cssVar": "bg-page",
+      "count": 2
+    },
+    "color-bg-card": {
+      "cssVar": "bg-card",
+      "count": 6
+    },
+    "color-primary-light": {
+      "cssVar": "primary-light",
+      "count": 15
+    },
+    "color-border": {
+      "cssVar": "border",
+      "count": 1
+    },
+    "color-danger": {
+      "cssVar": "danger",
+      "count": 22
+    },
+    "color-sage": {
+      "cssVar": "sage",
+      "count": 10
+    },
+    "color-gold": {
+      "cssVar": "gold",
+      "count": 18
+    },
+    "color-gold-deep": {
+      "cssVar": "gold-deep",
+      "count": 4
+    },
+    "color-teal": {
+      "cssVar": "teal",
+      "count": 18
+    },
+    "color-success": {
+      "cssVar": "success",
+      "count": 18
+    },
+    "color-coral": {
+      "cssVar": "coral",
+      "count": 7
+    },
+    "color-text-hint": {
+      "cssVar": "text-hint",
+      "count": 4
+    },
+    "color-text-primary": {
+      "cssVar": "text-primary",
+      "count": 5
+    },
+    "color-text-secondary": {
+      "cssVar": "text-secondary",
+      "count": 1
+    },
+    "color-text-tertiary": {
+      "cssVar": "text-tertiary",
+      "count": 1
+    }
+  },
+  "明细": [
+    {
+      "file": "pages\\family\\index.scss",
+      "line": 111,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 2rpx solid rgba($color-primary, 0.45);"
+    },
+    {
+      "file": "pages\\family\\index.scss",
+      "line": 487,
+      "varName": "color-warning",
+      "cssVar": "warning",
+      "text": "background: rgba($color-warning, 0.12);"
+    },
+    {
+      "file": "pages\\family\\index.scss",
+      "line": 580,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.06);"
+    },
+    {
+      "file": "pages\\family\\index.scss",
+      "line": 680,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.04);"
+    },
+    {
+      "file": "pages\\family\\index.scss",
+      "line": 742,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 75,
+      "varName": "color-bg-page",
+      "cssVar": "bg-page",
+      "text": "background: rgba($color-bg-page, 0.94);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 94,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1rpx solid rgba($color-primary, 0.25);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 135,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 20rpx rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 173,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 174,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1rpx solid rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 178,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 250,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 16rpx rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 269,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 16rpx rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 385,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 16rpx rgba($color-primary, 0.2);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 399,
+      "varName": "color-bg-card",
+      "cssVar": "bg-card",
+      "text": "background: rgba($color-bg-card, 0.8);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 412,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 16rpx rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 447,
+      "varName": "color-primary-light",
+      "cssVar": "primary-light",
+      "text": "background: rgba($color-primary-light, 0.08);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 448,
+      "varName": "color-primary-light",
+      "cssVar": "primary-light",
+      "text": "border: 1rpx solid rgba($color-primary-light, 0.15);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 579,
+      "varName": "color-bg-page",
+      "cssVar": "bg-page",
+      "text": "background: rgba($color-bg-page, 0.96);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 620,
+      "varName": "color-border",
+      "cssVar": "border",
+      "text": "background: rgba($color-border, 0.4);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 679,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 683,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.12);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 717,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 727,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.1);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 789,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 811,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 816,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.12);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 839,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 2rpx 12rpx rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1065,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "border: 1rpx solid rgba($color-danger, 0.3);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1070,
+      "varName": "color-sage",
+      "cssVar": "sage",
+      "text": "background: rgba($color-sage, 0.1);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1071,
+      "varName": "color-sage",
+      "cssVar": "sage",
+      "text": "border: 1rpx solid rgba($color-sage, 0.3);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1080,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "background: rgba($color-danger, 0.08);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1081,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "border: 1rpx solid rgba($color-danger, 0.25);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1181,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 2rpx 8rpx rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1192,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-color: rgba($color-primary, 0.4);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1199,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-color: rgba($color-primary, 0.35);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1206,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-top: 1rpx dashed rgba($color-primary, 0.2);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1223,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.06), rgba($color-primary, 0.12));"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1223,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.06), rgba($color-primary, 0.12));"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1224,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1rpx dashed rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1229,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.12), rgba($color-primary, 0.2));"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1229,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.12), rgba($color-primary, 0.2));"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1230,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-color: rgba($color-primary, 0.5);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1253,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.04), rgba($color-primary, 0.08));"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1253,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.04), rgba($color-primary, 0.08));"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1255,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1rpx dashed rgba($color-primary, 0.2);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1445,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 4rpx 12rpx rgba($color-primary, 0.25);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1616,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-color: rgba($color-primary, 0.2);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1621,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-color: rgba($color-primary, 0.25);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1748,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 24rpx rgba($color-primary, 0.3), 0 0 60rpx rgba($color-primary, 0.18), 0 0 110rpx rgba($color-gold, 0.12);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1748,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 24rpx rgba($color-primary, 0.3), 0 0 60rpx rgba($color-primary, 0.18), 0 0 110rpx rgba($color-gold, 0.12);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1748,
+      "varName": "color-gold",
+      "cssVar": "gold",
+      "text": "box-shadow: 0 0 24rpx rgba($color-primary, 0.3), 0 0 60rpx rgba($color-primary, 0.18), 0 0 110rpx rgba($color-gold, 0.12);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1854,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: $shadow-button, 0 0 30rpx rgba($color-primary, 0.35), 0 0 80rpx rgba($color-gold, 0.2);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1854,
+      "varName": "color-gold",
+      "cssVar": "gold",
+      "text": "box-shadow: $shadow-button, 0 0 30rpx rgba($color-primary, 0.35), 0 0 80rpx rgba($color-gold, 0.2);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1954,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-color: rgba($color-primary, 0.35);"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1970,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "&--coral { background: rgba($color-primary, 0.12); }"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1971,
+      "varName": "color-gold-deep",
+      "cssVar": "gold-deep",
+      "text": "&--gold { background: rgba($color-gold-deep, 0.14); }"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1972,
+      "varName": "color-sage",
+      "cssVar": "sage",
+      "text": "&--sage { background: rgba($color-sage, 0.14); }"
+    },
+    {
+      "file": "pages\\index\\index.scss",
+      "line": 1973,
+      "varName": "color-teal",
+      "cssVar": "teal",
+      "text": "&--teal { background: rgba($color-teal, 0.14); }"
+    },
+    {
+      "file": "pages\\mine\\index.scss",
+      "line": 36,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "0 10rpx 28rpx rgba($color-primary, 0.16),"
+    },
+    {
+      "file": "pages\\mine\\index.scss",
+      "line": 37,
+      "varName": "color-bg-card",
+      "cssVar": "bg-card",
+      "text": "0 0 0 12rpx rgba($color-bg-card, 0.5);"
+    },
+    {
+      "file": "pages\\mine\\index.scss",
+      "line": 88,
+      "varName": "color-gold",
+      "cssVar": "gold",
+      "text": "box-shadow: 0 4rpx 16rpx -4rpx rgba($color-gold, 0.45);"
+    },
+    {
+      "file": "pages\\mine\\index.scss",
+      "line": 132,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "&--coral { background: rgba($color-primary, 0.14); color: $color-primary; }"
+    },
+    {
+      "file": "pages\\mine\\index.scss",
+      "line": 133,
+      "varName": "color-gold",
+      "cssVar": "gold",
+      "text": "&--gold { background: rgba($color-gold, 0.2); color: $color-gold-deep; }"
+    },
+    {
+      "file": "pages\\mine\\index.scss",
+      "line": 134,
+      "varName": "color-teal",
+      "cssVar": "teal",
+      "text": "&--info { background: rgba($color-teal, 0.16); color: $color-teal; }"
+    },
+    {
+      "file": "pages\\mine\\index.scss",
+      "line": 144,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "text-shadow: 0 0 12rpx rgba($color-primary, 0.28), 0 0 36rpx rgba($color-gold, 0.14);"
+    },
+    {
+      "file": "pages\\mine\\index.scss",
+      "line": 144,
+      "varName": "color-gold",
+      "cssVar": "gold",
+      "text": "text-shadow: 0 0 12rpx rgba($color-primary, 0.28), 0 0 36rpx rgba($color-gold, 0.14);"
+    },
+    {
+      "file": "pages\\mine\\index.scss",
+      "line": 172,
+      "varName": "color-gold",
+      "cssVar": "gold",
+      "text": "background: linear-gradient(135deg, rgba($color-gold, 0.22), rgba($color-primary, 0.16));"
+    },
+    {
+      "file": "pages\\mine\\index.scss",
+      "line": 172,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-gold, 0.22), rgba($color-primary, 0.16));"
+    },
+    {
+      "file": "pages\\mine\\index.scss",
+      "line": 190,
+      "varName": "color-gold",
+      "cssVar": "gold",
+      "text": "text-shadow: 0 0 12rpx rgba($color-gold, 0.22);"
+    },
+    {
+      "file": "pages\\mine\\index.scss",
+      "line": 233,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 20rpx rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pages\\mine\\index.scss",
+      "line": 284,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 2rpx 8rpx rgba($color-primary, 0.4);"
+    },
+    {
+      "file": "pages\\mine\\index.scss",
+      "line": 343,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.14);"
+    },
+    {
+      "file": "pages\\pet-profile\\index.scss",
+      "line": 42,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: radial-gradient(circle, rgba($color-primary, 0.16) 0%, transparent 66%);"
+    },
+    {
+      "file": "pages\\pet-profile\\index.scss",
+      "line": 126,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1rpx solid rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pages\\pet-profile\\index.scss",
+      "line": 146,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1rpx solid rgba($color-primary, 0.5);"
+    },
+    {
+      "file": "pages\\pet-profile\\index.scss",
+      "line": 148,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.07);"
+    },
+    {
+      "file": "pages\\pet-profile\\index.scss",
+      "line": 223,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pages\\pet-profile\\index.scss",
+      "line": 260,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "&--coral { background: rgba($color-primary, 0.14); color: $color-primary; }"
+    },
+    {
+      "file": "pages\\pet-profile\\index.scss",
+      "line": 261,
+      "varName": "color-gold",
+      "cssVar": "gold",
+      "text": "&--gold { background: rgba($color-gold, 0.2); color: $color-gold-deep; }"
+    },
+    {
+      "file": "pages\\pet-profile\\index.scss",
+      "line": 262,
+      "varName": "color-success",
+      "cssVar": "success",
+      "text": "&--success { background: rgba($color-success, 0.14); color: $color-success; }"
+    },
+    {
+      "file": "pages\\pet-profile\\index.scss",
+      "line": 263,
+      "varName": "color-teal",
+      "cssVar": "teal",
+      "text": "&--info { background: rgba($color-teal, 0.14); color: $color-teal; }"
+    },
+    {
+      "file": "pages\\pet-profile\\index.scss",
+      "line": 448,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-color: rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pages\\pet-profile\\index.scss",
+      "line": 532,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-color: rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pages\\pet-profile\\index.scss",
+      "line": 533,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.05);"
+    },
+    {
+      "file": "pages\\pet-profile\\index.scss",
+      "line": 559,
+      "varName": "color-coral",
+      "cssVar": "coral",
+      "text": "border: 1px solid rgba($color-coral, 0.3);"
+    },
+    {
+      "file": "pages\\pet-profile\\index.scss",
+      "line": 573,
+      "varName": "color-coral",
+      "cssVar": "coral",
+      "text": "background: rgba($color-coral, 0.08);"
+    },
+    {
+      "file": "pages\\pet-profile\\index.scss",
+      "line": 574,
+      "varName": "color-coral",
+      "cssVar": "coral",
+      "text": "border: 1px solid rgba($color-coral, 0.25);"
+    },
+    {
+      "file": "pages\\pet-profile\\index.scss",
+      "line": 582,
+      "varName": "color-coral",
+      "cssVar": "coral",
+      "text": "background: rgba($color-coral, 0.15);"
+    },
+    {
+      "file": "pages\\pet-profile\\index.scss",
+      "line": 622,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 246,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: radial-gradient(ellipse at center, rgba($color-primary, 0.08), transparent 70%);"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 340,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 20rpx rgba($color-primary, 0.5);"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 346,
+      "varName": "color-coral",
+      "cssVar": "coral",
+      "text": "box-shadow: 0 0 14rpx rgba($color-coral, 0.4);"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 351,
+      "varName": "color-teal",
+      "cssVar": "teal",
+      "text": "box-shadow: 0 0 14rpx rgba($color-teal, 0.4);"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 355,
+      "varName": "color-text-hint",
+      "cssVar": "text-hint",
+      "text": "background: rgba($color-text-hint, 0.4);"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 369,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(180deg, $color-primary 0%, rgba($color-primary, 0.1) 100%);"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 391,
+      "varName": "color-text-hint",
+      "cssVar": "text-hint",
+      "text": "border-color: rgba($color-text-hint, 0.3);"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 395,
+      "varName": "color-teal",
+      "cssVar": "teal",
+      "text": "border-color: rgba($color-teal, 0.4);"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 396,
+      "varName": "color-teal",
+      "cssVar": "teal",
+      "text": "background: linear-gradient(135deg, rgba($color-teal, 0.08), $color-bg-card);"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 436,
+      "varName": "color-teal",
+      "cssVar": "teal",
+      "text": "background: rgba($color-teal, 0.14);"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 437,
+      "varName": "color-teal",
+      "cssVar": "teal",
+      "text": "border: 1px solid rgba($color-teal, 0.35);"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 450,
+      "varName": "color-success",
+      "cssVar": "success",
+      "text": "background: rgba($color-success, 0.14);"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 451,
+      "varName": "color-success",
+      "cssVar": "success",
+      "text": "border: 1px solid rgba($color-success, 0.35);"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 463,
+      "varName": "color-text-hint",
+      "cssVar": "text-hint",
+      "text": "background: rgba($color-text-hint, 0.15);"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 464,
+      "varName": "color-text-hint",
+      "cssVar": "text-hint",
+      "text": "border: 1px solid rgba($color-text-hint, 0.3);"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 768,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.12), rgba($color-coral, 0.12));"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 768,
+      "varName": "color-coral",
+      "cssVar": "coral",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.12), rgba($color-coral, 0.12));"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 769,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1rpx solid rgba($color-primary, 0.35);"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 774,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.22), rgba($color-coral, 0.22));"
+    },
+    {
+      "file": "pages\\timeline\\index.scss",
+      "line": 774,
+      "varName": "color-coral",
+      "cssVar": "coral",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.22), rgba($color-coral, 0.22));"
+    },
+    {
+      "file": "pagesMemoir\\memoir-daily\\index.scss",
+      "line": 98,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.08), $color-bg-card);"
+    },
+    {
+      "file": "pagesMemoir\\memoir-daily\\index.scss",
+      "line": 99,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-color: rgba($color-primary, 0.25);"
+    },
+    {
+      "file": "pagesMemoir\\memoir-daily\\index.scss",
+      "line": 104,
+      "varName": "color-gold-deep",
+      "cssVar": "gold-deep",
+      "text": "border-color: rgba($color-gold-deep, 0.3);"
+    },
+    {
+      "file": "pagesPet\\add\\index.scss",
+      "line": 138,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 16rpx rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesPet\\add\\index.scss",
+      "line": 168,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 16rpx rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesPet\\add\\index.scss",
+      "line": 237,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 8rpx 32rpx rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pagesPet\\add\\index.scss",
+      "line": 249,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-color: rgba($color-primary, 0.25);"
+    },
+    {
+      "file": "pagesPet\\add\\index.scss",
+      "line": 255,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\add\\index.scss",
+      "line": 261,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-bottom: 2rpx solid rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesPet\\add\\index.scss",
+      "line": 301,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.12);"
+    },
+    {
+      "file": "pagesPet\\add\\index.scss",
+      "line": 413,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.12), rgba($color-primary, 0.06));"
+    },
+    {
+      "file": "pagesPet\\add\\index.scss",
+      "line": 413,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.12), rgba($color-primary, 0.06));"
+    },
+    {
+      "file": "pagesPet\\add\\index.scss",
+      "line": 414,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 2rpx solid rgba($color-primary, 0.35);"
+    },
+    {
+      "file": "pagesPet\\add\\index.scss",
+      "line": 457,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 2rpx solid rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pagesPet\\add\\index.scss",
+      "line": 509,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.1);"
+    },
+    {
+      "file": "pagesPet\\add\\index.scss",
+      "line": 510,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 2rpx solid rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pagesPet\\add\\index.scss",
+      "line": 532,
+      "varName": "color-bg-card",
+      "cssVar": "bg-card",
+      "text": "background: rgba($color-bg-card, 0.85);"
+    },
+    {
+      "file": "pagesPet\\add\\index.scss",
+      "line": 545,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 6rpx solid rgba($color-primary, 0.2);"
+    },
+    {
+      "file": "pagesPet\\add\\index.scss",
+      "line": 564,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\add\\index.scss",
+      "line": 565,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 2rpx solid rgba($color-primary, 0.25);"
+    },
+    {
+      "file": "pagesPet\\avatar-customize\\index.scss",
+      "line": 398,
+      "varName": "color-teal",
+      "cssVar": "teal",
+      "text": "background: rgba($color-teal, 0.16);"
+    },
+    {
+      "file": "pagesPet\\breed\\index.scss",
+      "line": 186,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.12);"
+    },
+    {
+      "file": "pagesPet\\breed\\index.scss",
+      "line": 232,
+      "varName": "color-bg-card",
+      "cssVar": "bg-card",
+      "text": "background: rgba($color-bg-card, 0.95);"
+    },
+    {
+      "file": "pagesPet\\breed\\index.scss",
+      "line": 253,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 8px 24px rgba($color-primary, 0.4);"
+    },
+    {
+      "file": "pagesPet\\breed\\index.scss",
+      "line": 260,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 4px 12px rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pagesPet\\breed-detail\\index.scss",
+      "line": 69,
+      "varName": "color-primary-light",
+      "cssVar": "primary-light",
+      "text": "border: 1px solid rgba($color-primary-light, 0.3);"
+    },
+    {
+      "file": "pagesPet\\breed-detail\\index.scss",
+      "line": 142,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.12);"
+    },
+    {
+      "file": "pagesPet\\breed-detail\\index.scss",
+      "line": 147,
+      "varName": "color-success",
+      "cssVar": "success",
+      "text": "background: rgba($color-success, 0.12);"
+    },
+    {
+      "file": "pagesPet\\breed-detail\\index.scss",
+      "line": 163,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "background: rgba($color-danger, 0.08);"
+    },
+    {
+      "file": "pagesPet\\breed-detail\\index.scss",
+      "line": 195,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\breed-detail\\index.scss",
+      "line": 227,
+      "varName": "color-success",
+      "cssVar": "success",
+      "text": "background: rgba($color-success, 0.08);"
+    },
+    {
+      "file": "pagesPet\\breed-detail\\index.scss",
+      "line": 311,
+      "varName": "color-bg-card",
+      "cssVar": "bg-card",
+      "text": "background: rgba($color-bg-card, 0.95);"
+    },
+    {
+      "file": "pagesPet\\breed-detail\\index.scss",
+      "line": 322,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.25);"
+    },
+    {
+      "file": "pagesPet\\checkin\\index.scss",
+      "line": 124,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "&--coral { background: rgba($color-primary, 0.14); color: $color-primary; }"
+    },
+    {
+      "file": "pagesPet\\checkin\\index.scss",
+      "line": 125,
+      "varName": "color-gold",
+      "cssVar": "gold",
+      "text": "&--gold { background: rgba($color-gold, 0.18); color: $color-gold-deep; }"
+    },
+    {
+      "file": "pagesPet\\checkin\\index.scss",
+      "line": 126,
+      "varName": "color-teal",
+      "cssVar": "teal",
+      "text": "&--info { background: rgba($color-teal, 0.14); color: $color-teal; }"
+    },
+    {
+      "file": "pagesPet\\checkin\\index.scss",
+      "line": 127,
+      "varName": "color-success",
+      "cssVar": "success",
+      "text": "&--success { background: rgba($color-success, 0.14); color: $color-success; }"
+    },
+    {
+      "file": "pagesPet\\checkin\\index.scss",
+      "line": 189,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.2);"
+    },
+    {
+      "file": "pagesPet\\checkin\\index.scss",
+      "line": 237,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\checkin\\index.scss",
+      "line": 262,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.2);"
+    },
+    {
+      "file": "pagesPet\\checkin\\index.scss",
+      "line": 412,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 8rpx 32rpx rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pagesPet\\checkin\\index.scss",
+      "line": 470,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.12);"
+    },
+    {
+      "file": "pagesPet\\checkin\\index.scss",
+      "line": 475,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesPet\\checkin\\index.scss",
+      "line": 536,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\checkin\\index.scss",
+      "line": 538,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1px solid rgba($color-primary, 0.12);"
+    },
+    {
+      "file": "pagesPet\\checkin\\index.scss",
+      "line": 648,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-color: rgba($color-primary, 0.25);"
+    },
+    {
+      "file": "pagesPet\\checkin\\index.scss",
+      "line": 657,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-bottom: 2rpx dashed rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesPet\\checkin\\index.scss",
+      "line": 702,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 6rpx 24rpx rgba($color-primary, 0.25);"
+    },
+    {
+      "file": "pagesPet\\checkin\\index.scss",
+      "line": 718,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-color: rgba($color-primary, 0.25);"
+    },
+    {
+      "file": "pagesPet\\checkin\\index.scss",
+      "line": 771,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 13,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.12) 0%, rgba($color-primary, 0.04) 100%);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 13,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.12) 0%, rgba($color-primary, 0.04) 100%);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 16,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-bottom: 1px solid rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 30,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.1);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 92,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "background: linear-gradient(135deg, rgba($color-danger, 0.1), rgba($color-danger, 0.05));"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 92,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "background: linear-gradient(135deg, rgba($color-danger, 0.1), rgba($color-danger, 0.05));"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 97,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "border: 1px solid rgba($color-danger, 0.2);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 116,
+      "varName": "color-warning",
+      "cssVar": "warning",
+      "text": "background: linear-gradient(180deg, rgba($color-warning, 0.08), rgba($color-warning, 0.02));"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 116,
+      "varName": "color-warning",
+      "cssVar": "warning",
+      "text": "background: linear-gradient(180deg, rgba($color-warning, 0.08), rgba($color-warning, 0.02));"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 117,
+      "varName": "color-warning",
+      "cssVar": "warning",
+      "text": "border: 1px solid rgba($color-warning, 0.2);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 186,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "border-color: rgba($color-danger, 0.3);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 187,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "background: rgba($color-danger, 0.05);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 191,
+      "varName": "color-warning",
+      "cssVar": "warning",
+      "text": "border-color: rgba($color-warning, 0.3);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 192,
+      "varName": "color-warning",
+      "cssVar": "warning",
+      "text": "background: rgba($color-warning, 0.05);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 196,
+      "varName": "color-teal",
+      "cssVar": "teal",
+      "text": "border-color: rgba($color-teal, 0.3);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 197,
+      "varName": "color-teal",
+      "cssVar": "teal",
+      "text": "background: rgba($color-teal, 0.05);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 289,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(180deg, rgba($color-primary, 0.06), rgba($color-primary, 0.02));"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 289,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(180deg, rgba($color-primary, 0.06), rgba($color-primary, 0.02));"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 290,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1px solid rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 388,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 405,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.25);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 462,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.05);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 565,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.1);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 567,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1px solid rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 571,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "background: rgba($color-danger, 0.1);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 573,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "border: 1px solid rgba($color-danger, 0.3);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 706,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.1);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 708,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1px solid rgba($color-primary, 0.2);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 751,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "background: linear-gradient(135deg, rgba($color-danger, 0.03), $color-bg-card);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 760,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 765,
+      "varName": "color-warning",
+      "cssVar": "warning",
+      "text": "background: rgba($color-warning, 0.1);"
+    },
+    {
+      "file": "pagesPet\\chronic-tracking\\index.scss",
+      "line": 769,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "background: rgba($color-danger, 0.08);"
+    },
+    {
+      "file": "pagesPet\\diary\\index.scss",
+      "line": 369,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.06);"
+    },
+    {
+      "file": "pagesPet\\diary\\index.scss",
+      "line": 370,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1px solid rgba($color-primary, 0.12);"
+    },
+    {
+      "file": "pagesPet\\family\\calendar\\index.scss",
+      "line": 77,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesPet\\family\\dashboard\\index.scss",
+      "line": 42,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 4rpx 12rpx rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pagesPet\\family\\dashboard\\index.scss",
+      "line": 90,
+      "varName": "color-sage",
+      "cssVar": "sage",
+      "text": "background: linear-gradient(135deg, rgba($color-sage, 0.08), rgba($color-primary, 0.06));"
+    },
+    {
+      "file": "pagesPet\\family\\dashboard\\index.scss",
+      "line": 90,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-sage, 0.08), rgba($color-primary, 0.06));"
+    },
+    {
+      "file": "pagesPet\\family\\dashboard\\index.scss",
+      "line": 160,
+      "varName": "color-sage",
+      "cssVar": "sage",
+      "text": "background: rgba($color-sage, 0.08);"
+    },
+    {
+      "file": "pagesPet\\family\\dashboard\\index.scss",
+      "line": 161,
+      "varName": "color-sage",
+      "cssVar": "sage",
+      "text": "border-color: rgba($color-sage, 0.2);"
+    },
+    {
+      "file": "pagesPet\\family\\dashboard\\index.scss",
+      "line": 176,
+      "varName": "color-sage",
+      "cssVar": "sage",
+      "text": "border-color: rgba($color-sage, 0.4);"
+    },
+    {
+      "file": "pagesPet\\family\\dashboard\\index.scss",
+      "line": 177,
+      "varName": "color-sage",
+      "cssVar": "sage",
+      "text": "background: rgba($color-sage, 0.1);"
+    },
+    {
+      "file": "pagesPet\\family\\dashboard\\index.scss",
+      "line": 203,
+      "varName": "color-sage",
+      "cssVar": "sage",
+      "text": "background: rgba($color-sage, 0.12);"
+    },
+    {
+      "file": "pagesPet\\family\\dashboard\\index.scss",
+      "line": 281,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1px solid rgba($color-primary, 0.2);"
+    },
+    {
+      "file": "pagesPet\\family\\dashboard\\index.scss",
+      "line": 284,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesPet\\family\\dashboard\\index.scss",
+      "line": 322,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "background: rgba($color-danger, 0.05);"
+    },
+    {
+      "file": "pagesPet\\family\\dashboard\\index.scss",
+      "line": 1048,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 0 0 rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pagesPet\\family\\dashboard\\index.scss",
+      "line": 1051,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 0 12rpx rgba($color-primary, 0.05);"
+    },
+    {
+      "file": "pagesPet\\family\\dashboard\\index.scss",
+      "line": 1054,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 0 0 rgba($color-primary, 0);"
+    },
+    {
+      "file": "pagesPet\\family\\dashboard\\index.scss",
+      "line": 1133,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.85);"
+    },
+    {
+      "file": "pagesPet\\family\\dashboard\\index.scss",
+      "line": 1230,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-color: rgba($color-primary, 0.25);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 275,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 16rpx rgba($color-primary, 0.2);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 316,
+      "varName": "color-primary-light",
+      "cssVar": "primary-light",
+      "text": "background: rgba($color-primary-light, 0.15);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 401,
+      "varName": "color-primary-light",
+      "cssVar": "primary-light",
+      "text": "background: linear-gradient(to bottom, $color-primary-light, rgba($color-primary-light, 0.3));"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 405,
+      "varName": "color-primary-light",
+      "cssVar": "primary-light",
+      "text": "background: linear-gradient(to top, $color-primary-light, rgba($color-primary-light, 0.3));"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 409,
+      "varName": "color-primary-light",
+      "cssVar": "primary-light",
+      "text": "background: linear-gradient(to bottom, $color-primary-light, rgba($color-primary-light, 0.3));"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 426,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.08), rgba($color-primary-light, 0.12));"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 426,
+      "varName": "color-primary-light",
+      "cssVar": "primary-light",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.08), rgba($color-primary-light, 0.12));"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 427,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1px solid rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 459,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 464,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 2px solid rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 535,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 32rpx rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 540,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 48rpx rgba($color-primary, 0.25);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 551,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: radial-gradient(ellipse, rgba($color-primary, 0.1), transparent);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 568,
+      "varName": "color-primary-light",
+      "cssVar": "primary-light",
+      "text": "background: rgba($color-primary-light, 0.2);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 628,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.1);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 634,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.2);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 804,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.1);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 851,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.06);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 876,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 884,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.03);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 885,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1px solid rgba($color-primary, 0.1);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 909,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.12);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 910,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 2px solid rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 914,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 4rpx 12rpx rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 926,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.2), rgba($color-primary-light, 0.15));"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 926,
+      "varName": "color-primary-light",
+      "cssVar": "primary-light",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.2), rgba($color-primary-light, 0.15));"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 947,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.1);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 978,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-left: 2px solid rgba($color-primary, 0.4);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 979,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-bottom: 2px solid rgba($color-primary, 0.4);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 996,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-top: 2px dashed rgba($color-primary, 0.4);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 1049,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-top: 2px solid rgba($color-primary, 0.4);"
+    },
+    {
+      "file": "pagesPet\\family\\lineage\\index.scss",
+      "line": 1051,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "&--solid { border-top-style: solid; border-top-color: rgba($color-primary, 0.5); }"
+    },
+    {
+      "file": "pagesPet\\family-tree\\index.scss",
+      "line": 211,
+      "varName": "color-gold",
+      "cssVar": "gold",
+      "text": "background: linear-gradient(135deg, rgba($color-gold, 0.35), rgba($color-primary, 0.2));"
+    },
+    {
+      "file": "pagesPet\\family-tree\\index.scss",
+      "line": 211,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-gold, 0.35), rgba($color-primary, 0.2));"
+    },
+    {
+      "file": "pagesPet\\family-tree\\index.scss",
+      "line": 325,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.04);"
+    },
+    {
+      "file": "pagesPet\\family-tree\\index.scss",
+      "line": 337,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.06);"
+    },
+    {
+      "file": "pagesPet\\family-tree\\index.scss",
+      "line": 423,
+      "varName": "color-gold",
+      "cssVar": "gold",
+      "text": "background: linear-gradient(135deg, rgba($color-gold, 0.28), rgba($color-primary, 0.18));"
+    },
+    {
+      "file": "pagesPet\\family-tree\\index.scss",
+      "line": 423,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-gold, 0.28), rgba($color-primary, 0.18));"
+    },
+    {
+      "file": "pagesPet\\family-tree\\index.scss",
+      "line": 454,
+      "varName": "color-gold",
+      "cssVar": "gold",
+      "text": "background: rgba($color-gold, 0.22);"
+    },
+    {
+      "file": "pagesPet\\family-tree\\index.scss",
+      "line": 507,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "background: rgba($color-danger, 0.1);"
+    },
+    {
+      "file": "pagesPet\\family-tree\\index.scss",
+      "line": 574,
+      "varName": "color-text-primary",
+      "cssVar": "text-primary",
+      "text": "border-bottom: 1rpx solid rgba($color-text-primary, 0.06);"
+    },
+    {
+      "file": "pagesPet\\family-tree\\index.scss",
+      "line": 609,
+      "varName": "color-text-primary",
+      "cssVar": "text-primary",
+      "text": "background: rgba($color-text-primary, 0.04);"
+    },
+    {
+      "file": "pagesPet\\family-tree\\index.scss",
+      "line": 632,
+      "varName": "color-text-primary",
+      "cssVar": "text-primary",
+      "text": "background: rgba($color-text-primary, 0.04);"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 13,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.12) 0%, rgba($color-primary, 0.04) 100%);"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 13,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.12) 0%, rgba($color-primary, 0.04) 100%);"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 16,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-bottom: 1px solid rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 87,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 104,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.25);"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 132,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(180deg, rgba($color-primary, 0.06), rgba($color-primary, 0.02));"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 132,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(180deg, rgba($color-primary, 0.06), rgba($color-primary, 0.02));"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 133,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1px solid rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 296,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, $color-bg-card, rgba($color-primary, 0.02));"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 337,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: linear-gradient(135deg, rgba($color-primary, 0.04), $color-bg-card);"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 393,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "background: rgba($color-danger, 0.1);"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 413,
+      "varName": "color-success",
+      "cssVar": "success",
+      "text": "background: rgba($color-success, 0.15);"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 418,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 423,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "background: rgba($color-danger, 0.15);"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 457,
+      "varName": "color-success",
+      "cssVar": "success",
+      "text": "background: rgba($color-success, 0.15);"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 462,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 467,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "background: rgba($color-danger, 0.15);"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 472,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesPet\\feeding-advice\\index.scss",
+      "line": 482,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "background: rgba($color-danger, 0.15);"
+    },
+    {
+      "file": "pagesPet\\food-query\\index.scss",
+      "line": 68,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\food-query\\index.scss",
+      "line": 69,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1px solid rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesPet\\food-query\\index.scss",
+      "line": 75,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.2);"
+    },
+    {
+      "file": "pagesPet\\food-query\\index.scss",
+      "line": 117,
+      "varName": "color-primary-light",
+      "cssVar": "primary-light",
+      "text": "box-shadow: 0 0 0 2rpx rgba($color-primary-light, 0.15);"
+    },
+    {
+      "file": "pagesPet\\food-query\\index.scss",
+      "line": 186,
+      "varName": "color-success",
+      "cssVar": "success",
+      "text": "background: rgba($color-success, 0.12);"
+    },
+    {
+      "file": "pagesPet\\food-query\\index.scss",
+      "line": 187,
+      "varName": "color-success",
+      "cssVar": "success",
+      "text": "border: 1rpx solid rgba($color-success, 0.26);"
+    },
+    {
+      "file": "pagesPet\\food-query\\index.scss",
+      "line": 191,
+      "varName": "color-warning",
+      "cssVar": "warning",
+      "text": "background: rgba($color-warning, 0.12);"
+    },
+    {
+      "file": "pagesPet\\food-query\\index.scss",
+      "line": 192,
+      "varName": "color-warning",
+      "cssVar": "warning",
+      "text": "border: 1rpx solid rgba($color-warning, 0.26);"
+    },
+    {
+      "file": "pagesPet\\food-query\\index.scss",
+      "line": 196,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "background: rgba($color-danger, 0.12);"
+    },
+    {
+      "file": "pagesPet\\food-query\\index.scss",
+      "line": 197,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "border: 1rpx solid rgba($color-danger, 0.26);"
+    },
+    {
+      "file": "pagesPet\\food-query\\index.scss",
+      "line": 319,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.2);"
+    },
+    {
+      "file": "pagesPet\\food-query\\index.scss",
+      "line": 429,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\grief\\index.scss",
+      "line": 46,
+      "varName": "color-text-primary",
+      "cssVar": "text-primary",
+      "text": "background: linear-gradient(to top, rgba($color-text-primary, 0.5), transparent);"
+    },
+    {
+      "file": "pagesPet\\grief\\index.scss",
+      "line": 63,
+      "varName": "color-text-primary",
+      "cssVar": "text-primary",
+      "text": "text-shadow: 0 2rpx 12rpx rgba($color-text-primary, 0.45);"
+    },
+    {
+      "file": "pagesPet\\grief\\index.scss",
+      "line": 78,
+      "varName": "color-teal",
+      "cssVar": "teal",
+      "text": "background: rgba($color-teal, 0.12);"
+    },
+    {
+      "file": "pagesPet\\grief\\index.scss",
+      "line": 289,
+      "varName": "color-gold-deep",
+      "cssVar": "gold-deep",
+      "text": "box-shadow: 0 12rpx 32rpx -12rpx rgba($color-gold-deep, 0.55);"
+    },
+    {
+      "file": "pagesPet\\health-report\\index.scss",
+      "line": 86,
+      "varName": "color-success",
+      "cssVar": "success",
+      "text": "background: rgba($color-success, 0.14);"
+    },
+    {
+      "file": "pagesPet\\health-report\\index.scss",
+      "line": 90,
+      "varName": "color-gold",
+      "cssVar": "gold",
+      "text": "background: rgba($color-gold, 0.16);"
+    },
+    {
+      "file": "pagesPet\\health-report\\index.scss",
+      "line": 147,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "&--coral { background: rgba($color-primary, 0.14); }"
+    },
+    {
+      "file": "pagesPet\\health-report\\index.scss",
+      "line": 148,
+      "varName": "color-gold",
+      "cssVar": "gold",
+      "text": "&--gold { background: rgba($color-gold, 0.16); }"
+    },
+    {
+      "file": "pagesPet\\health-report\\index.scss",
+      "line": 149,
+      "varName": "color-gold",
+      "cssVar": "gold",
+      "text": "&--warn { background: rgba($color-gold, 0.16); }"
+    },
+    {
+      "file": "pagesPet\\health-report\\index.scss",
+      "line": 258,
+      "varName": "color-success",
+      "cssVar": "success",
+      "text": "&--ok { background: rgba($color-success, 0.14); }"
+    },
+    {
+      "file": "pagesPet\\health-report\\index.scss",
+      "line": 259,
+      "varName": "color-gold",
+      "cssVar": "gold",
+      "text": "&--warn { background: rgba($color-gold, 0.18); }"
+    },
+    {
+      "file": "pagesPet\\health-report\\index.scss",
+      "line": 444,
+      "varName": "color-gold",
+      "cssVar": "gold",
+      "text": "&--warn { background: rgba($color-gold, 0.16); }"
+    },
+    {
+      "file": "pagesPet\\health-report\\index.scss",
+      "line": 446,
+      "varName": "color-success",
+      "cssVar": "success",
+      "text": "&--ok { background: rgba($color-success, 0.14); }"
+    },
+    {
+      "file": "pagesPet\\hospital\\index.scss",
+      "line": 36,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 0 6rpx rgba($color-primary, 0.1);"
+    },
+    {
+      "file": "pagesPet\\hospital\\index.scss",
+      "line": 80,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.25);"
+    },
+    {
+      "file": "pagesPet\\hospital\\index.scss",
+      "line": 290,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.1);"
+    },
+    {
+      "file": "pagesPet\\hospital\\index.scss",
+      "line": 336,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.1);"
+    },
+    {
+      "file": "pagesPet\\hospital\\index.scss",
+      "line": 360,
+      "varName": "color-success",
+      "cssVar": "success",
+      "text": "background: rgba($color-success, 0.1);"
+    },
+    {
+      "file": "pagesPet\\hospital\\index.scss",
+      "line": 361,
+      "varName": "color-success",
+      "cssVar": "success",
+      "text": "border: 1px solid rgba($color-success, 0.3);"
+    },
+    {
+      "file": "pagesPet\\hospital\\index.scss",
+      "line": 365,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.1);"
+    },
+    {
+      "file": "pagesPet\\naming\\index.scss",
+      "line": 367,
+      "varName": "color-teal",
+      "cssVar": "teal",
+      "text": "background: rgba($color-teal, 0.14);"
+    },
+    {
+      "file": "pagesPet\\naming\\index.scss",
+      "line": 434,
+      "varName": "color-success",
+      "cssVar": "success",
+      "text": "background: rgba($color-success, 0.14);"
+    },
+    {
+      "file": "pagesPet\\naming\\index.scss",
+      "line": 442,
+      "varName": "color-teal",
+      "cssVar": "teal",
+      "text": "background: rgba($color-teal, 0.14);"
+    },
+    {
+      "file": "pagesPet\\symptom-check\\index.scss",
+      "line": 98,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.1);"
+    },
+    {
+      "file": "pagesPet\\symptom-check\\index.scss",
+      "line": 173,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.1);"
+    },
+    {
+      "file": "pagesPet\\symptom-check\\index.scss",
+      "line": 195,
+      "varName": "color-gold",
+      "cssVar": "gold",
+      "text": "background: rgba($color-gold, 0.16);"
+    },
+    {
+      "file": "pagesPet\\symptom-check\\index.scss",
+      "line": 199,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.14);"
+    },
+    {
+      "file": "pagesPet\\symptom-check\\index.scss",
+      "line": 483,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 4rpx solid rgba($color-primary, 0.2);"
+    },
+    {
+      "file": "pagesPet\\symptom-check\\index.scss",
+      "line": 597,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.06);"
+    },
+    {
+      "file": "pagesPet\\symptom-check\\index.scss",
+      "line": 598,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1px solid rgba($color-primary, 0.12);"
+    },
+    {
+      "file": "pagesPet\\symptom-check\\index.scss",
+      "line": 602,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\symptom-check\\index.scss",
+      "line": 603,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1px solid rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesPet\\symptom-check\\index.scss",
+      "line": 654,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\symptom-check\\index.scss",
+      "line": 694,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.06);"
+    },
+    {
+      "file": "pagesPet\\symptom-check\\index.scss",
+      "line": 695,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1px solid rgba($color-primary, 0.12);"
+    },
+    {
+      "file": "pagesPet\\symptom-check\\index.scss",
+      "line": 727,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 8rpx 32rpx rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pagesPet\\symptom-check\\index.scss",
+      "line": 731,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.2);"
+    },
+    {
+      "file": "pagesPet\\trends\\index.scss",
+      "line": 30,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\trends\\index.scss",
+      "line": 69,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\trends\\index.scss",
+      "line": 149,
+      "varName": "color-warning",
+      "cssVar": "warning",
+      "text": "background: rgba($color-warning, 0.12);"
+    },
+    {
+      "file": "pagesPet\\trends\\index.scss",
+      "line": 358,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.06);"
+    },
+    {
+      "file": "pagesPet\\trends\\index.scss",
+      "line": 359,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-color: rgba($color-primary, 0.2);"
+    },
+    {
+      "file": "pagesPet\\trends\\index.scss",
+      "line": 363,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\trends\\index.scss",
+      "line": 364,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-color: rgba($color-primary, 0.25);"
+    },
+    {
+      "file": "pagesPet\\trends\\index.scss",
+      "line": 539,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 2rpx 6rpx rgba($color-primary, 0.4);"
+    },
+    {
+      "file": "pagesPet\\trends\\index.scss",
+      "line": 817,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.06);"
+    },
+    {
+      "file": "pagesPet\\trends\\index.scss",
+      "line": 918,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1px solid rgba($color-primary, 0.18);"
+    },
+    {
+      "file": "pagesPet\\trends\\index.scss",
+      "line": 930,
+      "varName": "color-sage",
+      "cssVar": "sage",
+      "text": "border: 1px solid rgba($color-sage, 0.35);"
+    },
+    {
+      "file": "pagesPet\\trends\\index.scss",
+      "line": 936,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1px solid rgba($color-primary, 0.18);"
+    },
+    {
+      "file": "pagesPet\\trends\\index.scss",
+      "line": 1026,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.06);"
+    },
+    {
+      "file": "pagesPet\\trends\\index.scss",
+      "line": 1027,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1px solid rgba($color-primary, 0.12);"
+    },
+    {
+      "file": "pagesPet\\vaccine\\index.scss",
+      "line": 64,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\vaccine\\index.scss",
+      "line": 118,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\vaccine\\index.scss",
+      "line": 466,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesPet\\vaccine\\index.scss",
+      "line": 500,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.06);"
+    },
+    {
+      "file": "pagesPet\\vaccine\\index.scss",
+      "line": 597,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.06);"
+    },
+    {
+      "file": "pagesPet\\vaccine\\index.scss",
+      "line": 682,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.06);"
+    },
+    {
+      "file": "pagesPet\\vaccine\\index.scss",
+      "line": 800,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 8rpx 32rpx rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pagesPet\\vaccine\\index.scss",
+      "line": 1263,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 8rpx 32rpx rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pagesPet\\weekly-report\\index.scss",
+      "line": 158,
+      "varName": "color-bg-card",
+      "cssVar": "bg-card",
+      "text": "background: rgba($color-bg-card, 0.8);"
+    },
+    {
+      "file": "pagesPet\\weekly-report\\index.scss",
+      "line": 278,
+      "varName": "color-success",
+      "cssVar": "success",
+      "text": "background: rgba($color-success, 0.14);"
+    },
+    {
+      "file": "pagesPet\\weekly-report\\index.scss",
+      "line": 282,
+      "varName": "color-warning",
+      "cssVar": "warning",
+      "text": "background: rgba($color-warning, 0.16);"
+    },
+    {
+      "file": "pagesPet\\weekly-report\\index.scss",
+      "line": 340,
+      "varName": "color-teal",
+      "cssVar": "teal",
+      "text": "background: rgba($color-teal, 0.12);"
+    },
+    {
+      "file": "pagesPet\\weekly-report\\index.scss",
+      "line": 341,
+      "varName": "color-teal",
+      "cssVar": "teal",
+      "text": "border: 2rpx solid rgba($color-teal, 0.28);"
+    },
+    {
+      "file": "pagesUser\\effect-tracking\\index.scss",
+      "line": 71,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border-color: rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pagesUser\\effect-tracking\\index.scss",
+      "line": 121,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 1px solid rgba($color-primary, 0.2);"
+    },
+    {
+      "file": "pagesUser\\effect-tracking\\index.scss",
+      "line": 151,
+      "varName": "color-primary-light",
+      "cssVar": "primary-light",
+      "text": "background: rgba($color-primary-light, 0.15);"
+    },
+    {
+      "file": "pagesUser\\effect-tracking\\index.scss",
+      "line": 389,
+      "varName": "color-text-secondary",
+      "cssVar": "text-secondary",
+      "text": "background: rgba($color-text-secondary, 0.1);"
+    },
+    {
+      "file": "pagesUser\\invite\\index.scss",
+      "line": 20,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: radial-gradient(circle, rgba($color-primary, 0.06) 0%, transparent 70%);"
+    },
+    {
+      "file": "pagesUser\\login\\index.scss",
+      "line": 146,
+      "varName": "color-danger",
+      "cssVar": "danger",
+      "text": "background: rgba($color-danger, 0.1);"
+    },
+    {
+      "file": "pagesUser\\login\\index.scss",
+      "line": 215,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 0 4px rgba($color-primary, 0.08), 0 0 20rpx rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesUser\\login\\index.scss",
+      "line": 215,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 0 4px rgba($color-primary, 0.08), 0 0 20rpx rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesUser\\login\\index.scss",
+      "line": 239,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesUser\\login\\index.scss",
+      "line": 240,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 2rpx solid rgba($color-primary, 0.2);"
+    },
+    {
+      "file": "pagesUser\\login\\index.scss",
+      "line": 245,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesUser\\member\\index.scss",
+      "line": 83,
+      "varName": "color-text-tertiary",
+      "cssVar": "text-tertiary",
+      "text": "background: rgba($color-text-tertiary, 0.12);"
+    },
+    {
+      "file": "pagesUser\\member\\index.scss",
+      "line": 315,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "&--coral { background: rgba($color-primary, 0.14); }"
+    },
+    {
+      "file": "pagesUser\\member\\index.scss",
+      "line": 316,
+      "varName": "color-gold-deep",
+      "cssVar": "gold-deep",
+      "text": "&--gold { background: rgba($color-gold-deep, 0.14); }"
+    },
+    {
+      "file": "pagesUser\\member\\index.scss",
+      "line": 317,
+      "varName": "color-success",
+      "cssVar": "success",
+      "text": "&--green { background: rgba($color-success, 0.14); }"
+    },
+    {
+      "file": "pagesUser\\member\\index.scss",
+      "line": 318,
+      "varName": "color-teal",
+      "cssVar": "teal",
+      "text": "&--blue { background: rgba($color-teal, 0.14); }"
+    },
+    {
+      "file": "pagesUser\\member\\index.scss",
+      "line": 319,
+      "varName": "color-primary-light",
+      "cssVar": "primary-light",
+      "text": "&--deep { background: rgba($color-primary-light, 0.22); }"
+    },
+    {
+      "file": "pagesUser\\onboarding\\index.scss",
+      "line": 24,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: radial-gradient(circle, rgba($color-primary, 0.05) 0%, transparent 70%);"
+    },
+    {
+      "file": "pagesUser\\onboarding\\index.scss",
+      "line": 37,
+      "varName": "color-primary-light",
+      "cssVar": "primary-light",
+      "text": "background: radial-gradient(circle, rgba($color-primary-light, 0.04) 0%, transparent 70%);"
+    },
+    {
+      "file": "pagesUser\\onboarding\\index.scss",
+      "line": 76,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 8px 32px rgba($color-primary, 0.08);"
+    },
+    {
+      "file": "pagesUser\\onboarding\\index.scss",
+      "line": 127,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 0 8rpx rgba($color-primary, 0.4);"
+    },
+    {
+      "file": "pagesUser\\onboarding\\index.scss",
+      "line": 150,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 4px 12px rgba($color-primary, 0.3);"
+    },
+    {
+      "file": "pagesUser\\profile\\index.scss",
+      "line": 26,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: radial-gradient(circle, rgba($color-primary, 0.06) 0%, transparent 70%);"
+    },
+    {
+      "file": "pagesUser\\profile\\index.scss",
+      "line": 35,
+      "varName": "color-primary-light",
+      "cssVar": "primary-light",
+      "text": "background: radial-gradient(circle, rgba($color-primary-light, 0.04) 0%, transparent 70%);"
+    },
+    {
+      "file": "pagesUser\\profile\\index.scss",
+      "line": 90,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.04);"
+    },
+    {
+      "file": "pagesUser\\profile\\index.scss",
+      "line": 106,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "border: 4rpx solid rgba($color-primary, 0.15);"
+    },
+    {
+      "file": "pagesUser\\profile\\index.scss",
+      "line": 114,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.1);"
+    },
+    {
+      "file": "pagesUser\\profile\\index.scss",
+      "line": 181,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.12);"
+    },
+    {
+      "file": "pagesUser\\profile\\index.scss",
+      "line": 234,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.1);"
+    },
+    {
+      "file": "styles\\global.scss",
+      "line": 33,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.25);"
+    },
+    {
+      "file": "styles\\global.scss",
+      "line": 72,
+      "varName": "color-primary",
+      "cssVar": "primary",
+      "text": "background: rgba($color-primary, 0.3);"
+    }
+  ]
+}

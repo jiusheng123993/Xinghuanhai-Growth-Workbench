@@ -1,0 +1,1060 @@
+@import '../../../styles/_theme';
+@import '../../../styles/_animations';
+
+// ===== 关键帧动画 =====
+@keyframes lineageDrawLine {
+  0% { height: 0; opacity: 0; }
+  100% { height: 32rpx; opacity: 1; }
+}
+
+@keyframes lineageDotPop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.3); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes lineageGlowPulse {
+  0%, 100% { opacity: 0.3; transform: translateX(-50%) scale(1); }
+  50% { opacity: 0.6; transform: translateX(-50%) scale(1.1); }
+}
+
+@keyframes lineageCardFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4rpx); }
+}
+
+@keyframes lineageSelfEnter {
+  0% { transform: scale(0.9); opacity: 0; }
+  60% { transform: scale(1.03); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes lineageBadgeSlide {
+  0% { transform: translateX(-20rpx); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes lineageRemoveBtnReveal {
+  0% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes lineageActionBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3rpx); }
+}
+
+.lineage-page {
+  min-height: 100vh;
+  background: $gradient-page;
+  display: flex;
+  flex-direction: column;
+}
+
+.lineage-header {
+  padding: 32rpx 32rpx 16rpx;
+}
+
+.lineage-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lineage-header-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  background: $gradient-gold;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.lineage-header-switch {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 10rpx 20rpx;
+  border-radius: $radius-full;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+}
+
+.lineage-header-switch-text {
+  font-size: 26rpx;
+  color: $color-text-primary;
+  font-weight: 500;
+}
+
+.lineage-header-switch-arrow {
+  font-size: 20rpx;
+  color: $color-text-secondary;
+}
+
+.lineage-selector {
+  margin-top: 16rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.lineage-selector-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 10rpx 20rpx;
+  border-radius: $radius-full;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  transition: all 0.2s ease;
+
+  &--active {
+    border-color: $color-primary;
+    background: $color-primary-bg;
+  }
+}
+
+.lineage-selector-emoji {
+  font-size: 24rpx;
+}
+
+/* 宠物选择器里的小动物头像图片：胶囊内小方形圆角 */
+.lineage-selector-avatar-img {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.lineage-selector-name {
+  font-size: 24rpx;
+  color: $color-text-primary;
+}
+
+.lineage-selector-check {
+  font-size: 20rpx;
+  color: $color-primary;
+  font-weight: 700;
+}
+
+// ===== 添加关系横幅 =====
+.lineage-adding-banner {
+  margin: 0 32rpx 16rpx;
+  padding: 16rpx 24rpx;
+  border-radius: $radius-md;
+  background: $color-primary-bg;
+  border: 1px dashed $color-primary-light;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.lineage-adding-banner-icon {
+  font-size: 28rpx;
+}
+
+.lineage-adding-banner-text {
+  flex: 1;
+  font-size: 26rpx;
+  color: $color-primary;
+  font-weight: 500;
+}
+
+.lineage-adding-banner-cancel {
+  padding: 6rpx 16rpx;
+  border-radius: $radius-sm;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.lineage-adding-banner-cancel Text {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+}
+
+// ===== 滚动区域 =====
+.lineage-scroll {
+  flex: 1;
+  padding: 0 32rpx;
+}
+
+// ===== 树形结构 =====
+.lineage-tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 16rpx;
+}
+
+.lineage-layer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 8rpx;
+  animation: fadeInUp 0.5s ease-out both;
+}
+
+.lineage-layer--owner { animation-delay: 0s; }
+.lineage-layer--parents { animation-delay: 0.05s; }
+.lineage-layer--self { animation-delay: 0.2s; }
+.lineage-layer--children { animation-delay: 0.35s; }
+.lineage-layer--siblings { animation-delay: 0.15s; }
+.lineage-layer--mates { animation-delay: 0s; }
+.lineage-layer--ancestors { animation-delay: 0.02s; }
+.lineage-layer--descendants { animation-delay: 0.5s; }
+
+.lineage-layer-label {
+  margin-bottom: 12rpx;
+}
+
+.lineage-layer-label-text {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  font-weight: 500;
+}
+
+.lineage-layer-cards {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16rpx;
+}
+
+.lineage-card-wrap {
+  position: relative;
+  max-width: 300rpx;
+}
+
+.lineage-remove-btn {
+  position: absolute;
+  top: -8rpx;
+  right: -8rpx;
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background: rgba(224, 133, 107, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 5;
+
+  Text {
+    font-size: 20rpx;
+    color: #fff;
+  }
+}
+
+.lineage-card-wrap:hover .lineage-remove-btn,
+.lineage-card-wrap:active .lineage-remove-btn {
+  opacity: 1;
+  animation: lineageRemoveBtnReveal 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+// ===== 血缘卡片 =====
+.lineage-card {
+  position: relative;
+  padding: 16rpx 20rpx;
+  border-radius: $radius-md;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  min-width: 220rpx;
+  animation: fadeInUp 0.35s ease-out both;
+
+  &:hover {
+    transform: translateY(-2rpx);
+    box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+  }
+
+  &--selected {
+    border-color: $color-primary;
+    box-shadow: 0 0 16rpx rgba($color-primary, 0.2);
+  }
+
+  &--selectable {
+    border-color: $color-primary-light;
+    border-style: dashed;
+    animation: lineageCardFloat 3s ease-in-out infinite;
+  }
+}
+
+.lineage-card:nth-child(1) { animation-delay: 0.05s; }
+.lineage-card:nth-child(2) { animation-delay: 0.1s; }
+.lineage-card:nth-child(3) { animation-delay: 0.15s; }
+
+.lineage-card-badge {
+  position: absolute;
+  top: -10rpx;
+  left: 16rpx;
+  padding: 2rpx 12rpx;
+  border-radius: $radius-sm;
+  background: $color-primary;
+  animation: lineageBadgeSlide 0.3s ease-out 0.2s both;
+}
+
+.lineage-card-badge-text {
+  font-size: 18rpx;
+  color: #fff;
+  font-weight: 500;
+}
+
+.lineage-card-body {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 4rpx;
+}
+
+.lineage-card-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: rgba($color-primary-light, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* 关系卡片的小动物头像图片：铺满圆形容器 */
+.lineage-card-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.lineage-card-emoji {
+  font-size: 40rpx;
+}
+
+.lineage-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.lineage-card-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.lineage-card-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+}
+
+.lineage-card-gender {
+  font-size: 22rpx;
+
+  &.lineage-gender--male {
+    color: #6CA0DC;
+  }
+
+  &.lineage-gender--female {
+    color: #E8A0B8;
+  }
+}
+
+.lineage-card-breed {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  margin-top: 4rpx;
+}
+
+.lineage-card-litter {
+  font-size: 20rpx;
+  color: $color-text-hint;
+  margin-top: 4rpx;
+}
+
+.lineage-card-indicator {
+  position: absolute;
+  right: 12rpx;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.lineage-card-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: $color-primary;
+}
+
+// ===== 连接线 =====
+.lineage-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 8rpx 0;
+}
+
+.lineage-connector-line {
+  width: 2rpx;
+  height: 32rpx;
+  background: linear-gradient(to bottom, $color-primary-light, rgba($color-primary-light, 0.3));
+  animation: lineageDrawLine 0.4s ease-out 0.1s both;
+
+  &--top {
+    background: linear-gradient(to top, $color-primary-light, rgba($color-primary-light, 0.3));
+  }
+
+  &--bottom {
+    background: linear-gradient(to bottom, $color-primary-light, rgba($color-primary-light, 0.3));
+  }
+}
+
+.lineage-connector-dot {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background: $color-primary-light;
+  animation: lineageDotPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
+}
+
+// ===== 铲屎官卡片 =====
+.lineage-owner-card {
+  position: relative;
+  padding: 16rpx 20rpx;
+  border-radius: $radius-md;
+  background: linear-gradient(135deg, rgba($color-primary, 0.08), rgba($color-primary-light, 0.12));
+  border: 1px solid rgba($color-primary, 0.3);
+  min-width: 220rpx;
+  animation: fadeInUp 0.35s ease-out both;
+}
+
+.lineage-owner-badge {
+  position: absolute;
+  top: -10rpx;
+  left: 16rpx;
+  padding: 2rpx 12rpx;
+  border-radius: $radius-sm;
+  background: $color-primary;
+  animation: lineageBadgeSlide 0.3s ease-out 0.2s both;
+}
+
+.lineage-owner-badge-text {
+  font-size: 18rpx;
+  color: #fff;
+  font-weight: 500;
+}
+
+.lineage-owner-body {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 4rpx;
+}
+
+.lineage-owner-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: rgba($color-primary, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid rgba($color-primary, 0.3);
+}
+
+.lineage-owner-emoji {
+  font-size: 40rpx;
+}
+
+.lineage-owner-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.lineage-owner-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+}
+
+.lineage-owner-role {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  margin-top: 4rpx;
+}
+
+// ===== 选中宠物卡片 =====
+.lineage-layer--center {
+  margin: 12rpx 0;
+}
+
+.lineage-center-row {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 16rpx;
+}
+
+.lineage-siblings-side {
+  flex-shrink: 0;
+  max-width: 240rpx;
+}
+
+.lineage-siblings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-top: 8rpx;
+}
+
+.lineage-card-wrap--sibling {
+  max-width: 220rpx;
+}
+
+.lineage-self-wrap {
+  flex: 1;
+  max-width: 500rpx;
+  min-width: 320rpx;
+}
+
+.lineage-layer--self {
+  margin: 16rpx 0;
+}
+
+.lineage-self-card {
+  position: relative;
+  width: 100%;
+  max-width: 500rpx;
+  padding: 24rpx;
+  border-radius: $radius-xl;
+  background: $gradient-card;
+  border: 2px solid $color-primary;
+  box-shadow: 0 0 32rpx rgba($color-primary, 0.15);
+  overflow: hidden;
+  animation: lineageSelfEnter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+
+  &:hover {
+    box-shadow: 0 0 48rpx rgba($color-primary, 0.25);
+  }
+}
+
+.lineage-self-glow {
+  position: absolute;
+  top: -40rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200rpx;
+  height: 120rpx;
+  background: radial-gradient(ellipse, rgba($color-primary, 0.1), transparent);
+  pointer-events: none;
+  animation: lineageGlowPulse 3s ease-in-out infinite;
+}
+
+.lineage-self-body {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.lineage-self-avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: rgba($color-primary-light, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid $color-primary-light;
+  overflow: hidden;
+}
+
+/* 选中宠物自己的小动物头像图片：铺满圆形容器 */
+.lineage-self-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.lineage-self-emoji {
+  font-size: 50rpx;
+}
+
+.lineage-self-info {
+  flex: 1;
+}
+
+.lineage-self-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.lineage-self-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: $color-text-primary;
+}
+
+.lineage-self-breed {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  margin-top: 4rpx;
+}
+
+.lineage-self-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 20rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.lineage-self-action {
+  flex: 1 1 calc(50% - 6rpx);
+  min-width: 140rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  padding: 12rpx;
+  border-radius: $radius-md;
+  background: rgba($color-primary, 0.1);
+  border: 1px dashed $color-primary-light;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: fadeInUp 0.3s ease-out 0.3s both;
+
+  &:active {
+    background: rgba($color-primary, 0.2);
+    transform: scale(0.96);
+  }
+}
+
+.lineage-self-action-icon {
+  font-size: 24rpx;
+  animation: lineageActionBounce 2s ease-in-out infinite;
+}
+
+.lineage-self-action:last-child .lineage-self-action-icon {
+  animation-delay: 0.3s;
+}
+
+.lineage-self-action-text {
+  font-size: 24rpx;
+  color: $color-primary;
+  font-weight: 500;
+}
+
+// ===== 空状态 =====
+.lineage-empty-relation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 32rpx;
+}
+
+.lineage-empty-relation-icon {
+  font-size: 72rpx;
+  margin-bottom: 16rpx;
+  opacity: 0.6;
+}
+
+.lineage-empty-relation-text {
+  font-size: 28rpx;
+  color: $color-text-secondary;
+  margin-bottom: 8rpx;
+}
+
+.lineage-empty-relation-hint {
+  font-size: 24rpx;
+  color: $color-text-hint;
+}
+
+// ===== 可选宠物列表 =====
+.lineage-available-section {
+  margin-top: 32rpx;
+}
+
+.lineage-section-title {
+  margin-bottom: 12rpx;
+
+  Text {
+    font-size: 26rpx;
+    font-weight: 600;
+    color: $color-text-primary;
+  }
+}
+
+.lineage-available-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.lineage-available-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 20rpx;
+  border-radius: $radius-md;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  transition: all 0.2s ease;
+
+  &:active {
+    border-color: $color-primary;
+    background: $color-primary-bg;
+  }
+}
+
+.lineage-available-emoji {
+  font-size: 40rpx;
+}
+
+/* 可选宠物列表里的小动物头像图片：方形圆角 */
+.lineage-available-avatar-img {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.lineage-available-info {
+  flex: 1;
+}
+
+.lineage-available-name {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: $color-text-primary;
+}
+
+.lineage-available-breed {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+}
+
+.lineage-available-add {
+  font-size: 32rpx;
+  color: $color-primary;
+  font-weight: 600;
+}
+
+// ===== 通用空状态 =====
+.lineage-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 32rpx;
+}
+
+.lineage-empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 20rpx;
+}
+
+.lineage-empty-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+  margin-bottom: 8rpx;
+}
+
+.lineage-empty-hint {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  margin-bottom: 32rpx;
+}
+
+.lineage-empty-btn {
+  padding: 16rpx 40rpx;
+  border-radius: $radius-full;
+  background: $color-primary;
+  transition: opacity 0.2s;
+
+  &:active {
+    opacity: 0.8;
+  }
+
+  Text {
+    font-size: 28rpx;
+    color: #fff;
+    font-weight: 500;
+  }
+}
+
+// ===== 底部安全区 =====
+.lineage-bottom-safe {
+  height: 80rpx;
+}
+
+// ===== 视图切换按钮 =====
+.lineage-view-toggle {
+  display: flex;
+  gap: 4rpx;
+  padding: 4rpx;
+  border-radius: $radius-full;
+  background: rgba($color-primary, 0.1);
+}
+
+.lineage-view-toggle-btn {
+  padding: 8rpx 20rpx;
+  border-radius: $radius-full;
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  transition: all 0.25s ease;
+
+  &--active {
+    background: $color-primary;
+    color: #fff;
+    font-weight: 500;
+  }
+}
+
+// ===== 关系总览 =====
+.lineage-overview {
+  padding: 20rpx 24rpx;
+}
+
+.lineage-overview-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80rpx 0;
+  color: $color-text-secondary;
+  font-size: 28rpx;
+}
+
+.lineage-overview-empty {
+  font-size: 26rpx;
+  color: $color-text-tertiary;
+  padding: 24rpx 0;
+  text-align: center;
+}
+
+// ===== 统计栏 =====
+.graph-stats-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 16rpx 0;
+  margin-bottom: 16rpx;
+  border-radius: $radius-md;
+  background: rgba($color-primary, 0.06);
+}
+
+.graph-stats-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 24rpx;
+}
+
+.graph-stats-num {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: $color-primary;
+}
+
+.graph-stats-label {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  margin-top: 2rpx;
+}
+
+.graph-stats-divider {
+  width: 1px;
+  height: 48rpx;
+  background: rgba($color-primary, 0.15);
+}
+
+// ===== 图谱画布 =====
+.graph-scroll {
+  width: 100%;
+  white-space: nowrap;
+  border-radius: $radius-md;
+  background: rgba($color-primary, 0.03);
+  border: 1px solid rgba($color-primary, 0.1);
+}
+
+.graph-canvas {
+  position: relative;
+  min-height: 400rpx;
+  padding: 20rpx 0;
+}
+
+// ===== 节点 =====
+.graph-node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+  z-index: 2;
+  animation: fadeInUp 0.35s ease-out both;
+}
+
+.graph-node-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: rgba($color-primary, 0.12);
+  border: 2px solid rgba($color-primary, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 12rpx rgba($color-primary, 0.15);
+  overflow: hidden;
+}
+
+/* 家族图谱节点的小动物头像图片：铺满圆形容器 */
+.graph-node-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.graph-node-avatar--owner {
+  background: linear-gradient(135deg, rgba($color-primary, 0.2), rgba($color-primary-light, 0.15));
+  border-color: $color-primary;
+}
+
+.graph-node-emoji {
+  font-size: 36rpx;
+}
+
+.graph-node-name {
+  font-size: 22rpx;
+  color: $color-text-primary;
+  font-weight: 500;
+  max-width: 120rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.graph-node-tag {
+  font-size: 18rpx;
+  color: $color-primary;
+  background: rgba($color-primary, 0.1);
+  padding: 2rpx 8rpx;
+  border-radius: $radius-sm;
+}
+
+.graph-node-tags {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.graph-node-gender {
+  font-size: 20rpx;
+  font-weight: 700;
+
+  &--male { color: #4A90D9; }
+  &--female { color: #E0856B; }
+}
+
+.graph-node-layer {
+  font-size: 18rpx;
+  color: $color-text-tertiary;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 1rpx 6rpx;
+  border-radius: $radius-sm;
+}
+
+// ===== 连线 =====
+.graph-edge {
+  position: absolute;
+  z-index: 1;
+  border-left: 2px solid rgba($color-primary, 0.4);
+  border-bottom: 2px solid rgba($color-primary, 0.4);
+  border-radius: 0 0 0 8rpx;
+  transition: all 0.2s;
+
+  &:active {
+    border-color: $color-danger;
+    border-width: 3px;
+  }
+}
+
+.graph-edge-h {
+  position: absolute;
+  z-index: 1;
+  height: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 2px dashed rgba($color-primary, 0.4);
+  transition: all 0.2s;
+
+  &--mate {
+    border-top-color: rgba(#E0856B, 0.5);
+    border-top-style: dashed;
+  }
+
+  &--sibling {
+    border-top-color: rgba(#4A90D9, 0.4);
+    border-top-style: dotted;
+  }
+
+  &:active {
+    border-top-width: 3px;
+    border-top-color: $color-danger;
+  }
+}
+
+.graph-edge-label {
+  position: absolute;
+  top: -16rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 20rpx;
+  color: $color-text-secondary;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0 8rpx;
+  border-radius: $radius-sm;
+  white-space: nowrap;
+}
+
+// ===== 图例 =====
+.graph-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20rpx;
+  padding: 16rpx 0;
+  flex-wrap: wrap;
+}
+
+.graph-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 22rpx;
+  color: $color-text-secondary;
+}
+
+.graph-legend-line {
+  width: 32rpx;
+  height: 0;
+  border-top: 2px solid rgba($color-primary, 0.4);
+
+  &--solid { border-top-style: solid; border-top-color: rgba($color-primary, 0.5); }
+  &--dashed-red { border-top-style: dashed; border-top-color: rgba(#E0856B, 0.5); }
+  &--dashed-blue { border-top-style: dotted; border-top-color: rgba(#4A90D9, 0.5); }
+}
+
+.graph-legend-hint {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  margin-left: 8rpx;
+}

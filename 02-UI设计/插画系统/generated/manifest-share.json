@@ -1,0 +1,20 @@
+[
+  {
+    "key": "share-card-warm",
+    "file": "share-card-warm.jpg",
+    "bytes": 172530,
+    "scene": "小猫和小狗在画面角落安静地并排坐着，姿态放松，主体缩小，画面大部分是柔和的奶油色与暖橙渐变。"
+  },
+  {
+    "key": "share-card-starry",
+    "file": "share-card-starry.jpg",
+    "bytes": 345927,
+    "scene": "小猫和小狗坐在一个小山丘上一起仰望星空，夜空是深蓝到暖紫渐变并点缀暖金色小星星，主体较小。"
+  },
+  {
+    "key": "share-card-soft",
+    "file": "share-card-soft.jpg",
+    "bytes": 325366,
+    "scene": "小猫和小狗的背影坐在窗边，窗外是柔和的暖橙色夕阳光晕，主体很小，画面以光晕和留白为主。"
+  }
+]

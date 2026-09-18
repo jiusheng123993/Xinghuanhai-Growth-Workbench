@@ -1,0 +1,1027 @@
+@import '../../styles/_theme';
+@import '../../styles/_animations';
+
+.chronic-page {
+  min-height: 100vh;
+  background-color: $color-bg-page;
+  padding-bottom: 80rpx;
+  animation: pageEnter 0.4s ease-out;
+}
+
+.chronic-header {
+  // 方案A（用户选定）：柔和浅底 + 深色文字，替代饱和橙色大渐变
+  background: linear-gradient(135deg, rgba($color-primary, 0.12) 0%, rgba($color-primary, 0.04) 100%);
+  padding: 80rpx 48rpx 40rpx;
+  color: $color-text-primary;
+  border-bottom: 1px solid rgba($color-primary, 0.08);
+}
+
+.chronic-header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.chronic-sync-btn {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  // 浅色头部下同步按钮改为主色淡底圆钮
+  background: rgba($color-primary, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  @include press-feedback;
+}
+
+.chronic-sync-icon {
+  font-size: 36rpx;
+  color: $color-primary-dark;
+}
+
+.chronic-title {
+  font-size: 56rpx;
+  font-weight: $font-weight-bold;
+  margin-bottom: 16rpx;
+  color: $color-text-primary;
+}
+
+.chronic-subtitle {
+  font-size: 28rpx;
+  opacity: 0.9;
+  color: $color-text-secondary;
+}
+
+.chronic-summary {
+  display: flex;
+  justify-content: space-around;
+  // 方案A：概览卡自然排布（去掉负边距压顶）
+  margin: 24rpx 32rpx 32rpx;
+  @include card-base;
+  padding: 40rpx 0;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.chronic-summary-item {
+  text-align: center;
+  flex: 1;
+}
+
+.chronic-summary-number {
+  font-size: 56rpx;
+  font-weight: $font-weight-bold;
+  // 提升对比度：主色 → 深色主色（白底上更清晰）
+  color: $color-primary-dark;
+  display: block;
+}
+
+.chronic-summary-number--warn {
+  color: $color-danger;
+}
+
+.chronic-summary-label {
+  font-size: 24rpx;
+  // 提升对比度：tertiary → secondary
+  color: $color-text-secondary;
+  margin-top: 8rpx;
+}
+
+.chronic-alert {
+  margin: 0 32rpx 24rpx;
+  padding: 24rpx 32rpx;
+  background: linear-gradient(135deg, rgba($color-danger, 0.1), rgba($color-danger, 0.05));
+  border-radius: $radius-md;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  border: 1px solid rgba($color-danger, 0.2);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.chronic-alert-icon {
+  font-size: 36rpx;
+}
+
+.chronic-alert-text {
+  font-size: 28rpx;
+  color: $color-danger;
+  flex: 1;
+}
+
+// ===== 慢病风险扫描卡片 =====
+.chronic-risk-card {
+  @include card-base;
+  margin: 0 32rpx 24rpx;
+  padding: 32rpx;
+  background: linear-gradient(180deg, rgba($color-warning, 0.08), rgba($color-warning, 0.02));
+  border: 1px solid rgba($color-warning, 0.2);
+  border-radius: $radius-lg;
+  animation: fadeInUp 0.35s ease-out both;
+}
+
+.chronic-risk-head {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 24rpx;
+}
+
+.chronic-risk-icon {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  background: linear-gradient(135deg, $color-warning, $color-gold);
+  border-radius: 50%;
+  color: #fff;
+}
+
+.chronic-risk-titles {
+  flex: 1;
+}
+
+.chronic-risk-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.chronic-risk-alert-badge {
+  display: inline-block;
+  margin-left: 12rpx;
+  padding: 4rpx 16rpx;
+  font-size: 22rpx;
+  font-weight: $font-weight-medium;
+  color: #fff;
+  background: $color-danger;
+  border-radius: 20rpx;
+  vertical-align: middle;
+}
+
+.chronic-risk-sub {
+  display: block;
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+}
+
+.chronic-risk-signals {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.chronic-risk-signal {
+  padding: 24rpx;
+  border-radius: $radius-md;
+  border: 1px solid;
+  background: $color-bg-card;
+}
+
+.chronic-risk-signal--alert {
+  border-color: rgba($color-danger, 0.3);
+  background: rgba($color-danger, 0.05);
+}
+
+.chronic-risk-signal--warning {
+  border-color: rgba($color-warning, 0.3);
+  background: rgba($color-warning, 0.05);
+}
+
+.chronic-risk-signal--info {
+  border-color: rgba($color-teal, 0.3);
+  background: rgba($color-teal, 0.05);
+}
+
+.chronic-risk-signal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 12rpx;
+}
+
+.chronic-risk-signal-title {
+  flex: 1;
+  font-size: 28rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.chronic-risk-signal-badge {
+  flex-shrink: 0;
+  font-size: 22rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  color: #fff;
+  background: $color-text-tertiary;
+}
+
+.chronic-risk-signal--alert .chronic-risk-signal-badge {
+  background: $color-danger;
+}
+
+.chronic-risk-signal--warning .chronic-risk-signal-badge {
+  background: $color-warning;
+}
+
+.chronic-risk-signal--info .chronic-risk-signal-badge {
+  background: $color-teal;
+}
+
+.chronic-risk-signal-detail {
+  display: block;
+  font-size: 26rpx;
+  line-height: 1.7;
+  color: $color-text-secondary;
+}
+
+.chronic-risk-signal-suggest {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: $color-warning;
+}
+
+.chronic-risk-ai {
+  display: block;
+  font-size: 28rpx;
+  line-height: 1.8;
+  color: $color-text-primary;
+  margin-bottom: 24rpx;
+}
+
+.chronic-risk-ai--muted {
+  color: $color-text-secondary;
+}
+
+.chronic-risk-ai--error {
+  color: $color-danger;
+}
+
+.chronic-risk-btn {
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, $color-warning, $color-gold);
+  border-radius: 44rpx;
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: $font-weight-medium;
+  @include press-feedback;
+  box-shadow: $glow-sm;
+}
+
+.chronic-risk-btn--disabled {
+  opacity: 0.6;
+}
+
+// ===== AI 慢病管理分析卡片 =====
+.chronic-ai-card {
+  @include card-base;
+  margin: 0 32rpx 24rpx;
+  padding: 32rpx;
+  background: linear-gradient(180deg, rgba($color-primary, 0.06), rgba($color-primary, 0.02));
+  border: 1px solid rgba($color-primary, 0.15);
+  border-radius: $radius-lg;
+  animation: fadeInUp 0.35s ease-out both;
+}
+
+.chronic-ai-head {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 24rpx;
+}
+
+.chronic-ai-icon {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  background: $gradient-gold;
+  border-radius: 50%;
+  color: #fff;
+}
+
+.chronic-ai-titles {
+  flex: 1;
+}
+
+.chronic-ai-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.chronic-ai-sub {
+  display: block;
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+}
+
+.chronic-ai-text {
+  display: block;
+  font-size: 28rpx;
+  line-height: 1.8;
+  color: $color-text-primary;
+  margin-bottom: 24rpx;
+}
+
+.chronic-ai-text--muted {
+  color: $color-text-secondary;
+}
+
+.chronic-ai-text--error {
+  color: $color-danger;
+}
+
+.chronic-ai-btn {
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $gradient-gold;
+  border-radius: 44rpx;
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: $font-weight-medium;
+  @include press-feedback;
+  box-shadow: $glow-sm;
+}
+
+.chronic-ai-btn--disabled {
+  opacity: 0.6;
+}
+
+.chronic-tabs {
+  display: flex;
+  margin: 0 32rpx 24rpx;
+  background: $color-primary-bg;
+  border-radius: $radius-md;
+  padding: 8rpx;
+}
+
+.chronic-tab {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  border-radius: $radius-sm;
+  font-size: 28rpx;
+  color: $color-text-secondary;
+  transition: all $transition-fast;
+}
+
+.chronic-tab--active {
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  color: $color-text-inverse;
+  font-weight: $font-weight-medium;
+  box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.3);
+}
+
+.chronic-actions {
+  padding: 0 32rpx 32rpx;
+}
+
+.chronic-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  color: $color-text-inverse;
+  padding: 28rpx;
+  border-radius: $radius-md;
+  font-size: 32rpx;
+  font-weight: $font-weight-medium;
+  box-shadow: 0 4rpx 16rpx rgba($color-primary, 0.25);
+  @include press-feedback;
+}
+
+.chronic-add-icon {
+  font-size: 40rpx;
+  margin-right: 16rpx;
+}
+
+.chronic-content {
+  min-height: 400rpx;
+}
+
+.chronic-empty-state {
+  text-align: center;
+  padding: 120rpx 48rpx;
+  animation: fadeInScale 0.4s ease-out;
+}
+
+.chronic-empty-icon {
+  font-size: 96rpx;
+  margin-bottom: 32rpx;
+}
+
+.chronic-empty-title {
+  font-size: 32rpx;
+  color: $color-text-primary;
+  margin-bottom: 16rpx;
+}
+
+.chronic-empty-hint {
+  font-size: 28rpx;
+  color: $color-text-tertiary;
+}
+
+.chronic-card {
+  @include card-base;
+  margin: 0 32rpx 24rpx;
+  overflow: hidden;
+  transition: all $transition-normal;
+  animation: fadeInUp 0.4s ease-out both;
+}
+
+.chronic-card:nth-child(1) { animation-delay: 0.05s; }
+.chronic-card:nth-child(2) { animation-delay: 0.1s; }
+.chronic-card:nth-child(3) { animation-delay: 0.15s; }
+
+.chronic-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx;
+  cursor: pointer;
+  transition: all $transition-fast;
+}
+
+.chronic-card-header:active {
+  background: rgba($color-primary, 0.05);
+}
+
+.chronic-card-main {
+  flex: 1;
+}
+
+.chronic-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+}
+
+.chronic-card-title {
+  font-size: 32rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.chronic-card-overdue-badge {
+  font-size: 20rpx;
+  color: $color-text-inverse;
+  background: $color-danger;
+  padding: 4rpx 12rpx;
+  border-radius: 4px;
+}
+
+.chronic-card-tags {
+  display: flex;
+  gap: 16rpx;
+}
+
+.chronic-card-tag {
+  font-size: 24rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 4px;
+}
+
+.chronic-card-arrow {
+  font-size: 28rpx;
+  color: $color-text-tertiary;
+  margin-left: 16rpx;
+}
+
+.chronic-card-body {
+  padding: 0 32rpx 32rpx;
+  border-top: 1px solid $color-divider;
+}
+
+.chronic-card-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 20rpx 0;
+  border-bottom: 1px solid $color-divider;
+}
+
+.chronic-card-row:last-child {
+  border-bottom: none;
+}
+
+.chronic-card-label {
+  font-size: 28rpx;
+  color: $color-text-secondary;
+  flex-shrink: 0;
+}
+
+.chronic-card-value {
+  font-size: 28rpx;
+  color: $color-text-primary;
+  text-align: right;
+  flex: 1;
+  margin-left: 32rpx;
+}
+
+.chronic-card-overdue {
+  color: $color-danger;
+  font-weight: $font-weight-medium;
+}
+
+.chronic-card-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 32rpx;
+  padding-top: 32rpx;
+  border-top: 1px solid $color-divider;
+}
+
+.chronic-card-btn {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 8rpx;
+  border-radius: 8px;
+  font-size: 26rpx;
+  @include press-feedback;
+}
+
+.chronic-card-btn-primary {
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  color: $color-text-inverse;
+}
+
+.chronic-card-btn-edit {
+  background: rgba($color-primary, 0.1);
+  color: $color-primary;
+  border: 1px solid rgba($color-primary, 0.3);
+}
+
+.chronic-card-btn-danger {
+  background: rgba($color-danger, 0.1);
+  color: $color-danger;
+  border: 1px solid rgba($color-danger, 0.3);
+}
+
+.chronic-trend {
+  padding: 0 32rpx;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.chronic-trend-header {
+  margin-bottom: 32rpx;
+}
+
+.chronic-trend-title {
+  font-size: 32rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.chronic-trend-subtitle {
+  font-size: 26rpx;
+  color: $color-text-tertiary;
+  margin-top: 8rpx;
+}
+
+.chronic-trend-chart {
+  @include card-base;
+  padding: 32rpx 24rpx;
+  display: flex;
+  gap: 16rpx;
+}
+
+.chronic-trend-y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 300rpx;
+  padding-bottom: 40rpx;
+}
+
+.chronic-trend-y-label {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  text-align: right;
+  width: 32rpx;
+}
+
+.chronic-trend-canvas {
+  flex: 1;
+  overflow-x: auto;
+}
+
+.chronic-trend-bars {
+  display: flex;
+  align-items: flex-end;
+  height: 340rpx;
+  gap: 4rpx;
+}
+
+.chronic-trend-bar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 16rpx;
+}
+
+.chronic-trend-bar-bg {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.chronic-trend-bar {
+  width: 100%;
+  border-radius: 2px 2px 0 0;
+  min-height: 4rpx;
+  transition: height 0.3s ease;
+}
+
+.chronic-trend-bar-label {
+  font-size: 18rpx;
+  color: $color-text-tertiary;
+  margin-top: 8rpx;
+  transform: rotate(-45deg);
+  transform-origin: center top;
+  white-space: nowrap;
+}
+
+.chronic-trend-legend {
+  display: flex;
+  justify-content: center;
+  gap: 40rpx;
+  margin-top: 24rpx;
+}
+
+.chronic-trend-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.chronic-trend-legend-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+}
+
+.chronic-trend-legend-text {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+}
+
+.chronic-trend-conditions {
+  margin-top: 32rpx;
+  @include card-base;
+  padding: 24rpx 32rpx;
+}
+
+.chronic-trend-conditions-title {
+  font-size: 28rpx;
+  color: $color-text-primary;
+  margin-bottom: 16rpx;
+}
+
+.chronic-trend-conditions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.chronic-trend-condition-tag {
+  padding: 8rpx 24rpx;
+  background: rgba($color-primary, 0.1);
+  border-radius: 16px;
+  border: 1px solid rgba($color-primary, 0.2);
+}
+
+.chronic-trend-condition-text {
+  font-size: 26rpx;
+  color: $color-primary;
+}
+
+.chronic-reminders {
+  padding: 0 32rpx;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.chronic-reminders-section {
+  margin-bottom: 32rpx;
+}
+
+.chronic-reminders-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.chronic-reminders-section-icon {
+  font-size: 32rpx;
+}
+
+.chronic-reminders-section-title {
+  font-size: 30rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.chronic-reminder-card {
+  @include card-base;
+  margin-bottom: 20rpx;
+  overflow: hidden;
+  border-left: 4px solid $color-primary;
+}
+
+.chronic-reminder-card--urgent {
+  border-left-color: $color-danger;
+  background: linear-gradient(135deg, rgba($color-danger, 0.03), $color-bg-card);
+}
+
+.chronic-reminder-card--soon {
+  border-left-color: $color-warning;
+}
+
+.chronic-reminder-badge {
+  padding: 16rpx 24rpx;
+  background: rgba($color-primary, 0.08);
+  border-bottom: 1px solid $color-divider;
+}
+
+.chronic-reminder-badge--soon {
+  background: rgba($color-warning, 0.1);
+}
+
+.chronic-reminder-card--urgent .chronic-reminder-badge {
+  background: rgba($color-danger, 0.08);
+}
+
+.chronic-reminder-badge-text {
+  font-size: 26rpx;
+  font-weight: $font-weight-medium;
+  color: $color-primary;
+}
+
+.chronic-reminder-card--urgent .chronic-reminder-badge-text {
+  color: $color-danger;
+}
+
+.chronic-reminder-badge--soon .chronic-reminder-badge-text {
+  color: $color-warning;
+}
+
+.chronic-reminder-body {
+  padding: 24rpx;
+}
+
+.chronic-reminder-condition {
+  font-size: 32rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 8rpx;
+}
+
+.chronic-reminder-date {
+  font-size: 28rpx;
+  color: $color-text-secondary;
+  margin-bottom: 8rpx;
+}
+
+.chronic-reminder-vet {
+  font-size: 26rpx;
+  color: $color-text-tertiary;
+}
+
+.chronic-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: $color-bg-overlay;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.chronic-modal {
+  background: linear-gradient(180deg, $color-bg-card 0%, $color-bg-page 100%);
+  width: 100%;
+  max-height: 80vh;
+  border-radius: 20px 20px 0 0;
+  display: flex;
+  flex-direction: column;
+  animation: sheetUp 0.3s ease-out;
+}
+
+.chronic-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx 40rpx;
+  border-bottom: 1px solid $color-divider;
+}
+
+.chronic-modal-title {
+  font-size: 36rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.chronic-modal-close {
+  font-size: 48rpx;
+  color: $color-text-tertiary;
+  padding: 8rpx 16rpx;
+  @include press-feedback;
+}
+
+.chronic-modal-body {
+  flex: 1;
+  padding: 32rpx 40rpx;
+  overflow-y: auto;
+}
+
+.chronic-form-group {
+  margin-bottom: 32rpx;
+}
+
+.chronic-form-label {
+  font-size: 28rpx;
+  color: $color-text-primary;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.chronic-form-condition-input {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.chronic-form-input--condition {
+  border-radius: 8px 0 0 8px !important;
+  border-right: none !important;
+}
+
+.chronic-form-condition-toggle {
+  width: 72rpx;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $color-primary-bg;
+  border: 1px solid $color-border;
+  border-radius: 0 8px 8px 0;
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  @include press-feedback;
+}
+
+.chronic-form-input {
+  width: 100%;
+  height: 88rpx;
+  padding: 0 24rpx;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  font-size: 28rpx;
+  background: $color-primary-bg;
+  color: $color-text-primary;
+  box-sizing: border-box;
+}
+
+.chronic-form-picker {
+  width: 100%;
+  height: 88rpx;
+  padding: 0 24rpx;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  font-size: 28rpx;
+  background: $color-primary-bg;
+  color: $color-text-primary;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.chronic-form-textarea {
+  width: 100%;
+  height: 160rpx;
+  padding: 16rpx 24rpx;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  font-size: 28rpx;
+  background: $color-primary-bg;
+  color: $color-text-primary;
+  box-sizing: border-box;
+}
+
+.chronic-form-severity {
+  display: flex;
+  gap: 24rpx;
+}
+
+.chronic-severity-option {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  font-size: 28rpx;
+  color: $color-text-secondary;
+  background: $color-primary-bg;
+  transition: all $transition-fast;
+  @include press-feedback;
+}
+
+.chronic-severity-active {
+  color: $color-text-inverse !important;
+}
+
+.chronic-condition-picker {
+  margin-top: 16rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  padding: 24rpx;
+  background: $color-primary-bg;
+  border-radius: $radius-md;
+  border: 1px solid $color-border;
+  animation: fadeIn 0.2s ease-out;
+  max-height: 320rpx;
+  overflow-y: auto;
+}
+
+.chronic-condition-option {
+  padding: 12rpx 28rpx;
+  border-radius: 16px;
+  font-size: 26rpx;
+  color: $color-text-secondary;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  @include press-feedback;
+  transition: all $transition-fast;
+}
+
+.chronic-condition-option--active {
+  background: $color-primary;
+  color: $color-text-inverse;
+  border-color: $color-primary;
+}
+
+.chronic-modal-footer {
+  display: flex;
+  gap: 24rpx;
+  padding: 32rpx 40rpx;
+  border-top: 1px solid $color-divider;
+}
+
+.chronic-modal-btn {
+  flex: 1;
+  text-align: center;
+  padding: 24rpx;
+  border-radius: 8px;
+  font-size: 32rpx;
+  @include press-feedback;
+}
+
+.chronic-modal-btn-cancel {
+  background: $color-primary-bg;
+  color: $color-text-secondary;
+  border: 1px solid $color-border;
+}
+
+.chronic-modal-btn-confirm {
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  color: $color-text-inverse;
+}
+
+.chronic-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.chronic-empty-text {
+  font-size: 32rpx;
+  color: $color-text-tertiary;
+}
+
+.chronic-bottom-safe {
+  height: 80rpx;
+}

@@ -1,0 +1,481 @@
+@import '../../styles/_theme';
+@import '../../styles/_animations';
+
+.breed-page {
+  min-height: 100vh;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
+  padding-bottom: 120px;
+  animation: pageEnter 0.4s ease-out;
+
+  &__header {
+    padding: $spacing-xl $spacing-lg $spacing-sm;
+    text-align: center;
+  }
+
+  &__title {
+    font-size: $font-size-xxl;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+    display: block;
+  }
+
+  &__subtitle {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+    margin-top: 8px;
+    display: block;
+  }
+
+  &__search {
+    padding: 0 $spacing-lg;
+    margin-bottom: $spacing-sm;
+  }
+
+  &__search-wrapper {
+    display: flex;
+    align-items: center;
+    background: $color-bg-card;
+    border-radius: $radius-full;
+    padding: 0 $spacing-lg;
+    height: 72px;
+    border: 1px solid $color-border;
+  }
+
+  &__search-icon {
+    font-size: 28px;
+    margin-right: $spacing-sm;
+    flex-shrink: 0;
+  }
+
+  &__search-input {
+    flex: 1;
+    height: 72px;
+    font-size: $font-size-xs;
+    color: $color-text-primary;
+  }
+
+  &__search-placeholder {
+    color: $color-text-tertiary;
+    font-size: $font-size-xs;
+  }
+
+  &__search-clear {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &__search-clear-icon {
+    font-size: 24px;
+    color: $color-text-tertiary;
+  }
+
+  &__filters {
+    padding: 0 $spacing-lg;
+    margin-bottom: $spacing-sm;
+  }
+
+  &__filter-row {
+    white-space: nowrap;
+    margin-bottom: $spacing-xs;
+  }
+
+  &__filter-chip {
+    display: inline-block;
+    padding: 10px $spacing-lg;
+    margin-right: $spacing-xs;
+    background: $color-bg-card;
+    border: 1px solid $color-border;
+    border-radius: $radius-lg;
+    font-size: $font-size-xs;
+    color: $color-text-secondary;
+    transition: all $transition-fast;
+
+    &--active {
+      background: $color-primary;
+      color: $color-text-inverse;
+      border-color: $color-primary;
+    }
+  }
+
+  &__count {
+    padding: $spacing-xs $spacing-lg;
+  }
+
+  &__count-text {
+    font-size: 22px;
+    color: $color-text-tertiary;
+  }
+
+  &__list {
+    padding: 0 $spacing-lg;
+    height: calc(100vh - 420px);
+  }
+
+  &__grid {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+  }
+
+  &__card {
+    @include card-base;
+    padding: $spacing-lg;
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    position: relative;
+    transition: all $transition-fast;
+    animation: cardStaggerIn 0.4s ease-out both;
+
+    &:active {
+      transform: scale(0.98);
+      opacity: 0.9;
+    }
+  }
+
+  &__card-emoji {
+    width: 80px;
+    height: 80px;
+    border-radius: $radius-md;
+    background: $color-primary-bg;
+    @include flex-center;
+    flex-shrink: 0;
+  }
+
+  &__card-emoji-text {
+    font-size: 44px;
+  }
+
+  &__card-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__card-name {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-medium;
+    color: $color-text-primary;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  &__card-meta {
+    display: flex;
+    gap: $spacing-md;
+    margin-bottom: 8px;
+  }
+
+  &__card-meta-item {
+    font-size: 22px;
+    color: $color-text-tertiary;
+  }
+
+  &__card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  &__card-tag {
+    padding: 2px 10px;
+    background: rgba($color-primary, 0.12);
+    border-radius: 12px;
+    font-size: 20px;
+    color: $color-primary-light;
+  }
+
+  &__card-arrow {
+    font-size: 36px;
+    color: $color-text-tertiary;
+    flex-shrink: 0;
+  }
+
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 80px 0;
+    animation: fadeInScale 0.4s ease-out;
+  }
+
+  &__empty-icon {
+    font-size: 64px;
+    margin-bottom: $spacing-md;
+  }
+
+  &__empty-text {
+    font-size: $font-size-md;
+    color: $color-text-tertiary;
+  }
+
+  &__load-more {
+    padding: $spacing-lg 0;
+    text-align: center;
+  }
+
+  &__load-more-text {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+  }
+
+  &__disclaimer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: $spacing-sm $spacing-lg;
+    background: rgba($color-bg-card, 0.95);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid $color-border;
+  }
+
+  &__disclaimer-text {
+    font-size: 20px;
+    color: $color-text-tertiary;
+    line-height: 1.5;
+  }
+
+  // 拍照识别按钮
+  &__camera-btn {
+    position: fixed;
+    right: 32px;
+    bottom: 160px;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: $color-primary;
+    @include flex-center;
+    box-shadow: 0 8px 24px rgba($color-primary, 0.4);
+    z-index: 100;
+    transition: all $transition-fast;
+    animation: floatPulse 2s ease-in-out infinite;
+
+    &:active {
+      transform: scale(0.9);
+      box-shadow: 0 4px 12px rgba($color-primary, 0.3);
+    }
+
+    &--loading {
+      animation: none;
+      background: $color-primary-light;
+      pointer-events: none;
+    }
+  }
+
+  &__camera-btn-icon {
+    font-size: 44px;
+  }
+
+  // 识别遮罩
+  &__recognize-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 200;
+    @include flex-center;
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  // 识别中加载
+  &__recognize-loading {
+    @include flex-center;
+    flex-direction: column;
+    background: $color-bg-card;
+    border-radius: $radius-xl;
+    padding: 48px 56px;
+    margin: 0 $spacing-xl;
+    animation: fadeInScale 0.3s ease-out;
+  }
+
+  &__recognize-spinner {
+    width: 64px;
+    height: 64px;
+    border: 4px solid $color-border;
+    border-top-color: $color-primary;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: $spacing-lg;
+  }
+
+  &__recognize-loading-text {
+    font-size: $font-size-md;
+    font-weight: $font-weight-medium;
+    color: $color-text-primary;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  &__recognize-loading-sub {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+    display: block;
+  }
+
+  // 识别结果弹窗
+  &__recognize-modal {
+    width: 600px;
+    background: $color-bg-card;
+    border-radius: $radius-xl;
+    overflow: hidden;
+    animation: fadeInScale 0.3s ease-out;
+    margin: 0 $spacing-xl;
+  }
+
+  &__recognize-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-lg $spacing-xl;
+    border-bottom: 1px solid $color-border;
+  }
+
+  &__recognize-modal-title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+  }
+
+  &__recognize-modal-close {
+    width: 48px;
+    height: 48px;
+    @include flex-center;
+    border-radius: 50%;
+    font-size: 28px;
+    color: $color-text-tertiary;
+
+    &:active {
+      background: $color-bg-secondary;
+    }
+  }
+
+  &__recognize-modal-body {
+    padding: $spacing-xl;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  &__recognize-species {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: $spacing-md;
+  }
+
+  &__recognize-species-icon {
+    font-size: 40px;
+  }
+
+  &__recognize-species-label {
+    font-size: $font-size-xs;
+    color: $color-text-secondary;
+    padding: 4px 16px;
+    background: $color-primary-bg;
+    border-radius: $radius-full;
+  }
+
+  &__recognize-breed-name {
+    font-size: 40px;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+    margin-bottom: $spacing-lg;
+    display: block;
+  }
+
+  &__recognize-confidence {
+    width: 100%;
+    margin-bottom: $spacing-md;
+  }
+
+  &__recognize-confidence-bar {
+    width: 100%;
+    height: 12px;
+    background: $color-bg-secondary;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  &__recognize-confidence-fill {
+    height: 100%;
+    background: linear-gradient(90deg, $color-primary-light, $color-primary);
+    border-radius: 6px;
+    transition: width 0.6s ease-out;
+  }
+
+  &__recognize-confidence-text {
+    font-size: 22px;
+    color: $color-text-tertiary;
+    text-align: center;
+    display: block;
+  }
+
+  &__recognize-reason {
+    font-size: $font-size-xs;
+    color: $color-text-secondary;
+    text-align: center;
+    margin-bottom: $spacing-md;
+    padding: $spacing-sm $spacing-md;
+    background: $color-bg-secondary;
+    border-radius: $radius-md;
+    display: block;
+    width: 100%;
+  }
+
+  &__recognize-match {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: $spacing-sm $spacing-md;
+    border-radius: $radius-md;
+    width: 100%;
+
+    &--no {
+      background: $color-bg-secondary;
+    }
+  }
+
+  &__recognize-match-icon {
+    font-size: 28px;
+  }
+
+  &__recognize-match-text {
+    font-size: $font-size-xs;
+    color: $color-text-secondary;
+  }
+
+  &__recognize-modal-footer {
+    display: flex;
+    gap: $spacing-sm;
+    padding: $spacing-md $spacing-xl $spacing-xl;
+  }
+
+  &__recognize-btn {
+    flex: 1;
+    height: 80px;
+    @include flex-center;
+    border-radius: $radius-lg;
+    border: 1px solid $color-border;
+    font-size: $font-size-md;
+    color: $color-text-primary;
+    transition: all $transition-fast;
+
+    &:active {
+      opacity: 0.8;
+    }
+
+    &--primary {
+      background: $color-primary;
+      border-color: $color-primary;
+      color: $color-text-inverse;
+    }
+  }
+}

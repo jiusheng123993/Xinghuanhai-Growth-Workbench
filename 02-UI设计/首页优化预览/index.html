@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>星河宠记 · 首页视觉升级预览</title>
+<style>
+  :root{
+    --coral:#FF6B3D; --coral-soft:#FFA082; --coral-deep:#F04E1D;
+    --gold:#FFB020; --gold-soft:#FFD068; --gold-deep:#E8920A;
+    --ink:#40281C; --ink2:#8B6E58; --ink3:#B69B83;
+    --card:#FFFFFF; --border:#F3E2D2; --border-light:rgba(243,226,210,.5);
+    --success:#2FC98E; --info:#4FA3E3; --danger:#FF5A5F;
+    --shadow-card:0 8px 30px -14px rgba(61,33,18,.14);
+    --shadow-pop:0 20px 60px -24px rgba(61,33,18,.30);
+    --shadow-btn:0 10px 28px -8px rgba(255,107,61,.38);
+    --r-lg:28px; --r-md:20px; --r-sm:14px; --r-full:999px;
+    --font:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{background:#F4EDE4;}
+  body{font-family:var(--font); color:var(--ink); -webkit-font-smoothing:antialiased;}
+
+  /* ===== 舞台 ===== */
+  .stage{display:flex; gap:40px; align-items:flex-start; justify-content:center; padding:48px 32px; flex-wrap:wrap;}
+  .stage-title{width:100%; text-align:center; margin-bottom:8px;}
+  .stage-title h1{font-size:22px; font-weight:700; letter-spacing:-.01em;}
+  .stage-title p{font-size:13px; color:var(--ink2); margin-top:4px;}
+
+  /* ===== 手机壳 ===== */
+  .phone{
+    position:relative; width:390px; min-height:844px; border-radius:48px; overflow:hidden;
+    background:var(--bg); box-shadow:0 40px 90px -30px rgba(61,33,18,.45), 0 0 0 10px #1d1d1f, 0 0 0 12px #3a3a3d;
+    transition:background .5s ease;
+    flex-shrink:0;
+  }
+  .phone-screen{position:relative; z-index:2; min-height:844px; display:flex; flex-direction:column;}
+
+  /* ===== 背景层 ===== */
+  .bg-layer{position:absolute; inset:0; z-index:0; pointer-events:none; transition:opacity .5s ease;}
+  .blob{position:absolute; border-radius:50%; filter:blur(54px); opacity:.85; transition:background .5s ease;}
+  .blob-a{width:300px; height:300px; top:-70px; left:-80px;}
+  .blob-b{width:260px; height:260px; top:210px; right:-110px;}
+  .blob-c{width:200px; height:200px; bottom:120px; left:-60px;}
+
+  /* 默认 暖阳米白 */
+  .bg-autumn .phone{--bg:linear-gradient(180deg,#FFFDF9 0%,#FFF6EE 45%,#FFEDE0 100%);}
+  .bg-autumn .blob-a{background:rgba(255,107,61,.26);}
+  .bg-autumn .blob-b{background:rgba(255,176,32,.20);}
+  .bg-autumn .blob-c{background:rgba(255,107,61,.14);}
+
+  /* 星空银河 */
+  .bg-starry .phone{--bg:linear-gradient(180deg,#171F42 0%,#25315F 55%,#33406F 100%);}
+  .bg-starry .blob-a{background:rgba(122,140,255,.30);}
+  .bg-starry .blob-b{background:rgba(255,176,32,.14);}
+  .bg-starry .blob-c{background:rgba(122,140,255,.16);}
+  .stars{position:absolute; inset:0; z-index:1;}
+  .star{position:absolute; background:#fff; border-radius:50%; opacity:.8;}
+  .star.tw{animation:twinkle 2.6s ease-in-out infinite;}
+
+  /* 嫩芽春色 */
+  .bg-spring .phone{--bg:linear-gradient(180deg,#FBFEF8 0%,#F3FAEF 45%,#E7F4DE 100%);}
+  .bg-spring .blob-a{background:rgba(84,180,96,.22);}
+  .bg-spring .blob-b{background:rgba(255,201,77,.16);}
+  .bg-spring .blob-c{background:rgba(84,180,96,.12);}
+
+  /* 海盐蓝 */
+  .bg-summer .phone{--bg:linear-gradient(180deg,#FAFDFF 0%,#EFF7FC 45%,#DFEFF8 100%);}
+  .bg-summer .blob-a{background:rgba(47,168,232,.20);}
+  .bg-summer .blob-b{background:rgba(255,184,77,.14);}
+  .bg-summer .blob-c{background:rgba(47,168,232,.12);}
+
+  /* 冰晶紫 */
+  .bg-winter .phone{--bg:linear-gradient(180deg,#FAFAFE 0%,#F1F3FB 45%,#E5E9F8 100%);}
+  .bg-winter .blob-a{background:rgba(108,124,240,.20);}
+  .bg-winter .blob-b{background:rgba(143,168,232,.16);}
+  .bg-winter .blob-c{background:rgba(108,124,240,.12);}
+
+  /* 奶油格纹 */
+  .bg-grid .phone{--bg:#FFF9F0;}
+  .bg-grid .blob-a,.bg-grid .blob-b,.bg-grid .blob-c{display:none;}
+  .bg-grid .bg-layer::after{
+    content:''; position:absolute; inset:0;
+    background:
+      linear-gradient(rgba(255,107,61,.045) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,107,61,.045) 1px,transparent 1px);
+    background-size:34px 34px;
+    mask-image:radial-gradient(ellipse at 50% 20%,#000 0%,transparent 78%);
+  }
+
+  /* 宠物照片壁纸 */
+  .bg-pet .phone{--bg:#FFF6EE;}
+  .bg-pet .blob-a,.bg-pet .blob-b,.bg-pet .blob-c{display:none;}
+  .pet-wall{position:absolute; inset:0; z-index:1; opacity:0; transition:opacity .5s ease; pointer-events:none;}
+  .pet-wall img{width:100%; height:100%; object-fit:cover; filter:blur(14px) saturate(1.02); transform:scale(1.1);}
+  .pet-wall .veil{position:absolute; inset:0; background:linear-gradient(180deg,rgba(255,246,238,.42) 0%,rgba(255,246,238,.66) 100%);}
+
+  /* ===== 状态栏 ===== */
+  .statusbar{position:relative; z-index:3; display:flex; justify-content:space-between; align-items:center; padding:16px 26px 0; font-size:14px; font-weight:600;}
+  .statusbar .icons{display:flex; gap:6px; align-items:center;}
+
+  /* ===== 顶部导航 ===== */
+  .topbar{position:relative; z-index:3; display:flex; align-items:center; justify-content:space-between; padding:12px 22px 4px;}
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{width:38px; height:38px; border-radius:12px; overflow:hidden; box-shadow:0 6px 16px -6px rgba(240,78,29,.5); background:#fff;}
+  .brand-mark img{width:100%; height:100%; object-fit:cover;}
+  .brand-name{font-size:17px; font-weight:700; letter-spacing:.01em; line-height:1.1;}
+  .brand-sub{font-size:11px; color:var(--ink3); margin-top:1px;}
+  .top-actions{display:flex; gap:8px;}
+  .icon-btn{width:38px; height:38px; border-radius:var(--r-full); display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.72); border:1px solid var(--border-light); box-shadow:0 4px 14px -6px rgba(61,33,18,.12); cursor:pointer; transition:transform .35s cubic-bezier(.34,1.56,.64,1);}
+  .icon-btn:active{transform:scale(.9);}
+  .icon-btn svg{width:20px; height:20px;}
+
+  /* ===== Hero ===== */
+  .hero{position:relative; z-index:3; display:flex; flex-direction:column; align-items:center; text-align:center; padding:16px 30px 4px;}
+  .slogan{cursor:pointer; font-size:24px; font-weight:800; letter-spacing:-.01em; line-height:1.45; max-width:320px; transition:opacity .3s ease;}
+  .slogan .accent{color:var(--coral);}
+  /* 小星星点缀（第一行两侧） */
+  .slogan-star{display:inline-block; font-size:.72em; color:var(--coral); vertical-align:.1em; margin:0 10px;}
+  /* 散落星点：绝对定位铺在 Hero 内，闪烁呼应「星河」并填充留白 */
+  .slogan-spark{position:absolute; color:var(--coral); animation:sparkTwinkle 3.2s ease-in-out infinite;}
+  .slogan-spark--1{top:16px; left:14%; font-size:15px; animation-delay:0s;}
+  .slogan-spark--2{top:74px; left:7%; font-size:10px; animation-delay:.6s;}
+  .slogan-spark--3{top:30px; right:12%; font-size:13px; animation-delay:1.2s;}
+  .slogan-spark--4{top:104px; right:6%; font-size:9px; animation-delay:.3s;}
+  .slogan-spark--5{top:150px; left:10%; font-size:11px; animation-delay:.9s;}
+  .slogan-spark--6{top:186px; right:15%; font-size:8px; animation-delay:1.5s;}
+  @keyframes sparkTwinkle{0%,100%{opacity:.3; transform:scale(.88);}50%{opacity:1; transform:scale(1.12);}}
+  .slogan-hint{font-size:11px; color:var(--ink3); margin-top:10px; opacity:.8;}
+  .mascot{position:relative; margin-top:10px; width:248px; height:248px;}
+  .mascot .halo{position:absolute; inset:-16px; border-radius:50%; background:radial-gradient(circle,rgba(255,176,32,.30) 0%,rgba(255,107,61,.10) 55%,transparent 72%); filter:blur(6px);}
+  .mascot .ring{position:absolute; inset:0; border-radius:50%; border:2px solid rgba(255,255,255,.85); box-shadow:0 24px 50px -18px rgba(240,78,29,.45);}
+  .mascot img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:50%;}
+  .pet-switch{margin-top:14px; display:flex; align-items:center; gap:9px; padding:8px 16px 8px 8px; border-radius:var(--r-full); background:rgba(255,255,255,.78); border:1px solid var(--border-light); box-shadow:0 6px 18px -8px rgba(61,33,18,.16); cursor:pointer;}
+  .pet-switch img{width:34px; height:34px; border-radius:50%; object-fit:cover;}
+  .pet-switch .pname{font-size:14px; font-weight:600;}
+  .pet-switch .ptag{font-size:11px; color:var(--ink3); margin-top:-1px;}
+
+  /* ===== 内容区 ===== */
+  .content{position:relative; z-index:3; padding:12px 20px 0; display:flex; flex-direction:column; gap:14px;}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg); box-shadow:var(--shadow-card);}
+  .today-card{padding:18px; display:flex; align-items:center; gap:14px;}
+  .today-icon{width:52px; height:52px; border-radius:16px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--coral-soft),var(--coral)); box-shadow:var(--shadow-btn); flex-shrink:0;}
+  .today-icon svg{width:26px; height:26px; color:#fff;}
+  .today-body{flex:1; min-width:0;}
+  .today-title{font-size:15px; font-weight:700;}
+  .today-meta{font-size:12.5px; color:var(--ink2); margin-top:3px;}
+  .today-meta b{color:var(--coral); font-weight:700;}
+  .today-cta{font-size:12px; color:var(--coral-deep); font-weight:600; margin-top:5px;}
+
+  .checkin-btn{display:flex; align-items:center; gap:14px; padding:18px 20px; border:none; cursor:pointer; border-radius:var(--r-lg); background:linear-gradient(135deg,var(--gold-soft),var(--gold)); box-shadow:var(--shadow-btn); text-align:left;}
+  .checkin-btn .ck-icon{width:44px; height:44px; border-radius:14px; background:rgba(255,255,255,.30); display:flex; align-items:center; justify-content:center;}
+  .checkin-btn .ck-icon svg{width:24px; height:24px; color:#fff;}
+  .checkin-btn .ck-body{flex:1;}
+  .checkin-btn .ck-title{font-size:15px; font-weight:700; color:#fff;}
+  .checkin-btn .ck-sub{font-size:11.5px; color:rgba(255,255,255,.92); margin-top:2px;}
+  .checkin-btn .ck-arrow{color:#fff;}
+
+  .section-title{font-size:15px; font-weight:700; padding:2px 4px 0; margin-bottom:-4px;}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .grid-item{display:flex; align-items:center; gap:11px; padding:14px; background:var(--card); border:1px solid var(--border); border-radius:var(--r-md); box-shadow:var(--shadow-card); cursor:pointer;}
+  .grid-item .gi-icon{width:42px; height:42px; border-radius:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .grid-item .gi-icon svg{width:22px; height:22px;}
+  .gi-t{font-size:13.5px; font-weight:700; line-height:1.2;}
+  .gi-d{font-size:11px; color:var(--ink3); margin-top:2px; line-height:1.25;}
+  .tint-coral{background:rgba(255,107,61,.12);} .tint-coral svg{color:var(--coral);}
+  .tint-gold{background:rgba(255,176,32,.16);} .tint-gold svg{color:var(--gold-deep);}
+  .tint-green{background:rgba(47,201,142,.14);} .tint-green svg{color:var(--success);}
+  .tint-blue{background:rgba(79,163,227,.14);} .tint-blue svg{color:var(--info);}
+
+  /* ===== 底部导航 ===== */
+  .tabbar{position:relative; z-index:3; margin-top:auto; display:flex; align-items:center; justify-content:space-around; padding:10px 8px 26px; background:rgba(255,255,255,.86); border-top:1px solid var(--border-light); backdrop-filter:blur(14px);}
+  .tab{display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:var(--ink3);}
+  .tab svg{width:22px; height:22px;}
+  .tab span{font-size:10px; font-weight:600;}
+  .tab.active{color:var(--coral);}
+  .tab-center{width:48px; height:48px; border-radius:18px; background:linear-gradient(135deg,var(--coral),var(--coral-deep)); box-shadow:var(--shadow-btn); display:flex; align-items:center; justify-content:center; margin-top:-22px; color:#fff;}
+  .tab-center svg{width:24px; height:24px;}
+
+  /* ===== 背景选择 sheet ===== */
+  .sheet-mask{position:absolute; inset:0; z-index:20; background:rgba(40,22,12,.45); opacity:0; pointer-events:none; transition:opacity .3s ease;}
+  .sheet-mask.show{opacity:1; pointer-events:auto;}
+  .sheet{position:absolute; left:0; right:0; bottom:0; z-index:21; background:#fff; border-radius:28px 28px 0 0; padding:22px 22px 30px; transform:translateY(105%); transition:transform .42s cubic-bezier(.32,.72,0,1); box-shadow:0 -20px 60px -20px rgba(61,33,18,.4);}
+  .sheet.show{transform:translateY(0);}
+  .sheet-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;}
+  .sheet-title{font-size:17px; font-weight:700;}
+  .sheet-close{width:32px; height:32px; border-radius:50%; background:#F3E2D2; display:flex; align-items:center; justify-content:center; cursor:pointer;}
+  .sheet-label{font-size:12.5px; font-weight:700; color:var(--ink2); margin:14px 0 10px;}
+  .bg-row{display:flex; gap:12px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none;}
+  .bg-row::-webkit-scrollbar{display:none;}
+  .bg-thumb{flex-shrink:0; width:88px; text-align:center; cursor:pointer;}
+  .bg-thumb .sw{width:88px; height:88px; border-radius:20px; border:2.5px solid transparent; overflow:hidden; box-shadow:0 6px 18px -8px rgba(61,33,18,.2); transition:border-color .2s ease, transform .2s ease;}
+  .bg-thumb.active .sw{border-color:var(--coral);}
+  .bg-thumb:active .sw{transform:scale(.94);}
+  .bg-thumb span{display:block; font-size:11px; color:var(--ink2); margin-top:6px; font-weight:600;}
+  .bg-thumb.active span{color:var(--coral-deep);}
+  .sw-auto{background:linear-gradient(180deg,#FFFDF9,#FFEDE0);}
+  .sw-starry{background:linear-gradient(180deg,#171F42,#33406F); position:relative;}
+  .sw-starry::before,.sw-starry::after{content:''; position:absolute; border-radius:50%; background:#fff;}
+  .sw-starry::before{width:6px; height:6px; top:18px; left:16px;}
+  .sw-starry::after{width:4px; height:4px; top:34px; right:20px;}
+  .sw-starry i{position:absolute; border-radius:50%; background:#fff; width:3px; height:3px;}
+  .sw-spring{background:linear-gradient(180deg,#FBFEF8,#E7F4DE);}
+  .sw-summer{background:linear-gradient(180deg,#FAFDFF,#DFEFF8);}
+  .sw-winter{background:linear-gradient(180deg,#FAFAFE,#E5E9F8);}
+  .sw-grid{background:#FFF9F0; position:relative;}
+  .sw-grid::before{content:''; position:absolute; inset:0; background:linear-gradient(rgba(255,107,61,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,107,61,.08) 1px,transparent 1px); background-size:16px 16px;}
+  .sw-pet{position:relative;}
+  .sw-pet img{width:100%; height:100%; object-fit:cover;}
+  .sw-pet::after{content:''; position:absolute; inset:0; background:rgba(255,246,238,.55);}
+
+  /* ===== 右侧说明栏 ===== */
+  .notes{width:320px; flex-shrink:0; display:flex; flex-direction:column; gap:18px; position:sticky; top:48px;}
+  .note-card{background:#fff; border-radius:20px; padding:20px; box-shadow:var(--shadow-card); border:1px solid #eee;}
+  .note-card h3{font-size:15px; font-weight:700; margin-bottom:12px; display:flex; align-items:center; gap:8px;}
+  .note-card h3 .dot{width:8px; height:8px; border-radius:50%; background:var(--coral);}
+  .slogan-list{display:flex; flex-direction:column; gap:9px;}
+  .slogan-item{font-size:13.5px; padding:11px 13px; border-radius:12px; background:#FFF6EE; cursor:pointer; border:1.5px solid transparent; transition:all .18s ease; line-height:1.5;}
+  .slogan-item:hover{border-color:var(--coral-soft); background:#FFF0E8;}
+  .slogan-item.current{border-color:var(--coral); background:#FFEDE0; font-weight:600;}
+  .slogan-item .tag{display:inline-block; font-size:10px; font-weight:700; color:#fff; background:var(--coral); border-radius:6px; padding:1px 6px; margin-right:6px; vertical-align:1px;}
+  .kv{font-size:12.5px; color:var(--ink2); line-height:1.7;}
+  .kv b{color:var(--ink);}
+
+  @keyframes twinkle{0%,100%{opacity:.25;}50%{opacity:.95;}}
+  @keyframes floaty{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  .mascot{animation:floaty 4.5s ease-in-out infinite;}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="stage-title">
+    <h1>星河宠记 · 首页视觉升级预览</h1>
+    <p>品牌头部 Hero + IP 吉祥物 + 情绪 slogan + 页面背景自定义（预设库 + 宠物照片壁纸）</p>
+  </div>
+
+  <!-- ============ 手机壳 ============ -->
+  <div class="bg-autumn" id="phoneWrap">
+    <div class="phone" id="phone">
+      <div class="bg-layer">
+        <div class="blob blob-a"></div>
+        <div class="blob blob-b"></div>
+        <div class="blob blob-c"></div>
+      </div>
+      <div class="stars" id="stars"></div>
+      <div class="pet-wall" id="petWall">
+        <img src="assets/pet-photo.png" alt="宠物照片壁纸">
+        <div class="veil"></div>
+      </div>
+
+      <div class="phone-screen">
+        <!-- 状态栏 -->
+        <div class="statusbar">
+          <span id="sbTime">9:41</span>
+          <span class="icons">
+            <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><rect x="0" y="6" width="3" height="6" rx="1" fill="currentColor"/><rect x="4.5" y="4" width="3" height="8" rx="1" fill="currentColor"/><rect x="9" y="2" width="3" height="10" rx="1" fill="currentColor"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="currentColor"/></svg>
+            <svg width="20" height="12" viewBox="0 0 20 12" fill="none"><rect x="0" y="0" width="15" height="12" rx="3" fill="currentColor"/><rect x="16.5" y="3" width="2" height="6" rx="1" fill="currentColor"/></svg>
+          </span>
+        </div>
+
+        <!-- 顶部导航 -->
+        <div class="topbar">
+          <div class="brand">
+            <div class="brand-mark"><img src="assets/ip-cuddle.png" alt=""></div>
+            <div>
+              <div class="brand-name">星河宠记</div>
+              <div class="brand-sub">AI 宠物管家</div>
+            </div>
+          </div>
+          <div class="top-actions">
+            <button class="icon-btn" onclick="openSheet()" aria-label="页面背景" style="color:var(--coral)">
+              <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M200.77,53.89A103.27,103.27,0,0,0,128,24h-1.07A104,104,0,0,0,24,128c0,43,26.58,79.06,69.36,94.17A32,32,0,0,0,136,192a16,16,0,0,1,16-16h46.21a31.81,31.81,0,0,0,31.2-24.88,104.43,104.43,0,0,0,2.59-24A103.28,103.28,0,0,0,200.77,53.89ZM84,168a12,12,0,1,1,12-12A12,12,0,0,1,84,168Zm0-56a12,12,0,1,1,12-12A12,12,0,0,1,84,112Zm44-24a12,12,0,1,1,12-12A12,12,0,0,1,128,88Zm44,24a12,12,0,1,1,12-12A12,12,0,0,1,172,112Z"/></svg>
+            </button>
+            <button class="icon-btn" style="color:var(--coral-deep)" aria-label="记忆">
+              <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M212,76V72a44,44,0,0,0-74.86-31.31,3.93,3.93,0,0,0-1.14,2.8v88.72a4,4,0,0,0,6.2,3.33A47.67,47.67,0,0,1,167.68,128a8.18,8.18,0,0,1,8.31,7.58,8,8,0,0,1-8,8.42,32,32,0,0,0-32,32v33.88a4,4,0,0,0,1.49,3.12,47.92,47.92,0,0,0,74.21-17.16,4,4,0,0,0-4.49-5.56A68.06,68.06,0,0,1,192,192h-7.73a8.18,8.18,0,0,1-8.25-7.47,8,8,0,0,1,8-8.53h8a51.6,51.6,0,0,0,24-5.88v0A52,52,0,0,0,212,76Zm-12,36h-4a36,36,0,0,1-36-36V72a8,8,0,0,1,16,0v4a20,20,0,0,0,20,20h4a8,8,0,0,1,0,16ZM88,28A44.05,44.05,0,0,0,44,72v4a52,52,0,0,0-4,94.12h0A51.6,51.6,0,0,0,64,176h7.73A8.18,8.18,0,0,1,80,183.47,8,8,0,0,1,72,192H64a67.48,67.48,0,0,1-15.21-1.73,4,4,0,0,0-4.5,5.55A47.93,47.93,0,0,0,118.51,213a4,4,0,0,0,1.49-3.12V176a32,32,0,0,0-32-32,8,8,0,0,1-8-8.42A8.18,8.18,0,0,1,88.32,128a47.67,47.67,0,0,1,25.48,7.54,4,4,0,0,0,6.2-3.33V43.49a4,4,0,0,0-1.14-2.81A43.85,43.85,0,0,0,88,28Zm8,48a36,36,0,0,1-36,36H56a8,8,0,0,1,0-16h4A20,20,0,0,0,80,76V72a8,8,0,0,1,16,0Z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Hero -->
+        <div class="hero">
+          <span class="slogan-spark slogan-spark--1">✦</span>
+          <span class="slogan-spark slogan-spark--2">✦</span>
+          <span class="slogan-spark slogan-spark--3">✦</span>
+          <span class="slogan-spark slogan-spark--4">✦</span>
+          <span class="slogan-spark slogan-spark--5">✦</span>
+          <span class="slogan-spark slogan-spark--6">✦</span>
+          <div class="slogan" id="slogan" onclick="cycleSlogan()"></div>
+          <div class="slogan-hint">点这句话，换一条 slogan 看看</div>
+          <div class="mascot">
+            <div class="halo"></div>
+            <div class="ring"></div>
+            <img src="assets/ip-3d.png" alt="猫狗吉祥物">
+          </div>
+          <div class="pet-switch">
+            <img src="assets/ip-3d.png" alt="">
+            <div>
+              <div class="pname">可乐</div>
+              <div class="ptag">橘猫 · 3岁</div>
+            </div>
+            <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,48,88H208a8,8,0,0,1,5.66,13.66Z"/></svg>
+          </div>
+        </div>
+
+        <!-- 内容区 -->
+        <div class="content">
+          <div class="card today-card">
+            <div class="today-icon">
+              <svg width="26" height="26" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM169.66,133.66l-48,48a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L116,164.69l42.34-42.35a8,8,0,0,1,11.32,11.32ZM48,80V48H72v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80Z"/></svg>
+            </div>
+            <div class="today-body">
+              <div class="today-title">今日健康摘要</div>
+              <div class="today-meta">便便 <b>3/5</b> · 食欲正常 · 精神良好</div>
+              <div class="today-cta">查看详情 →</div>
+            </div>
+          </div>
+
+          <button class="checkin-btn">
+            <div class="ck-icon">
+              <svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM205.66,85.66l-96,96a8,8,0,0,1-11.32,0l-40-40a8,8,0,0,1,11.32-11.32L104,164.69l90.34-90.35a8,8,0,0,1,11.32,11.32Z"/></svg>
+            </div>
+            <div class="ck-body">
+              <div class="ck-title">3 秒健康打卡</div>
+              <div class="ck-sub">便便 · 食欲 · 精神 · 运动 · 体重</div>
+            </div>
+            <svg class="ck-arrow" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M221.66,133.66l-72,72A8,8,0,0,1,136,200V136H40a8,8,0,0,1,0-16h96V56a8,8,0,0,1,13.66-5.66l72,72A8,8,0,0,1,221.66,133.66Z"/></svg>
+          </button>
+
+          <div>
+            <div class="section-title">快捷功能</div>
+            <div class="grid" style="margin-top:12px">
+              <div class="grid-item">
+                <div class="gi-icon tint-coral"><svg width="22" height="22" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M224,104h-8.37a88,88,0,0,0-175.26,0H32a8,8,0,0,0-8,8,104.35,104.35,0,0,0,56,92.28V208a16,16,0,0,0,16,16h64a16,16,0,0,0,16-16v-3.72A104.35,104.35,0,0,0,232,112,8,8,0,0,0,224,104ZM173.48,56.23q2.75,2.25,5.27,4.75a87.92,87.92,0,0,0-49.15,43H100.1A72.26,72.26,0,0,1,168,56C169.83,56,171.66,56.09,173.48,56.23ZM148.12,104a71.84,71.84,0,0,1,41.27-29.57A71.45,71.45,0,0,1,199.54,104ZM128,40a71.87,71.87,0,0,1,19,2.57A88.36,88.36,0,0,0,83.33,104H56.46A72.08,72.08,0,0,1,128,40Z"/></svg></div>
+                <div><div class="gi-t">食物查询</div><div class="gi-d">能不能吃先问问</div></div>
+              </div>
+              <div class="grid-item">
+                <div class="gi-icon tint-blue"><svg width="22" height="22" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M240,160a32,32,0,1,0-39.93,31,8,8,0,0,0-.07,1,32,32,0,0,1-32,32H144a32,32,0,0,1-32-32V151.48c31.47-4,56-31.47,56-64.31V40a8,8,0,0,0-8-8H136a8,8,0,0,0,0,16h16V87.17c0,26.58-21.25,48.49-47.36,48.83A48,48,0,0,1,56,88V48H72a8,8,0,0,0,0-16H48a8,8,0,0,0-8,8V88a64,64,0,0,0,56,63.49V192a48.05,48.05,0,0,0,48,48h24a48.05,48.05,0,0,0,48-48,8,8,0,0,0-.07-1A32,32,0,0,0,240,160Zm-32,8a8,8,0,1,1,8-8A8,8,0,0,1,208,168Z"/></svg></div>
+                <div><div class="gi-t">症状初筛</div><div class="gi-d">不舒服先问问</div></div>
+              </div>
+              <div class="grid-item">
+                <div class="gi-icon tint-green"><svg width="22" height="22" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M237.66,77.6a8,8,0,0,1-11.32,0L208,59.25,179.3,88l34.35,34.35a8,8,0,0,1-11.32,11.32L196,127.27l-84,84A16,16,0,0,1,100.65,216H51.26L29.6,237.66a8,8,0,0,1-11.72-.43,8.21,8.21,0,0,1,.61-11.1l21.45-21.46V155.28A16,16,0,0,1,44.63,144l15.18-15.18a4,4,0,0,1,5.66,0L94.3,157.63a8,8,0,1,0,11.32-11.32L76.78,117.47a4,4,0,0,1,0-5.66l11-11a4,4,0,0,1,5.66,0l28.84,28.84a8,8,0,1,0,11.32-11.32L104.79,89.46a4,4,0,0,1,0-5.66l23.87-23.86-6.35-6.35a8,8,0,0,1,.18-11.49,8.22,8.22,0,0,1,11.37.41L168,76.63l28.69-28.7L178.33,29.58a8,8,0,0,1,.17-11.49,8.23,8.23,0,0,1,11.38.41l47.78,47.78A8,8,0,0,1,237.66,77.6Z"/></svg></div>
+                <div><div class="gi-t">疫苗日历</div><div class="gi-d">接种不遗忘</div></div>
+              </div>
+              <div class="grid-item">
+                <div class="gi-icon tint-gold"><svg width="22" height="22" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M208,144a15.78,15.78,0,0,1-10.42,14.94L146,178l-19,51.62a15.92,15.92,0,0,1-29.88,0L78,178l-51.62-19a15.92,15.92,0,0,1,0-29.88L78,110l19-51.62a15.92,15.92,0,0,1,29.88,0L146,110l51.62,19A15.78,15.78,0,0,1,208,144ZM152,48h16V64a8,8,0,0,0,16,0V48h16a8,8,0,0,0,0-16H184V16a8,8,0,0,0-16,0V32H152a8,8,0,0,0,0,16Zm88,32h-8V72a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0V96h8a8,8,0,0,0,0-16Z"/></svg></div>
+                <div><div class="gi-t">回忆时间线</div><div class="gi-d">故事都在这里</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部导航 -->
+        <div class="tabbar">
+          <div class="tab active">
+            <svg width="22" height="22" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z"/></svg><span>首页</span>
+          </div>
+          <div class="tab">
+            <svg width="22" height="22" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm56,112H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48a8,8,0,0,1,0,16Z"/></svg><span>时间线</span>
+          </div>
+          <div class="tab-center">
+            <svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM184,136H136v48a8,8,0,0,1-16,0V136H72a8,8,0,0,1,0-16h48V72a8,8,0,0,1,16,0v48h48a8,8,0,0,1,0,16Z"/></svg>
+          </div>
+          <div class="tab">
+            <svg width="22" height="22" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M240,108a28,28,0,1,1-28-28A28,28,0,0,1,240,108ZM72,108a28,28,0,1,0-28,28A28,28,0,0,0,72,108ZM92,88A28,28,0,1,0,64,60,28,28,0,0,0,92,88Zm72,0a28,28,0,1,0-28-28A28,28,0,0,0,164,88Zm23.12,60.86a35.3,35.3,0,0,1-16.87-21.14,44,44,0,0,0-84.5,0A35.25,35.25,0,0,1,69,148.82,40,40,0,0,0,88,224a39.48,39.48,0,0,0,15.52-3.13,64.09,64.09,0,0,1,48.87,0,40,40,0,0,0,34.73-72Z"/></svg><span>家庭</span>
+          </div>
+          <div class="tab">
+            <svg width="22" height="22" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z"/></svg><span>我的</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 背景选择 sheet -->
+      <div class="sheet-mask" id="mask" onclick="closeSheet()"></div>
+      <div class="sheet" id="sheet">
+        <div class="sheet-head">
+          <div class="sheet-title">页面背景</div>
+          <div class="sheet-close" onclick="closeSheet()">
+            <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM181.66,170.34a8,8,0,0,1-11.32,11.32L128,139.31,85.66,181.66a8,8,0,0,1-11.32-11.32L116.69,128,74.34,85.66A8,8,0,0,1,85.66,74.34L128,116.69l42.34-42.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>
+          </div>
+        </div>
+        <div class="sheet-label">预设背景</div>
+        <div class="bg-row" id="bgRow">
+          <div class="bg-thumb active" data-bg="autumn"><div class="sw sw-auto"></div><span>暖阳米白</span></div>
+          <div class="bg-thumb" data-bg="starry"><div class="sw sw-starry"><i style="top:24px;left:40px"></i><i style="top:52px;left:14px"></i><i style="top:12px;right:30px"></i></div><span>星空银河</span></div>
+          <div class="bg-thumb" data-bg="spring"><div class="sw sw-spring"></div><span>嫩芽春色</span></div>
+          <div class="bg-thumb" data-bg="summer"><div class="sw sw-summer"></div><span>海盐蓝</span></div>
+          <div class="bg-thumb" data-bg="winter"><div class="sw sw-winter"></div><span>冰晶紫</span></div>
+          <div class="bg-thumb" data-bg="grid"><div class="sw sw-grid"></div><span>奶油格纹</span></div>
+        </div>
+        <div class="sheet-label">宠物照片壁纸</div>
+        <div class="bg-row">
+          <div class="bg-thumb" data-bg="pet"><div class="sw sw-pet"><img src="assets/pet-photo.png" alt=""></div><span>可乐的照片</span></div>
+          <div class="bg-thumb" data-bg="pet2"><div class="sw sw-pet"><img src="assets/pet-photo-dog.png" alt=""></div><span>旺财的照片</span></div>
+          <div class="bg-thumb"><div class="sw" style="border:2px dashed #E3D2C2; display:flex; align-items:center; justify-content:center; color:#C9B49B;"><svg width="26" height="26" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM156,88a12,12,0,1,1-12,12A12,12,0,0,1,156,88Zm60,112H40V160.69l46.34-46.35a8,8,0,0,1,11.32,0h0L165,181.66a8,8,0,0,0,11.32-11.32l-17.66-17.65L173,138.34a8,8,0,0,1,11.31,0L216,170.07V200Z"/></svg></div><span>选择照片</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 说明栏 ============ -->
+  <aside class="notes">
+    <div class="note-card">
+      <h3><span class="dot"></span>slogan 候选（点击换到手机上看）</h3>
+      <div class="slogan-list" id="sloganList"></div>
+    </div>
+    <div class="note-card">
+      <h3><span class="dot"></span>slogan 排版（点一下换一种）</h3>
+      <div class="slogan-list" id="layoutList"></div>
+    </div>
+    <div class="note-card">
+      <h3><span class="dot"></span>这次改了什么</h3>
+      <div class="kv">
+        <b>① 品牌头部 Hero</b>：新增大留白 + 情绪 slogan + 3D 猫狗吉祥物主视觉，让首页从「8 个区块堆叠」变成「先看这是谁的家」。
+      </div>
+      <div class="kv" style="margin-top:8px">
+        <b>② IP 吉祥物贯穿</b>：3D 猫狗形象作为首屏主角，替代零散 emoji。
+      </div>
+      <div class="kv" style="margin-top:8px">
+        <b>③ 图标换面性填充</b>：统一换成 Phosphor Fill 实心图标——疫苗=注射器、症状=听诊器、食物=食碗、记忆=大脑，语义对得上。
+      </div>
+      <div class="kv" style="margin-top:8px">
+        <b>④ 页面背景自定义</b>：右上角调色盘打开，可换背景与宠物照片壁纸。
+      </div>
+      <div class="kv" style="margin-top:8px; color:#B69B83">点右上角调色盘按钮，试试切换背景。</div>
+    </div>
+  </aside>
+</div>
+
+<script>
+  const SLOGANS = [
+    {t:"它的可爱，要一颗一颗收进星河里", tag:"主推"},
+    {t:"和它的每一天，都想好好记下来呀", tag:"备选"},
+    {t:"陪它走过的日子，都会闪闪发光", tag:"备选"},
+    {t:"毛孩子的日常，也想被温柔记住", tag:"备选"},
+    {t:"今天也要记住，它有多可爱呀", tag:"备选"}
+  ];
+  let si = 0;
+  let layout = 'a';
+  const slogEl = document.getElementById('slogan');
+  const listEl = document.getElementById('sloganList');
+
+  // 主推 slogan 的三种分行排版：断行落在语义处，避免把「一颗一颗」拆开
+  const LAYOUTS = {
+    a: ['它的可爱', '要一颗一颗收进星河里'],
+    b: ['它的可爱', '要一颗一颗', '收进星河里'],
+    c: ['它的可爱 要一颗一颗', '收进星河里']
+  };
+
+  function renderSlogan(){
+    const s = SLOGANS[si];
+    let html = (si === 0 && LAYOUTS[layout]) ? LAYOUTS[layout].join('<br>') : s.t;
+    // 关键词高亮（<br> 不参与匹配，安全）
+    html = html.replace(/(星河|闪闪发光|记住|记下来|可爱)/g, '<span class="accent">$1</span>');
+    // 主推 slogan 第一行两侧点缀小星星
+    if (si === 0) {
+      const parts = html.split('<br>');
+      parts[0] = '<span class="slogan-star">✦</span>' + parts[0] + '<span class="slogan-star">✦</span>';
+      html = parts.join('<br>');
+    }
+    slogEl.innerHTML = html;
+  }
+  function cycleSlogan(){ si=(si+1)%SLOGANS.length; renderSlogan(); renderList(); }
+  function setSlogan(i){ si=i; renderSlogan(); renderList(); }
+  function renderList(){
+    listEl.innerHTML = SLOGANS.map((s,i)=>`<div class="slogan-item ${i===si?'current':''}" onclick="setSlogan(${i})"><span class="tag">${s.tag}</span>${s.t}</div>`).join('');
+  }
+  function renderLayouts(){
+    const items = [
+      {k:'a', name:'两行·短长', demo:'它的可爱 ／ 要一颗一颗收进星河里'},
+      {k:'b', name:'三行·阶梯', demo:'它的可爱 ／ 要一颗一颗 ／ 收进星河里'},
+      {k:'c', name:'两行·长短', demo:'它的可爱 要一颗一颗 ／ 收进星河里'}
+    ];
+    document.getElementById('layoutList').innerHTML = items.map(it=>
+      `<div class="slogan-item ${it.k===layout?'current':''}" onclick="setLayout('${it.k}')"><span class="tag">${it.name}</span>${it.demo}</div>`
+    ).join('');
+  }
+  function setLayout(k){ layout=k; renderSlogan(); renderLayouts(); }
+  renderSlogan(); renderList(); renderLayouts();
+
+  // 背景切换
+  const BGCLASS = ['autumn','starry','spring','summer','winter','grid','pet','pet2'];
+  function applyBg(bg){
+    const wrap = document.getElementById('phoneWrap');
+    wrap.className = bg==='autumn' ? 'bg-autumn' : (bg==='pet'||bg==='pet2' ? 'bg-pet' : 'bg-'+bg);
+    document.getElementById('petWall').style.opacity = (bg==='pet'||bg==='pet2') ? '1' : '0';
+    if(bg==='pet2'){ document.querySelector('#petWall img').src='assets/pet-photo-dog.png'; }
+    else { document.querySelector('#petWall img').src='assets/pet-photo.png'; }
+    const dark = (bg==='starry');
+    document.querySelectorAll('.brand-name,.slogan,.slogan-hint,.statusbar,.section-title').forEach(e=>{
+      e.style.color = dark ? '#fff' : '';
+    });
+    document.querySelector('.slogan .accent') && (document.querySelector('.slogan .accent').style.color = dark ? '#FFD068' : '');
+    document.querySelector('.brand-sub').style.color = dark ? 'rgba(255,255,255,.6)' : '';
+    document.querySelectorAll('.icon-btn').forEach(e=>{
+      e.style.background = dark ? 'rgba(255,255,255,.14)' : '';
+      e.style.borderColor = dark ? 'rgba(255,255,255,.2)' : '';
+    });
+    // 同步缩略图 active
+    document.querySelectorAll('#bgRow .bg-thumb').forEach(t=>t.classList.remove('active'));
+    const thumb = document.querySelector(`#bgRow .bg-thumb[data-bg="${bg}"]`);
+    if(thumb) thumb.classList.add('active');
+  }
+  document.querySelectorAll('.bg-thumb').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const bg = el.getAttribute('data-bg');
+      if(bg) applyBg(bg);
+    });
+  });
+
+  // 星星
+  const starsEl = document.getElementById('stars');
+  for(let i=0;i<46;i++){
+    const s=document.createElement('div');
+    s.className='star'+(i%3===0?' tw':'');
+    const size=(Math.random()*2.4+1.2).toFixed(1);
+    s.style.width=size+'px'; s.style.height=size+'px';
+    s.style.left=(Math.random()*100)+'%';
+    s.style.top=(Math.random()*100)+'%';
+    s.style.animationDelay=(Math.random()*3)+'s';
+    starsEl.appendChild(s);
+  }
+
+  // sheet
+  function openSheet(){ document.getElementById('mask').classList.add('show'); document.getElementById('sheet').classList.add('show'); }
+  function closeSheet(){ document.getElementById('mask').classList.remove('show'); document.getElementById('sheet').classList.remove('show'); }
+
+  // hash 初始化（无头截图用，规避中文 file URL + query 的解析问题）：#starry / #sheet / #pet / #pet2
+  function focusOnly(){
+    document.querySelector('.stage-title').style.display='none';
+    document.querySelector('.notes').style.display='none';
+    document.querySelector('.stage').style.padding='28px';
+  }
+  const h = (location.hash || '').replace('#','');
+  if(h === 'focus'){ focusOnly(); }
+  else if(h === 'sheet'){ openSheet(); focusOnly(); }
+  else if(h === 'starry' || h === 'pet' || h === 'pet2'){ applyBg(h); focusOnly(); }
+</script>
+</body>
+</html>

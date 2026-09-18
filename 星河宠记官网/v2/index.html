@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>星河宠记 · 有记忆的 AI 宠物管家</title>
+<meta name="description" content="星河宠记是一个有记忆的 AI 宠物管家。聊宠物，AI 记得全部历史——健康打卡、时光回忆、家庭维度，一站式宠物健康记录。" />
+<meta name="theme-color" content="#FFF7F0" />
+
+<!-- 首屏防闪烁：先给 <html> 打上 js 标记，CSS 才会把首屏元素预置为"待入场"状态。
+     这不是必须的——就算这段脚本和 motion.js 全挂了，site.js 的看门狗会摘掉 js 标记，
+     页面会完整显示（见 site.js 的 ensureVisible）。 -->
+<script>document.documentElement.classList.add('js');</script>
+
+<!-- 图标：站点图标用品牌「星印爪爪」标 -->
+<link rel="icon" type="image/svg+xml" href="assets/logo/logo-mark.svg" />
+<link rel="apple-touch-icon" href="assets/logo/logo-mark.png" />
+<meta property="og:title" content="星河宠记 · 有记忆的 AI 宠物管家" />
+<meta property="og:description" content="聊宠物，AI 记得全部历史。健康打卡、时光回忆、家庭维度，一站式宠物健康记录。" />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="assets/img/brand-ip-felt.webp" />
+
+<!-- 样式：全部本地，无任何 CDN 依赖（旧站用 jsdelivr/unpkg，大陆网络下会阻塞首屏 / 图标丢失） -->
+<link rel="stylesheet" href="assets/css/tokens.css" />
+<link rel="stylesheet" href="assets/css/site.css" />
+</head>
+<body>
+
+<!-- ==========================================================================
+     图标精灵表（inline SVG symbol）
+     为什么内联：旧站用 `<script src="unpkg.com/lucide">` 从 CDN 拉图标，
+     大陆网络下经常整体失败，页面就变成一排空框。内联后零请求、零闪烁。
+     ========================================================================== -->
+<svg class="sprite" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 2.5 14 9l6.5 2-6.5 2-2 6.5-2-6.5L3.5 11 10 9z"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.2 14.6 9l6.2.6-4.7 4.1 1.4 6.1L12 16.5l-5.5 3.3 1.4-6.1L3.2 9.6 9.4 9z"/></symbol>
+    <symbol id="i-paw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><ellipse cx="7" cy="8" rx="2.1" ry="2.7"/><ellipse cx="12" cy="6.4" rx="2.1" ry="2.8"/><ellipse cx="17" cy="8" rx="2.1" ry="2.7"/><path d="M12 12.2c3.3 0 5.6 2 5.6 4.3 0 1.9-1.6 3-3.5 3-1 0-1.5-.3-2.1-.3s-1.1.3-2.1.3c-1.9 0-3.5-1.1-3.5-3 0-2.3 2.3-4.3 5.6-4.3z"/></symbol>
+    <symbol id="i-brain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5A3 3 0 0 0 6.2 4.6 3 3 0 0 0 4.6 9.3 3.2 3.2 0 0 0 5 15a3 3 0 0 0 3.6 4.1A2.7 2.7 0 0 0 12 18.5z"/><path d="M12 5.5a3 3 0 0 1 5.8-.9 3 3 0 0 1 1.6 4.7A3.2 3.2 0 0 1 19 15a3 3 0 0 1-3.6 4.1A2.7 2.7 0 0 1 12 18.5z"/><path d="M12 5.5v13"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5 9.5 17.5 19.5 7"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 5 1.6 6.4 2 7H4c.4-.6 2-2 2-7z"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7.5-4.6-7.5-9.4A4.1 4.1 0 0 1 12 8.2a4.1 4.1 0 0 1 7.5 2.4C19.5 15.4 12 20 12 20z"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s5 4.2 5 8.6A5 5 0 0 1 7 11.6C7 9 9 7.4 9 7.4s.4 2 1.6 2.6C11.4 8.4 12 5.6 12 3z"/><path d="M12 20a4.4 4.4 0 0 0 4.4-4.4"/></symbol>
+    <symbol id="i-message" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a7.5 7.5 0 0 1-10.9 6.7L4.5 20l1.2-4.3A7.5 7.5 0 1 1 20 12z"/></symbol>
+    <symbol id="i-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3 5 13.5h5.5L11 21l8-10.5h-5.5z"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 3.5 8 12 12.5 20.5 8z"/><path d="M3.5 12.5 12 17l8.5-4.5"/><path d="M3.5 16.5 12 21l8.5-4.5"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3.5V6M16 3.5V6"/><path d="M8.5 14.5l2 2 4-4"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></symbol>
+    <symbol id="i-activity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2.5-6 4 12L16 12h5"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M7.5 15.5l3.5-4 3 2.5 4.5-6"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2 2 0 0 1 6 3.5h13v15H6a2 2 0 0 0-2 2z"/><path d="M4 18.5v-13"/><path d="M12 8.5c1.2-1.4 3.2-.7 3.2.9 0 1.5-3.2 3.3-3.2 3.3s-3.2-1.8-3.2-3.3c0-1.6 2-2.3 3.2-.9z"/></symbol>
+    <symbol id="i-award" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9.5" r="5.5"/><path d="M8.5 14.2 7 21l5-2.4L17 21l-1.5-6.8"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.8 20a6.4 6.4 0 0 1 12.4 0"/><path d="M16.5 5.4a3.5 3.5 0 0 1 0 6.7M18 14.4a6.4 6.4 0 0 1 3.3 5.6"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l4.5-4.5L13 17l3-2.5 4 3.5"/></symbol>
+    <symbol id="i-branch" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="5.5" r="2.5"/><circle cx="7" cy="18.5" r="2.5"/><circle cx="17" cy="12" r="2.5"/><path d="M7 8v8M9.4 6.5h3.1A2.5 2.5 0 0 1 15 9v.6"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13.5 3.5V9H19"/><path d="M8.5 13h7M8.5 16.5h4.5"/></symbol>
+    <symbol id="i-mountain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19h18L14.5 7l-3 5.5-2-3z"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5 12 15.5 18 9.5"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12h14M13 6.5l5.5 5.5L13 17.5"/></symbol>
+    <symbol id="i-arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5.5M6 11.5 12 5.5l6 6"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="M15.5 9.2a4 4 0 0 1 0 5.6M18.2 6.5a7.6 7.6 0 0 1 0 11"/></symbol>
+    <symbol id="i-volume-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="M16 10l4 4M20 10l-4 4"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 3.5 3.8 10.2l6.4 2.6 2.6 6.4z"/><path d="M20.5 3.5 10.2 12.8"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20H4z"/><path d="M9.5 20v-5.5h5V20"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m4 8 8 5 8-5"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 5 6.2v5.5c0 4.2 3 7.5 7 8.8 4-1.3 7-4.6 7-8.8V6.2z"/><path d="m9.2 11.8 2 2 3.6-3.8"/></symbol>
+    <symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M7 20h10"/><path d="M4.5 8h15"/><path d="M4.5 8 2 13.5a3 3 0 0 0 5 0z"/><path d="M19.5 8 17 13.5a3 3 0 0 0 5 0z"/></symbol>
+    <symbol id="i-bowl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11h17a8.5 8.5 0 0 1-17 0z"/><path d="M9 7.5c0-1.5 1.3-2.5 3-2.5s3 1 3 2.5"/></symbol>
+    <symbol id="i-smile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 14.2a4.4 4.4 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/></symbol>
+    <symbol id="i-github" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.2A9.8 9.8 0 0 0 8.9 21.3c.5.1.7-.2.7-.5v-1.7c-2.7.6-3.3-1.3-3.3-1.3-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.3-4.5-1.1-4.5-4.9 0-1.1.4-2 1-2.7-.1-.2-.4-1.2.1-2.6 0 0 .8-.3 2.7 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.6.6.7 1 1.6 1 2.7 0 3.8-2.3 4.6-4.5 4.9.4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A9.8 9.8 0 0 0 12 2.2z"/></symbol>
+  </defs>
+</svg>
+
+<!-- ==========================================================================
+     1. 导航
+     ========================================================================== -->
+<header class="nav" id="nav">
+  <div class="nav__inner">
+    <a class="brand" href="#top" aria-label="星河宠记 首页">
+      <!-- 品牌标：星印爪爪（此前官网误用了母品牌「星寰海」的月牙标，已纠正） -->
+      <img class="brand__mark" src="assets/logo/logo-mark.svg" alt="" width="34" height="34" />
+      <span class="brand__name">星河宠记</span>
+    </a>
+
+    <nav class="nav__links" aria-label="主导航">
+      <a href="#memory">记忆引擎</a>
+      <a href="#features">功能特色</a>
+      <a href="#play">互动游乐</a>
+      <a href="#product">产品体验</a>
+      <a href="#story">情感故事</a>
+    </nav>
+
+    <div class="nav__actions">
+      <a class="btn btn--primary btn--sm" href="#cta">
+        <svg class="ico" aria-hidden="true"><use href="#i-sparkle" /></svg>
+        立即体验
+      </a>
+      <button class="nav__toggle" id="navToggle" aria-label="打开菜单" aria-expanded="false" aria-controls="navDrawer">
+        <svg class="ico ico--open" aria-hidden="true"><use href="#i-menu" /></svg>
+        <svg class="ico ico--close" aria-hidden="true"><use href="#i-close" /></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- 移动端抽屉 -->
+  <div class="nav__drawer" id="navDrawer" hidden>
+    <a href="#memory">记忆引擎</a>
+    <a href="#features">功能特色</a>
+    <a href="#play">互动游乐</a>
+    <a href="#product">产品体验</a>
+    <a href="#story">情感故事</a>
+    <a href="#pricing">会员价格</a>
+    <a href="#faq">常见问题</a>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ==========================================================================
+     2. 首屏
+     动效：时间线入场编排（motion.js 的 heroIntro）
+     ========================================================================== -->
+<section class="hero">
+  <!-- 背景光斑：纯装饰，用 GSAP 做极慢漂浮 -->
+  <div class="hero__glow hero__glow--a" data-m="float" data-speed="14" aria-hidden="true"></div>
+  <div class="hero__glow hero__glow--b" data-m="float" data-speed="-10" aria-hidden="true"></div>
+
+  <div class="container hero__grid">
+    <div class="hero__copy">
+      <p class="eyebrow" data-m="hero-item">
+        <svg class="ico" aria-hidden="true"><use href="#i-sparkle" /></svg>
+        有记忆的 AI 宠物管家
+      </p>
+
+      <!-- 标题按行拆开，逐行做遮罩揭示（初始位移由 CSS 的 .js 规则预置，见 site.css §16） -->
+      <h1 class="hero__title" data-m="hero-title">
+        <span class="line"><span class="line__in">它记得你家毛孩子</span></span>
+        <span class="line"><span class="line__in">每一次<span class="hl">健康变化</span></span></span>
+      </h1>
+
+      <p class="hero__desc" data-m="hero-item">
+        聊宠物就够了。AI 记得全部历史——健康打卡、时光回忆、家庭维度，
+        一站式宠物健康记录。每一次互动，都接着上一次。
+      </p>
+
+      <div class="hero__cta" data-m="hero-item">
+        <a class="btn btn--primary" href="#cta">
+          <svg class="ico" aria-hidden="true"><use href="#i-sparkle" /></svg>
+          微信体验
+        </a>
+        <a class="btn btn--ghost" href="#memory">
+          先看它怎么记住
+          <svg class="ico" aria-hidden="true"><use href="#i-arrow-right" /></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- 主视觉：品牌毛毡 IP（旧站此处是星空游戏风 GIF，与品牌调性冲突，已换掉） -->
+    <div class="hero__visual" data-m="hero-item">
+      <div class="hero__stage">
+        <div class="hero__halo" aria-hidden="true"></div>
+        <img
+          class="hero__ip"
+          src="assets/img/brand-ip-felt.webp"
+          width="512" height="512"
+          alt="星河宠记品牌形象：毛毡质感的橘色条纹猫和奶油色贵宾犬"
+          fetchpriority="high" decoding="async" />
+
+        <!-- 浮动数据卡：GSAP 单独给它们做错峰浮入 + 常驻呼吸 -->
+        <div class="float-card float-card--pet" data-m="hero-card">
+          <span class="dot" aria-hidden="true"></span>
+          <span>
+            <b>青橘</b>
+            <i>3 岁 · 金毛</i>
+          </span>
+        </div>
+        <div class="float-card float-card--streak" data-m="hero-card">
+          <svg class="ico ico--gold" aria-hidden="true"><use href="#i-flame" /></svg>
+          <span>
+            <b data-m="counter" data-to="28">0</b>
+            <i>连续打卡天数</i>
+          </span>
+        </div>
+        <div class="float-card float-card--memory" data-m="hero-card">
+          <svg class="ico ico--gold" aria-hidden="true"><use href="#i-brain" /></svg>
+          <span>
+            <b data-m="counter" data-to="156">0</b>
+            <i>AI 记忆条数</i>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     3. 记忆引擎（滚动钉住 + scrub 驱动的对比）
+     动效：pinCompare —— 左栏"无记忆"逐条变灰，右栏"有记忆"逐条点亮
+     ========================================================================== -->
+<section class="section" id="memory" data-m="pin-compare">
+  <div class="container">
+    <div class="section__head" data-m="reveal">
+      <p class="eyebrow">
+        <svg class="ico" aria-hidden="true"><use href="#i-brain" /></svg>
+        核心壁垒
+      </p>
+      <h2 class="section__title">所有宠物 AI 都在<span class="muted">无状态问诊</span></h2>
+      <p class="section__sub">
+        只有星河宠记是有记忆的。它记得每一次打卡、每一次症状、每一次健康变化，
+        让记录不必从零开始。
+      </p>
+    </div>
+
+    <div class="compare">
+      <!-- 无记忆 -->
+      <div class="compare__col compare__col--bad">
+        <p class="compare__tag">无记忆 · 传统方案</p>
+        <h3 class="compare__title">每次对话都是陌生人</h3>
+        <ul class="compare__list">
+          <li class="compare__item"><svg class="ico" aria-hidden="true"><use href="#i-x" /></svg><span><b>每次从零开始</b>，要反复描述宠物基本情况</span></li>
+          <li class="compare__item"><svg class="ico" aria-hidden="true"><use href="#i-x" /></svg><span><b>静态快照</b>，只看当前一张照片或一次描述</span></li>
+          <li class="compare__item"><svg class="ico" aria-hidden="true"><use href="#i-x" /></svg><span><b>等用户来问</b>，不会主动提醒疫苗、驱虫、生日</span></li>
+          <li class="compare__item"><svg class="ico" aria-hidden="true"><use href="#i-x" /></svg><span><b>无情绪感知</b>，只回答问题，不关心它今天状态</span></li>
+        </ul>
+      </div>
+
+      <!-- 有记忆 -->
+      <div class="compare__col compare__col--good">
+        <p class="compare__tag">有记忆 · 星河宠记</p>
+        <h3 class="compare__title">越用越了解你的毛孩子</h3>
+        <ul class="compare__list">
+          <li class="compare__item"><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span><b>完整档案 + 半年打卡</b>，AI 拥有全生命周期记忆</span></li>
+          <li class="compare__item"><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span><b>动态追踪画像</b>，健康趋势、饮食偏好、性格变化持续更新</span></li>
+          <li class="compare__item"><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span><b>主动触达提醒</b>，疫苗到期、异常波动、生日里程碑主动推送</span></li>
+          <li class="compare__item"><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg><span><b>情绪观察提醒</b>，从打卡记录识别波动，提示关注状态</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     4. 功能世界（五大能力，配品牌插画）
+     动效：ScrollTrigger.batch 错峰入场 + 配图视差
+     ========================================================================== -->
+<section class="section" id="features">
+  <div class="container">
+    <div class="section__head" data-m="reveal">
+      <p class="eyebrow">
+        <svg class="ico" aria-hidden="true"><use href="#i-layers" /></svg>
+        功能世界
+      </p>
+      <h2 class="section__title">一个入口，<span class="hl">无限可能</span></h2>
+      <p class="section__sub">
+        不用学五个 App，聊宠物就够了。AI 对话是唯一入口，背后串起健康、回忆、家庭、取名五大世界。
+      </p>
+    </div>
+
+    <!-- 01 AI 对话 -->
+    <article class="feat" data-m="reveal">
+      <div class="feat__copy">
+        <p class="feat__num">01 / AI 对话</p>
+        <h3 class="feat__title">唯一交互入口，聊宠物就够</h3>
+        <p class="feat__desc">
+          说一句"给青橘打卡"，AI 自动引导五项选择，生成动态卡片。
+          不用翻菜单、不用找按钮，想到什么说什么，AI 直接照做。
+        </p>
+        <p class="tags">
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-message" /></svg>自然语言</span>
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-zap" /></svg>动态卡片</span>
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-layers" /></svg>多轮引导</span>
+        </p>
+      </div>
+      <div class="feat__art" data-m="parallax" data-speed="-26">
+        <div class="chat">
+          <p class="chat__bubble chat__bubble--user" data-m="chat-seq">给青橘打卡</p>
+          <p class="chat__bubble chat__bubble--ai" data-m="chat-seq">好的，今天要记录哪一项呢？</p>
+          <p class="chat__chips" data-m="chat-seq">
+            <span>饮食</span><span>运动</span><span>情绪</span><span>便便</span><span>体重</span>
+          </p>
+          <p class="chat__bubble chat__bubble--user" data-m="chat-seq">今天吃了 200g 鸡胸肉，精神很好</p>
+          <p class="chat__result" data-m="chat-seq">
+            <svg class="ico" aria-hidden="true"><use href="#i-check" /></svg>
+            <span><b>打卡成功 · 饮食记录</b><i>2026.08.05 · 连续第 28 天</i></span>
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <!-- 02 健康管理 -->
+    <article class="feat feat--flip" data-m="reveal">
+      <div class="feat__copy">
+        <p class="feat__num">02 / 健康管理</p>
+        <h3 class="feat__title">打卡 · 食物查询 · 症状初筛 · 疫苗日历 · 健康趋势</h3>
+        <p class="feat__desc">
+          五大健康维度全追踪。每日打卡生成趋势曲线，食物库秒查能不能吃，
+          症状初筛给出建议，疫苗日历自动提醒，健康分一目了然。
+        </p>
+        <p class="tags">
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-calendar" /></svg>疫苗日历</span>
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-search" /></svg>食物查询</span>
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-activity" /></svg>症状初筛</span>
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-chart" /></svg>健康趋势</span>
+        </p>
+      </div>
+      <div class="feat__art" data-m="parallax" data-speed="-26">
+        <figure class="shot">
+          <img src="assets/img/header-health.webp" width="960" height="540" loading="lazy" decoding="async"
+               alt="星河宠记健康管理界面：本周健康分与五大维度趋势" />
+        </figure>
+      </div>
+    </article>
+
+    <!-- 03 时光回忆 -->
+    <article class="feat" data-m="reveal">
+      <div class="feat__copy">
+        <p class="feat__num">03 / 时光回忆</p>
+        <h3 class="feat__title">时间线 · 回忆录 · 里程碑 · 旧时光提醒</h3>
+        <p class="feat__desc">
+          每一条打卡、每一张照片、每一次疫苗，都在时间线上留下痕迹。
+          AI 自动生成回忆录，在"一年前的今天"推送旧时光，让美好不被遗忘。
+        </p>
+        <p class="tags">
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-clock" /></svg>时间线</span>
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-book" /></svg>回忆录</span>
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-award" /></svg>里程碑</span>
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-bell" /></svg>旧时光提醒</span>
+        </p>
+      </div>
+      <div class="feat__art" data-m="parallax" data-speed="-26">
+        <figure class="shot">
+          <img src="assets/img/header-memoir.webp" width="960" height="540" loading="lazy" decoding="async"
+               alt="星河宠记回忆录：毛毡质感的猫咪和小狗在影院看自己的回忆" />
+        </figure>
+      </div>
+    </article>
+
+    <!-- 04 家庭维度 -->
+    <article class="feat feat--flip" data-m="reveal">
+      <div class="feat__copy">
+        <p class="feat__num">04 / 家庭维度</p>
+        <h3 class="feat__title">族谱 · 看板 · 周报 · 全家福</h3>
+        <p class="feat__desc">
+          多宠物家庭也能轻松管理。家庭看板一目了然谁需要关注，AI 周报自动总结本周动态，
+          族谱记录毛孩子家族脉络，全家福留住每个温馨瞬间。
+        </p>
+        <p class="tags">
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-branch" /></svg>族谱</span>
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-users" /></svg>看板</span>
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-file" /></svg>周报</span>
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-image" /></svg>全家福</span>
+        </p>
+      </div>
+      <div class="feat__art" data-m="parallax" data-speed="-26">
+        <figure class="shot">
+          <img src="assets/img/header-family-photo.webp" width="960" height="540" loading="lazy" decoding="async"
+               alt="星河宠记全家福功能：多只毛毡宠物同框合影" />
+        </figure>
+      </div>
+    </article>
+
+    <!-- 05 取名引擎 -->
+    <article class="feat" data-m="reveal">
+      <div class="feat__copy">
+        <p class="feat__num">05 / 取名引擎</p>
+        <h3 class="feat__title">五行 · 星象 · 诗词 · 山川 · 典故</h3>
+        <p class="feat__desc">
+          五大取名维度，为毛孩子起一个有故事的名字。五行调和命格，星象对应性格，
+          诗词赋予意境，山川寄托远志，典故承载文化。每个名字都是一份礼物。
+        </p>
+        <p class="tags">
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-flame" /></svg>五行</span>
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-star" /></svg>星象</span>
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-book" /></svg>诗词</span>
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-mountain" /></svg>山川</span>
+          <span class="tag"><svg class="ico" aria-hidden="true"><use href="#i-award" /></svg>典故</span>
+        </p>
+      </div>
+      <div class="feat__art" data-m="parallax" data-speed="-26">
+        <div class="names">
+          <div class="name-card" data-m="stagger-item"><p class="name-card__cat">五行 · 木火相生</p><p class="name-card__val">青橘</p><p class="name-card__desc">木生火，温润如橘色晨光</p></div>
+          <div class="name-card" data-m="stagger-item"><p class="name-card__cat">星象 · 天狼星</p><p class="name-card__val">天狼</p><p class="name-card__desc">忠诚守护，夜空中最亮的星</p></div>
+          <div class="name-card" data-m="stagger-item"><p class="name-card__cat">诗词 · 橘柚</p><p class="name-card__val">柚柚</p><p class="name-card__desc">"橘柚花开处"，清新可爱</p></div>
+          <div class="name-card" data-m="stagger-item"><p class="name-card__cat">山川 · 昆仑</p><p class="name-card__val">昆仑</p><p class="name-card__desc">万山之祖，气势磅礴</p></div>
+          <div class="name-card" data-m="stagger-item"><p class="name-card__cat">典故 · 鲲鹏</p><p class="name-card__val">鲲鹏</p><p class="name-card__desc">志在千里，展翅九万里</p></div>
+          <div class="name-card" data-m="stagger-item"><p class="name-card__cat">五行 · 金水相生</p><p class="name-card__val">星寰</p><p class="name-card__desc">金生水，星河浩瀚寰宇</p></div>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     5. 产品体验（手机 mock）
+     动效：滚动 scrub 驱动聊天气泡逐条出现
+     ========================================================================== -->
+<section class="section section--product" id="product">
+  <div class="container">
+    <div class="section__head" data-m="reveal">
+      <p class="eyebrow">
+        <svg class="ico" aria-hidden="true"><use href="#i-message" /></svg>
+        产品体验
+      </p>
+      <h2 class="section__title">聊一聊，<span class="hl">一切都发生</span></h2>
+      <p class="section__sub">微信小程序，无需下载。打开就是 AI 对话界面，说你想说的，剩下的交给星河宠记。</p>
+    </div>
+
+    <div class="product" data-m="phone">
+      <div class="phone">
+        <div class="phone__shell">
+          <div class="phone__notch" aria-hidden="true"></div>
+          <div class="phone__screen">
+            <div class="phone__status" aria-hidden="true">
+              <span>9:41</span>
+              <span class="phone__status-icons"><i></i><i></i><i></i></span>
+            </div>
+            <div class="phone__greet">
+              <p class="phone__hi">你好</p>
+              <p class="phone__name">青橘的主人</p>
+            </div>
+            <div class="phone__chat">
+              <p class="phone__bubble phone__bubble--ai" data-m="phone-seq">今天青橘怎么样？有想记录的事情吗？</p>
+              <p class="phone__bubble phone__bubble--user" data-m="phone-seq">青橘今天精神不太好</p>
+              <p class="phone__bubble phone__bubble--ai" data-m="phone-seq">关心青橘了。是饮食有变化吗？还是运动量减少了？我可以帮你记下来，过几天看看趋势。</p>
+              <p class="phone__quick" data-m="phone-seq"><span>记录情绪</span><span>查看历史</span><span>症状初筛</span></p>
+            </div>
+            <div class="phone__input" aria-hidden="true">
+              <span class="phone__ph">聊宠物，聊什么都行…</span>
+              <span class="phone__send"><svg class="ico" aria-hidden="true"><use href="#i-send" /></svg></span>
+            </div>
+            <div class="phone__tabbar" aria-hidden="true">
+              <span class="phone__tab is-active"><svg class="ico" aria-hidden="true"><use href="#i-home" /></svg>首页</span>
+              <span class="phone__tab"><svg class="ico" aria-hidden="true"><use href="#i-paw" /></svg>宠物</span>
+              <span class="phone__tab"><svg class="ico" aria-hidden="true"><use href="#i-users" /></svg>家庭</span>
+              <span class="phone__tab"><svg class="ico" aria-hidden="true"><use href="#i-user" /></svg>我的</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="product__side">
+        <div class="side-card" data-m="phone-seq">
+          <p class="side-card__label"><svg class="ico" aria-hidden="true"><use href="#i-heart" /></svg>本周健康分</p>
+          <p class="side-card__value">92</p>
+          <p class="side-card__sub">较上周 +5，饮食规律是关键</p>
+        </div>
+        <div class="side-card" data-m="phone-seq">
+          <p class="side-card__label"><svg class="ico" aria-hidden="true"><use href="#i-calendar" /></svg>疫苗提醒</p>
+          <p class="side-card__value side-card__value--sm">3 天后</p>
+          <p class="side-card__sub">狂犬疫苗到期 · 2026.08.08</p>
+        </div>
+        <div class="side-card" data-m="phone-seq">
+          <p class="side-card__label"><svg class="ico" aria-hidden="true"><use href="#i-bell" /></svg>旧时光</p>
+          <p class="side-card__value side-card__value--xs">1 年前今天</p>
+          <p class="side-card__sub">青橘第一次学会握手</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     6. 互动游乐区（保留原有可玩交互）
+     ========================================================================== -->
+<section class="section" id="play">
+  <div class="container">
+    <div class="section__head" data-m="reveal">
+      <p class="eyebrow">
+        <svg class="ico" aria-hidden="true"><use href="#i-paw" /></svg>
+        互动游乐区
+      </p>
+      <h2 class="section__title">和它们 <span class="hl">玩一会儿</span></h2>
+      <p class="section__sub">点一下草地，把球抛给小狗，它会颠颠地跑去叼回来。</p>
+    </div>
+
+    <div class="play" id="playBox" data-m="reveal" role="button" tabindex="0"
+         aria-label="点击把球抛给小狗">
+      <img class="play__bg" src="assets/img/play-idle-poster.webp" alt="" aria-hidden="true" />
+      <video class="play__video is-on" id="playIdle"
+             poster="assets/img/play-idle-poster.webp" muted playsinline loop preload="metadata"
+             aria-label="草地上安静待着的小猫和小狗"></video>
+      <video class="play__video" id="playFetch"
+             poster="assets/img/play-fetch-poster.webp" muted playsinline preload="none"
+             aria-label="小狗跑去把球叼回来"></video>
+
+      <span class="play__hint">点一下，把球抛给小狗</span>
+      <!-- 旧站此处有一个「音效开关」按钮，但源视频（grass-idle/grass-fetch.mp4）
+           经 ffprobe 确认**根本没有音轨**，该按钮点了没有任何效果，属无效控件，故删除。 -->
+      <span class="play__ball" id="playBall" aria-hidden="true"></span>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     7. 情感故事（时间线）
+     动效：scrub 驱动时间轴画线 + 节点依次点亮
+     ========================================================================== -->
+<section class="section section--story" id="story" data-m="timeline">
+  <div class="container">
+    <div class="section__head" data-m="reveal">
+      <p class="eyebrow">
+        <svg class="ico" aria-hidden="true"><use href="#i-heart" /></svg>
+        情感故事
+      </p>
+      <h2 class="section__title">每一个瞬间都<br /><span class="hl">值得被记住</span></h2>
+      <p class="section__sub">
+        从第一次见面到每一次打卡，从疫苗接种到生日庆祝。当一年后 AI 推送
+        "今天，青橘第一次来到家里"，你会发现，原来那些平凡的日子，早已串成星河。
+      </p>
+    </div>
+
+    <ol class="tl">
+      <li class="tl__item">
+        <span class="tl__dot"><svg class="ico" aria-hidden="true"><use href="#i-paw" /></svg></span>
+        <p class="tl__date">2024.03.15</p>
+        <p class="tl__title">青橘来到家里</p>
+        <p class="tl__desc">第一次见面，3 个月大的小金毛</p>
+      </li>
+      <li class="tl__item">
+        <span class="tl__dot"><svg class="ico" aria-hidden="true"><use href="#i-shield" /></svg></span>
+        <p class="tl__date">2024.04.20</p>
+        <p class="tl__title">完成第一针疫苗</p>
+        <p class="tl__desc">兽医说青橘很勇敢</p>
+      </li>
+      <li class="tl__item">
+        <span class="tl__dot"><svg class="ico" aria-hidden="true"><use href="#i-award" /></svg></span>
+        <p class="tl__date">2025.01.03</p>
+        <p class="tl__title">青橘一岁生日</p>
+        <p class="tl__desc">做了鸡肉蛋糕，摇着尾巴吃完</p>
+      </li>
+      <li class="tl__item">
+        <span class="tl__dot"><svg class="ico" aria-hidden="true"><use href="#i-flame" /></svg></span>
+        <p class="tl__date">2026.08.05</p>
+        <p class="tl__title">连续打卡 28 天</p>
+        <p class="tl__desc">健康分稳定在 90 以上</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     8. 常见问题
+     ========================================================================== -->
+<section class="section" id="faq">
+  <div class="container container--narrow">
+    <div class="section__head" data-m="reveal">
+      <p class="eyebrow">
+        <svg class="ico" aria-hidden="true"><use href="#i-message" /></svg>
+        常见问题
+      </p>
+      <h2 class="section__title">你可能想问的</h2>
+    </div>
+
+    <div class="faq" data-m="reveal">
+      <details class="faq__item">
+        <summary class="faq__q">星河宠记和小红书、抖音上的宠物工具有什么不同？<svg class="ico" aria-hidden="true"><use href="#i-chevron" /></svg></summary>
+        <div class="faq__a">星河宠记是唯一有"记忆"的 AI 宠物管家。其他工具每次对话都从零开始，星河宠记记得你家宠物的完整档案、每一次打卡、每一次症状。越用越了解你家毛孩子的情况，不需要重复描述。</div>
+      </details>
+      <details class="faq__item">
+        <summary class="faq__q">免费版够用吗？会员版值得买吗？<svg class="ico" aria-hidden="true"><use href="#i-chevron" /></svg></summary>
+        <div class="faq__a">免费版包含每日 10 次 AI 对话、健康打卡和 1 只宠物档案，足够日常使用。会员版解锁无限对话、完整记忆引擎、时光回忆录、全家福生成和取名引擎，适合想深度记录宠物生活的家庭。</div>
+      </details>
+      <details class="faq__item">
+        <summary class="faq__q">我的宠物数据安全吗？<svg class="ico" aria-hidden="true"><use href="#i-chevron" /></svg></summary>
+        <div class="faq__a">所有数据加密存储，不会泄露给第三方。AI 对话内容仅用于为你提供个性化建议，输入文本会自动脱敏处理。你可以随时导出或删除所有数据。</div>
+      </details>
+      <details class="faq__item">
+        <summary class="faq__q">需要下载 App 吗？<svg class="ico" aria-hidden="true"><use href="#i-chevron" /></svg></summary>
+        <div class="faq__a">不需要。星河宠记是微信小程序，扫码即用，无需下载安装。打开微信就能和 AI 聊宠物，和聊天一样简单。</div>
+      </details>
+      <details class="faq__item">
+        <summary class="faq__q">支持多只宠物和家庭共享吗？<svg class="ico" aria-hidden="true"><use href="#i-chevron" /></svg></summary>
+        <div class="faq__a">会员版支持无限宠物档案和家庭维度共享。全家人可以共同管理宠物记录，每个人看到的都是同一份完整记忆。</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     9. 会员价格
+     ========================================================================== -->
+<section class="section section--pricing" id="pricing">
+  <div class="container">
+    <div class="section__head" data-m="reveal">
+      <h2 class="section__title">选择你的<span class="hl">陪伴方式</span></h2>
+      <p class="section__sub">免费体验核心功能，升级解锁完整记忆引擎</p>
+    </div>
+
+    <div class="price-toggle" id="priceToggle" data-m="reveal" role="tablist" aria-label="计费周期">
+      <button class="price-toggle__btn is-active" data-period="monthly" role="tab" aria-selected="true">月付</button>
+      <button class="price-toggle__btn" data-period="yearly" role="tab" aria-selected="false">年付<span class="price-toggle__save">省 50%</span></button>
+    </div>
+
+    <div class="plans" data-m="reveal">
+      <!-- 免费版 -->
+      <div class="plan">
+        <p class="plan__name">免费版</p>
+        <p class="plan__price"><b class="plan__num">0</b><span class="plan__unit">元 / 永久</span></p>
+        <p class="plan__note">&nbsp;</p>
+        <ul class="plan__feat">
+          <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg>AI 对话（每日 10 次）</li>
+          <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg>健康打卡与趋势</li>
+          <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg>1 只宠物档案</li>
+          <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg>基础食物查询</li>
+        </ul>
+        <a class="btn btn--ghost btn--block" href="#cta">立即开始</a>
+      </div>
+
+      <!-- 会员版 -->
+      <div class="plan plan--featured">
+        <span class="plan__badge">限时早鸟价</span>
+        <p class="plan__name">会员版</p>
+        <p class="plan__price">
+          <b class="plan__num" id="proPrice" data-monthly="9.9" data-yearly="4.9">9.9</b>
+          <span class="plan__unit" id="proUnit">元 / 月</span>
+        </p>
+        <p class="plan__note" id="proNote">原价 19.9 元 / 月</p>
+        <ul class="plan__feat">
+          <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg>AI 对话无限次</li>
+          <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg>记忆引擎完整版</li>
+          <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg>无限宠物与家庭维度</li>
+          <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg>时光回忆录与全家福</li>
+          <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg>取名引擎全部风格</li>
+          <li><svg class="ico" aria-hidden="true"><use href="#i-check" /></svg>主动健康提醒</li>
+        </ul>
+        <a class="btn btn--primary btn--block" href="#cta">升级会员</a>
+      </div>
+    </div>
+
+    <div class="promo" data-m="reveal">
+      <span class="promo__icon"><svg class="ico" aria-hidden="true"><use href="#i-award" /></svg></span>
+      <span class="promo__text">
+        <b>限时活动：年卡省 60 元</b>
+        <!-- 口径必须写清基准，否则三个数字会互相打脸（审-1 指出）：
+             省 50% = 9.9 → 4.9（月单价对比）；
+             省 60 元 = 月付 9.9×12=118.8 与年付 59 的差额。 -->
+        <i>仅需 59 元 / 年。按月付 9.9 元算，一年要 118.8 元 —— 直接省下 60 元，再送 2 个月。截止 9 月 30 日。</i>
+      </span>
+      <a class="btn btn--primary btn--sm" href="#cta">立即抢购</a>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     10. 结尾召唤
+     ========================================================================== -->
+<section class="cta" id="cta" data-m="reveal">
+  <div class="cta__glow" aria-hidden="true"></div>
+  <div class="container cta__inner">
+    <img class="cta__mark" src="assets/logo/logo-mark.svg" alt="" width="56" height="56" />
+    <h2 class="cta__title">开始你和毛孩子的<span class="hl">星海之旅</span></h2>
+    <p class="cta__sub">微信扫码，立即体验</p>
+    <div class="cta__btns">
+      <a class="btn btn--primary btn--lg" href="#top">
+        <svg class="ico" aria-hidden="true"><use href="#i-message" /></svg>
+        微信体验
+      </a>
+      <span class="cta__soon">
+        <span class="btn btn--ghost btn--lg" aria-disabled="true">App 即将上线</span>
+        <em>敬请期待</em>
+      </span>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ==========================================================================
+     11. 页脚
+     ========================================================================== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div class="footer__brand">
+        <a class="brand" href="#top">
+          <img class="brand__mark" src="assets/logo/logo-mark.svg" alt="" width="34" height="34" />
+          <span class="brand__name">星河宠记</span>
+        </a>
+        <p class="footer__tagline">
+          有记忆的 AI 宠物管家。聊宠物，AI 记得全部历史。健康打卡、时光回忆、家庭维度，一站式宠物健康记录。
+        </p>
+      </div>
+      <div class="footer__col">
+        <h4>产品</h4>
+        <a href="#features">功能特色</a>
+        <a href="#product">产品体验</a>
+        <a href="#story">情感故事</a>
+        <a href="#pricing">会员价格</a>
+      </div>
+      <div class="footer__col">
+        <h4>联系</h4>
+        <a href="mailto:hello@xinghuanhai.com"><svg class="ico" aria-hidden="true"><use href="#i-mail" /></svg>hello@xinghuanhai.com</a>
+        <a href="#top"><svg class="ico" aria-hidden="true"><use href="#i-message" /></svg>微信公众号</a>
+        <a href="#top"><svg class="ico" aria-hidden="true"><use href="#i-github" /></svg>开发者社区</a>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <p>© 2026 星河宠记. 保留所有权利.</p>
+      <p class="footer__links"><a href="#top">隐私政策</a><a href="#top">用户协议</a></p>
+    </div>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="返回顶部">
+  <svg class="ico" aria-hidden="true"><use href="#i-arrow-up" /></svg>
+</button>
+
+<!-- 脚本：GSAP 本地 vendor（不走 CDN），自定义脚本放最后 -->
+<script src="assets/js/vendor/gsap.min.js" defer></script>
+<script src="assets/js/vendor/ScrollTrigger.min.js" defer></script>
+<script src="assets/js/site.js" defer></script>
+<script src="assets/js/motion.js" defer></script>
+</body>
+</html>

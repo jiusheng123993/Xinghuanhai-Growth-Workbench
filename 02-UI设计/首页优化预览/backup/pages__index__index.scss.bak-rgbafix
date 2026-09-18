@@ -1,0 +1,2232 @@
+@import '../../styles/_theme';
+@import '../../styles/_animations';
+
+// ============================================
+// AI 对话首页 — 温馨家庭主题 + 丰富动效
+// ============================================
+
+// ===== 页面容器 =====
+.chat-home-page {
+  min-height: 100vh;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  animation: pageEnter 0.4s ease-out;
+}
+
+// ===== 爪印粒子装饰 =====
+.chat-paw-particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.chat-paw {
+  position: absolute;
+  font-size: 32rpx;
+  opacity: 0;
+
+  &--1 { bottom: 20%; left: 8%; animation: pawFloat1 5s ease-out infinite; animation-delay: 0s; }
+  &--2 { bottom: 30%; right: 10%; animation: pawFloat2 6s ease-out infinite; animation-delay: 2s; }
+  &--3 { bottom: 15%; left: 45%; animation: pawFloat3 4.5s ease-out infinite; animation-delay: 1s; }
+  &--4 { bottom: 25%; right: 30%; animation: pawFloat1 5.5s ease-out infinite; animation-delay: 3s; }
+  &--5 { bottom: 10%; left: 25%; animation: pawFloat2 4.8s ease-out infinite; animation-delay: 0.5s; }
+  &--6 { bottom: 35%; left: 60%; animation: pawFloat3 5.2s ease-out infinite; animation-delay: 2.5s; }
+}
+
+// ===== 星星装饰 =====
+.chat-stars {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.chat-star {
+  position: absolute;
+  font-size: 16rpx;
+  opacity: 0.25;
+
+  &--1 { top: 8%; right: 12%; animation: starTwinkle1 2.5s ease-in-out infinite; }
+  &--2 { top: 15%; left: 8%; animation: starTwinkle2 3s ease-in-out infinite; animation-delay: 0.8s; }
+  &--3 { top: 22%; right: 25%; animation: starTwinkle3 2.8s ease-in-out infinite; animation-delay: 1.6s; }
+  &--4 { top: 5%; left: 35%; animation: starTwinkle1 3.2s ease-in-out infinite; animation-delay: 0.4s; }
+  &--5 { top: 18%; left: 55%; animation: starTwinkle2 2.4s ease-in-out infinite; animation-delay: 1.2s; }
+  &--6 { top: 10%; right: 40%; animation: starTwinkle3 3.5s ease-in-out infinite; animation-delay: 2s; }
+}
+
+// ===== 顶部栏 =====
+.chat-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 32rpx;
+  background: rgba($color-bg-page, 0.94);
+  backdrop-filter: blur(24rpx);
+  border-bottom: 1rpx solid $color-border-light;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  // 进入页面时品牌栏轻缓滑入，避免内容瞬间出现（ease-out，仅 transform/opacity）
+  animation: topBarEnter 0.28s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* 多成员共同养宠：情侣引导横幅（2026-08-24） */
+.home-co-care-tip {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin: 16rpx 32rpx 0;
+  padding: 20rpx 24rpx;
+  border-radius: 20rpx;
+  background: $gradient-card;
+  border: 1rpx solid rgba($color-primary, 0.25);
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.home-co-care-tip__icon {
+  font-size: 30rpx;
+}
+
+.home-co-care-tip__text {
+  flex: 1;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+}
+
+.home-co-care-tip__close {
+  font-size: 28rpx;
+  color: $color-text-tertiary;
+  padding: 4rpx 8rpx;
+}
+
+.chat-top-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.chat-top-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 12rpx;
+}
+
+.chat-pet-avatar {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 50%;
+  background: $gradient-warm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38rpx;
+  box-shadow: 0 0 20rpx rgba($color-primary, 0.3);
+  @include breathe-glow;
+}
+
+.chat-top-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-pet-name {
+  font-size: 40rpx;
+  font-weight: $font-weight-bold;
+  line-height: 1;
+  background: linear-gradient(135deg, $color-primary-light, $color-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.chat-pet-detail {
+  font-size: 22rpx;
+  line-height: 1;
+  color: $color-text-tertiary;
+  margin-top: 2rpx;
+}
+
+// 顶部右侧：记忆纠错入口
+.chat-top-right {
+  display: flex;
+  align-items: center;
+}
+
+.chat-top-memory-btn {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 10rpx 20rpx;
+  border-radius: 20rpx;
+  background: rgba($color-primary, 0.08);
+  border: 1rpx solid rgba($color-primary, 0.15);
+  transition: all 0.2s ease;
+
+  &:active {
+    background: rgba($color-primary, 0.15);
+    transform: scale(0.95);
+  }
+}
+
+.chat-top-memory-icon {
+  font-size: 24rpx;
+}
+
+.chat-top-memory-text {
+  font-size: 22rpx;
+  color: $color-primary;
+  font-weight: 500;
+}
+
+.chat-switch-btn {
+  background: $color-primary-bg;
+  border: 1rpx solid $color-border;
+  border-radius: 24rpx;
+  padding: 8rpx 24rpx;
+  font-size: 24rpx;
+  color: $color-primary-light;
+  transition: all 0.2s ease;
+  @include press-feedback;
+}
+
+// ===== 消息列表 =====
+.chat-msg-list {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1;
+}
+
+// scroll-view 上不支持 padding（webview 渲染模式），间距放到内部容器
+.chat-msg-list__inner {
+  padding: 32rpx;
+}
+
+// ===== 消息行 =====
+.msg-row {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 28rpx;
+  animation: msgBounceIn 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.msg-row.ai {
+  align-self: flex-start;
+  max-width: 88%;
+}
+
+.msg-row.user {
+  align-self: flex-end;
+  max-width: 80%;
+  flex-direction: row-reverse;
+}
+
+// ===== 头像 =====
+.msg-avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+}
+
+.msg-row.ai .msg-avatar {
+  background: $gradient-warm;
+  box-shadow: 0 0 16rpx rgba($color-primary, 0.3);
+  overflow: hidden;
+}
+
+/* AI 管家头像图片：铺满圆形 */
+.msg-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+/* AI 管家头像加载失败回退 emoji */
+.msg-avatar-emoji {
+  font-size: 32rpx;
+  line-height: 1;
+}
+
+.msg-row.user .msg-avatar {
+  background: $gradient-warm;
+  box-shadow: 0 0 16rpx rgba($color-primary, 0.3);
+}
+
+// ===== 气泡 =====
+.msg-bubble-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.msg-bubble {
+  padding: 24rpx 32rpx;
+  border-radius: 32rpx;
+  font-size: 28rpx;
+  line-height: 1.7;
+  color: $color-text-primary;
+  word-break: break-all;
+}
+
+.msg-row.ai .msg-bubble {
+  background: $color-bg-card;
+  border-top-left-radius: 8rpx;
+  border: 1rpx solid $color-border-light;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+
+.msg-row.user .msg-bubble {
+  background: $color-primary;
+  border-top-right-radius: 8rpx;
+  border: 1rpx solid $color-primary;
+  color: $color-text-inverse;
+}
+
+// ===== AI 欢迎消息能力高亮 =====
+.msg-bubble-highlight {
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+// ===== 流式打字机效果 =====
+.msg-bubble--streaming {
+  cursor: pointer;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3rpx;
+    background: linear-gradient(90deg, transparent, $color-primary, transparent);
+    border-radius: 0 0 16rpx 16rpx;
+    animation: streamingGlow 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes streamingGlow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+.streaming-cursor {
+  display: inline-block;
+  margin-left: 4rpx;
+  color: $color-primary;
+  animation: cursorBlink 0.8s step-end infinite;
+  font-weight: bold;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.streaming-hint {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  text-align: right;
+  opacity: 0.7;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+// ===== 快捷操作按钮（对齐原型：圆角边框 pill） =====
+.msg-quick-actions {
+  display: flex;
+  gap: 16rpx;
+  flex-wrap: wrap;
+  margin-top: 18rpx;
+  animation: fadeInUp 0.35s ease-out 0.1s both;
+}
+
+.msg-quick-btn {
+  /* 图标与文字水平排列（原来 emoji 是内联在文字串里的，改用 Icon 组件后需要 flex） */
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  background: $color-bg-card;
+  border: 1rpx solid $color-primary;
+  color: $color-primary;
+  padding: 14rpx 28rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  font-weight: $font-weight-medium;
+  transition: all 0.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+  @include press-feedback;
+
+  &:active {
+    background: $color-primary-bg;
+    border-color: $color-primary;
+    box-shadow: 0 0 16rpx rgba($color-primary, 0.2);
+  }
+}
+
+// ===== 选项列表 =====
+.msg-options-list {
+  margin-top: 18rpx;
+  animation: fadeInUp 0.35s ease-out 0.05s both;
+}
+
+.msg-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: rgba($color-bg-card, 0.8);
+  border: 1rpx solid $color-border;
+  color: $color-text-primary;
+  padding: 26rpx 32rpx;
+  border-radius: 24rpx;
+  font-size: 28rpx;
+  margin-bottom: 16rpx;
+  transition: all 0.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  &:active {
+    background: $color-primary-bg;
+    border-color: $color-primary;
+    transform: scale(0.98);
+    box-shadow: 0 0 16rpx rgba($color-primary, 0.15);
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// ===== 打字指示器 =====
+.typing-bubble {
+  padding: 16rpx 32rpx;
+}
+
+.typing-dots {
+  display: flex;
+  gap: 8rpx;
+  padding: 8rpx 0;
+  align-items: center;
+}
+
+.typing-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: $color-primary-light;
+  animation: dotBounce 1.4s ease-in-out infinite both;
+
+  &:nth-child(1) { animation-delay: 0s; }
+  &:nth-child(2) { animation-delay: 0.2s; }
+  &:nth-child(3) { animation-delay: 0.4s; }
+}
+
+// ===== Agent 工具调用状态 =====
+.agent-status-bubble {
+  padding: 14rpx 28rpx;
+  background: rgba($color-primary-light, 0.08);
+  border: 1rpx solid rgba($color-primary-light, 0.15);
+  border-radius: 20rpx;
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.agent-status-text {
+  font-size: 24rpx;
+  color: $color-primary;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+// ===== 底部间距 =====
+.chat-bottom-spacer {
+  height: 80rpx;
+}
+
+// ===== 空状态（无宠物） =====
+.chat-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  padding: 0 60rpx;
+  animation: fadeInUp 0.6s ease-out;
+
+  /* 猫狗 IP 主视觉：空态最需要情感锚点（原来是 120rpx 的浅色爪印，太弱） */
+  .chat-empty-mascot {
+    position: relative;
+    width: 280rpx;
+    height: 280rpx;
+    margin-bottom: 12rpx;
+    animation: floaty 4.5s ease-in-out infinite;
+  }
+
+  .chat-empty-mascot__halo {
+    position: absolute;
+    inset: -30rpx;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(var(--primary-rgb, 255, 107, 61), 0.22) 0%, rgba(var(--gold-rgb, 255, 176, 32), 0.1) 55%, transparent 72%);
+  }
+
+  .chat-empty-mascot__ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 4rpx solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 20rpx 48rpx -18rpx rgba(240, 78, 29, 0.45);
+  }
+
+  .chat-empty-mascot__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+  }
+
+  /* 品牌 slogan：两侧小星星点缀 */
+  .chat-empty-slogan {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+    margin: 24rpx 0 28rpx;
+  }
+
+  .chat-empty-slogan__star {
+    flex-shrink: 0;
+    opacity: 0.9;
+  }
+
+  .chat-empty-slogan__text {
+    font-size: 26rpx;
+    font-weight: $font-weight-semibold;
+    color: $color-text-secondary;
+    letter-spacing: 0.02em;
+  }
+
+  .chat-empty-slogan__accent {
+    color: $color-primary;
+  }
+
+  .chat-empty-title {
+    font-size: 40rpx;
+    font-weight: 700;
+    color: $color-text-primary;
+    margin-bottom: 16rpx;
+    text-align: center;
+  }
+
+  .chat-empty-desc {
+    font-size: 28rpx;
+    color: $color-text-secondary;
+    text-align: center;
+    line-height: 1.8;
+    margin-bottom: 48rpx;
+  }
+
+  .chat-empty-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* 图标与文字间距（原按钮是「+ 添加宠物」的纯文字） */
+    gap: 8rpx;
+    padding: 24rpx 80rpx;
+    border-radius: $radius-full;
+    background: $gradient-gold;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease, box-shadow 0.3s ease;
+    @include press-feedback;
+    /* 可见动效：主按钮呼吸光晕 */
+    animation: xhh-breathe 2.4s ease-in-out infinite;
+
+    .chat-empty-btn-text {
+      font-size: 30rpx;
+      font-weight: 600;
+      color: $color-text-inverse;
+    }
+  }
+}
+
+// ===== 输入区域 =====
+.chat-input-area {
+  position: sticky;
+  bottom: 0;
+  padding: 20rpx 32rpx 0;
+  background: rgba($color-bg-page, 0.96);
+  backdrop-filter: blur(24rpx);
+  z-index: 99;
+}
+
+.chat-input-safe {
+  height: constant(safe-area-inset-bottom);
+  height: env(safe-area-inset-bottom);
+  min-height: 24rpx;
+}
+
+// ===== 待发送图片附件条（发图带文字：选图后先预览，可补充文字/取消） =====
+.chat-attach-bar {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 0 6rpx 16rpx;
+  animation: attach-in 0.2s ease;
+}
+
+@keyframes attach-in {
+  from {
+    opacity: 0;
+    transform: translateY(12rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat-attach-thumb-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.chat-attach-thumb {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 16rpx;
+  border: 1rpx solid $color-border;
+  background: rgba($color-border, 0.4);
+}
+
+.chat-attach-remove {
+  position: absolute;
+  top: -16rpx;
+  right: -16rpx;
+  // 48rpx 热区（视觉 40rpx 圆 + 命中区外扩），对齐微信 44px 最小触控建议的等比口径
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-attach-remove-icon {
+  color: #fff;
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+.chat-attach-hint {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  line-height: 1.5;
+}
+
+// ===== 微信风格输入行（胶囊圆角，对齐设计稿） =====
+.chat-input-row {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  background: $color-bg-card;
+  border-radius: $radius-round;
+  padding: 10rpx 14rpx;
+  border: 1rpx solid $color-border;
+  box-shadow: $shadow-card;
+  transition: all 0.25s ease;
+
+  &:focus-within {
+    border-color: $color-primary;
+    box-shadow: $shadow-button;
+  }
+}
+
+// ===== 语音/文字切换按钮 =====
+.wx-toggle-btn {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+
+  &:active {
+    background: rgba($color-primary, 0.15);
+  }
+
+  &--active {
+    background: rgba($color-primary, 0.12);
+  }
+}
+
+.wx-toggle-icon {
+  font-size: 32rpx;
+  line-height: 1;
+}
+
+// ===== 输入框 =====
+.chat-input-field {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: $color-text-primary;
+  font-size: 28rpx;
+  padding: 8rpx 0;
+  height: 60rpx;
+  line-height: 60rpx;
+}
+
+// ===== 按住说话（胶囊圆角） =====
+.wx-hold-talk {
+  flex: 1;
+  height: 72rpx;
+  border-radius: $radius-round;
+  background: $color-primary-bg;
+  border: 1rpx solid $color-border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+
+  &:active {
+    background: rgba($color-primary, 0.15);
+  }
+
+  &--recording {
+    background: linear-gradient(135deg, $color-danger, $color-danger);
+    border-color: $color-danger;
+    animation: voicePulse 1.2s ease-in-out infinite;
+  }
+
+  &--processing {
+    background: rgba($color-primary, 0.1);
+    border-color: $color-primary;
+    opacity: 0.7;
+  }
+}
+
+.wx-hold-talk-text {
+  font-size: 28rpx;
+  color: $color-text-secondary;
+}
+
+.wx-hold-talk-recording {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.wx-hold-talk-wave {
+  display: flex;
+  align-items: flex-end;
+  gap: 4rpx;
+  height: 20rpx;
+}
+
+.wx-hold-talk-wave-bar {
+  width: 4rpx;
+  border-radius: 2rpx;
+  background: #fff;
+  animation: waveBar 0.8s ease-in-out infinite;
+
+  &:nth-child(1) {
+    height: 10rpx;
+    animation-delay: 0s;
+  }
+  &:nth-child(2) {
+    height: 18rpx;
+    animation-delay: 0.15s;
+  }
+  &:nth-child(3) {
+    height: 12rpx;
+    animation-delay: 0.3s;
+  }
+}
+
+.wx-hold-talk-duration {
+  font-size: 20rpx;
+  color: #fff;
+  font-weight: 600;
+}
+
+// ===== 图标按钮（照片） =====
+.wx-icon-btn {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+
+  &:active {
+    background: rgba($color-primary, 0.15);
+    transform: scale(0.9);
+  }
+}
+
+.wx-icon-text {
+  font-size: 32rpx;
+  line-height: 1;
+}
+
+// ===== + 按钮 =====
+.wx-plus-btn {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  &:active {
+    background: rgba($color-primary, 0.15);
+    transform: rotate(90deg) scale(0.9);
+  }
+
+  &--active {
+    background: rgba($color-primary, 0.12);
+    transform: rotate(45deg);
+  }
+}
+
+.wx-plus-text {
+  font-size: 40rpx;
+  color: $color-primary-light;
+  line-height: 1;
+  font-weight: 300;
+}
+
+// ===== 发送按钮 =====
+.wx-send-btn {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: $gradient-gold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  box-shadow: 0 2rpx 12rpx rgba($color-primary, 0.3);
+
+  &:active {
+    transform: scale(0.88);
+  }
+}
+
+.wx-send-text {
+  font-size: 32rpx;
+  color: $color-text-inverse;
+  font-weight: 700;
+  line-height: 1;
+}
+
+@keyframes voicePulse {
+  0%, 100% {
+    box-shadow: 0 0 24rpx rgba(255, 107, 107, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 40rpx rgba(255, 107, 107, 0.8);
+  }
+}
+
+@keyframes waveBar {
+  0%, 100% {
+    transform: scaleY(0.6);
+  }
+  50% {
+    transform: scaleY(1.2);
+  }
+}
+
+// ===== 加号菜单遮罩 =====
+.chat-plus-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  animation: fadeIn 0.2s ease-out;
+}
+
+// ===== 加号面板（微信风格九宫格） =====
+.chat-plus-panel {
+  position: absolute;
+  bottom: 110rpx;
+  left: 16rpx;
+  right: 16rpx;
+  background: $color-bg-card;
+  border-radius: 24rpx;
+  padding: 24rpx 16rpx;
+  border: 1rpx solid $color-border;
+  box-shadow: 0 -4rpx 32rpx rgba(0, 0, 0, 0.15);
+  animation: popupBounceIn 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+  z-index: 100;
+}
+
+.chat-plus-panel-grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.plus-panel-item {
+  width: 25%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16rpx 4rpx;
+  transition: all 0.15s ease;
+
+  &--hover {
+    transform: scale(0.92);
+    opacity: 0.7;
+  }
+}
+
+.plus-panel-icon-wrap {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-bottom: 10rpx;
+}
+
+.plus-panel-icon {
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+.plus-panel-label {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  text-align: center;
+  line-height: 1.4;
+}
+
+// ===== 旧版加号菜单（保留兼容） =====
+.chat-plus-menu {
+  position: absolute;
+  bottom: 130rpx;
+  left: 32rpx;
+  right: 32rpx;
+  background: $color-bg-card;
+  border-radius: 32rpx;
+  padding: 16rpx;
+  border: 1rpx solid $color-border;
+  box-shadow: 0 16rpx 64rpx rgba(0, 0, 0, 0.5);
+  animation: popupBounceIn 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+  z-index: 100;
+}
+
+.plus-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 24rpx 32rpx;
+  border-radius: 24rpx;
+  transition: all 0.15s ease;
+
+  &:active {
+    background: $color-primary-bg;
+    transform: scale(0.98);
+  }
+}
+
+.plus-menu-icon-wrap {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.plus-menu-icon {
+  font-size: 36rpx;
+}
+
+.plus-menu-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.plus-menu-label {
+  font-size: 28rpx;
+  color: $color-text-primary;
+  font-weight: 500;
+}
+
+.plus-menu-sub {
+  font-size: 22rpx;
+  color: $color-text-hint;
+  margin-top: 4rpx;
+}
+
+// ===== 结构化结果卡片 =====
+.msg-card {
+  background: $color-primary-bg;
+  border: 1rpx solid $color-border;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  margin-top: 16rpx;
+  animation: fadeInUp 0.4s ease-out 0.05s both;
+  @include breathe-glow;
+}
+
+.msg-card-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: $color-primary-light;
+  margin-bottom: 12rpx;
+  display: block;
+}
+
+.msg-card-text {
+  font-size: 24rpx;
+  color: $color-text-hint;
+  line-height: 1.6;
+  display: block;
+}
+
+.msg-card-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8rpx 0;
+  font-size: 24rpx;
+}
+
+.msg-card-stat-label {
+  color: $color-text-hint;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.msg-card-stat-val {
+  color: $color-primary-light;
+  font-weight: 600;
+}
+
+// ===== 评分星星 =====
+.score-stars {
+  color: $color-primary;
+  font-size: 32rpx;
+  letter-spacing: 4rpx;
+  margin-bottom: 16rpx;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+// ===== 危险/安全提示条 =====
+.msg-card-alert {
+  margin-top: 16rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 16rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+
+  &--danger {
+    background: $color-danger-light;
+    border: 1rpx solid rgba($color-danger, 0.3);
+    color: $color-danger;
+  }
+
+  &--safe {
+    background: rgba($color-sage, 0.1);
+    border: 1rpx solid rgba($color-sage, 0.3);
+    color: $color-sage;
+  }
+}
+
+// ===== 附近医院卡片 =====
+.msg-card-hospital {
+  margin-top: 16rpx;
+  padding: 20rpx;
+  background: rgba($color-danger, 0.08);
+  border: 1rpx solid rgba($color-danger, 0.25);
+  border-radius: 24rpx;
+  text-align: center;
+}
+
+.msg-card-hospital-title {
+  font-size: 26rpx;
+  color: $color-danger;
+  font-weight: 600;
+  margin-bottom: 12rpx;
+  display: block;
+}
+
+.msg-card-hospital-item {
+  font-size: 24rpx;
+  color: $color-text-hint;
+  line-height: 1.8;
+  display: block;
+}
+
+// ===== 名字卡片（富文本） =====
+.msg-naming-card {
+  margin-top: 16rpx;
+  background: $color-primary-bg;
+  border: 1rpx solid $color-border;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  position: relative;
+  animation: fadeInUp 0.4s ease-out 0.05s both;
+}
+
+.msg-naming-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.msg-naming-name {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: $color-primary-light;
+  letter-spacing: 4rpx;
+}
+
+.msg-naming-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-bottom: 12rpx;
+}
+
+.msg-naming-tag {
+  font-size: 22rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 12rpx;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.msg-naming-tag--wuxing {
+  background: rgba(91, 154, 155, 0.15);
+  color: #5b9a9b;
+}
+
+.msg-naming-tag--star {
+  background: rgba(166, 143, 120, 0.15);
+  color: #a68f78;
+}
+
+.msg-naming-source {
+  font-size: 22rpx;
+  color: #8a7a6a;
+  line-height: 1.5;
+  display: block;
+  margin-bottom: 8rpx;
+  padding: 8rpx 12rpx;
+  background: rgba(166, 143, 120, 0.08);
+  border-radius: 10rpx;
+  border-left: 3rpx solid #a68f78;
+  font-style: italic;
+}
+
+.msg-naming-meaning {
+  font-size: 24rpx;
+  color: $color-text-hint;
+  line-height: 1.7;
+  display: block;
+}
+
+.msg-naming-badge {
+  position: absolute;
+  top: 16rpx;
+  right: 20rpx;
+  padding: 4rpx 14rpx;
+  background: $gradient-gold;
+  color: $color-text-inverse;
+  font-size: 20rpx;
+  font-weight: 600;
+  border-radius: 14rpx;
+  box-shadow: 0 2rpx 8rpx rgba($color-primary, 0.3);
+}
+
+// 可点击样式
+.msg-naming-card--clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.98);
+    background: rgba(255, 215, 176, 0.5);
+    border-color: rgba($color-primary, 0.4);
+  }
+}
+
+.msg-naming-card--hover {
+  transform: scale(0.98);
+  background: rgba(255, 215, 176, 0.45);
+  border-color: rgba($color-primary, 0.35);
+}
+
+// 点击查看详情提示
+.msg-naming-detail-hint {
+  margin-top: 12rpx;
+  padding-top: 10rpx;
+  border-top: 1rpx dashed rgba($color-primary, 0.2);
+  text-align: right;
+
+  text {
+    font-size: 22rpx;
+    color: $color-primary;
+    font-weight: 500;
+  }
+}
+
+// ===== 换一批按钮 =====
+.msg-naming-refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20rpx;
+  padding: 20rpx;
+  background: linear-gradient(135deg, rgba($color-primary, 0.06), rgba($color-primary, 0.12));
+  border: 1rpx dashed rgba($color-primary, 0.3);
+  border-radius: 16rpx;
+  transition: all 0.2s;
+
+  &--hover {
+    background: linear-gradient(135deg, rgba($color-primary, 0.12), rgba($color-primary, 0.2));
+    border-color: rgba($color-primary, 0.5);
+    transform: scale(0.98);
+  }
+}
+
+.msg-naming-refresh-icon {
+  font-size: 28rpx;
+  margin-right: 12rpx;
+}
+
+.msg-naming-refresh-label {
+  font-size: 26rpx;
+  color: $color-primary;
+  font-weight: 500;
+}
+
+// ===== 换一批加载态 =====
+.msg-naming-refreshing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48rpx 32rpx;
+  background: linear-gradient(135deg, rgba($color-primary, 0.04), rgba($color-primary, 0.08));
+  border-radius: 20rpx;
+  border: 1rpx dashed rgba($color-primary, 0.2);
+}
+
+.msg-naming-refreshing-text {
+  font-size: 26rpx;
+  color: $color-text-secondary;
+  margin-bottom: 20rpx;
+}
+
+.msg-naming-refreshing-dots {
+  display: flex;
+  gap: 12rpx;
+}
+
+.msg-naming-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: $color-primary;
+  animation: namingDotPulse 1.2s infinite ease-in-out;
+
+  &:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  &:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+}
+
+@keyframes namingDotPulse {
+  0%, 80%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+// ===== 命理详情卡片 =====
+.msg-naming-detail {
+  margin-top: 16rpx;
+  background: linear-gradient(135deg, #fdf8f0 0%, #faf3e8 50%, #fef9f3 100%);
+  border: 1rpx solid rgba(166, 143, 120, 0.25);
+  border-radius: 24rpx;
+  padding: 28rpx;
+  position: relative;
+  overflow: hidden;
+  animation: fadeInUp 0.5s ease-out;
+
+  // 装饰边框
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4rpx;
+    background: linear-gradient(90deg, #c9a96e, #e8c97a, #d4a85c, #e8c97a, #c9a96e);
+  }
+}
+
+.msg-naming-detail-header {
+  text-align: center;
+  padding: 16rpx 0 24rpx;
+  margin-bottom: 20rpx;
+  border-bottom: 1rpx solid rgba(166, 143, 120, 0.2);
+}
+
+.msg-naming-detail-name {
+  font-size: 52rpx;
+  font-weight: 800;
+  color: #5b3a1a;
+  letter-spacing: 8rpx;
+  display: block;
+  // 文字阴影增加质感
+  text-shadow: 1rpx 1rpx 0 rgba(201, 169, 110, 0.3);
+}
+
+.msg-naming-detail-subtitle {
+  font-size: 24rpx;
+  color: #a68f78;
+  letter-spacing: 6rpx;
+  margin-top: 8rpx;
+  display: block;
+}
+
+.msg-naming-detail-section {
+  margin-bottom: 20rpx;
+  padding: 16rpx;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 16rpx;
+  border: 1rpx solid rgba(166, 143, 120, 0.12);
+
+  &--fortune {
+    background: linear-gradient(135deg, rgba(255, 215, 176, 0.2), rgba(255, 255, 255, 0.6));
+    border-color: rgba(201, 169, 110, 0.3);
+  }
+
+  &--summary {
+    background: linear-gradient(135deg, rgba(232, 168, 56, 0.1), rgba(255, 255, 255, 0.7));
+    border-color: rgba(232, 168, 56, 0.25);
+    margin-bottom: 0;
+  }
+}
+
+.msg-naming-detail-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 10rpx;
+
+  text {
+    font-size: 26rpx;
+    font-weight: 600;
+    color: #5b3a1a;
+  }
+}
+
+.msg-naming-detail-icon {
+  font-size: 28rpx;
+}
+
+.msg-naming-detail-text {
+  font-size: 24rpx;
+  color: #6b5b4a;
+  line-height: 1.8;
+  display: block;
+
+  &--summary {
+    font-size: 26rpx;
+    color: #5b3a1a;
+    font-weight: 500;
+    font-style: italic;
+    line-height: 1.9;
+  }
+}
+
+// 吉祥三宝
+.msg-naming-detail-lucky {
+  display: flex;
+  gap: 12rpx;
+}
+
+.msg-naming-detail-lucky-item {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 8rpx;
+  background: linear-gradient(135deg, rgba(255, 215, 176, 0.2), rgba(255, 255, 255, 0.5));
+  border-radius: 14rpx;
+  border: 1rpx solid rgba(201, 169, 110, 0.2);
+}
+
+.msg-naming-detail-lucky-label {
+  font-size: 20rpx;
+  color: #a68f78;
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.msg-naming-detail-lucky-val {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #5b3a1a;
+  display: block;
+}
+
+// ===== 取名流程操作按钮 =====
+.msg-naming-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 16rpx;
+  padding: 0 4rpx;
+}
+
+.msg-naming-action-btn {
+  flex: 1;
+  text-align: center;
+  padding: 18rpx 24rpx;
+  border-radius: 18rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.msg-naming-action-btn--upload {
+  background: $gradient-gold;
+  color: $color-text-inverse;
+  box-shadow: 0 4rpx 12rpx rgba($color-primary, 0.25);
+}
+
+.msg-naming-action-btn--upload:active {
+  opacity: 0.85;
+  transform: scale(0.97);
+}
+
+.msg-naming-action-btn--skip {
+  background: $color-primary-bg;
+  border: 1rpx solid $color-border;
+  color: $color-text-hint;
+}
+
+.msg-naming-action-btn--skip:active {
+  background: rgba(0, 0, 0, 0.03);
+  transform: scale(0.97);
+}
+
+// 回忆流程 - 照片预览
+.msg-memory-photo-preview {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 12rpx;
+  background: $color-bg-secondary;
+  border-radius: 18rpx;
+  border: 1rpx solid $color-border-light;
+}
+
+.msg-memory-photo-img {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 12rpx;
+  flex-shrink: 0;
+}
+
+.msg-memory-photo-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.msg-memory-photo-label {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  font-weight: 500;
+}
+
+.msg-memory-photo-actions {
+  display: flex;
+  gap: 12rpx;
+}
+
+// ===== 命理详情悬浮弹窗 =====
+.naming-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: namingPopupFadeIn 0.3s ease-out;
+}
+
+@keyframes namingPopupFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.naming-popup-card {
+  width: 650rpx;
+  max-height: 90%;
+  background: linear-gradient(180deg, #fef9f3 0%, #faf3e8 30%, #fdf8f0 100%);
+  border-radius: 32rpx;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 24rpx 80rpx rgba(0, 0, 0, 0.3);
+  animation: namingPopupSlideUp 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+  display: flex;
+  flex-direction: column;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6rpx;
+    background: $gradient-gold;
+    z-index: 1;
+  }
+}
+
+@keyframes namingPopupSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(60rpx) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.naming-popup-close {
+  position: absolute;
+  top: 20rpx;
+  right: 20rpx;
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: rgba(166, 143, 120, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: all 0.2s ease;
+
+  text {
+    font-size: 28rpx;
+    color: #8b7355;
+    font-weight: 700;
+  }
+
+  &:active {
+    background: rgba(166, 143, 120, 0.3);
+    transform: scale(0.92);
+  }
+}
+
+.naming-popup-body {
+  flex: 1;
+  height: 0;
+  min-height: 0;
+  padding: 0 28rpx 28rpx;
+}
+
+.naming-popup-card .msg-naming-detail-header {
+  padding: 36rpx 28rpx 20rpx;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #fef9f3 0%, rgba(254, 249, 243, 0.95) 100%);
+  position: relative;
+  z-index: 1;
+}
+
+.naming-popup-card .msg-naming-detail-name {
+  font-size: 48rpx;
+}
+
+.naming-popup-card .msg-naming-detail-subtitle {
+  font-size: 26rpx;
+  color: #a68f78;
+  margin-top: 4rpx;
+}
+
+.naming-popup-card .msg-naming-detail-section {
+  padding: 20rpx;
+  margin-bottom: 12rpx;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 16rpx;
+  border: 1rpx solid rgba(166, 143, 120, 0.12);
+}
+
+.naming-popup-card .msg-naming-detail-section--fortune {
+  background: linear-gradient(135deg, rgba(255, 215, 176, 0.25), rgba(255, 255, 255, 0.5));
+  border-color: rgba($color-primary, 0.2);
+}
+
+.naming-popup-card .msg-naming-detail-section--summary {
+  background: linear-gradient(135deg, rgba(255, 215, 176, 0.3), rgba(255, 240, 220, 0.5));
+  border-color: rgba($color-primary, 0.25);
+  margin-bottom: 0;
+  padding-bottom: 28rpx;
+}
+
+.naming-popup-card .msg-naming-detail-lucky {
+  margin-bottom: 0;
+}
+
+// ===== 命理详情弹窗 - 加载骨架屏 =====
+.naming-popup-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 20rpx;
+}
+
+.naming-popup-spinner {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, $color-primary, #f5d5a0, $color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: spinnerRotate 1.2s linear infinite;
+  margin-bottom: 28rpx;
+
+  &::before {
+    content: '';
+    position: absolute;
+    width: 84rpx;
+    height: 84rpx;
+    border-radius: 50%;
+    background: $color-bg-page;
+  }
+}
+
+.naming-popup-spinner-icon {
+  font-size: 40rpx;
+  z-index: 1;
+  animation: spinnerPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes spinnerRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spinnerPulse {
+  0%, 100% { opacity: 0.6; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.naming-popup-loading-text {
+  font-size: 28rpx;
+  color: #8b7355;
+  text-align: center;
+  margin-bottom: 36rpx;
+  animation: shimmerText 1.8s ease-in-out infinite;
+}
+
+@keyframes shimmerText {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.naming-popup-skeleton {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.naming-popup-skeleton-line {
+  height: 28rpx;
+  background: linear-gradient(
+    90deg,
+    rgba(166, 143, 120, 0.1) 0%,
+    rgba(166, 143, 120, 0.25) 50%,
+    rgba(166, 143, 120, 0.1) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: 8rpx;
+  animation: skeletonShimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeletonShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// ============================================
+// 首页顶部区块（对齐设计稿 home.html）
+// 健康摘要卡 / 宠物的话 / 3秒打卡按钮
+// ============================================
+
+// —— 今日健康摘要卡 ——
+.home-summary-card {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  border: 1rpx solid $color-border;
+  box-shadow: $shadow-card, $glow-sm;
+  padding: 28rpx 32rpx;
+  margin-bottom: 20rpx;
+  @include press-feedback;
+  // 与顶部栏错开 80ms 入场，形成轻微层次感
+  animation: fadeInUp 0.32s cubic-bezier(0.22, 0.61, 0.36, 1) 0.08s both;
+}
+
+.home-summary-main {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.home-summary-avatar {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 50%;
+  background: $gradient-warm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56rpx;
+  flex-shrink: 0;
+  overflow: hidden;
+  box-shadow: 0 0 24rpx rgba($color-primary, 0.3), 0 0 60rpx rgba($color-primary, 0.18), 0 0 110rpx rgba($color-gold, 0.12);
+}
+
+/* 宠物真实头像（与档案页一致）：圆角裁切 */
+.home-summary-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.home-summary-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.home-summary-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 10rpx;
+}
+
+.home-summary-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx 24rpx;
+}
+
+.home-summary-stat {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+}
+
+.home-summary-stat-val {
+  font-weight: $font-weight-bold;
+  margin-left: 4rpx;
+
+  &--coral {
+    color: $color-primary;
+    // 沉浸光感：暖色统计数字辉光
+    text-shadow: 0 0 12rpx rgba(var(--primary-rgb), 0.35), 0 0 34rpx rgba(255, 176, 32, 0.18);
+  }
+
+  &--success {
+    color: $color-success;
+  }
+}
+
+.home-summary-hint {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+}
+
+.home-summary-go {
+  font-size: 40rpx;
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+  margin-left: 8rpx;
+}
+
+// —— 宠物的话（暖金横幅） ——
+.home-pet-quote {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  background: $color-gold-bg;
+  border-radius: $radius-md;
+  padding: 22rpx 28rpx;
+  margin-bottom: 20rpx;
+}
+
+.home-pet-quote-icon {
+  font-size: 28rpx;
+  flex-shrink: 0;
+  color: $color-gold-deep;
+}
+
+.home-pet-quote-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 24rpx;
+  color: $color-text-primary;
+  line-height: 1.6;
+}
+
+.home-pet-quote-author {
+  flex-shrink: 0;
+  font-size: 22rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-gold-deep;
+}
+
+// —— 3秒健康打卡主按钮 ——
+.home-checkin-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  background: $gradient-gold;
+  border-radius: $radius-lg;
+  padding: 28rpx 32rpx;
+  margin-bottom: 28rpx;
+  position: relative;
+  box-shadow: $shadow-button, 0 0 30rpx rgba($color-primary, 0.35), 0 0 80rpx rgba($color-gold, 0.2);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease, box-shadow 0.3s ease;
+
+  &--hover {
+    transform: scale(0.97);
+    opacity: 0.92;
+  }
+}
+
+// 扩散光晕环（仿鸿蒙"充电光晕"脉冲）：渐变主按钮自带呼吸辉光
+.home-checkin-cta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0);
+  animation: xhh-pulse-ring 3.2s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+  pointer-events: none;
+}
+
+.home-checkin-cta-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  min-width: 0;
+}
+
+.home-checkin-cta-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  flex-shrink: 0;
+}
+
+.home-checkin-cta-texts {
+  min-width: 0;
+}
+
+.home-checkin-cta-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: $font-weight-bold;
+  color: $color-text-inverse;
+  line-height: 1.3;
+}
+
+.home-checkin-cta-sub {
+  display: block;
+  font-size: 20rpx;
+  margin-top: 4rpx;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-checkin-cta-arrow {
+  font-size: 36rpx;
+  color: $color-text-inverse;
+  flex-shrink: 0;
+}
+
+// ============================================
+// 快捷功能网格 2x2（对齐设计稿 home.html）
+// ============================================
+.home-shortcuts {
+  margin-top: 8rpx;
+}
+
+.home-shortcuts-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
+  margin-bottom: 20rpx;
+}
+
+.home-shortcuts-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+.home-shortcut {
+  width: calc((100% - 40rpx) / 3);
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  border: 1rpx solid $color-border;
+  box-shadow: $shadow-card, $glow-sm;
+  padding: 24rpx;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+  @include press-feedback;
+
+  &--hover {
+    transform: translateY(-4rpx) scale(0.98);
+    border-color: rgba($color-primary, 0.35);
+    box-shadow: $shadow-md;
+  }
+}
+
+.home-shortcut-icon {
+  position: relative;
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  margin-bottom: 16rpx;
+
+  &--coral { background: rgba($color-primary, 0.12); }
+  &--gold { background: rgba($color-gold-deep, 0.14); }
+  &--sage { background: rgba($color-sage, 0.14); }
+  &--teal { background: rgba($color-teal, 0.14); }
+}
+
+/* 慢性病风险角标（红色数字徽标，右上角） */
+.home-shortcut-badge {
+  position: absolute;
+  top: -8rpx;
+  right: -8rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  padding: 0 8rpx;
+  border-radius: 16rpx;
+  background: $color-danger;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid #fff;
+}
+
+.home-shortcut-badge-text {
+  font-size: 20rpx;
+  color: #fff;
+  font-weight: $font-weight-semibold;
+}
+
+.home-shortcut-label {
+  display: block;
+  font-size: 28rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+}
+
+.home-shortcut-desc {
+  display: block;
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  line-height: 1.5;
+}
+
+// 减少动态效果偏好：入场只保留淡入，去掉位移动画
+@media (prefers-reduced-motion: reduce) {
+  .chat-top-bar,
+  .home-summary-card,
+  .msg-quick-actions,
+  .chat-empty {
+    animation: fadeIn 0.2s ease both;
+  }
+}
+
+/* ===== 长对话软提示（多会话：满 30 轮建议新建，不强制） ===== */
+.chat-long-tip {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin: 12rpx 0 20rpx;
+  padding: 20rpx 24rpx;
+  background: linear-gradient(135deg, #fff7ed, #ffedd5);
+  border: 1rpx solid #ffd9b0;
+  border-radius: 20rpx;
+}
+
+.chat-long-tip-icon { font-size: 30rpx; }
+
+.chat-long-tip-text {
+  flex: 1;
+  font-size: 24rpx;
+  color: #a06a3f;
+}
+
+.chat-long-tip-action {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #ff6b3d;
+  padding: 8rpx 16rpx;
+  background: #fff;
+  border-radius: 999rpx;
+}
+
+/* ===== 会话列表抽屉（多会话「历史对话」，豆包式新建/切换/删除） ===== */
+.session-drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+}
+
+.session-drawer {
+  width: 100%;
+  max-height: 70vh;
+  background: #fff;
+  border-radius: 32rpx 32rpx 0 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.session-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 32rpx 20rpx;
+  border-bottom: 1rpx solid #f3ece4;
+}
+
+.session-drawer-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #4a3728;
+}
+
+.session-drawer-new {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 10rpx 20rpx;
+  background: linear-gradient(135deg, #ff8a5c, #ff6b3d);
+  border-radius: 999rpx;
+}
+
+.session-drawer-new-icon { font-size: 26rpx; color: #fff; font-weight: 700; }
+.session-drawer-new-text { font-size: 24rpx; color: #fff; }
+
+.session-drawer-list { max-height: 56vh; }
+
+.session-drawer-empty {
+  padding: 80rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.session-drawer-empty-icon { font-size: 64rpx; }
+.session-drawer-empty-text { font-size: 24rpx; color: #b6a594; }
+
+.session-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid #f7f1ea;
+}
+
+.session-item--active { background: #fff7ed; }
+
+.session-item-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.session-item-title {
+  font-size: 28rpx;
+  color: #4a3728;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-item-meta { font-size: 22rpx; color: #b6a594; }
+
+.session-item-current {
+  flex-shrink: 0;
+  font-size: 20rpx;
+  color: #ff6b3d;
+  padding: 4rpx 14rpx;
+  background: #ffedd5;
+  border-radius: 999rpx;
+}
+
+/* ============================================
+   品牌 Hero：情绪 slogan + 猫狗 IP 主视觉
+   首页主体是对话流，Hero 刻意做得克制 ——
+   只负责在首屏建立品牌感与「这是谁的家」的情感锚点，不抢占消息列表的空间
+   ============================================ */
+.home-hero {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24rpx 48rpx 8rpx;
+}
+
+/* 散落星点：绝对定位铺在 Hero 内，用闪烁动画呼应「星河」，同时填掉大片留白 */
+.home-hero__spark {
+  position: absolute;
+  animation: home-hero-twinkle 3.2s ease-in-out infinite;
+}
+
+.home-hero__spark--1 { top: 26rpx; left: 11%; animation-delay: 0s; }
+.home-hero__spark--2 { top: 128rpx; left: 5%; animation-delay: 0.6s; }
+.home-hero__spark--3 { top: 56rpx; right: 9%; animation-delay: 1.2s; }
+.home-hero__spark--4 { top: 196rpx; right: 4%; animation-delay: 0.3s; }
+.home-hero__spark--5 { top: 262rpx; left: 8%; animation-delay: 0.9s; }
+.home-hero__spark--6 { top: 312rpx; right: 13%; animation-delay: 1.5s; }
+
+@keyframes home-hero-twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.88); }
+  50% { opacity: 1; transform: scale(1.12); }
+}
+
+.home-hero__slogan {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+  font-size: 40rpx;
+  font-weight: $font-weight-bold;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: $color-text-primary;
+  text-align: center;
+}
+
+/* 每行：文字与星星用 flex 排列（Icon 是 Image 组件，不能塞进 <Text>） */
+.home-hero__line {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.home-hero__star {
+  flex-shrink: 0;
+}
+
+/* 行末补缀的那颗略靠外一点，避免贴着文字 */
+.home-hero__star--end {
+  margin-left: 6rpx;
+}
+
+.home-hero__line-text {
+  display: block;
+}
+
+/* 「星河」二字用主色点出，呼应品牌名 */
+.home-hero__accent {
+  color: $color-primary;
+}
+
+.home-hero__mascot {
+  position: relative;
+  z-index: 1;
+  /* 280rpx：原来 168/220rpx 在 375px 屏上只有 84/110px，Hero 显得空；
+     放大后吉祥物成为真正的视觉主角，同时把上下留白压下去 */
+  width: 280rpx;
+  height: 280rpx;
+  margin-top: 10rpx;
+}

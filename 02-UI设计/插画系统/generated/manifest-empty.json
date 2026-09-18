@@ -1,0 +1,62 @@
+[
+  {
+    "key": "empty-timeline",
+    "file": "empty-timeline.jpg",
+    "bytes": 342458,
+    "scene": "小猫和小狗并排坐着望向面前一本摊开的空白相册，神态温柔期待，猫咪微微歪头。"
+  },
+  {
+    "key": "empty-checkin",
+    "file": "empty-checkin.jpg",
+    "bytes": 373502,
+    "scene": "小猫和小狗一起看着一块空白的打卡记录板，小狗歪头，猫爪搭在板子边上，表情好奇。"
+  },
+  {
+    "key": "empty-pet",
+    "file": "empty-pet.jpg",
+    "bytes": 383288,
+    "scene": "一只空空的小窝放在画面中央，小猫和小狗从两侧探进头来看向窝里，表情好奇又期待。"
+  },
+  {
+    "key": "empty-search",
+    "file": "empty-search.jpg",
+    "bytes": 340630,
+    "scene": "小猫和小狗一起低头看一枚立在地上的放大镜，镜片里空空的，两只表情疑惑。"
+  },
+  {
+    "key": "empty-photo",
+    "file": "empty-photo.jpg",
+    "bytes": 358480,
+    "scene": "小猫和小狗好奇地看着一个空的相框，相框里是空白的奶油色，两只脑袋挤在一起往里看。"
+  },
+  {
+    "key": "empty-chart",
+    "file": "empty-chart.jpg",
+    "bytes": 352883,
+    "scene": "小猫和小狗一起看着一块空白的成长曲线板，板子上只有淡淡的网格线没有数据，两只神情期待。"
+  },
+  {
+    "key": "empty-vaccine",
+    "file": "empty-vaccine.jpg",
+    "bytes": 401452,
+    "scene": "小猫和小狗一起看着一本空白的日历，日历上只有淡淡格子没有标记，小狗用爪子指着日历。"
+  },
+  {
+    "key": "empty-family",
+    "file": "empty-family.jpg",
+    "bytes": 404773,
+    "scene": "小猫和小狗并排坐在草地上，中间留出一个空位，两只一起回头看向那个空位，表达\"还差一位家人\"。"
+  },
+  {
+    "key": "empty-achievement",
+    "file": "empty-achievement.jpg",
+    "bytes": 365217,
+    "scene": "小猫和小狗一起看着一个空空的奖杯陈列架，架子上没有奖杯，两只抬头仰望，表情期待。"
+  },
+  {
+    "key": "empty-message",
+    "file": "empty-message.jpg",
+    "bytes": 327947,
+    "scene": "小猫和小狗一起好奇地看着一个空白的对话气泡，气泡里空空的，两只凑在一起望进去。"
+  }
+]

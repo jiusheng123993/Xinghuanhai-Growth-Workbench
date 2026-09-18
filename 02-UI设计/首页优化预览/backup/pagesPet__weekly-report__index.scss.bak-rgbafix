@@ -1,0 +1,441 @@
+@import '../../styles/_theme';
+@import '../../styles/_animations';
+
+// ============================================
+// 家庭周报页 — 原型 1:1：金色横幅 + 亮点 + 成员小结 + 数据 + 寄语 + 分享
+// ============================================
+
+.report-page {
+  min-height: 100vh;
+  /* 背景统一由 <PageBackground /> 组件渲染（含星空/格纹/照片壁纸），此处保持透明 */
+  background: transparent;
+  position: relative;
+  z-index: 1;
+  animation: pageEnter 0.4s ease-out;
+}
+
+.report-page__content {
+  position: relative;
+  z-index: 2;
+  padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.report-page__empty {
+  @include flex-center;
+  flex-direction: column;
+  min-height: 100vh;
+  gap: 24rpx;
+}
+
+.report-page__empty-icon {
+  font-size: 96rpx;
+}
+
+.report-page__empty-text {
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+}
+
+// ===== 生成按钮 =====
+.report-generate-btn {
+  height: 96rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  box-shadow: $shadow-button;
+  @include flex-center;
+  transition: opacity $transition-fast;
+
+  &:active {
+    opacity: 0.85;
+  }
+
+  &--loading {
+    opacity: 0.6;
+  }
+}
+
+.report-generate-btn__text {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: #FFFFFF;
+}
+
+// ===== 通用标题行 =====
+.fr-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 24rpx;
+}
+
+.fr-card__title {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  flex: 1;
+  min-width: 0;
+}
+
+.fr-card__title-icon {
+  font-size: 28rpx;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.fr-card__title-meta {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+}
+
+// ===== 金色渐变横幅 =====
+.fr-banner {
+  background: linear-gradient(135deg, $color-gold-soft, $color-gold-bg);
+  border-radius: 24rpx;
+  padding: 40rpx;
+  box-shadow: $shadow-card;
+  animation: fadeInUp 0.35s ease-out;
+}
+
+.fr-banner__head {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.fr-banner__icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: $color-bg-card;
+  @include flex-center;
+  flex-shrink: 0;
+  box-shadow: $shadow-xs;
+}
+
+.fr-banner__icon-text {
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+.fr-banner__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.fr-banner__title {
+  display: block;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  @include text-ellipsis;
+}
+
+.fr-banner__meta {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 10rpx;
+}
+
+.fr-banner__meta-icon {
+  font-size: 24rpx;
+  line-height: 1;
+}
+
+.fr-banner__meta-text {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+}
+
+.fr-banner__badge {
+  flex-shrink: 0;
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+  background: rgba($color-bg-card, 0.8);
+  box-shadow: $shadow-xs;
+}
+
+.fr-banner__badge-text {
+  font-size: 22rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-gold-deep;
+}
+
+// ===== 本周亮点卡（珊瑚描边） =====
+.fr-highlights {
+  @include card-base;
+  padding: 32rpx;
+  border: 3rpx solid $color-primary;
+  animation: fadeInUp 0.35s ease-out;
+}
+
+.fr-highlights__list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.fr-highlight-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+  min-width: 0;
+}
+
+.fr-highlight-dot {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: $color-primary-bg;
+  @include flex-center;
+  flex-shrink: 0;
+  margin-top: 2rpx;
+}
+
+.fr-highlight-dot-icon {
+  font-size: 24rpx;
+  line-height: 1;
+}
+
+.fr-highlight-text {
+  flex: 1;
+  min-width: 0;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  line-height: 1.6;
+}
+
+// ===== 成员健康小结 =====
+.fr-members {
+  @include card-base;
+  padding: 32rpx;
+  animation: fadeInUp 0.35s ease-out;
+}
+
+.fr-member-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.fr-member-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 20rpx 0;
+  border-bottom: 2rpx solid $color-border-light;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.fr-member-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  border: 2rpx solid $color-border;
+  @include flex-center;
+  background: $color-primary-bg;
+  flex-shrink: 0;
+}
+
+.fr-member-avatar-emoji {
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+.fr-member-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.fr-member-name {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  @include text-ellipsis;
+}
+
+.fr-member-summary {
+  display: block;
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  margin-top: 6rpx;
+  @include text-ellipsis;
+}
+
+.fr-status {
+  flex-shrink: 0;
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+
+  &--good {
+    background: rgba($color-success, 0.14);
+  }
+
+  &--warn {
+    background: rgba($color-warning, 0.16);
+  }
+}
+
+.fr-status-text {
+  font-size: 22rpx;
+  font-weight: $font-weight-semibold;
+
+  .fr-status--good & {
+    color: $color-success;
+  }
+
+  .fr-status--warn & {
+    color: $color-warning;
+  }
+}
+
+// ===== 本周数据 2x2 =====
+.fr-stats {
+  @include card-base;
+  padding: 32rpx;
+  animation: fadeInUp 0.35s ease-out;
+}
+
+.fr-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20rpx;
+}
+
+.fr-stat-tile {
+  padding: 28rpx 16rpx;
+  border-radius: 24rpx;
+  background: $color-bg-secondary;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.fr-stat-tile__value {
+  font-size: 40rpx;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+  line-height: 1;
+}
+
+.fr-stat-tile__label {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+  text-align: center;
+  line-height: 1.4;
+}
+
+// ===== AI 寄语（蓝底） =====
+.fr-note {
+  border-radius: 24rpx;
+  padding: 32rpx;
+  background: rgba($color-teal, 0.12);
+  border: 2rpx solid rgba($color-teal, 0.28);
+  animation: fadeInUp 0.35s ease-out;
+}
+
+.fr-note__text {
+  display: block;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  line-height: 1.8;
+}
+
+// ===== 分享按钮 =====
+.fr-share-btn {
+  height: 96rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, $color-primary-light, $color-primary);
+  box-shadow: $shadow-button;
+  @include flex-center;
+  gap: 12rpx;
+  animation: fadeInUp 0.35s ease-out;
+
+  &:active {
+    opacity: 0.85;
+  }
+}
+
+.fr-share-btn__icon {
+  font-size: 32rpx;
+  line-height: 1;
+}
+
+.fr-share-btn__text {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: #FFFFFF;
+}
+
+// ===== 历史周报 =====
+.report-history {
+  @include card-base;
+  padding: 32rpx;
+  animation: fadeInUp 0.35s ease-out;
+}
+
+.report-history__title {
+  display: block;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 24rpx;
+}
+
+.report-history__item {
+  border-bottom: 2rpx solid $color-border-light;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.report-history__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 0;
+}
+
+.report-history__date {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
+}
+
+.report-history__arrow {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.report-history__body {
+  padding-bottom: 24rpx;
+}
+
+.report-history__summary {
+  display: block;
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  line-height: 1.7;
+  margin-bottom: 16rpx;
+}
+
+.report-history__tags {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.report-history__tag {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  line-height: 1.5;
+}

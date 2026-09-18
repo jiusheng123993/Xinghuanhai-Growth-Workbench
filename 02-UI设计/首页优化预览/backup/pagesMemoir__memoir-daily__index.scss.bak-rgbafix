@@ -1,0 +1,848 @@
+@import '../../styles/_theme';
+@import '../../styles/_animations';
+
+// ============================================
+// 日常回忆录页 · 原型 1:1
+// ============================================
+.memoir {
+  min-height: 100vh;
+  /* 背景由 <PageBackground /> 组件统一渲染，此处保持透明 */
+  background: transparent;
+  padding: $spacing-xl $spacing-lg $spacing-xxl;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  animation: pageEnter 0.4s ease-out;
+}
+
+.xhh-card {
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card;
+}
+
+// —— 标题区 ——
+.memoir__head {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.memoir__title {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.memoir__subtitle {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+// —— hero 横幅 ——
+.memoir__hero {
+  position: relative;
+  height: 300rpx;
+  border-radius: $radius-md;
+  overflow: hidden;
+  background-image: linear-gradient(135deg, $color-primary-bg, $color-gold-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: $shadow-card;
+}
+
+.memoir__hero-bg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.memoir__hero-emoji {
+  font-size: 160rpx;
+  line-height: 1;
+  animation: pulse 3s ease-in-out infinite;
+}
+
+.memoir__hero-badge {
+  position: absolute;
+  top: $spacing-md;
+  right: $spacing-md;
+  padding: 6rpx $spacing-md;
+  border-radius: $radius-round;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.memoir__hero-badge-text {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+// —— 双产品线卡 ——
+.memoir__product-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.memoir__product-card {
+  padding: $spacing-lg;
+  border-radius: $radius-md;
+  border: 1px solid $color-border;
+  box-shadow: $shadow-xs;
+  @include press-feedback;
+
+  &--coral {
+    background: linear-gradient(135deg, rgba($color-primary, 0.08), $color-bg-card);
+    border-color: rgba($color-primary, 0.25);
+  }
+
+  &--gold {
+    background: linear-gradient(135deg, $color-gold-bg, $color-bg-card);
+    border-color: rgba($color-gold-deep, 0.3);
+  }
+}
+
+.memoir__product-head {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.memoir__product-icon {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: $radius-lg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44rpx;
+  background: $color-bg-card;
+  box-shadow: $shadow-xs;
+  flex-shrink: 0;
+}
+
+.memoir__product-titles {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.memoir__product-name {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.memoir__product-price {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.memoir__product-arrow {
+  font-size: 40rpx;
+  color: $color-text-tertiary;
+  line-height: 1;
+}
+
+.memoir__badge-paid {
+  padding: 4rpx $spacing-md;
+  border-radius: $radius-round;
+  background: $color-gold-deep;
+}
+
+.memoir__badge-paid-text {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $color-text-inverse;
+}
+
+.memoir__product-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  margin-top: $spacing-md;
+}
+
+.memoir__pill {
+  padding: 4rpx $spacing-md;
+  border-radius: $radius-round;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+// —— 步骤指示器 ——
+.memoir__steps {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: $spacing-sm 0;
+}
+
+.memoir__step-wrap {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.memoir__step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.memoir__step-dot {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: $radius-full;
+  background: $color-bg-card;
+  border: 2rpx solid $color-border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all $transition-fast;
+
+  &--active {
+    background-image: linear-gradient(135deg, $color-primary-light, $color-primary);
+    border-color: transparent;
+    box-shadow: $shadow-button;
+  }
+
+  &--done {
+    background: $color-primary;
+    border-color: transparent;
+  }
+}
+
+.memoir__step-num {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $color-text-tertiary;
+
+  .memoir__step-dot--active &,
+  .memoir__step-dot--done & {
+    color: $color-text-inverse;
+  }
+}
+
+.memoir__step-label {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+
+  &--active {
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.memoir__step-line {
+  width: 120rpx;
+  height: 2rpx;
+  background: $color-border;
+  margin: 0 $spacing-md;
+  margin-bottom: 40rpx;
+}
+
+// —— 内容区 ——
+.memoir__content {
+  flex: 1;
+  min-height: 0;
+}
+
+// —— 面板卡 ——
+.memoir__panel {
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+}
+
+.memoir__section-title {
+  display: block;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.memoir__section-sub {
+  display: block;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-bottom: $spacing-md;
+  margin-top: -$spacing-sm;
+}
+
+// —— 上传素材：照片网格 ——
+.memoir__photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.memoir__photo-slot {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: $radius-sm;
+  overflow: hidden;
+  background: $color-bg-secondary;
+  border: 1px solid $color-border;
+
+  &--add {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8rpx;
+    border: 2rpx dashed $color-border;
+    @include press-feedback;
+  }
+}
+
+.memoir__photo-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.memoir__photo-delete {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: $radius-full;
+  background: rgba(0, 0, 0, 0.5);
+  color: $color-text-inverse;
+  font-size: $font-size-xs;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.memoir__photo-add-icon {
+  font-size: 44rpx;
+  line-height: 1;
+}
+
+.memoir__photo-add-text {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.memoir__pick-btn {
+  padding: 20rpx 0;
+  border: 2rpx solid $color-primary;
+  border-radius: $radius-round;
+  text-align: center;
+  margin-bottom: $spacing-md;
+  @include press-feedback;
+
+  &--disabled {
+    border-color: $color-border;
+  }
+}
+
+.memoir__pick-btn-text {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+
+  .memoir__pick-btn--disabled & {
+    color: $color-text-placeholder;
+  }
+}
+
+.memoir__story {
+  width: 100%;
+  min-height: 140rpx;
+  padding: $spacing-md;
+  background: $color-bg-secondary;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  box-sizing: border-box;
+  margin-bottom: $spacing-md;
+}
+
+// ==================== 回忆标签（F4 记忆驱动） ====================
+.memoir__tags {
+  margin-bottom: $spacing-md;
+}
+
+.memoir__tags-title {
+  display: block;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: 16rpx;
+}
+
+.memoir__tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.memoir__tag {
+  padding: 12rpx 24rpx;
+  border-radius: 999rpx;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  background: $color-bg-secondary;
+  border: 1px solid $color-border;
+  transition: all 0.2s ease;
+}
+
+.memoir__tag--active {
+  color: #e8913f;
+  background: rgba(232, 145, 63, 0.1);
+  border-color: #e8913f;
+  font-weight: 600;
+}
+
+.memoir__placeholder {
+  color: $color-text-placeholder;
+}
+
+.memoir__lockbar {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  background: $color-primary-bg;
+  border-radius: $radius-sm;
+}
+
+.memoir__lockbar-icon {
+  font-size: $font-size-sm;
+}
+
+.memoir__lockbar-text {
+  font-size: $font-size-xs;
+  color: $color-primary;
+}
+
+// —— AI 生成：风格列表 ——
+.memoir__style-list,
+.memoir__bgm-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.memoir__style-card,
+.memoir__bgm-card {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  transition: border-color $transition-fast, background-color $transition-fast;
+  @include press-feedback;
+
+  &--active {
+    border-color: $color-primary;
+    background: $color-primary-bg;
+  }
+}
+
+.memoir__style-emoji,
+.memoir__bgm-emoji {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-full;
+  background: $color-bg-secondary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  flex-shrink: 0;
+}
+
+.memoir__style-info,
+.memoir__bgm-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.memoir__style-name,
+.memoir__bgm-name {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.memoir__style-desc,
+.memoir__bgm-tag {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.memoir__style-check {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: $radius-full;
+  border: 2rpx solid $color-border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-xs;
+  color: $color-text-inverse;
+  flex-shrink: 0;
+
+  &--checked {
+    background: $color-primary;
+    border-color: $color-primary;
+  }
+}
+
+.memoir__bgm-preview {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: $radius-full;
+  background: $color-gold-bg;
+  color: $color-gold-deep;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-xs;
+  flex-shrink: 0;
+  @include press-feedback;
+
+  &--playing {
+    background: $color-primary;
+    color: $color-text-inverse;
+  }
+}
+
+// —— AI 生成进度卡 ——
+.memoir__progress {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.memoir__progress-track {
+  flex: 1;
+  height: 12rpx;
+  background: $color-border;
+  border-radius: $radius-round;
+  overflow: hidden;
+}
+
+.memoir__progress-bar {
+  height: 100%;
+  width: 0;
+  border-radius: $radius-round;
+  background-image: linear-gradient(90deg, $color-primary-light, $color-primary);
+  animation: memoirProgress 3s ease-in-out infinite;
+}
+
+@keyframes memoirProgress {
+  0% { width: 8%; }
+  60% { width: 82%; }
+  100% { width: 92%; }
+}
+
+.memoir__progress-pct {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+}
+
+.memoir__gen-text {
+  display: block;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.memoir__gen-hint {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.memoir__gen-hint-icon {
+  font-size: $font-size-xs;
+}
+
+.memoir__gen-hint-text {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.memoir__gen-status {
+  display: block;
+  margin-top: $spacing-md;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+// —— 预览 / 封面 ——
+.memoir__cover {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: $radius-sm;
+  overflow: hidden;
+  background: #1A1410;
+  margin-bottom: $spacing-lg;
+}
+
+.memoir__preview-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.memoir__cover-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.memoir__cover-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+}
+
+.memoir__cover-placeholder-icon {
+  font-size: 72rpx;
+}
+
+.memoir__cover-placeholder-text {
+  font-size: $font-size-md;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.memoir__cover-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.memoir__cover-play-btn {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: $radius-full;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.memoir__cover-play-icon {
+  font-size: 40rpx;
+  color: $color-text-inverse;
+  margin-left: 6rpx;
+}
+
+.memoir__cover-duration {
+  position: absolute;
+  right: $spacing-md;
+  bottom: $spacing-md;
+  padding: 4rpx $spacing-md;
+  border-radius: $radius-round;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.memoir__cover-duration-text {
+  font-size: $font-size-xs;
+  color: $color-text-inverse;
+}
+
+.memoir__preview-info {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  background: $color-bg-secondary;
+  border-radius: $radius-sm;
+}
+
+.memoir__preview-icon {
+  font-size: 40rpx;
+}
+
+.memoir__preview-texts {
+  flex: 1;
+  min-width: 0;
+}
+
+.memoir__preview-text,
+.memoir__preview-label {
+  display: block;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+}
+
+.memoir__preview-label {
+  margin-top: 4rpx;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+// —— 结果按钮 ——
+.memoir__result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+}
+
+.memoir__btn {
+  padding: 22rpx 0;
+  border-radius: $radius-round;
+  text-align: center;
+  flex: 1;
+  min-width: 200rpx;
+  @include press-feedback;
+
+  &--primary {
+    background-image: linear-gradient(135deg, $color-primary-light, $color-primary);
+    box-shadow: $shadow-button;
+  }
+
+  &--ghost {
+    background: $color-bg-card;
+    border: 2rpx solid $color-border;
+  }
+
+  &--disabled {
+    background: $color-text-placeholder;
+    box-shadow: none;
+  }
+}
+
+.memoir__btn-text {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $color-text-inverse;
+
+  &--ghost {
+    color: $color-text-secondary;
+  }
+}
+
+// —— 底部操作栏 ——
+.memoir__footer {
+  padding: $spacing-md 0;
+}
+
+.memoir__loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(255, 246, 238, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-xl;
+}
+
+.memoir__loading-overlay .memoir__panel {
+  width: 100%;
+}
+
+// ==================== 照片上传状态徽标（2026-09-09 B2：本地照片先上传后提交） ====================
+.memoir__photo-badge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 6rpx 0;
+  font-size: 20rpx;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.55);
+  color: $color-text-inverse;
+
+  &--failed {
+    background: rgba(200, 80, 80, 0.75);
+  }
+}
+
+// ==================== 参考样例视频区（2026-09-10 轻纪念两案例） ====================
+.memoir__samples {
+  margin-top: $spacing-md;
+}
+
+.memoir__samples-title {
+  display: block;
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.memoir__samples-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.memoir__samples-card {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  border-radius: $radius-lg;
+  background: #fff;
+  box-shadow: 0 4rpx 14rpx rgba(170, 120, 70, 0.1);
+  @include press-feedback;
+}
+
+.memoir__samples-card-emoji {
+  font-size: 40rpx;
+  flex-shrink: 0;
+}
+
+.memoir__samples-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.memoir__samples-card-label {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.memoir__samples-card-hint {
+  display: block;
+  margin-top: 4rpx;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.memoir__samples-card-play {
+  flex-shrink: 0;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  @include flex-center;
+  background: rgba(255, 107, 61, 0.12);
+  color: #FF6B3D;
+  font-size: 24rpx;
+}

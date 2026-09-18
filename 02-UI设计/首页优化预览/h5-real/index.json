@@ -1,0 +1,122 @@
+[
+  {
+    "key": "home",
+    "route": "/pages/index/index",
+    "out": "E:\\星河宠记\\02-UI设计\\首页优化预览\\h5-real\\home.png",
+    "size": 262868,
+    "ok": true,
+    "name": "今天"
+  },
+  {
+    "key": "creative",
+    "route": "/pages/creative/index",
+    "out": "E:\\星河宠记\\02-UI设计\\首页优化预览\\h5-real\\creative.png",
+    "size": 377322,
+    "ok": true,
+    "name": "创作"
+  },
+  {
+    "key": "timeline",
+    "route": "/pages/timeline/index",
+    "out": "E:\\星河宠记\\02-UI设计\\首页优化预览\\h5-real\\timeline.png",
+    "size": 287752,
+    "ok": true,
+    "name": "时光"
+  },
+  {
+    "key": "pet",
+    "route": "/pages/pet-profile/index",
+    "out": "E:\\星河宠记\\02-UI设计\\首页优化预览\\h5-real\\pet.png",
+    "size": 377395,
+    "ok": true,
+    "name": "宠物档案"
+  },
+  {
+    "key": "mine",
+    "route": "/pages/mine/index",
+    "out": "E:\\星河宠记\\02-UI设计\\首页优化预览\\h5-real\\mine.png",
+    "size": 377395,
+    "ok": true,
+    "name": "我的"
+  },
+  {
+    "key": "family",
+    "route": "/pages/family/index",
+    "out": "E:\\星河宠记\\02-UI设计\\首页优化预览\\h5-real\\family.png",
+    "size": 376260,
+    "ok": true,
+    "name": "家庭"
+  },
+  {
+    "key": "checkin",
+    "route": "/pagesPet/checkin/index",
+    "out": "E:\\星河宠记\\02-UI设计\\首页优化预览\\h5-real\\checkin.png",
+    "size": 48290,
+    "ok": true,
+    "name": "健康打卡"
+  },
+  {
+    "key": "vaccine",
+    "route": "/pagesPet/vaccine/index",
+    "out": "E:\\星河宠记\\02-UI设计\\首页优化预览\\h5-real\\vaccine.png",
+    "size": 46919,
+    "ok": true,
+    "name": "疫苗日历"
+  },
+  {
+    "key": "trends",
+    "route": "/pagesPet/trends/index",
+    "out": "E:\\星河宠记\\02-UI设计\\首页优化预览\\h5-real\\trends.png",
+    "size": 144177,
+    "ok": true,
+    "name": "健康趋势"
+  },
+  {
+    "key": "achievement",
+    "route": "/pagesPet/achievement/index",
+    "out": "E:\\星河宠记\\02-UI设计\\首页优化预览\\h5-real\\achievement.png",
+    "size": 27326,
+    "ok": true,
+    "name": "成就"
+  },
+  {
+    "key": "chronic",
+    "route": "/pagesPet/chronic-tracking/index",
+    "out": "E:\\星河宠记\\02-UI设计\\首页优化预览\\h5-real\\chronic.png",
+    "size": 71438,
+    "ok": true,
+    "name": "慢病追踪"
+  },
+  {
+    "key": "healthreport",
+    "route": "/pagesPet/health-report/index",
+    "out": "E:\\星河宠记\\02-UI设计\\首页优化预览\\h5-real\\healthreport.png",
+    "size": 71746,
+    "ok": true,
+    "name": "健康报告"
+  },
+  {
+    "key": "lineage",
+    "route": "/pagesPet/family/lineage/index",
+    "out": "E:\\星河宠记\\02-UI设计\\首页优化预览\\h5-real\\lineage.png",
+    "size": 51802,
+    "ok": true,
+    "name": "家庭图谱"
+  },
+  {
+    "key": "memoir",
+    "route": "/pagesMemoir/memoir-center/index",
+    "out": "E:\\星河宠记\\02-UI设计\\首页优化预览\\h5-real\\memoir.png",
+    "size": 139154,
+    "ok": true,
+    "name": "回忆录馆"
+  },
+  {
+    "key": "settings",
+    "route": "/pagesUser/settings/index",
+    "out": "E:\\星河宠记\\02-UI设计\\首页优化预览\\h5-real\\settings.png",
+    "size": 93800,
+    "ok": true,
+    "name": "设置"
+  }
+]

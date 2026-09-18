@@ -1,0 +1,32 @@
+[
+  {
+    "key": "header-memoir",
+    "file": "header-memoir.jpg",
+    "bytes": 295523,
+    "scene": "小猫和小狗并排坐在影院座椅上，抬头望向前方发出暖光的空白银幕，期待又温馨。"
+  },
+  {
+    "key": "header-avatar-studio",
+    "file": "header-avatar-studio.jpg",
+    "bytes": 293760,
+    "scene": "小猫站在一面化妆镜前，镜子里映出它自己，小狗在旁边叼着一件小披风，像在准备变装。"
+  },
+  {
+    "key": "header-health",
+    "file": "header-health.jpg",
+    "bytes": 297562,
+    "scene": "小狗坐在检查台上，小猫在旁边举着一块写有空白横线的健康记录板，两只神情认真又可爱。"
+  },
+  {
+    "key": "header-family-photo",
+    "file": "header-family-photo.jpg",
+    "bytes": 273950,
+    "scene": "小猫和小狗并排坐好，一起看向前方像在配合拍全家福，身后是一块奶油色的空白背景布。"
+  },
+  {
+    "key": "header-naming",
+    "file": "header-naming.jpg",
+    "bytes": 288343,
+    "scene": "小猫和小狗一起盯着一块空白的小木牌，木牌上还没有字，小狗歪头思考，猫爪摸着下巴。"
+  }
+]
