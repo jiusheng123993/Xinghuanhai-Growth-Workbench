@@ -10,8 +10,8 @@ import { describe, it, expect, vi } from 'vitest';
 
 // mock 数据库与配置，避免单测触发真实连接
 vi.mock('../db.js', () => ({ pool: { query: vi.fn() } }));
-// 角标合成走真实 jimp 太重，本文件只测提示词构建，mock 成透传
-vi.mock('./imageBadge.js', () => ({ addAiBadge: vi.fn(async (url: string) => url) }));
+// 转存走真实 jimp 太重，本文件只测提示词构建，mock 成透传
+vi.mock('./imageBadge.js', () => ({ hostAiImage: vi.fn(async (url: string) => url) }));
 vi.mock('../config.js', () => ({
   config: {
     jwtSecret: 'test-jwt-secret',

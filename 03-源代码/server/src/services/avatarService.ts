@@ -7,8 +7,8 @@ import { callSeedream } from './image2DService.js';
 import { analyzeImage } from './visionService.js';
 // 宠物提示词公共模块：统一按提示词库 §0.6/§四 规范构造（角色锁定 + 主体锁定 + 品种兜底）
 import { petSubjectText, PET_IDENTITY_KEEP, PET_ONLY_ONE } from './petPrompt.js';
-// AI 生图统一角标（水印 B 方案：去平台水印 + 自有品牌角标，见 imageBadge 模块注释）
-import { addAiBadge } from './imageBadge.js';
+// AI 生图转存（去 Seedream 平台水印后转存本站图床，见 imageBadge 模块注释）
+import { hostAiImage } from './imageBadge.js';
 
 /** 宠物形象生成请求参数 */
 export interface GeneratePetImageParams {
@@ -372,7 +372,9 @@ export function cleanCustomBackground(raw: string): string {
  * - 参考图 = 用户选定的形象/照片 URL（callSeedream 传 image 字段走图生图，身份锚点）
  * - 背景 = 预设 key（AVATAR_BACKGROUND_OPTIONS 白名单）或用户自定义描述（清洗截断 60 字，优先于预设）
  * - 提示词按技能 §角色锁定：以参考照片为准（有图才写）+ 只出现这一只 + 边缘干净自然
- * - 水印/角标由 callSeedream 统一处理（watermark:false + 自有品牌角标）
+ * - 水印/角标：Seedream 侧统一 `watermark:false`（去平台水印）；
+ *   **自有品牌角标已于 2026-09-19 按产品决策关闭**（全链路不做可见角标），
+ *   转存与**隐式 AIGC 元数据**仍由 `hostAiImage` 承担（见 imageBadge.ts）
  * @returns 新图 URL；无 key/背景为空/生成失败返回 null（调用方明确报错）
  */
 export async function generateBackgroundSwap(params: {
@@ -480,7 +482,7 @@ export async function generatePetImage(
         prompt,
         size: '1024x1024',
         n: 1,
-        // 水印合规 B 方案：去平台水印，显式标识由 addAiBadge 的自有品牌角标承担
+        // 去掉 Seedream 平台水印（样式不可控），生成图随后由 hostAiImage 转存本站
         watermark: false,
       }),
     });
@@ -499,8 +501,8 @@ export async function generatePetImage(
 
     if (data.data && data.data.length > 0 && data.data[0].url) {
       return {
-        // 合成自有品牌角标并转存本站 uploads（失败降级返回原图 URL，见 imageBadge 模块注释）
-        url: await addAiBadge(data.data[0].url),
+        // 转存本站 uploads（失败降级返回原图 URL，见 imageBadge 模块注释）
+        url: await hostAiImage(data.data[0].url),
         isPlaceholder: false,
       };
     }

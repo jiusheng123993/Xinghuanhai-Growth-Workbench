@@ -8,8 +8,8 @@ import { updateTaskProgress, updateTaskStatus, updateTaskResult } from './taskQu
 import { delay } from '../utils/delay.js';
 // 宠物提示词公共模块：统一按提示词库 §0.6/§四 规范构造（角色锁定 + 主体锁定 + 品种兜底）
 import { petSubjectText, PET_IDENTITY_KEEP, PET_ONLY_ONE } from './petPrompt.js';
-// AI 生图统一角标（水印 B 方案：去平台水印 + 自有品牌角标，见 imageBadge 模块注释）
-import { addAiBadge } from './imageBadge.js';
+// AI 生图转存（去 Seedream 平台水印后转存本站图床，见 imageBadge 模块注释）
+import { hostAiImage } from './imageBadge.js';
 
 const SEEDREAM_API = 'https://ark.cn-beijing.volces.com/api/v3/images/generations';
 
@@ -224,7 +224,7 @@ export async function callSeedream(prompt: string, referenceImageUrl: string, ap
       n: 1,
       // 仅当传了参考照片时带 image 字段，走图生图；否则为纯文生图
       ...(referenceImageUrl ? { image: referenceImageUrl } : {}),
-      // 水印合规 B 方案：去平台水印，显式标识由 addAiBadge 的自有品牌角标承担
+      // 去掉 Seedream 平台水印（样式不可控），生成图随后由 hostAiImage 转存本站
       watermark: false,
     }),
   });
@@ -241,8 +241,8 @@ export async function callSeedream(prompt: string, referenceImageUrl: string, ap
   const data = (await response.json()) as { data: Array<{ url: string }> };
   const url = data.data?.[0]?.url || null;
   if (!url) return null;
-  // 合成自有品牌角标并转存本站 uploads（失败降级返回原图 URL，见 imageBadge 模块注释）
-  return addAiBadge(url);
+  // 转存本站 uploads（失败降级返回原图 URL，见 imageBadge 模块注释）
+  return hostAiImage(url);
 }
 
 export { EXPRESSIONS, ANGLES, ACTIONS, ACTION_ANGLES };

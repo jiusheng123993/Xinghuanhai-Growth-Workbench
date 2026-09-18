@@ -17,7 +17,7 @@
  *
  * 依赖复用（不另起一套）：
  *   - 提示词公共约束（身份锁定 / 数量锁定 / 名字红线）复用 `petPrompt.ts`；
- *   - 生成图落盘 + AI 角标复用 `imageBadge.addAiBadge`（与全家福/头像/表情包同一条路径）；
+ *   - 生成图落盘复用 `imageBadge.hostAiImage`（与全家福/头像/表情包同一条转存路径）；
  *   - Seedream 的端点、模型名、超时与 429 重试口径与 `image2DService`、
  *     `familyPhotoService` 保持一致（那两处分别是单图版与未导出的多图版，
  *     本模块需要「多图 + 16:9 尺寸」，故按同一口径本地实现，不动兄弟模块的导出面）。
@@ -35,8 +35,8 @@ import { sanitizeError } from '../utils/sanitize.js';
 import { delay } from '../utils/delay.js';
 // 提示词公共约束：身份锁定（以参考图为准）+ 数量锁定（只出现这一只）
 import { PET_IDENTITY_KEEP, PET_ONLY_ONE } from './petPrompt.js';
-// AI 生图统一落盘 + 品牌角标（失败降级返回原图，见该模块注释）
-import { addAiBadge } from './imageBadge.js';
+// AI 生图统一落盘（失败降级返回原图，见该模块注释）
+import { hostAiImage } from './imageBadge.js';
 
 /** Seedream 生图端点（与 image2DService / familyPhotoService 同一地址，换端点须三处同步） */
 const SEEDREAM_API = 'https://ark.cn-beijing.volces.com/api/v3/images/generations';
@@ -188,7 +188,7 @@ async function callSeedreamForKeyframe(
     prompt,
     size: KEYFRAME_SIZE,
     n: 1,
-    // 水印合规 B 方案：去平台水印，显式标识由 addAiBadge 的自有品牌角标承担
+    // 去掉 Seedream 平台水印（样式不可控），生成图随后由 hostAiImage 转存本站
     watermark: false,
   };
   // 有参考图才带 images（无参考图时是纯文生图，避免传空数组触发参数校验失败）
@@ -222,7 +222,7 @@ async function callSeedreamForKeyframe(
 /**
  * 生成单镜关键帧（模式 C 的第一步）
  *
- * 流程：组装提示词 → Seedream 多图图生图 → `addAiBadge` 落盘本站 uploads 并返回公网 URL。
+ * 流程：组装提示词 → Seedream 多图图生图 → `hostAiImage` 落盘本站 uploads 并返回公网 URL。
  * 任何一步失败（无参考图 / 未配置 Key / 上游报错 / 超时 / 抛异常）都返回 null，
  * 由调用方回落原照片——本函数**不会**向上抛异常。
  *
@@ -258,10 +258,10 @@ export async function generateMemoirKeyframe(params: MemoirKeyframeParams): Prom
     }
 
     // 落盘本站 uploads（与全家福/头像/表情包同一路径）。
-    // ⚠️ 关键帧是**中间产物**（只作视频首帧、不直接给用户看），故传 visible:false **不合成可见角标**：
-    //    角标会被 Seedance 动起来（可能扭曲成渲染缺陷），且等于给成片凭空加一个用户可见元素。
-    //    隐式合规不受影响：AIGC tEXt 隐式标识照旧写入（见 imageBadge / aigcMetadata）。
-    const hostedUrl = await addAiBadge(generatedUrl, { visible: false });
+    // 关键帧是**中间产物**（只作视频首帧、不直接给用户看），本函数默认就不合成可见角标，
+    // 与它的定位一致，故这里直接调用、不传任何选项（角标若被 Seedance 动起来还可能扭曲成缺陷）。
+    // 隐式标识不受影响：AIGC tEXt 隐式标识照旧写入（见 imageBadge / aigcMetadata）。
+    const hostedUrl = await hostAiImage(generatedUrl);
     return hostedUrl || null;
   } catch (error) {
     // 关键帧是尽力项：任何异常都吞掉（脱敏后记日志），交由调用方回落原照片

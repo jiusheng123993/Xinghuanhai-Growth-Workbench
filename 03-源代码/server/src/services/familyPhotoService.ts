@@ -9,8 +9,8 @@ import { pool } from '../db.js';
 import { delay } from '../utils/delay.js';
 // 宠物提示词公共模块：主体描述（品种兜底 + 绝不写名字）统一从这里取
 import { petSubjectText, petSpeciesLabel, translatePetNames } from './petPrompt.js';
-// AI 生图统一角标（水印 B 方案：去平台水印 + 自有品牌角标，见 imageBadge 模块注释）
-import { addAiBadge } from './imageBadge.js';
+// AI 生图转存（去 Seedream 平台水印后转存本站图床，见 imageBadge 模块注释）
+import { hostAiImage } from './imageBadge.js';
 
 const SEEDREAM_API = 'https://ark.cn-beijing.volces.com/api/v3/images/generations';
 
@@ -311,8 +311,8 @@ async function callSeedreamMulti(
     prompt,
     size: '1024x1024',
     n: 1,
-    // 水印合规 B 方案：去掉 Seedream 平台「AI生成」水印，
-    // 显式标识改由 imageBadge.addAiBadge 合成的自有品牌角标承担（样式可控、贴品牌）
+    // 去掉 Seedream 平台水印（样式不可控且带平台色彩），
+    // 生成图改由 imageBadge.hostAiImage 转存到本站 uploads 后再入库
     watermark: false,
   };
 
@@ -458,9 +458,9 @@ export async function generateFamilyPhoto(params: GenerateFamilyPhotoParams): Pr
     return { success: false, message: 'AI 生成失败，请稍后重试' };
   }
 
-  // 合成品牌角标（去平台水印后的合规显式标识）并转存本站 uploads；
-  // addAiBadge 内部失败会降级返回原图 URL，不会阻断主流程
-  const finalUrl = await addAiBadge(generatedUrl);
+  // 转存本站 uploads（Seedream 临时链接过期即失效，必须取回落盘）；
+  // hostAiImage 内部失败会降级返回原图 URL，不会阻断主流程
+  const finalUrl = await hostAiImage(generatedUrl);
 
   // 入库
   await pool.query(

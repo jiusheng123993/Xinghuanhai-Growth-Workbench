@@ -38,10 +38,10 @@ vi.mock('../utils/delay.js', () => ({
   delay: mockDelay,
 }));
 
-// 显式 mock 角标模块（透传原 URL）：否则成功路径会真实走 addAiBadge——
-// fetch mock 无 arrayBuffer 时靠抛错降级"侥幸"通过，一旦补全 mock 响应就会在测试期写真实磁盘
+// 显式 mock 转存模块（透传原 URL）：否则成功路径会真实走 hostAiImage——
+// fetch mock 无 arrayBuffer 时靠抛错降级「侥幸」通过，一旦补全 mock 响应就会在测试期写真实磁盘
 vi.mock('./imageBadge.js', () => ({
-  addAiBadge: vi.fn(async (url: string) => url),
+  hostAiImage: vi.fn(async (url: string) => url),
 }));
 
 vi.mock('../config.js', () => ({

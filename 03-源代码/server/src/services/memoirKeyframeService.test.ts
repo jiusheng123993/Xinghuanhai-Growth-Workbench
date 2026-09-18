@@ -17,11 +17,11 @@ vi.mock('../config.js', () => ({
   },
 }));
 
-// 角标合成走真实 jimp 太重；本文件只关心"拿到生成图后是否落盘返回"，故 mock 成透传
-vi.mock('./imageBadge.js', () => ({ addAiBadge: vi.fn(async (url: string) => url) }));
+// 转存走真实 jimp 太重；本文件只关心拿到生成图后是否落盘返回，故 mock 成透传
+vi.mock('./imageBadge.js', () => ({ hostAiImage: vi.fn(async (url: string) => url) }));
 
 import { config } from '../config.js';
-import { addAiBadge } from './imageBadge.js';
+import { hostAiImage } from './imageBadge.js';
 import {
   buildMemoirKeyframePrompt,
   generateMemoirKeyframe,
@@ -131,7 +131,7 @@ describe('memoirKeyframeService 生成与降级', () => {
     vi.clearAllMocks();
     config.seedream.apiKey = 'test-seedream-key';
     // restoreAllMocks 会清掉 vi.fn 的实现，这里每例重建透传实现
-    vi.mocked(addAiBadge).mockImplementation(async (url: string) => url);
+    vi.mocked(hostAiImage).mockImplementation(async (url: string) => url);
   });
 
   afterEach(() => {
@@ -155,12 +155,9 @@ describe('memoirKeyframeService 生成与降级', () => {
     // 请求体里的提示词同样不含宠物名字（红线在真正的出网请求上也成立）
     expect(body.prompt).not.toContain(PET_NAME);
     expect(body.prompt).toContain('16:9');
-    // 走既有落盘路径（imageBadge.addAiBadge）。
-    // ⚠️ 第二个参数 `{ visible: false }` 是**有意**的：关键帧是中间产物，不合成可见角标
-    //    （角标会被 Seedance 动起来、且等于给成片凭空加用户可见元素）；隐式 AIGC 元数据仍照写。
-    expect(vi.mocked(addAiBadge)).toHaveBeenCalledWith('https://cdn.example.com/keyframe.png', {
-      visible: false,
-    });
+    // 走既有转存路径（imageBadge.hostAiImage）。
+    // 关键帧是中间产物：不传 options 即走默认（不合成可见角标）；隐式 AIGC 元数据仍照写。
+    expect(vi.mocked(hostAiImage)).toHaveBeenCalledWith('https://cdn.example.com/keyframe.png');
   });
 
   it('无设定图 → 只有一张参考图（真实照片）', async () => {
@@ -184,7 +181,7 @@ describe('memoirKeyframeService 生成与降级', () => {
       durationSec: 5,
     });
     expect(url).toBeNull();
-    expect(vi.mocked(addAiBadge)).not.toHaveBeenCalled();
+    expect(vi.mocked(hostAiImage)).not.toHaveBeenCalled();
   });
 
   it('网络异常（fetch reject）→ 返回 null 而不是抛错', async () => {

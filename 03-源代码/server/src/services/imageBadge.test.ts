@@ -1,21 +1,26 @@
 /**
- * AI 生图角标服务单元测试
- * mock jimp / fs / fetch，验证两条主链路：
- * 1. 成功：下载 → 等比缩放合成到右下角 → 落盘 → 返回本站 /uploads/ai-generated/xxx.png
- * 2. 失败：任一环节出错降级返回原图 URL（不抛错、不阻断生成主流程）
+ * AI 生图转存服务（imageBadge）单元测试
+ * mock jimp / fs / fetch，验证三条主链路：
+ * 1. 默认（不传 options）：下载 → **不合成可见角标** → 落盘 → 返回本站 /uploads/ai-generated/xxx.png
+ * 2. `{ withBadge: true }`：仍会合成可见角标（保留的一行开关）
+ * 3. 失败：任一环节出错降级返回原图 URL（不抛错、不阻断生成主流程）
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ---------- hoisted mocks ----------
-const { mockJimp, mockFs } = vi.hoisted(() => ({
+const { mockJimp, mockFs, mockAppendAigc } = vi.hoisted(() => ({
   // jimp 默认导出只用到 read/AUTO/MIME_PNG 三个成员
   mockJimp: { read: vi.fn(), AUTO: -1, MIME_PNG: 'image/png' },
   // imageBadge 只用 fs.promises 的 mkdir/writeFile
   mockFs: { mkdir: vi.fn(), writeFile: vi.fn() },
+  // 隐式 AIGC 元数据：用「打标记」的替身，才能断言"写盘的那份确实盖过隐式标识"
+  // （2026-09-19 独立复核指出：此前这条合规底线只靠注释守着，摘掉函数调用全量测试仍全绿）
+  mockAppendAigc: vi.fn((buf: Buffer) => Buffer.concat([buf, Buffer.from('AIGC-STAMP')])),
 }));
 
 vi.mock('jimp', () => ({ default: mockJimp }));
 vi.mock('fs', () => ({ promises: mockFs }));
+vi.mock('./aigcMetadata.js', () => ({ appendAigcPngMetadata: mockAppendAigc }));
 vi.mock('../config.js', () => ({
   config: {
     jwtSecret: 'test-jwt-secret',
@@ -30,7 +35,7 @@ vi.mock('../config.js', () => ({
   },
 }));
 
-import { addAiBadge } from './imageBadge.js';
+import { hostAiImage } from './imageBadge.js';
 
 /** Jimp 假图的类型声明（只声明被测代码/断言实际用到的成员） */
 interface FakeJimpImage {
@@ -72,7 +77,7 @@ beforeEach(() => {
   mockFs.writeFile.mockResolvedValue(undefined);
 });
 
-describe('addAiBadge 成功链路', () => {
+describe('hostAiImage 成功链路（可见角标通道：{ withBadge: true }）', () => {
   it('下载原图与角标素材，等比缩放后贴右下角，落盘并返回本站 URL', async () => {
     const base = makeFakeImage(1000, 1000);   // Seedream 1024 图按 1000 便于口算
     const badgeAsset = makeFakeImage(451, 93); // 角标素材实际尺寸
@@ -85,7 +90,7 @@ describe('addAiBadge 成功链路', () => {
     });
     vi.stubGlobal('fetch', mockFetch);
 
-    const result = await addAiBadge('https://seedream.example.com/out.png');
+    const result = await hostAiImage('https://seedream.example.com/out.png', { withBadge: true });
 
     // 1. fetch 了 CDN 原图（第二个参数是超时 signal 选项，只断言 URL 本身）
     expect(mockFetch.mock.calls[0][0]).toBe('https://seedream.example.com/out.png');
@@ -105,36 +110,41 @@ describe('addAiBadge 成功链路', () => {
 });
 
 /**
- * 【2026-09-19 新增】中间产物路径：`{ visible: false }`
- * 背景：回忆录关键帧是**中间产物**（只作视频首帧、不直接给用户看）。
- * 可见角标会被 Seedance 动起来（可能扭曲成渲染缺陷），且等于给成片凭空加一个用户可见元素，
- * 故关键帧传 `visible:false` —— **只跳过合成，不跳过合规**：隐式 AIGC 元数据照旧写入。
+ * 【2026-09-19 行为变更】默认**不合成**可见角标
+ * 背景：用户按产品决策去掉所有可见 AI 角标，故默认值由「合成」翻转为「不合成」，
+ * 函数也由旧名改名为 hostAiImage（如实描述它真正做的事：把 CDN 临时图转存到本站）。
+ * 这里守住两条不变量：
+ * ① 默认（不传 options）= 不合成可见角标，但仍照旧落盘并写入隐式 AIGC 元数据；
+ * ② `{ withBadge: true }` = 仍能合成（保留那个一行开关，当前无任何调用点开它）。
  */
-describe('addAiBadge { visible: false }（中间产物：不合成可见角标，但仍落盘）', () => {
-  it('不读取角标素材、不 composite，但照旧落盘并返回本站 URL', async () => {
+describe('hostAiImage 默认不合成可见角标（默认值翻转回归）', () => {
+  it('默认（不传 options）：不读角标素材、不 composite，但照旧落盘并返回本站 URL', async () => {
     const base = makeFakeImage(1000, 1000);
-    mockJimp.read.mockResolvedValueOnce(base); // 只应有这一次 read（角标素材不该被读）
+    // 只排队一次 read（原图）：若默认值被改回「合成」，第二次 read 会拿到 undefined 并抛错降级，
+    // 下面的 writeFile / URL 断言随即失败 —— 这条用例就是用来守住默认值的
+    mockJimp.read.mockResolvedValueOnce(base);
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
       arrayBuffer: async () => new ArrayBuffer(8),
     }));
 
-    const result = await addAiBadge('https://seedream.example.com/out.png', { visible: false });
+    const result = await hostAiImage('https://seedream.example.com/out.png');
 
     // ① 只 read 了一次 —— 即只读了原图，没有读角标素材
     expect(mockJimp.read).toHaveBeenCalledTimes(1);
     // ② 没有做任何合成
     expect(base.composite).not.toHaveBeenCalled();
-    // ③ 但落盘与返回 URL 一切照旧（合规元数据走 appendAigcPngMetadata，在落盘那步）
+    // ③ 但落盘与返回 URL 一切照旧（隐式 AIGC 元数据走 appendAigcPngMetadata，在落盘那一步）
     expect(mockFs.writeFile).toHaveBeenCalledTimes(1);
+    expect(String(mockFs.writeFile.mock.calls[0][0])).toMatch(/ai-generated[\\/][0-9a-f-]{36}\.png$/);
     expect(result).toMatch(/^\/uploads\/ai-generated\/[0-9a-f-]{36}\.png$/);
   });
 
-  it('默认（不传 options）仍然合成角标 —— 保证既有 4 处调用点行为不变', async () => {
-    // ⚠️ 本用例**只断言 composite 被调用**，不再排队 mockResolvedValueOnce：
-    //    `badgeCache` 是模块级缓存，跨用例存活；若在此排队"角标素材"的返回值而缓存已命中，
-    //    那个排队值不会被消费，会**泄漏到下一个用例**（曾让"失败降级"用例误判）。
-    //    默认路径的"缩放 + 右下角定位"细节已由本文件第一条用例覆盖，这里只守行为不变量。
+  it('{ withBadge: true } 时仍会合成角标（保留的一行开关），落盘与 URL 照旧', async () => {
+    // ⚠️ 本用例**只断言 composite 被调用**，不排队 mockResolvedValueOnce：
+    //    `badgeCache` 是模块级缓存，跨用例存活；若在此排队「角标素材」的返回值而缓存已命中，
+    //    那个排队值不会被消费，会**泄漏到下一个用例**（曾让「失败降级」用例误判）。
+    //    角标通道的「缩放 + 右下角定位」细节已由本文件第一条用例覆盖，这里只守行为不变量。
     const base = makeFakeImage(1000, 1000);
     mockJimp.read.mockImplementation(async () => base);
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
@@ -142,27 +152,75 @@ describe('addAiBadge { visible: false }（中间产物：不合成可见角标�
       arrayBuffer: async () => new ArrayBuffer(8),
     }));
 
-    await addAiBadge('https://seedream.example.com/out.png');
+    const result = await hostAiImage('https://seedream.example.com/out.png', { withBadge: true });
 
+    // ① 开关打开时仍然合成
     expect(base.composite).toHaveBeenCalledTimes(1);
+    // ② 落盘与返回 URL 与默认路径完全一致
+    expect(mockFs.writeFile).toHaveBeenCalledTimes(1);
+    expect(result).toMatch(/^\/uploads\/ai-generated\/[0-9a-f-]{36}\.png$/);
   });
 });
 
-describe('addAiBadge 失败降级', () => {
+describe('hostAiImage 失败降级', () => {
   it('CDN 图片下载失败时返回原始 URL，不写盘不抛错', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404 }));
-    const result = await addAiBadge('https://seedream.example.com/gone.png');
+    const result = await hostAiImage('https://seedream.example.com/gone.png');
     expect(result).toBe('https://seedream.example.com/gone.png');
     expect(mockFs.writeFile).not.toHaveBeenCalled();
   });
-
   it('jimp 解码失败等异常同样降级返回原始 URL', async () => {
     mockJimp.read.mockRejectedValue(new Error('unsupported image'));
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
       arrayBuffer: async () => new ArrayBuffer(8),
     }));
-    const result = await addAiBadge('https://seedream.example.com/broken.png');
+    const result = await hostAiImage('https://seedream.example.com/broken.png');
     expect(result).toBe('https://seedream.example.com/broken.png');
+  });
+});
+
+/**
+ * 【2026-09-19 独立复核补】隐式 AIGC 标识的**回归断言**
+ *
+ * 为什么必须有这条：独立复核做了一次变异 —— 把 `appendAigcPngMetadata` 从落盘那一步**摘掉**，
+ * 全量 **1353 条测试依然全绿**。也就是说：本轮去掉可见角标后，**唯一保留的合规底线（隐式标识）
+ * 此前只靠一句注释守着，没有任何测试托底** —— 谁哪天顺手删掉它，CI 不会响。
+ *
+ * 这条把注释变成断言：**写进磁盘的那份，必须是「已盖上隐式标识」的那一份**。
+ * （替身会给 buffer 追加标记，因此"摘掉调用"或"写错对象"都会让本用例变红。）
+ */
+describe('隐式 AIGC 元数据必须真的写进文件（独立复核补的合规回归）', () => {
+  it('落盘内容 = appendAigcPngMetadata 的返回值，而不是未盖章的原 buffer', async () => {
+    const base = makeFakeImage(1000, 1000);
+    mockJimp.read.mockResolvedValueOnce(base);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: async () => new ArrayBuffer(8),
+    }));
+
+    await hostAiImage('https://seedream.example.com/out.png');
+
+    // ① 隐式标识函数必须被调用过（且只一次）
+    expect(mockAppendAigc).toHaveBeenCalledTimes(1);
+    // ② 写进磁盘的第二个参数必须就是它的返回值（带标记）—— 摘掉这一步、或改成写原 buffer，本用例即红
+    const written = mockFs.writeFile.mock.calls[0][1] as Buffer;
+    expect(Buffer.isBuffer(written)).toBe(true);
+    expect(written.toString('binary')).toContain('AIGC-STAMP');
+  });
+
+  it('`{ withBadge: true }` 分支同样要写隐式标识（两条分支共用同一行，不得只保一条）', async () => {
+    const base = makeFakeImage(1000, 1000);
+    mockJimp.read.mockImplementation(async () => base);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: async () => new ArrayBuffer(8),
+    }));
+
+    await hostAiImage('https://seedream.example.com/out.png', { withBadge: true });
+
+    expect(mockAppendAigc).toHaveBeenCalledTimes(1);
+    const written = mockFs.writeFile.mock.calls[0][1] as Buffer;
+    expect(written.toString('binary')).toContain('AIGC-STAMP');
   });
 });

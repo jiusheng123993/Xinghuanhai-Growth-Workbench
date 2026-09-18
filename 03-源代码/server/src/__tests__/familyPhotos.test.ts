@@ -38,9 +38,9 @@ vi.mock('../middleware/auth.js', () => ({
 const mockFetch = vi.fn();
 global.fetch = mockFetch as unknown as typeof fetch;
 
-// Mock 角标合成（集成测试只验证业务链路；角标本体逻辑由 imageBadge.test.ts 单测覆盖）
+// Mock 转存（集成测试只验证业务链路；转存本体逻辑由 imageBadge.test.ts 单测覆盖）
 vi.mock('../services/imageBadge.js', () => ({
-  addAiBadge: vi.fn(async (url: string) => url),
+  hostAiImage: vi.fn(async (url: string) => url),
 }));
 
 import familyPhotosRouter from '../routes/familyPhotos.js';
@@ -197,8 +197,8 @@ describe('POST /api/families/:familyId/photos — 生成全家福', () => {
       'https://example.com/pet1.jpg',
       'https://example.com/pet2.jpg',
     ]);
-    // 水印合规 B 方案：必须显式关闭平台水印，由服务端 imageBadge 打自有角标
-    // （watermark 默认 true 会带「AI生成」角标，与自有角标重复且不可控；此参数一旦回归即红灯）
+    // 必须显式关闭 Seedream 平台水印（默认 true 会带「AI生成」平台角标，样式不可控且带平台色彩）；
+    // 服务端只把生成图转存到本站（不再合成自有可见角标），隐式 AIGC 元数据在落盘时写入 —— 此参数一旦回归即红灯
     expect(capturedBody.watermark).toBe(false);
   });
 
