@@ -6,7 +6,7 @@
  * 3. 性别前缀与物种中文名正确
  */
 import { describe, it, expect } from 'vitest';
-import { petSpeciesLabel, petSubjectText, translatePetNames, PET_BREED_FALLBACK, PET_IDENTITY_KEEP, PET_ONLY_ONE } from './petPrompt.js';
+import { petSpeciesLabel, petSubjectText, translatePetNames, stripNamingPhrases, PET_BREED_FALLBACK, PET_IDENTITY_KEEP, PET_ONLY_ONE } from './petPrompt.js';
 
 describe('petSpeciesLabel 物种中文名', () => {
   it('dog → 狗狗，cat → 猫咪，未知物种兜底为猫咪', () => {
@@ -101,5 +101,247 @@ describe('translatePetNames 名字→外貌指代转译（用户用名字说话�
     ];
     const out = translatePetNames('小猫咪和小猫在玩', [...pair].reverse());
     expect(out).not.toContain('小猫咪和小猫');
+  });
+});
+
+/**
+ * stripNamingPhrases —— 命名句式（结构性）清洗
+ *
+ * 这一组锁的是「白名单拦不住 LLM 编造名字」这个缺口：translatePetNames 只认宠物档案里
+ * 已有的名字，而分镜脚本里出现的「小橘」「大黄」这类编造名字只能靠句法结构拦。
+ * 用例分三类：
+ * ① 正面：命名句式必须清干净、且不留残渣
+ * ② 负面：高频动词「叫」与正常句子绝不能被改坏（宁可漏一个名字，也不能改坏句子）
+ * ③ 已知边界：当前算法确实会漏 / 会多删的情况，全部显式钉住，防止以后悄悄漂移
+ */
+describe('stripNamingPhrases 命名句式结构性清洗（拦白名单拦不住的编造名字）', () => {
+  /**
+   * 通用残渣体检，逐项对应任务书点名的残渣形态：
+   * - 「叫的」「唤作的」：名字删了、命名框架没删干净
+   * - 「，，」：删除点两侧标点撞在一起
+   * - 句首悬空标点（如「，它很胖」）
+   * - 多余空格（含首尾）
+   */
+  const expectNoResidue = (out: string): void => {
+    expect(out).not.toMatch(/叫的|唤作的|名叫的/);
+    expect(out).not.toMatch(/[，、；：]{2,}/);
+    expect(out).not.toMatch(/^[，、；：。！？…]/);
+    expect(out).not.toMatch(/\s{2,}|^\s|\s$/);
+  };
+
+  describe('正面：命名句式必须被清掉（输入里的名字不在任何档案里，白名单够不着）', () => {
+    it('用例1 裸「叫」：「一只叫小橘的猫在窗台上」→「一只猫在窗台上」', () => {
+      // 「叫」是高频动词，本案必须靠「叫 X 的 + 宠物名词」的句法才能认定是起名
+      const out = stripNamingPhrases('一只叫小橘的猫在窗台上');
+      expect(out).toBe('一只猫在窗台上');
+      expect(out).not.toContain('小橘');
+      expectNoResidue(out);
+    });
+
+    it('用例2 「名叫大黄的狗狗趴着」→「狗狗趴着」', () => {
+      const out = stripNamingPhrases('名叫大黄的狗狗趴着');
+      expect(out).toBe('狗狗趴着');
+      expect(out).not.toContain('大黄');
+      expectNoResidue(out);
+    });
+
+    it('用例3 「这只狗名字是旺财」→「这只狗」', () => {
+      const out = stripNamingPhrases('这只狗名字是旺财');
+      expect(out).toBe('这只狗');
+      expect(out).not.toContain('旺财');
+      expectNoResidue(out);
+    });
+
+    it('用例4 「那只猫叫作咪咪，正在睡觉」→「那只猫，正在睡觉」（保留停顿逗号）', () => {
+      // 逗号**刻意保留**：吃掉它会把「这只狗名字是旺财，那只猫叫小黑」粘成
+      // 「这只狗那只猫叫小黑」，两个主体糊成一团，比留一个停顿逗号更糟
+      const out = stripNamingPhrases('那只猫叫作咪咪，正在睡觉');
+      expect(out).toBe('那只猫，正在睡觉');
+      expect(out).not.toContain('咪咪');
+      expectNoResidue(out);
+    });
+
+    it('用例5 「唤作小黑的猫」→「猫」', () => {
+      const out = stripNamingPhrases('唤作小黑的猫');
+      expect(out).toBe('猫');
+      expect(out).not.toContain('小黑');
+      expectNoResidue(out);
+    });
+
+    it('用例6 「昵称是团子」→ 空串（整句只有命名部分）', () => {
+      const out = stripNamingPhrases('昵称是团子');
+      expect(out).toBe('');
+      expect(out).not.toContain('团子');
+      expectNoResidue(out);
+    });
+
+    it('定语式：「名叫旺财的那只猫」→「那只猫」（「的」随命名框架一起删，不留悬空「的」）', () => {
+      const out = stripNamingPhrases('名叫旺财的那只猫');
+      expect(out).toBe('那只猫');
+      expectNoResidue(out);
+    });
+
+    it('定语式+外貌修饰：「名叫旺财的橘猫追着狗」→「橘猫追着狗」（「的」后允许 1~2 字修饰）', () => {
+      const out = stripNamingPhrases('名叫旺财的橘猫追着狗');
+      expect(out).toBe('橘猫追着狗');
+      expectNoResidue(out);
+    });
+
+    it('多句混排：「一只叫小橘的猫，名叫旺财的狗在旁边」→「一只猫，狗在旁边」', () => {
+      const out = stripNamingPhrases('一只叫小橘的猫，名叫旺财的狗在旁边');
+      expect(out).toBe('一只猫，狗在旁边');
+      expect(out).not.toContain('小橘');
+      expect(out).not.toContain('旺财');
+      expectNoResidue(out);
+    });
+
+    it('候选段长度上限：8 字以内算名字；超过 8 字不当作名字（防把一整句话当名字删掉）', () => {
+      expect(stripNamingPhrases('名叫abcdefgh的猫')).toBe('猫');
+      expect(stripNamingPhrases('名叫abcdefghij的猫')).toBe('名叫abcdefghij的猫');
+    });
+
+    it('候选段不能为空：「名叫的猫」原样不动（防「名叫，」这类残渣）', () => {
+      expect(stripNamingPhrases('名叫的猫')).toBe('名叫的猫');
+    });
+
+    it('左邻标点：「汪汪。名字是旺财。今天天气好」→「汪汪。今天天气好」（撞在一起的同种标点吃掉一个）', () => {
+      const out = stripNamingPhrases('汪汪。名字是旺财。今天天气好');
+      expect(out).toBe('汪汪。今天天气好');
+      expectNoResidue(out);
+    });
+
+    it('删除段落在句首：「名字是旺财。今天天气好」→「今天天气好」（连它身后失去依附的句号一起带走）', () => {
+      const out = stripNamingPhrases('名字是旺财。今天天气好');
+      expect(out).toBe('今天天气好');
+      expectNoResidue(out);
+    });
+
+    it('左邻「的」：「这只狗的名字是旺财」→「这只狗」（不留下悬空的「这只狗的」）', () => {
+      expect(stripNamingPhrases('这只狗的名字是旺财')).toBe('这只狗');
+    });
+
+    it('前后有空格时折叠并去首尾空白（不产生多余空格）', () => {
+      expect(stripNamingPhrases('  一只叫小橘的猫  ')).toBe('一只猫');
+    });
+  });
+
+  describe('负面：绝不误伤（全是「叫」当普通动词 / 不该动的正常句子）', () => {
+    it('「他叫我过去」原样：代词「我」被名字段的代词否定挡住，且「叫我」后面没有「的+宠物名词」', () => {
+      // 两道防线都要写清：① 名字候选段不允许以人称代词开头；② 裸「叫」只认「叫X的+宠物名词」
+      expect(stripNamingPhrases('他叫我过去')).toBe('他叫我过去');
+    });
+
+    it('「老板叫你过去一下」原样：同上，换成「你」', () => {
+      expect(stripNamingPhrases('老板叫你过去一下')).toBe('老板叫你过去一下');
+    });
+
+    it('「门口有人在叫卖」原样：「叫卖」是动词复合，裸「叫」后面没有「的+宠物名词」', () => {
+      // 若只按「叫」判名字，「叫卖」的「卖」会被当成名字删掉（实测反例），所以裸「叫」必须配句式
+      expect(stripNamingPhrases('门口有人在叫卖')).toBe('门口有人在叫卖');
+    });
+
+    it('「这只狗在叫」原样：「叫」在句末，既无命名标记也无「的」', () => {
+      expect(stripNamingPhrases('这只狗在叫')).toBe('这只狗在叫');
+    });
+
+    it('「他叫我过去的时候」原样：有「的」，但代词 + 「的时候」是时间状语不是定语', () => {
+      expect(stripNamingPhrases('他叫我过去的时候')).toBe('他叫我过去的时候');
+    });
+
+    it('「他叫我的猫过来」原样：「叫我」被代词挡；即便放开代词，「我的猫」也不是「叫X的猫」', () => {
+      expect(stripNamingPhrases('他叫我的猫过来')).toBe('他叫我的猫过来');
+    });
+
+    it('「他叫小黑的时候猫会来」原样：「的」后接「时候」是时间状语，否定前瞻命中（宁可漏）', () => {
+      // 这条是本次实现里真实踩过的坑：忘了把守卫里的「的」去掉，会把句子删成「他时候猫会来」
+      expect(stripNamingPhrases('他叫小黑的时候猫会来')).toBe('他叫小黑的时候猫会来');
+    });
+
+    it('「名叫小明的学生」原样：「学生」不是宠物名词；且右边界是「的」时必须整条不匹配（防「明的学生」）', () => {
+      expect(stripNamingPhrases('名叫小明的学生')).toBe('名叫小明的学生');
+    });
+
+    it('「名叫小明的」原样：名字后既无标点也无句末，右边界不成立', () => {
+      expect(stripNamingPhrases('名叫小明的')).toBe('名叫小明的');
+    });
+
+    it('「猫叫，狗也叫」原样：逗号在「叫」后面，不是「叫X的」结构', () => {
+      expect(stripNamingPhrases('猫叫，狗也叫')).toBe('猫叫，狗也叫');
+    });
+
+    it('裸「叫」+ 动词补语原样：「被叫醒的猫咪」「被邻居叫走的狗」「隔壁叫春的猫」', () => {
+      // 这三条是自审时找出来的真误伤：没有补语守卫会变成「被猫咪」「被邻居狗」「隔壁猫」
+      expect(stripNamingPhrases('被叫醒的猫咪')).toBe('被叫醒的猫咪');
+      expect(stripNamingPhrases('被邻居叫走的狗')).toBe('被邻居叫走的狗');
+      expect(stripNamingPhrases('隔壁叫春的猫')).toBe('隔壁叫春的猫');
+    });
+
+    it('「有人在叫卖小猫」原样：「小猫」是「叫卖」的宾语，不是名字', () => {
+      expect(stripNamingPhrases('有人在叫卖小猫')).toBe('有人在叫卖小猫');
+    });
+
+    it('「他在叫狗的名字」原样：这是「喊」，不是起名', () => {
+      expect(stripNamingPhrases('他在叫狗的名字')).toBe('他在叫狗的名字');
+    });
+
+    it('「给猫取名字」原样：「取名字」是普通说法，不是命名句式（标记里用了否定前瞻排除「字」）', () => {
+      expect(stripNamingPhrases('给猫取名字')).toBe('给猫取名字');
+    });
+
+    it('已由白名单处理过的文本原样（幂等，不重复处理、不产残渣）', () => {
+      const whitelisted = translatePetNames('烧鸡戴着生日帽', [{ name: '烧鸡', breed: '英短', species: 'cat' }]);
+      expect(whitelisted).toBe('那只英短猫咪戴着生日帽');
+      expect(stripNamingPhrases(whitelisted)).toBe('那只英短猫咪戴着生日帽');
+    });
+
+    it('未命中时原样返回（含空串），且连续调用结果不变（幂等）', () => {
+      expect(stripNamingPhrases('铺满落叶的秋日森林小径')).toBe('铺满落叶的秋日森林小径');
+      expect(stripNamingPhrases('')).toBe('');
+      const once = stripNamingPhrases('一只叫小橘的猫在窗台上');
+      expect(stripNamingPhrases(once)).toBe(once);
+    });
+  });
+
+  describe('与 translatePetNames 的调用顺序（推荐：先结构性清洗，再白名单替换）', () => {
+    const pets = [{ name: '烧鸡', breed: '英短', species: 'cat' }];
+
+    it('推荐顺序（先 strip 后 translate）：命名框架被结构清洗吃掉，白名单只看到剩下的普通文本', () => {
+      const raw = '名叫烧鸡的猫在叫，烧鸡盯着窗外';
+      const out = translatePetNames(stripNamingPhrases(raw), pets);
+      expect(out).toBe('猫在叫，那只英短猫咪盯着窗外');
+      expect(out).not.toContain('烧鸡');
+    });
+
+    it('反序（先 translate 后 strip）结果同样不含名字，两者不互相破坏', () => {
+      // 反序的中间态会出现「名叫那只英短猫咪的猫」这种别扭文本，所以推荐顺序是先结构后白名单；
+      // 但最终结果一致，锁在这里防止以后改动让某一种顺序漏名字
+      const raw = '名叫烧鸡的猫在叫，烧鸡盯着窗外';
+      const out = stripNamingPhrases(translatePetNames(raw, pets));
+      expect(out).toBe('猫在叫，那只英短猫咪盯着窗外');
+      expect(out).not.toContain('烧鸡');
+    });
+  });
+
+  describe('已知边界（自曝：会漏 / 会多删，钉住当前行为，详见交付正文）', () => {
+    it('多删：名字后紧跟正文且没有标点时，边界无法判定，会按最长候选一并删掉', () => {
+      // 「今天很乖」被当作名字的一部分删除——名字确实没了（安全目标达成），但正文有损失；
+      // 真实调用应保证名字后带标点，或依赖白名单 + 本函数双重兜底
+      expect(stripNamingPhrases('这只狗名字是旺财今天很乖')).toBe('这只狗');
+    });
+
+    it('漏网：裸「叫」后面没有「的」时不动（「她叫咪咪」「隔壁的猫叫小黑」）', () => {
+      // 宁可漏：放开这类会立刻误伤「他叫我过去」，而漏掉的名字仍可由 translatePetNames 白名单兜住
+      expect(stripNamingPhrases('她叫咪咪')).toBe('她叫咪咪');
+      expect(stripNamingPhrases('隔壁的猫叫小黑')).toBe('隔壁的猫叫小黑');
+    });
+
+    it('不区分主体：显式命名标记一律清（「这本书的名字是小王子」→「这本书」）', () => {
+      // 本函数的契约是「删掉一切命名框架与名字」，不判断主体是不是宠物；对人名/书名同样生效
+      expect(stripNamingPhrases('这本书的名字是小王子')).toBe('这本书');
+    });
+
+    it('错序不粘连：两句话各自有命名框架时，标点保留，两个主体不会被粘成一个', () => {
+      expect(stripNamingPhrases('这只狗名叫旺财，那只猫叫小黑')).toBe('这只狗，那只猫叫小黑');
+    });
   });
 });

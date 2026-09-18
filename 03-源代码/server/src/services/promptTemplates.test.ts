@@ -3,7 +3,8 @@
  * 覆盖：
  *   1. completeSections：缺失段补齐、完整 prompt 不重复补
  *   2. injectCharacters：有 CHARACTERS 段注入 / 无段时插入
- *   3. appendLocks：COUNT LOCK / SCREEN DIRECTION / IDENTITY LOCK
+ *   3. appendLocks：5 把连续性锁（COUNT LOCK / SCREEN DIRECTION / IDENTITY LOCK / ANATOMY LOCK / QUALITY LOCK），
+ *      并用『锁条数与锁名齐全』一条断言把『锁只有 5 把』钉死，防止注释与实现再次漂移
  *   4. buildFinalSegmentPrompt：完整组装（多角色锚点 / 旧单锚点兜底）
  */
 import { describe, it, expect } from 'vitest';
@@ -111,6 +112,22 @@ describe('promptTemplates 提示词模板库', () => {
     it('明确指定方向时可锁定到左侧', () => {
       const result = appendLocks(FULL_PROMPT, 'left');
       expect(result).toContain('主体始终朝向画面左侧');
+    });
+
+    it('锁条数与锁名齐全（锁固定 5 把，防注释与实现再次漂移）', () => {
+      // 锁名清单只在这里写一次，条数由 LOCK_NAMES.length 推出 —— 避免同一个数字硬编码两遍后各自漂移。
+      const LOCK_NAMES = ['COUNT LOCK', 'SCREEN DIRECTION', 'IDENTITY LOCK', 'ANATOMY LOCK', 'QUALITY LOCK'];
+      const result = appendLocks(FULL_PROMPT, 'right');
+      // 追加部分 = 原文之后的尾部（实现用空行分隔正文与锁块）
+      const appended = result.slice(FULL_PROMPT.trim().length);
+      const lockLines = appended.split('\n').filter((line) => line.trim().length > 0);
+      // ① 条数：每行一把锁，行数必须等于锁名清单长度
+      expect(lockLines).toHaveLength(LOCK_NAMES.length);
+      // ② 锁名：逐把检查存在，且都出现在某一行的行首（即每把锁独占一行、名字未被截断）
+      for (const name of LOCK_NAMES) {
+        expect(result).toContain(name);
+        expect(lockLines.some((line) => line.indexOf(name) === 0)).toBe(true);
+      }
     });
   });
 
